@@ -10,16 +10,16 @@ Before making any change, read:
 
 1. `PROJECT_RULES.md`
 2. `PROJECT_SKILLS.md`
+3. Relevant ADRs in `docs/adr/`
+4. `docs/architecture/FRONTEND_ARCHITECTURE.md` when the task affects structure, dependencies, state ownership, reusable UI, or API flow
 
-These files are authoritative for architecture, coding rules, UX direction, testing, security, and skill selection.
+Repository rules and accepted ADRs override generic skill examples.
 
 ---
 
 ## 1. Current Product Priority
 
-The current MVP priority is **enterprise / corporate health checks first**.
-
-Primary vertical slice:
+The current priority is **enterprise / corporate health checks first**.
 
 ```text
 Company
@@ -45,11 +45,11 @@ Patient Link/Create
 Encounter
 ```
 
-Do not prioritize unrelated outpatient, doctor, diagnostic, or billing features before this flow unless the task explicitly requires them.
+Do not prioritize unrelated workflows unless the current task explicitly requires them.
 
 ---
 
-## 2. Architecture
+## 2. Frontend Architecture
 
 Use:
 
@@ -59,130 +59,115 @@ Next.js App Router
 Domain / Module-Based Architecture
 ```
 
-Canonical root structure:
+Canonical structure:
 
 ```text
 src/
-├── app/
-├── modules/
-├── shared/
-├── widgets/
-└── providers/
+├── app/                 # routes, layouts, metadata, boundaries
+├── components/
+│   └── ui/              # shadcn/ui primitives
+├── modules/             # business/domain modules
+├── shared/              # reusable application-level FE code
+├── widgets/             # large reusable app compositions
+├── providers/           # global React providers
+└── lib/                 # small framework/shadcn utilities
 ```
 
-### `src/app`
+Rules:
 
-Routing/composition only.
-
-Do not place domain business logic, API implementations, large forms, validation engines, or reusable business UI directly in route files.
-
-### `src/modules`
-
-Business/domain code.
-
-Initial priority modules:
-
-```text
-auth/
-companies/
-health-check-batches/
-employees/
-health-check-print/
-```
-
-### `src/shared`
-
-Only domain-neutral reusable infrastructure/UI.
-
-### `src/widgets`
-
-Large reusable application composition blocks such as app shell/header/sidebar.
+- `src/app` is routing/composition only.
+- Business logic belongs in `src/modules`.
+- shadcn primitives belong in `src/components/ui`.
+- Shared cross-module application components belong in `src/shared`.
+- Large reusable shell/workflow compositions belong in `src/widgets`.
+- Do not turn `src/lib` or `src/shared` into dumping grounds.
 
 ---
 
-## 3. Domain Rules
+## 3. UI Reuse Is Mandatory
 
-The enterprise hierarchy is:
+Before creating **any new UI component**, search for an existing reusable solution.
 
-```text
-Company
-  └── HealthCheckBatch
-        └── CompanyEmployee
-```
-
-Do not model Campaign above Company.
-
-`CompanyEmployee` is not the same as `Patient`.
-
-Correct flow:
+Required priority:
 
 ```text
-CompanyEmployee
-  ↓ employee arrives
-Search Patient
-  ├── found → link
-  └── not found → create
-  ↓
-Encounter
+1. Existing component in the current module
+2. Existing reusable component in src/shared
+3. Existing shadcn primitive in src/components/ui
+4. Suitable component from the configured shadcn registry
+5. Compose existing primitives
+6. Create a new component only if 1–5 cannot satisfy the requirement
 ```
 
-Do not create Patients for all imported employees automatically.
+Before UI implementation, inspect:
+
+```text
+src/modules/<current-module>
+src/shared
+src/components/ui
+components.json
+```
+
+Do not create redundant wrappers such as:
+
+```text
+CustomButton
+BaseButton
+AppButton
+CustomModal
+AppModal
+CustomSelect
+BaseCheckbox
+```
+
+when they only duplicate an existing primitive.
+
+A domain component is valid when it adds **meaningful business semantics or business behavior**.
+
+A component reused across multiple modules belongs in `src/shared`.
+
+Do not copy/paste an existing component just to change styles. Prefer:
+
+```text
+props
+variants
+composition
+shared abstraction
+```
+
+See ADR-0002.
 
 ---
 
-## 4. Technology Rules
-
-Production baseline:
-
-```text
-Node.js            24.21.0 LTS
-pnpm                11.26.0
-Next.js             16.3.5
-ESLint              10.11.0
-eslint-config-next  16.3.5
-shadcn/ui           Mira
-Typography          Inter
-Icons               Hugeicons
-```
-
-Use pnpm only.
-
-Do not introduce:
-- canary/beta/RC dependencies;
-- another package manager;
-- another authoritative linter/formatter;
-- major framework changes
-
-without explicit approval / ADR.
-
----
-
-## 5. State Management
+## 4. State Ownership
 
 Use:
 
 ```text
-TanStack Query → server/API state
-React Hook Form → form state
-Zod            → validation
-Zustand         → true cross-component client/UI state only
-URL params      → shareable filter/search/navigation state where suitable
+TanStack Query   → server/API state
+React Hook Form  → form state
+Zod              → validation/schema boundaries
+URL params       → shareable search/filter/navigation state
+React state      → local transient UI state
+Zustand          → true cross-component client-only state
 ```
 
-Do not copy server state into Zustand without a documented reason.
+Do not mirror TanStack Query data into Zustand without a documented reason.
+
+See ADR-0003.
 
 ---
 
-## 6. API Rules
+## 5. API Boundary
 
 Presentation components must not call HTTP directly.
 
-Preferred dependency flow:
+Preferred flow:
 
 ```text
 Component
   ↓
-Query/Mutation Hook
+Query / Mutation Hook
   ↓
 Module API
   ↓
@@ -191,193 +176,143 @@ Shared HTTP Client
 Backend
 ```
 
-Do not invent backend endpoints or response fields.
+Do not invent endpoint, DTO fields, statuses, permission behavior, or backend calculations.
 
-If an API contract is missing, clearly flag the assumption instead of fabricating it.
+If a backend contract is missing, state the assumption instead of fabricating it.
 
----
-
-## 7. Module Imports
-
-Each module should expose its public API through `index.ts`.
-
-Preferred:
-
-```ts
-import { CompanyListPage, type Company } from '@/modules/companies'
-```
-
-Avoid deep cross-module imports such as:
-
-```ts
-import { Company } from '@/modules/companies/types/company.types'
-```
-
-Avoid circular dependencies.
+See ADR-0004.
 
 ---
 
-## 8. UI/UX Direction
+## 6. Domain Rules
 
-The application is a real healthcare enterprise system.
-
-Design for:
+Corporate hierarchy:
 
 ```text
+Company
+  └── HealthCheckBatch
+        └── CompanyEmployee
+```
+
+`CompanyEmployee` is not automatically a `Patient`.
+
+Correct flow:
+
+```text
+CompanyEmployee arrives
+  ↓
+Search Patient by identity
+  ├── found     → link
+  └── not found → create
+  ↓
+Create Encounter
+```
+
+Do not create Patient records for every imported employee.
+
+---
+
+## 7. UI Direction
+
+Current design baseline:
+
+```text
+shadcn/ui preset: Mira
+Typography: Inter
+Icons: Hugeicons
+```
+
+Product style:
+
+```text
+healthcare enterprise
 professional
 calm
 clean
 desktop-first
-low cognitive load
 workflow-first
+low cognitive load
+accessible
 progressive disclosure
 ```
 
-Avoid:
+Avoid excessive gradients, decorative dashboards, fake analytics, unnecessary cards, one-off custom primitives, and overly AI-looking layouts.
+
+Interaction pattern:
 
 ```text
-flashy gradients
-excessive cards
-fake analytics
-decorative dashboards
-overly AI-looking layouts
-huge information density
-```
-
-Use:
-
-```text
-Page   → main workflow
-Drawer → contextual information
+Page   → primary workflow
+Drawer → contextual inspection
 Modal  → short focused action
-Page   → complex multi-step flow
+Page   → complex multi-step workflow
 ```
 
-For important UI tasks, use the skills specified in `PROJECT_SKILLS.md`, especially:
+---
+
+## 8. Approved Frontend Skills
+
+Local skills live in:
 
 ```text
-ui-ux-pro-max
+.agents/skills/
+```
+
+Approved FE-only skill set:
+
+```text
+architecture-decision-records
+code-review
+diagnosing-bugs
+error-handling-patterns
 frontend-design
-web-design-guidelines
-design-system
+javascript-testing-patterns
+react-state-management
+security-best-practices
+setup-pre-commit
 tailwind-design-system
+tdd
+ui-styling
+ui-ux-pro-max
+web-design-guidelines
 ```
+
+Use only relevant skills.
+
+Do not add backend/Java/Spring/Gradle/database/Python backend skills to this frontend repository unless the repository scope changes.
+
+Before applying a skill, read its `SKILL.md`.
 
 ---
 
-## 9. No Demo Data
+## 9. Security / Privacy
 
-Do not hard-code fake production data into application components.
-
-Do not add example companies, employees, patients, encounters, payments, or results in production paths.
-
-Use:
-- test fixtures;
-- test mocks;
-- backend seed data;
-- explicit development-only fixtures when required.
-
----
-
-## 10. Excel Import Rules
-
-Excel import is P0.
-
-Required flow:
-
-```text
-Choose File
-  ↓
-Column Mapping
-  ↓
-Validation Preview
-  ↓
-Confirm Import
-```
-
-At minimum validate:
-
-```text
-required fields
-valid date
-age >= 18 on examination date
-duplicate identity number
-leading zero preservation
-```
-
-Invalid rows must not silently enter bulk print.
-
-Keep parsing/validation logic outside page components.
-
----
-
-## 11. Mẫu số 03 Rules
-
-Use one shared Mẫu số 03 renderer for:
-
-```text
-individual health check
-enterprise bulk print
-reprint
-```
-
-Do not duplicate print implementations.
-
-Never fabricate or prefill clinical findings from assumptions.
-
-Printing must support:
-- A4;
-- deterministic page breaks;
-- preview;
-- bulk count;
-- reprint;
-- clear per-employee error handling.
-
----
-
-## 12. Security / Privacy
-
-Healthcare data is sensitive.
+Healthcare information is sensitive.
 
 Never:
+
+- expose secrets in frontend source;
 - log complete patient payloads;
-- expose secrets in frontend code;
 - store passwords/private keys;
-- place sensitive clinical data in localStorage without an explicit reviewed design;
-- bypass authorization because a button is hidden.
+- place sensitive clinical data in `localStorage` without explicit review;
+- treat hidden UI as authorization.
 
-Frontend RBAC is UX only; backend authorization is authoritative.
-
-For auth/security-sensitive changes, use:
-
-```text
-security-threat-model
-security-best-practices
-```
+Backend authorization is authoritative. Frontend permission checks are UX only.
 
 ---
 
-## 13. TypeScript
+## 10. TypeScript
 
 Use strict TypeScript.
 
-Avoid:
-- `any`;
-- unsafe broad casts;
-- duplicated enum/status strings;
-- silent null assumptions.
+Avoid `any`, unsafe broad casts, duplicated status literals, and silent null assumptions.
 
-Prefer:
-- `unknown` at untrusted boundaries;
-- Zod validation;
-- discriminated unions;
-- exhaustive state handling.
+Prefer `unknown` at untrusted boundaries, Zod parsing, discriminated unions, and exhaustive handling where useful.
 
 ---
 
-## 14. Required Screen States
+## 11. Required Screen States
 
-Significant screens/components must account for applicable states:
+Significant screens must handle applicable states:
 
 ```text
 loading
@@ -388,153 +323,74 @@ partial-data
 permission-denied
 ```
 
-Do not ship a screen that only works on the happy path.
+Do not implement only the happy path.
 
 ---
 
-## 15. Testing
+## 12. Testing
 
 Use:
 
 ```text
 Vitest + Testing Library
-Playwright
+Playwright for critical E2E flows
 ```
 
-Critical business behavior should be tested, especially:
-
-```text
-company creation
-batch creation
-Excel mapping/validation
-under-18 rejection
-duplicate CCCD
-bulk selection
-Mẫu số 03 mapping
-print-batch preparation
-employee check-in
-```
-
-Use TDD for deterministic business rules when practical.
+Critical business behavior includes Excel mapping/validation, under-18 rejection, duplicate CCCD handling, bulk selection, Mẫu số 03 mapping, print-batch preparation, and employee check-in.
 
 ---
 
-## 16. Before Implementing a Non-Trivial Feature
+## 13. Before Implementing a Non-Trivial Feature
 
-Follow this order when relevant:
+Follow this sequence:
 
 ```text
 1. Read PROJECT_RULES.md
-2. Read PROJECT_SKILLS.md
+2. Read relevant ADRs
 3. Inspect existing code
-4. Understand domain model
-5. Confirm API contract
-6. Confirm UI/UX flow
-7. Implement
-8. Add/update tests
-9. Review architecture/security
-10. Run verification commands
+4. Search for reusable UI/components
+5. Select only relevant FE skills
+6. Confirm domain behavior
+7. Confirm API contract
+8. Confirm UI flow
+9. Implement the smallest cohesive change
+10. Add/update tests
+11. Review duplication/accessibility/error/security concerns
+12. Run verification
 ```
 
 Do not start by creating files blindly.
 
 ---
 
-## 17. Skill Selection
+## 14. Verification
 
-Do not invoke every skill automatically.
-
-Select relevant skills from `PROJECT_SKILLS.md`.
-
-Typical production feature:
-
-```text
-domain-modeling
-architecture-patterns
-api-design-principles
-ui-ux-pro-max
-react-state-management
-javascript-testing-patterns
-code-review
-run-tests
-```
-
-Add security skills when sensitive data/auth/permissions are involved.
-
----
-
-## 18. Verification Before Completion
-
-Before declaring a task complete, run all applicable checks:
+Before claiming completion, run all configured applicable checks:
 
 ```bash
 pnpm lint
 pnpm typecheck
 pnpm test
-pnpm test:e2e
 pnpm build
 ```
 
-If a script does not exist yet, do not invent a successful result. State that it is not configured.
+Run Playwright when a critical E2E flow is affected and E2E is configured.
 
-Do not claim tests/build passed unless they were actually run and passed.
-
----
-
-## 19. Change Discipline
-
-When editing:
-
-- reuse existing components and utilities;
-- avoid duplicate business rules;
-- avoid premature abstraction;
-- avoid unrelated refactors;
-- keep changes scoped to the task;
-- preserve public contracts unless intentionally changed;
-- document long-lived architectural decisions with an ADR.
-
-Do not silently redesign the repository.
+Never claim a check passed unless it was actually executed successfully.
 
 ---
 
-## 20. Completion Report
+## 15. Completion Report
 
-At the end of implementation, report:
+At the end of a task, report:
 
 1. What changed.
 2. Files added/modified.
-3. Tests/checks actually run.
-4. Any assumptions.
-5. Missing backend/API contracts.
-6. Remaining risks/TODOs.
-
----
-
-## 21. Current Implementation Order
-
-Unless explicitly changed:
-
-```text
-1. Frontend foundation
-2. App shell / providers
-3. HTTP client / API conventions
-4. Company List
-5. Company Detail
-6. Health Check Batch
-7. Employee Roster
-8. Excel Import Wizard
-9. Employee Validation
-10. Bulk Selection
-11. Mẫu số 03 Renderer
-12. Print Preview
-13. Bulk Print
-14. Employee Check-in
-15. Patient Link/Create
-16. Encounter
-17. Doctor Workflow
-18. Diagnostics
-19. Billing
-```
+3. Existing components reused.
+4. Any new reusable component created and why existing options were insufficient.
+5. Checks actually run.
+6. Assumptions / missing API contracts.
+7. Remaining risks / TODOs.
 
 ---
 
@@ -543,19 +399,17 @@ Unless explicitly changed:
 Prefer:
 
 ```text
-correct workflow
+reuse existing UI
 +
 clear domain boundaries
 +
-simple maintainable code
+simple state ownership
 +
 real API contracts
 +
-safe patient-data handling
-+
-good clinic UX
+safe healthcare data handling
 +
 testable behavior
 ```
 
-over unnecessary complexity.
+over unnecessary custom code or abstraction.

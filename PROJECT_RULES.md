@@ -1,42 +1,32 @@
 # Ngọc Khánh Clinic Frontend — Project Rules
 
-> Production frontend rules for the real Ngọc Khánh Clinic application. These rules are mandatory unless a later ADR or explicit project decision overrides them.
+> Mandatory production frontend rules. A later accepted ADR may supersede a rule.
 
-## 1. Product direction
+## 1. Product Scope
 
-The frontend is a real production application, not a demo/prototype.
+This is a **real production clinic application**.
 
-Primary MVP:
+Current MVP priority:
 
 ```text
 Company
-  ↓
-Health Check Batch
-  ↓
-Employee Roster
-  ↓
-Excel Import
-  ↓
-Validation
-  ↓
-Bulk Selection
-  ↓
-Mẫu số 03 Preview
-  ↓
-Bulk Print
-  ↓
-Employee Check-in
-  ↓
-Patient Link/Create
-  ↓
-Encounter
-  ↓
-Clinical Workflow
+→ Health Check Batch
+→ Employee Roster
+→ Excel Import
+→ Validation
+→ Bulk Selection
+→ Mẫu số 03 Preview
+→ Bulk Print
+→ Employee Check-in
+→ Patient Link/Create
+→ Encounter
 ```
 
-Current priority: **enterprise/corporate health checks first**.
+Enterprise/corporate health checks are the current primary vertical slice.
 
-## 2. Technology baseline
+---
+
+## 2. Production Baseline
 
 ```text
 Node.js            24.21.0 LTS
@@ -44,82 +34,61 @@ pnpm                11.26.0
 Next.js             16.3.5
 ESLint              10.11.0
 eslint-config-next  16.3.5
-TypeScript          compatible stable version
-React               stable version installed by Next.js
-shadcn/ui           Mira preset
+shadcn/ui           Mira
 Typography          Inter
 Icons               Hugeicons
 ```
 
 Rules:
-- No canary/beta/RC in production.
+
+- Use pnpm only.
+- Do not use canary/beta/RC dependencies in production.
+- Do not upgrade major framework/tooling versions casually.
+- Keep `pnpm-lock.yaml` committed.
+- Long-lived stack changes require an ADR.
 - Do not use `latest` blindly for core dependencies.
-- Pin framework/toolchain versions.
-- Upgrade via reviewed PR.
-- Major upgrades require explicit approval.
-- Security patches must be tested before deployment.
-- Do not change the core stack without an ADR.
 
-## 3. Package manager
+---
 
-Use **pnpm only**. Do not mix npm/yarn/bun in the repo.
+## 3. Frontend Architecture
 
-Required:
+Use:
 
-```json
-{
-  "packageManager": "pnpm@11.26.0",
-  "engines": {
-    "node": "24.21.x"
-  }
-}
+```text
+Next.js App Router
++
+Domain / Module-Based Architecture
 ```
 
-Commit `pnpm-lock.yaml`. Do not regenerate it casually.
-
-## 4. Architecture
-
-Use **Next.js App Router + Domain/Module-Based Architecture**.
+Canonical structure:
 
 ```text
 src/
 ├── app/
+├── components/
+│   └── ui/
 ├── modules/
 ├── shared/
 ├── widgets/
-└── providers/
+├── providers/
+└── lib/
 ```
 
-### app/
-Routing/composition only.
+### `src/app`
 
-Allowed:
-- routes/layouts/metadata;
-- route-level composition;
-- loading/error/not-found boundaries.
+Allowed: routes, layouts, metadata, loading/error/not-found boundaries, route-level composition.
 
-Avoid:
-- business rules;
-- direct API implementation;
-- large reusable forms;
-- domain validation;
-- large reusable UI.
+Do not put domain business logic, API implementation, validation engines or large reusable feature components here.
 
-Route example:
+### `src/components/ui`
 
-```tsx
-import { CompanyListPage } from '@/modules/companies'
+Contains shadcn/ui primitives and intentionally maintained primitive variants.
 
-export default function Page() {
-  return <CompanyListPage />
-}
-```
+### `src/modules`
 
-## 5. Modules
+Contains domain/business feature code.
 
-Business code lives in `src/modules/`.
-
-Initial modules:
+Initial modules may include:
 
 ```text
 auth/
@@ -132,17 +101,15 @@ health-check-print/
 Later:
 
 ```text
-reception/
 patients/
 encounters/
+reception/
 clinical/
 diagnostics/
 billing/
-prescriptions/
-appointments/
 ```
 
-A module may contain:
+A module may contain only what it needs:
 
 ```text
 api/
@@ -156,55 +123,198 @@ utils/
 index.ts
 ```
 
-Do not create empty folders preemptively.
+Do not create empty folder trees speculatively.
 
-## 6. Module public API
+### `src/shared`
 
-Each module exposes public contracts through `index.ts`.
+Contains application-level reusable frontend code not owned by one business module.
+
+Examples:
+
+```text
+shared/api/
+shared/components/data-table/
+shared/components/empty-state/
+shared/components/error-state/
+shared/components/page-header/
+shared/hooks/
+shared/config/
+shared/types/
+```
+
+Do not place domain entities or domain rules in `shared`.
+
+### `src/widgets`
+
+Contains large reusable application compositions such as app shell, app header/sidebar, patient search or status summary.
+
+### `src/lib`
+
+Small framework/shadcn utilities only. Do not turn it into a business-logic dumping ground.
+
+---
+
+## 4. Reuse-First UI Policy — Mandatory
+
+Before creating new UI code, search for existing implementations.
+
+Priority:
+
+```text
+Existing module component
+  ↓
+Existing src/shared component
+  ↓
+Existing src/components/ui shadcn primitive
+  ↓
+Available shadcn registry component
+  ↓
+Composition of existing primitives
+  ↓
+New reusable component
+```
+
+Rules:
+
+- Do not reimplement a primitive already provided by shadcn/ui.
+- Do not create one-to-one wrappers with no added behavior.
+- Do not duplicate reusable components across modules.
+- Do not copy an existing component merely to change spacing/color.
+- Prefer props, variants, composition and shared abstractions.
+- New cross-module reusable app components belong in `src/shared`.
+- Domain-specific components stay inside their owning module.
+- A custom primitive requires a clear functional gap.
+
+Examples that should normally reuse shadcn:
+
+```text
+Button
+Input
+Label
+Dialog
+Sheet
+Select
+Checkbox
+RadioGroup
+Tabs
+Table
+Badge
+Card
+Calendar
+Popover
+Tooltip
+Skeleton
+Alert
+DropdownMenu
+```
+
+Forbidden unless meaningful behavior is added:
+
+```text
+CustomButton
+BaseButton
+AppButton
+CustomModal
+AppModal
+CustomSelect
+BaseCheckbox
+```
+
+See ADR-0002.
+
+---
+
+## 5. Module Boundaries
+
+Each module should expose its public contract through `index.ts`.
 
 Preferred:
 
 ```ts
-import { CompanyListPage, useCompany, type Company } from '@/modules/companies'
+import { CompanyListPage, type Company } from '@/modules/companies'
 ```
 
-Avoid deep cross-module imports.
+Avoid deep cross-module imports and circular dependencies.
 
-Avoid circular dependencies.
+Business-specific logic belongs close to the domain that owns it.
 
-## 7. Shared layer
+---
 
-`src/shared` contains only truly reusable domain-neutral code.
+## 6. State Management
 
-Allowed examples:
+Use:
 
 ```text
-shared/api/http-client.ts
-shared/ui/data-table/
-shared/ui/empty-state/
-shared/ui/error-state/
-shared/hooks/use-debounce.ts
-shared/lib/date.ts
-shared/lib/money.ts
-shared/constants/routes.ts
+TanStack Query   = server/API state
+React Hook Form  = form state
+Zod              = validation/schema boundaries
+URL params       = shareable navigation/search/filter state
+React state      = local transient UI state
+Zustand          = cross-component client-only state
 ```
 
-Do not put domain objects such as Company, Employee, Patient or Encounter in shared.
+Rules:
 
-## 8. Widgets
+- Do not mirror TanStack Query results into Zustand.
+- Do not use Zustand merely to avoid passing a few local props.
+- Do not store form state in Zustand when React Hook Form is the natural owner.
+- Prefer URL state for shareable search/filter/sort state.
 
-`widgets/` contains large reusable app composition blocks, e.g.:
+See ADR-0003.
+
+---
+
+## 7. Forms and Validation
+
+Use React Hook Form + Zod.
+
+Forms must handle field errors, form/server errors, submitting state, duplicate-submit prevention, accessible labels and accessible error associations.
+
+Do not duplicate validation rules in multiple components.
+
+---
+
+## 8. API Layer
+
+Presentation components must not call Axios/fetch directly.
+
+Preferred flow:
 
 ```text
-app-sidebar/
-app-header/
-patient-search/
-status-summary/
+Component
+↓
+Query/Mutation Hook
+↓
+Module API
+↓
+Shared HTTP Client
+↓
+Backend
 ```
 
-Do not use widgets as a dumping ground.
+Rules:
 
-## 9. Domain model
+- Do not invent backend endpoints or DTO fields.
+- Do not assume API DTO = frontend view model.
+- Map DTOs explicitly when UI/domain models differ.
+- Normalize API errors.
+- Treat backend-calculated financial totals as authoritative.
+
+See ADR-0004.
+
+---
+
+## 9. Server / Client Components
+
+Default to Server Components where useful.
+
+Use `'use client'` only when required for event handlers, browser APIs, interactive local state, React Query hooks, client-side forms or client-only libraries.
+
+Do not mark entire route trees as client components unnecessarily.
+
+---
+
+## 10. Domain Rules
 
 Enterprise hierarchy:
 
@@ -214,33 +324,27 @@ Company
         └── CompanyEmployee
 ```
 
-Do not model Campaign above Company.
-
-## 10. Employee is not Patient
-
 `CompanyEmployee` and `Patient` are separate concepts.
 
-Correct flow:
+Do not create Patient records for all imported employees.
+
+Correct check-in flow:
 
 ```text
-Excel row
-  ↓
 CompanyEmployee
-  ↓
-Employee arrives
-  ↓
-Search Patient by identity
-  ├── Found → Link
-  └── Not found → Create Patient
-  ↓
-Create Encounter
+↓
+Search Patient
+├── found → Link
+└── not found → Create
+↓
+Encounter
 ```
 
-Do not create Patients for every imported employee.
+---
 
-## 11. Corporate-first routing
+## 11. Corporate-First Routing
 
-Primary production routes:
+Primary routes should evolve around:
 
 ```text
 /login
@@ -255,193 +359,119 @@ Later:
 ```text
 /reception
 /doctor
-/billing
 /diagnostics
+/billing
 ```
 
-## 12. Server state
+---
 
-Use **TanStack Query** for API/server state.
+## 12. Excel Import
 
-Do not mirror API responses into Zustand without a strong reason.
+Excel import is P0.
 
 ```text
-API
- ↓
-TanStack Query
- ↓
-UI
+Choose File
+→ Column Mapping
+→ Validation Preview
+→ Confirm Import
 ```
 
-## 13. Zustand
+At minimum validate required fields, valid dates, age >= 18 on examination date, duplicate identity and leading-zero preservation.
 
-Use only for true client-side/global UI state:
-- sidebar state;
-- temporary wizard draft;
-- temporary bulk selection if local/URL state is insufficient;
-- UI preferences.
+Never silently import invalid rows. Show row/cell errors. Keep parsing logic outside page components. Blocking invalid rows cannot enter bulk print.
 
-Do not use Zustand instead of TanStack Query, React Hook Form, URL params, or local component state.
+---
 
-## 14. Forms
+## 13. Health Check Print
 
-Use:
+Use one shared Mẫu số 03 implementation for individual health check, enterprise bulk print and reprint.
 
 ```text
-React Hook Form + Zod
-```
-
-Forms must support:
-- field errors;
-- form-level errors;
-- submitting state;
-- duplicate-submit prevention;
-- server validation errors.
-
-Do not duplicate validation rules across components.
-
-## 15. API layer
-
-Do not call Axios/fetch directly from presentational components.
-
-Preferred flow:
-
-```text
-Component
- ↓
-Query/Mutation Hook
- ↓
-Module API
- ↓
-Shared HTTP Client
- ↓
-Backend
-```
-
-Shared HTTP concerns:
-- base URL;
-- auth/session;
-- timeout;
-- request ID;
-- error normalization;
-- 401 handling.
-
-## 16. API/domain types
-
-Do not assume API DTO = frontend view model.
-
-Use explicit mapping when necessary:
-
-```text
-API DTO
- ↓
+Source Data
+↓
 Mapper
- ↓
-Frontend Model
+↓
+HealthCheckPrintModel
+↓
+Mẫu 03 Components
+↓
+Print Preview
+↓
+Browser Print
 ```
 
-Avoid `any`; prefer `unknown` and validate/narrow.
+Never fabricate or prefill clinical findings from assumptions.
 
-## 17. Zod boundaries
+---
 
-Validate untrusted data at boundaries:
-- forms;
-- Excel imports;
-- API responses where necessary;
-- route/search params where applicable;
-- environment variables.
+## 14. Print Workflow
 
-## 18. UI design system
+Requirements:
+
+```text
+A4
+deterministic page breaks
+no dashboard chrome in print
+preview before bulk print
+visible batch count
+reprint support
+clear per-employee errors
+```
+
+---
+
+## 15. UI / UX
 
 Baseline:
 
 ```text
-shadcn/ui: Mira
-Typography: Inter
-Icons: Hugeicons
+Mira + Inter + Hugeicons
 ```
 
 Direction:
-- healthcare enterprise;
-- calm;
-- professional;
-- desktop-first;
-- realistic;
-- low cognitive load;
-- not flashy;
-- not overly “AI-generated”.
 
-Semantic colors:
-- Blue: active/primary/in-progress
-- Green: valid/completed
-- Orange: waiting/attention
-- Red: blocking/destructive
-- Gray: neutral/disabled
-
-Never communicate state by color alone.
-
-## 19. Information density
+```text
+healthcare enterprise
+professional
+calm
+clean
+desktop-first
+low cognitive load
+accessible
+workflow-first
+```
 
 Use progressive disclosure:
 
 ```text
 Page   → primary workflow
-Drawer → context/inspection
-Modal  → short focused task
-Page   → complex multi-step workflow
+Drawer → contextual details
+Modal  → short focused action
+Page   → complex multi-step task
 ```
 
-Examples:
-- Company list → Page
-- Company detail → Page
-- Employee quick view → Drawer
-- Create batch → Modal
-- Excel import → Wizard/Page
-- Print preview → Dedicated Page
-- Cancel visit → Confirm Modal
+Never communicate status by color alone.
 
-## 20. Modal rules
+---
 
-Use modal for short blocking tasks. Avoid giant tables or complex workflows inside modals.
-
-Every modal needs:
-- clear title;
-- close behavior;
-- primary CTA;
-- secondary/cancel;
-- loading state;
-- error state;
-- keyboard focus management.
-
-## 21. Drawer rules
-
-Use drawers for:
-- quick details;
-- patient/employee context;
-- secondary actions;
-- non-blocking information.
-
-Do not hide a major workflow permanently inside a drawer.
-
-## 22. Tables
+## 16. Tables
 
 Use TanStack Table for complex operational tables.
 
-Employee roster should support:
-- row selection;
-- bulk selection;
-- sorting;
-- filtering;
-- pagination/virtualization;
-- sticky header;
-- column visibility;
-- keyboard accessibility.
+Support as needed: row/bulk selection, sorting, filtering, pagination, virtualization, sticky headers, column visibility and keyboard accessibility.
 
-Keep `Họ và tên` and `CCCD` visible during horizontal scrolling where practical.
+Keep identity columns visible where practical:
 
-## 23. Required UI states
+```text
+Họ và tên
+CCCD
+```
 
-Significant screens must support:
+---
+
+## 17. Required UI States
+
+Significant screens must handle applicable states:
 
 ```text
 loading
@@ -452,353 +482,142 @@ partial-data
 permission-denied
 ```
 
-Never leave a blank page on failure.
+Never leave a blank page on API failure.
 
-## 24. Employee validation
+---
 
-Support at minimum:
-
-```text
-VALID
-MISSING_INFORMATION
-UNDERAGE
-DUPLICATE_IDENTITY
-```
-
-Blocking validation errors cannot enter bulk print.
-
-Mẫu số 03 age rule:
-
-```text
-ageOnExaminationDate >= 18
-```
-
-Do not calculate age from year only.
-
-## 25. Excel import
-
-Excel import is P0.
-
-```text
-Choose File
- ↓
-Column Mapping
- ↓
-Validation Preview
- ↓
-Confirm Import
-```
-
-Rules:
-- never silently import invalid rows;
-- show row/cell errors;
-- preserve leading zeroes in identity numbers;
-- support Vietnamese header mapping later;
-- display valid/warning/error counts;
-- keep parsing logic out of page components.
-
-## 26. Health-check printing
-
-Use one shared Mẫu số 03 implementation for:
-- individual print;
-- enterprise bulk print;
-- reprint.
-
-```text
-Source Data
- ↓
-Mapper
- ↓
-HealthCheckPrintModel
- ↓
-Mẫu 03 Components
- ↓
-Print Preview
- ↓
-Browser Print
-```
-
-Never fabricate/prefill clinical findings from assumptions.
-
-## 27. Print workflow
-
-Requirements:
-- A4;
-- deterministic page breaks;
-- no dashboard chrome in print;
-- preview before bulk print;
-- batch count visible;
-- reprint supported;
-- errors identify affected employee(s).
-
-## 28. RBAC
-
-Frontend permission checks are UX only; backend remains authoritative.
-
-Initial roles may include:
-
-```text
-FRONT_DESK
-DOCTOR
-CASHIER
-CLINIC_ADMIN
-```
-
-Do not expose enterprise master-data management to doctors by default.
-
-## 29. Security/privacy
-
-Never store:
-- passwords;
-- secrets;
-- private API keys;
-- sensitive tokens
-
-in source code.
-
-Do not log full patient payloads.
-
-Avoid sensitive clinical data in `localStorage`.
-
-Treat healthcare data as sensitive.
-
-## 30. Environment variables
-
-Use `NEXT_PUBLIC_*` only for browser-safe values.
-
-Secrets belong to server/backend.
-
-Validate env config where practical.
-
-## 31. Error handling
-
-Normalize API errors.
-
-Example:
-
-```ts
-type AppError = {
-  code: string
-  message: string
-  fieldErrors?: Record<string, string[]>
-  requestId?: string
-}
-```
-
-Never show backend stack traces to users.
-
-## 32. Dates
-
-Use one date library consistently. UI may display `dd/MM/yyyy`, but internal parsing must be deterministic.
-
-## 33. Money
-
-Do not trust frontend floating-point calculations as authoritative for billing.
-
-Backend-calculated totals are authoritative.
-
-## 34. Accessibility
+## 18. Accessibility
 
 Minimum:
+
 - keyboard navigation;
-- visible focus;
-- proper labels;
+- visible focus state;
 - semantic buttons;
+- labels linked to inputs;
 - accessible dialogs;
 - sufficient contrast;
-- non-color status indicators.
+- non-color status indicators;
+- accessible table selection.
 
-## 35. Responsive strategy
+---
 
-Primary target: desktop >= 1280px.
+## 19. Security / Privacy
 
-Tablet:
-- hide low-priority columns;
-- collapse row actions.
+Healthcare data is sensitive.
 
-Mobile:
-- reading/search/status review only;
-- do not prioritize bulk Excel import/printing.
+Never expose secrets in browser source, log full patient payloads, store passwords/private keys, place sensitive clinical information into localStorage without review, or rely on hidden buttons for authorization.
 
-## 36. Performance
+Backend authorization is authoritative. Frontend RBAC is UX only.
 
-Avoid obvious performance problems:
-- server pagination for large datasets when available;
-- do not render thousands of rows blindly;
-- virtualize when needed;
-- debounce search where appropriate;
-- avoid unnecessary global state;
-- avoid unnecessary `use client`.
+---
 
-## 37. Server/client components
-
-Default to Server Components where useful.
-
-Use `use client` only when needed for:
-- event handlers;
-- browser APIs;
-- local state;
-- React Query;
-- client forms.
-
-Do not mark entire route trees as client components.
-
-## 38. React Compiler
-
-React Compiler may be enabled.
-
-Do not add `useMemo`, `useCallback`, or `React.memo` everywhere without a real reason.
-
-## 39. Naming
-
-Code identifiers: English.
-
-UI labels: Vietnamese.
-
-Conventions:
-- files: kebab-case
-- React components: PascalCase
-- variables/functions: camelCase
-- real constants: UPPER_SNAKE_CASE
-
-## 40. TypeScript
+## 20. TypeScript
 
 Use strict TypeScript.
 
-Rules:
-- avoid `any`;
-- avoid unsafe casts;
-- prefer discriminated unions for status/state;
-- centralize enums/constants;
-- use exhaustive handling where useful.
+Avoid `any`, unsafe broad casts, duplicated enum/status strings and silent null assumptions.
 
-## 41. Component boundaries
+Prefer `unknown`, Zod validation, discriminated unions and exhaustive handling.
 
-Avoid giant components mixing:
-- data fetching;
-- business rules;
-- forms;
-- tables;
-- modal logic;
-- printing.
+---
 
-Also avoid splitting tiny components without benefit.
+## 21. Naming
 
-Optimize for cohesion.
-
-## 42. Business logic location
-
-Keep business rules close to their domain module.
-
-Employee-specific validation belongs under `modules/employees`, not generic shared utilities.
-
-## 43. Testing
-
-Use Vitest + Testing Library for unit/component tests.
-
-Use Playwright for critical E2E workflows.
-
-Critical workflows requiring tests:
-- create company;
-- create batch;
-- Excel validation;
-- under-18 rejection;
-- duplicate identity detection;
-- bulk selection;
-- Mẫu 03 mapping;
-- print batch preparation;
-- employee check-in.
-
-## 44. Definition of Done
-
-Applicable checks must pass:
+Source identifiers use English. UI labels use Vietnamese.
 
 ```text
-TypeScript
-ESLint
-Unit/component tests
-Relevant E2E
-Production build
-Loading state
-Empty state
-Error state
-Permission behavior
-Desktop UX
-Accessibility basics
+files             kebab-case
+React components  PascalCase
+functions/vars    camelCase
+real constants    UPPER_SNAKE_CASE
 ```
 
-## 45. Lint/format
+---
 
-ESLint is the authoritative linter.
+## 22. Component Boundaries
 
-Prettier is the formatter.
+Avoid giant components mixing data fetching, business rules, form state, table rendering, modal logic and printing.
 
-Do not replace/add another authoritative linter/formatter without an ADR.
+Also avoid splitting tiny components without meaningful benefit. Optimize for cohesion.
 
-Recommended scripts:
+---
 
-```text
-lint
-format
-format:check
-typecheck
-test
-test:e2e
-build
-```
+## 23. Performance
 
-## 46. Dependency rules
+Avoid premature optimization, but prevent obvious issues: server pagination for large datasets, virtualization when needed, no thousands of rendered rows, no unnecessary global state, debounce where useful, and avoid unnecessary `'use client'`.
 
-Before adding a package ask:
-1. Can React/Next/platform solve it?
-2. Is it maintained?
-3. Compatible with Node 24/Next 16?
-4. Bundle/runtime cost?
-5. Duplicate existing dependency?
-6. Acceptable license?
-7. Needed now?
+---
+
+## 24. Testing
+
+Use Vitest + Testing Library. Use Playwright for critical E2E workflows.
+
+Critical tests include company creation, health-check batch creation, Excel validation, under-18 rejection, duplicate identity, bulk selection, Mẫu số 03 mapping, print-batch preparation and employee check-in.
+
+Tests verify behavior through public interfaces, not implementation details.
+
+---
+
+## 25. Dependency Policy
+
+Before adding a dependency:
+
+1. Can React/Next.js/platform solve it?
+2. Does the project already have a dependency for it?
+3. Does shadcn already provide the needed UI?
+4. Is it maintained?
+5. Is it compatible with current Node/Next/React?
+6. Does it add meaningful bundle/runtime cost?
+7. Is it needed now?
 
 Do not add packages because they are trendy.
 
-## 47. No demo data in production components
+---
 
-No hard-coded fake companies/patients/employees in production paths.
+## 26. No Demo Data in Production Paths
 
-Use test fixtures, mock API layers for tests, or backend seed data.
+Do not hard-code fake companies, employees, patients, encounters, payments or results inside production components.
 
-## 48. Git
+Use test fixtures, test mocks or backend seed data.
 
-Prefer focused commits, e.g.:
+---
 
-```text
-feat(companies): add company list
-feat(employees): add import validation
-fix(print): correct Mẫu 03 page break
-refactor(api): normalize API errors
-test(employees): cover underage validation
+## 27. AI / Code-Agent Discipline
+
+Before modifying code:
+
+- read `AGENTS.md`;
+- read relevant ADRs;
+- inspect existing reusable components;
+- select only relevant FE skills;
+- do not invent APIs;
+- do not add production mock data;
+- avoid duplicate code;
+- keep changes scoped;
+- report assumptions;
+- verify before claiming completion.
+
+---
+
+## 28. Definition of Done
+
+Run all configured applicable checks:
+
+```bash
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm build
 ```
 
-Do not mix unrelated changes.
+For UI work also verify reuse search, loading/empty/error states, accessibility basics, desktop workflow and no unnecessary duplicate primitive.
 
-## 49. AI/code-agent rules
+---
 
-Before edits:
-- inspect architecture;
-- read these rules;
-- do not invent APIs;
-- do not add mock production data;
-- reuse existing components;
-- avoid duplication;
-- run checks after changes;
-- summarize changed files;
-- state assumptions;
-- flag missing backend contracts;
-- do not silently redesign architecture.
-
-## 50. Current implementation order
+## 29. Current Implementation Order
 
 ```text
-1. Production frontend foundation
+1. Frontend foundation
 2. App shell/providers
 3. HTTP client/API conventions
 4. Company List
@@ -819,30 +638,24 @@ Before edits:
 19. Billing
 ```
 
-Final principle:
+---
+
+## Final Principle
+
+Prefer:
 
 ```text
-clear domain boundaries
+reuse
++
+clear ownership
 +
 simple data flow
 +
 real API contracts
 +
-progressive disclosure
-+
 testable business rules
++
+safe healthcare data handling
 ```
 
-over:
-
-```text
-clever abstraction
-+
-premature patterns
-+
-large global stores
-+
-hard-coded demo behavior
-+
-duplicated domain logic
-```
+over unnecessary custom code and abstraction.
