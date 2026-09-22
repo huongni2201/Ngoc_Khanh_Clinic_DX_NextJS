@@ -66,10 +66,8 @@ export function ReportExportActions({
       <TooltipProvider>
         <div className="flex flex-wrap items-center gap-2.5">
           <Tooltip>
-            <TooltipTrigger asChild>
-              <span tabIndex={0} className="inline-block cursor-not-allowed">
-                {detailButton}
-              </span>
+            <TooltipTrigger className="inline-block cursor-not-allowed">
+              {detailButton}
             </TooltipTrigger>
             <TooltipContent>
               <p className="text-xs">{disabledTooltip}</p>
@@ -77,10 +75,8 @@ export function ReportExportActions({
           </Tooltip>
 
           <Tooltip>
-            <TooltipTrigger asChild>
-              <span tabIndex={0} className="inline-block cursor-not-allowed">
-                {summaryButton}
-              </span>
+            <TooltipTrigger className="inline-block cursor-not-allowed">
+              {summaryButton}
             </TooltipTrigger>
             <TooltipContent>
               <p className="text-xs">{disabledTooltip}</p>

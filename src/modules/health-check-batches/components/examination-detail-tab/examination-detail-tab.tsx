@@ -1,9 +1,11 @@
 "use client"
 
 import * as React from "react"
+import { AlertCircle, RefreshCw } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
 import { ExaminationDetailToolbar } from "./examination-detail-toolbar"
 import { ExaminationMatrixTable } from "./examination-matrix-table"
-import { Skeleton } from "@/components/ui/skeleton"
 import { useExamBatchMatrix } from "../../hooks/use-exam-batches"
 
 interface ExaminationDetailTabProps {
@@ -12,14 +14,24 @@ interface ExaminationDetailTabProps {
 
 export function ExaminationDetailTab({ batchId }: ExaminationDetailTabProps) {
   const [search, setSearch] = React.useState("")
+  const [debouncedSearch, setDebouncedSearch] = React.useState("")
   const [department, setDepartment] = React.useState("ALL")
   const [examStatus, setExamStatus] = React.useState("ALL")
   const [page, setPage] = React.useState(1)
   const [selectedIds, setSelectedIds] = React.useState<string[]>([])
 
+  // Debounce search input
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search)
+      setPage(1)
+    }, 300)
+
+    return () => clearTimeout(timer)
+  }, [search])
+
   const handleSearchChange = (val: string) => {
     setSearch(val)
-    setPage(1)
   }
 
   const handleDepartmentChange = (val: string) => {
@@ -32,14 +44,15 @@ export function ExaminationDetailTab({ batchId }: ExaminationDetailTabProps) {
     setPage(1)
   }
 
-  const { data, isLoading } = useExamBatchMatrix(batchId, {
-    search,
+  const { data, isLoading, isError, refetch } = useExamBatchMatrix(batchId, {
+    search: debouncedSearch,
     department,
     examStatus,
     page,
     pageSize: 10,
   })
 
+  const categoryColumns = data?.items || []
   const items = data?.data || []
   const total = data?.total || 0
   const totalPages = data?.totalPages || 1
@@ -73,17 +86,46 @@ export function ExaminationDetailTab({ batchId }: ExaminationDetailTabProps) {
         onExamStatusChange={handleExamStatusChange}
       />
 
-      {/* 2. Matrix Table / Loading Skeleton */}
-      {isLoading ? (
+      {/* 2. Error State */}
+      {isError ? (
+        <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-8 text-center space-y-3">
+          <div className="size-10 rounded-full bg-destructive/10 text-destructive flex items-center justify-center mx-auto">
+            <AlertCircle className="size-5" />
+          </div>
+          <p className="text-sm font-semibold text-foreground">
+            Không thể tải chi tiết khám.
+          </p>
+          <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+            Đã xảy ra lỗi khi tải ma trận chi tiết khám của đợt khám này. Vui lòng thử lại.
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => refetch()}
+            className="text-xs h-8 shadow-xs"
+          >
+            <RefreshCw className="size-3.5 mr-1.5" />
+            Thử lại
+          </Button>
+        </div>
+      ) : isLoading ? (
+        /* 3. Loading Skeleton */
         <div className="space-y-3">
-          <Skeleton className="h-96 w-full rounded-xl" />
+          <div className="rounded-xl border border-border bg-card shadow-2xs overflow-hidden p-4 space-y-3">
+            <Skeleton className="h-9 w-full rounded-md" />
+            {Array.from({ length: 8 }).map((_, i) => (
+              <Skeleton key={i} className="h-8 w-full rounded-md" />
+            ))}
+          </div>
           <div className="flex justify-between items-center pt-2">
             <Skeleton className="h-4 w-48" />
             <Skeleton className="h-8 w-64" />
           </div>
         </div>
       ) : (
+        /* 4. Matrix Table */
         <ExaminationMatrixTable
+          categoryColumns={categoryColumns}
           items={items}
           totalItems={total}
           currentPage={page}

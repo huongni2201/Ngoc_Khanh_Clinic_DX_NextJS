@@ -30,28 +30,20 @@ export function ExamBatchDetailPage({
   const pathname = usePathname()
 
   const tabParam = searchParams?.get("tab")
-  const getInitialTab = (): ExamBatchTabType => {
-    if (tabParam === "details" || tabParam === "examination") return "examination"
-    if (tabParam === "report") return "report"
-    return "employees"
-  }
+  const [localTab, setLocalTab] = React.useState<ExamBatchTabType | null>(null)
 
-  const [activeTab, setActiveTab] = React.useState<ExamBatchTabType>(getInitialTab)
+  const activeTab: ExamBatchTabType =
+    localTab ??
+    (tabParam === "details" || tabParam === "examination"
+      ? "examination"
+      : tabParam === "report"
+      ? "report"
+      : "employees")
+
   const [isImportDialogOpen, setIsImportDialogOpen] = React.useState(false)
 
-  // Sync tab state when URL changes
-  React.useEffect(() => {
-    if (tabParam === "details" || tabParam === "examination") {
-      setActiveTab("examination")
-    } else if (tabParam === "report") {
-      setActiveTab("report")
-    } else if (!tabParam) {
-      setActiveTab("employees")
-    }
-  }, [tabParam])
-
   const handleTabChange = (tab: ExamBatchTabType) => {
-    setActiveTab(tab)
+    setLocalTab(tab)
     const params = new URLSearchParams(searchParams?.toString() || "")
     if (tab === "employees") {
       params.delete("tab")
@@ -61,7 +53,9 @@ export function ExamBatchDetailPage({
       params.set("tab", "report")
     }
     const query = params.toString() ? `?${params.toString()}` : ""
-    router.replace(`${pathname}${query}`, { scroll: false })
+    if (router && typeof router.replace === "function") {
+      router.replace(`${pathname}${query}`, { scroll: false })
+    }
   }
 
   const {

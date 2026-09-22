@@ -12,6 +12,7 @@ import {
   EmployeeMatrixResponse,
   ExamBatchReportSummary,
   ExamBatchReportItem,
+  ExamItemCompletionStatus,
 } from "../types"
 
 // Master catalog of clinic's examination items (matching reference image)
@@ -205,7 +206,7 @@ const referenceEmployees: Omit<EmployeeInBatch, "batchId">[] = [
     joinDate: "01/06/2018",
     contractType: "HĐLĐ",
     profileStatus: "VALID",
-    note: "Đủ hồ sơ",
+    note: "",
   },
   {
     id: "emp-002",
@@ -221,7 +222,7 @@ const referenceEmployees: Omit<EmployeeInBatch, "batchId">[] = [
     joinDate: "15/03/2019",
     contractType: "HĐLĐ",
     profileStatus: "VALID",
-    note: "Đủ hồ sơ",
+    note: "",
   },
   {
     id: "emp-003",
@@ -237,7 +238,7 @@ const referenceEmployees: Omit<EmployeeInBatch, "batchId">[] = [
     joinDate: "20/07/2017",
     contractType: "HĐLĐ",
     profileStatus: "MISSING_CCCD",
-    note: "Khám bù",
+    note: "",
   },
   {
     id: "emp-004",
@@ -253,7 +254,7 @@ const referenceEmployees: Omit<EmployeeInBatch, "batchId">[] = [
     joinDate: "01/12/2020",
     contractType: "HĐLĐ",
     profileStatus: "VALID",
-    note: "Đủ hồ sơ",
+    note: "",
   },
   {
     id: "emp-005",
@@ -269,7 +270,7 @@ const referenceEmployees: Omit<EmployeeInBatch, "batchId">[] = [
     joinDate: "10/05/2019",
     contractType: "HĐLĐ",
     profileStatus: "MISSING_SIGNATURE",
-    note: "Thiếu chữ ký",
+    note: "",
   },
   {
     id: "emp-006",
@@ -285,7 +286,7 @@ const referenceEmployees: Omit<EmployeeInBatch, "batchId">[] = [
     joinDate: "03/11/2018",
     contractType: "HĐLĐ",
     profileStatus: "VALID",
-    note: "Đủ hồ sơ",
+    note: "",
   },
   {
     id: "emp-007",
@@ -301,7 +302,7 @@ const referenceEmployees: Omit<EmployeeInBatch, "batchId">[] = [
     joinDate: "21/01/2021",
     contractType: "HĐ thử việc",
     profileStatus: "MISSING_CCCD",
-    note: "Khám bù",
+    note: "",
   },
   {
     id: "emp-008",
@@ -317,7 +318,7 @@ const referenceEmployees: Omit<EmployeeInBatch, "batchId">[] = [
     joinDate: "18/09/2018",
     contractType: "HĐLĐ",
     profileStatus: "VALID",
-    note: "Đủ hồ sơ",
+    note: "",
   },
   {
     id: "emp-009",
@@ -333,7 +334,7 @@ const referenceEmployees: Omit<EmployeeInBatch, "batchId">[] = [
     joinDate: "12/03/2020",
     contractType: "HĐLĐ",
     profileStatus: "MISSING_SIGNATURE",
-    note: "Khám bù",
+    note: "",
   },
   {
     id: "emp-010",
@@ -349,7 +350,7 @@ const referenceEmployees: Omit<EmployeeInBatch, "batchId">[] = [
     joinDate: "01/08/2016",
     contractType: "HĐLĐ",
     profileStatus: "VALID",
-    note: "Đủ hồ sơ",
+    note: "",
   },
 ]
 
@@ -383,7 +384,6 @@ const generateSeedEmployees = (batchId: string): EmployeeInBatch[] => {
     const code = `FPT${String(idx).padStart(3, "0")}`
     const isFemale = i % 3 === 0
     const profileStatus = i % 5 === 0 ? "MISSING_CCCD" : i % 7 === 0 ? "MISSING_SIGNATURE" : "VALID"
-    const note = profileStatus === "VALID" ? "Đủ hồ sơ" : profileStatus === "MISSING_CCCD" ? "Khám bù" : "Thiếu chữ ký"
 
     result.push({
       id: `emp-${String(idx).padStart(3, "0")}`,
@@ -400,7 +400,7 @@ const generateSeedEmployees = (batchId: string): EmployeeInBatch[] => {
       joinDate: `01/${String((i % 12) + 1).padStart(2, "0")}/${2017 + (i % 7)}`,
       contractType: i === 38 ? "HĐ thử việc" : "HĐLĐ",
       profileStatus,
-      note,
+      note: "",
     })
   }
 
@@ -410,44 +410,23 @@ const generateSeedEmployees = (batchId: string): EmployeeInBatch[] => {
 // In-memory employee store
 let employeesStore: EmployeeInBatch[] = generateSeedEmployees("batch-1")
 
-// Specific completed examination items strictly matching the reference image for the first 10 employees:
-const referenceCompletedItems: Record<number, string[]> = {
-  // Row 1: FPT001 Trần Minh Đức (Khám nội, XN máu, XN nước tiểu, Siêu âm, X-quang)
-  0: ["item-kntq", "item-xnm", "item-xnnt", "item-saob", "item-xqp"],
-  // Row 2: FPT002 Nguyễn Thu Hà (XN máu, XN nước tiểu, Siêu âm, X-quang, Khám mắt)
-  1: ["item-xnm", "item-xnnt", "item-saob", "item-xqp", "item-km"],
-  // Row 3: FPT003 Lê Quang Huy (Khám nội, XN máu, X-quang, TMH)
-  2: ["item-kntq", "item-xnm", "item-xqp", "item-tmh"],
-  // Row 4: FPT004 Phạm Thị Mai (Khám nội, XN máu, XN nước tiểu, Siêu âm, Khám mắt, TMH)
-  3: ["item-kntq", "item-xnm", "item-xnnt", "item-saob", "item-km", "item-tmh"],
-  // Row 5: FPT005 Đặng Hoàng Nam (Khám nội, XN máu, Siêu âm)
-  4: ["item-kntq", "item-xnm", "item-saob"],
-  // Row 6: FPT006 Nguyễn Văn Long (XN máu, XN nước tiểu, X-quang, Khám mắt)
-  5: ["item-xnm", "item-xnnt", "item-xqp", "item-km"],
-  // Row 7: FPT007 Vũ Thị Thanh Huyền (Khám nội, XN nước tiểu, Khám mắt)
-  6: ["item-kntq", "item-xnnt", "item-km"],
-  // Row 8: FPT008 Hoàng Anh Tuấn (Khám nội, XN máu, XN nước tiểu, Siêu âm, X-quang, TMH)
-  7: ["item-kntq", "item-xnm", "item-xnnt", "item-saob", "item-xqp", "item-tmh"],
-  // Row 9: FPT009 Đỗ Thị Kim Ngân (XN máu, X-quang, Khám mắt)
-  8: ["item-xnm", "item-xqp", "item-km"],
-  // Row 10: FPT010 Bùi Văn Duy (Khám nội, XN máu, XN nước tiểu, Siêu âm, X-quang, Khám mắt)
-  9: ["item-kntq", "item-xnm", "item-xnnt", "item-saob", "item-xqp", "item-km"],
-}
-
+// Completed examination items by employee to match Tab 2 & Tab 3:
+// - Khám nội tổng quát: 50
+// - Xét nghiệm máu: 48
+// - Xét nghiệm nước tiểu: 46
+// - Siêu âm ổ bụng: 42
+// - X-quang phổi: 40
+// - Khám mắt: 38
+// - Tai mũi họng: 35
 export const getCompletedItemsForEmployee = (employeeIndex: number): string[] => {
-  if (employeeIndex in referenceCompletedItems) {
-    return referenceCompletedItems[employeeIndex]
-  }
-
   const completed: string[] = []
-  // For remaining 40 employees:
   if (employeeIndex < 50) completed.push("item-kntq")
-  if (employeeIndex < 49) completed.push("item-xnm")
-  if (employeeIndex < 49) completed.push("item-xnnt")
-  if (employeeIndex < 46) completed.push("item-saob")
-  if (employeeIndex < 43) completed.push("item-xqp")
-  if (employeeIndex < 42) completed.push("item-km")
-  if (employeeIndex < 42) completed.push("item-tmh")
+  if (employeeIndex < 48) completed.push("item-xnm")
+  if (employeeIndex < 46) completed.push("item-xnnt")
+  if (employeeIndex < 42) completed.push("item-saob")
+  if (employeeIndex < 40) completed.push("item-xqp")
+  if (employeeIndex < 38) completed.push("item-km")
+  if (employeeIndex < 35) completed.push("item-tmh")
   return completed
 }
 
@@ -642,11 +621,15 @@ export async function fetchExamBatchMatrix(
 
     const note =
       e.note ||
-      (e.profileStatus === "VALID"
-        ? "Đủ hồ sơ"
+      (index === 2 || index === 6 || index === 8
+        ? "Khám bù"
+        : index === 4
+        ? "Thiếu chữ ký"
         : e.profileStatus === "MISSING_CCCD"
         ? "Khám bù"
-        : "Thiếu chữ ký")
+        : e.profileStatus === "MISSING_SIGNATURE"
+        ? "Thiếu chữ ký"
+        : "Đủ hồ sơ")
     const noteType: "success" | "warning" =
       note === "Đủ hồ sơ" ? "success" : "warning"
 
@@ -679,11 +662,12 @@ export async function fetchExamBatchMatrix(
 
   // Filter by department
   if (params?.department && params.department !== "ALL") {
+    const targetDept = params.department.toLowerCase()
     filtered = filtered.filter(
       (m) =>
-        m.department.toLowerCase() === params.department.toLowerCase() ||
-        m.department.toLowerCase() === `khối ${params.department}`.toLowerCase() ||
-        params.department.toLowerCase() === `khối ${m.department}`.toLowerCase()
+        m.department.toLowerCase() === targetDept ||
+        m.department.toLowerCase() === `khối ${targetDept}` ||
+        targetDept === `khối ${m.department}`.toLowerCase()
     )
   }
 

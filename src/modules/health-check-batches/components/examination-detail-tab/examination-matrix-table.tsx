@@ -3,10 +3,11 @@
 import * as React from "react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { DataTablePagination } from "@/shared/ui"
-import { EmployeeMatrixItem } from "../../types"
+import { EmployeeMatrixItem, MatrixCategoryItem } from "../../types"
 import { cn } from "@/lib/utils"
 
 interface ExaminationMatrixTableProps {
+  categoryColumns: MatrixCategoryItem[]
   items: EmployeeMatrixItem[]
   totalItems: number
   currentPage: number
@@ -18,22 +19,8 @@ interface ExaminationMatrixTableProps {
   onToggleSelectAll: () => void
 }
 
-interface MatrixCategoryColumn {
-  id: string
-  label: string
-}
-
-const MATRIX_CATEGORIES: MatrixCategoryColumn[] = [
-  { id: "item-kntq", label: "Khám nội" },
-  { id: "item-xnm", label: "XN máu" },
-  { id: "item-xnnt", label: "XN nước tiểu" },
-  { id: "item-saob", label: "Siêu âm" },
-  { id: "item-xqp", label: "X-quang" },
-  { id: "item-km", label: "Khám mắt" },
-  { id: "item-tmh", label: "TMH" },
-]
-
 export function ExaminationMatrixTable({
+  categoryColumns,
   items,
   totalItems,
   currentPage,
@@ -50,6 +37,13 @@ export function ExaminationMatrixTable({
   const isSomeSelected =
     items.some((emp) => selectedIds.includes(emp.id)) && !isAllSelected
 
+  // Check if there are any completed exams among current items
+  const hasAnyCompleted = items.some(
+    (emp) =>
+      (emp.completedItemIds && emp.completedItemIds.length > 0) ||
+      Object.values(emp.examinations || {}).some((st) => st === "COMPLETED")
+  )
+
   return (
     <div className="space-y-4">
       {/* Table Container with Horizontal Scroll */}
@@ -58,7 +52,8 @@ export function ExaminationMatrixTable({
           <table className="w-full text-xs border-collapse min-w-[1000px]">
             <thead>
               <tr className="bg-table-header-bg border-b border-border text-table-header-fg font-semibold select-none">
-                <th className="py-3 px-3.5 text-center w-10">
+                {/* 1. Checkbox */}
+                <th className="py-3 px-3.5 text-center w-10 sticky left-0 z-20 bg-table-header-bg">
                   <Checkbox
                     checked={isAllSelected}
                     indeterminate={isSomeSelected}
@@ -66,28 +61,45 @@ export function ExaminationMatrixTable({
                     aria-label="Chọn tất cả nhân sự"
                   />
                 </th>
-                <th className="py-3 px-3.5 text-left font-semibold w-24">Mã NV</th>
-                <th className="py-3 px-3.5 text-left font-semibold min-w-[150px]">Họ tên</th>
-                <th className="py-3 px-3.5 text-left font-semibold min-w-[130px]">Phòng ban</th>
 
-                {/* 7 Examination Matrix Categories */}
-                {MATRIX_CATEGORIES.map((cat) => (
+                {/* 2. Mã NV */}
+                <th className="py-3 px-3.5 text-left font-semibold w-24 sticky left-[40px] z-20 bg-table-header-bg">
+                  Mã NV
+                </th>
+
+                {/* 3. Họ tên */}
+                <th className="py-3 px-3.5 text-left font-semibold min-w-[150px] sticky left-[136px] z-20 bg-table-header-bg border-r border-border/60">
+                  Họ tên
+                </th>
+
+                {/* 4. Phòng ban */}
+                <th className="py-3 px-3.5 text-left font-semibold min-w-[130px]">
+                  Phòng ban
+                </th>
+
+                {/* Dynamic Examination Columns from Configured Items */}
+                {categoryColumns.map((cat) => (
                   <th
                     key={cat.id}
                     className="py-3 px-3 text-center font-semibold whitespace-nowrap min-w-[85px]"
                   >
-                    {cat.label}
+                    <span className="line-clamp-2 leading-tight">
+                      {cat.name}
+                    </span>
                   </th>
                 ))}
 
-                <th className="py-3 px-3.5 text-left font-semibold min-w-[100px]">Ghi chú</th>
+                {/* Ghi chú */}
+                <th className="py-3 px-3.5 text-left font-semibold min-w-[110px]">
+                  Ghi chú
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-table-divider">
               {items.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={12}
+                    colSpan={5 + categoryColumns.length}
                     className="py-10 text-center text-muted-foreground text-xs"
                   >
                     Không tìm thấy nhân sự phù hợp với điều kiện tìm kiếm.
@@ -100,50 +112,96 @@ export function ExaminationMatrixTable({
                   return (
                     <tr
                       key={emp.id}
+                      data-selected={isSelected}
                       className={cn(
-                        "transition-colors hover:bg-muted/40",
+                        "group transition-colors hover:bg-muted/40",
                         isSelected && "bg-primary/5 hover:bg-primary/10"
                       )}
                     >
-                      <td className="py-2.5 px-3.5 text-center">
+                      {/* Checkbox */}
+                      <td
+                        className={cn(
+                          "py-2.5 px-3.5 text-center sticky left-0 z-10 bg-card group-hover:bg-muted/40",
+                          isSelected && "bg-primary/5 group-hover:bg-primary/10"
+                        )}
+                      >
                         <Checkbox
                           checked={isSelected}
                           onCheckedChange={() => onToggleSelect(emp.id)}
                           aria-label={`Chọn nhân sự ${emp.fullName}`}
                         />
                       </td>
-                      <td className="py-2.5 px-3.5 font-medium text-foreground whitespace-nowrap">
+
+                      {/* Mã NV */}
+                      <td
+                        className={cn(
+                          "py-2.5 px-3.5 font-medium text-foreground whitespace-nowrap sticky left-[40px] z-10 bg-card group-hover:bg-muted/40",
+                          isSelected && "bg-primary/5 group-hover:bg-primary/10"
+                        )}
+                      >
                         {emp.employeeCode}
                       </td>
-                      <td className="py-2.5 px-3.5 font-medium text-foreground whitespace-nowrap">
+
+                      {/* Họ tên */}
+                      <td
+                        className={cn(
+                          "py-2.5 px-3.5 font-medium text-foreground whitespace-nowrap sticky left-[136px] z-10 bg-card group-hover:bg-muted/40 border-r border-border/60",
+                          isSelected && "bg-primary/5 group-hover:bg-primary/10"
+                        )}
+                      >
                         {emp.fullName}
                       </td>
+
+                      {/* Phòng ban */}
                       <td className="py-2.5 px-3.5 text-secondary-foreground whitespace-nowrap">
                         {emp.department}
                       </td>
 
-                      {/* 7 Categories Matrix Cells */}
-                      {MATRIX_CATEGORIES.map((cat) => {
-                        const hasCompleted = emp.completedItemIds.includes(cat.id)
+                      {/* Dynamic Examination Matrix Cells */}
+                      {categoryColumns.map((cat) => {
+                        const isCompleted =
+                          emp.examinations?.[cat.id] === "COMPLETED" ||
+                          emp.completedItemIds?.includes(cat.id)
 
                         return (
                           <td
                             key={cat.id}
                             className="py-2.5 px-3 text-center align-middle whitespace-nowrap"
                           >
-                            {hasCompleted ? (
+                            {isCompleted && (
                               <span className="inline-flex items-center justify-center font-bold text-primary text-sm select-none">
                                 X
                               </span>
-                            ) : (
-                              <span className="text-muted-foreground/30">—</span>
                             )}
                           </td>
                         )
                       })}
 
-                      <td className="py-2.5 px-3.5 text-muted-foreground whitespace-nowrap">
-                        {emp.note || "—"}
+                      {/* Ghi chú Badge */}
+                      <td className="py-2.5 px-3.5 whitespace-nowrap">
+                        {emp.note === "Đủ hồ sơ" ? (
+                          <span className="inline-flex items-center rounded-full bg-status-success-bg px-2.5 py-0.5 text-[11px] font-medium text-status-success select-none whitespace-nowrap">
+                            Đủ hồ sơ
+                          </span>
+                        ) : emp.note === "Khám bù" ? (
+                          <span className="inline-flex items-center rounded-full bg-status-warning-bg px-2.5 py-0.5 text-[11px] font-medium text-status-warning select-none whitespace-nowrap">
+                            Khám bù
+                          </span>
+                        ) : emp.note === "Thiếu chữ ký" ? (
+                          <span className="inline-flex items-center rounded-full bg-status-warning-bg px-2.5 py-0.5 text-[11px] font-medium text-status-warning select-none whitespace-nowrap">
+                            Thiếu chữ ký
+                          </span>
+                        ) : emp.note === "Thiếu CCCD" ? (
+                          <span className="inline-flex items-center rounded-full bg-status-warning-bg px-2.5 py-0.5 text-[11px] font-medium text-status-warning select-none whitespace-nowrap">
+                            Thiếu CCCD
+                          </span>
+                        ) : emp.note ? (
+                          <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground select-none whitespace-nowrap">
+                            {emp.note}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground/30">—</span>
+                        )}
                       </td>
                     </tr>
                   )
@@ -153,6 +211,13 @@ export function ExaminationMatrixTable({
           </table>
         </div>
       </div>
+
+      {/* Helper notice if employees exist but no completed exams yet */}
+      {items.length > 0 && !hasAnyCompleted && (
+        <div className="rounded-lg bg-muted/40 border border-border/80 px-3.5 py-2 text-xs text-muted-foreground text-center">
+          Chưa ghi nhận hạng mục khám hoàn thành.
+        </div>
+      )}
 
       {/* Pagination */}
       <DataTablePagination

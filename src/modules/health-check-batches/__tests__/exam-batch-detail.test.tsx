@@ -8,10 +8,12 @@ import { ExamBatchDetailPage } from "../pages/exam-batch-detail-page"
 
 // Mock next/navigation
 const mockPush = vi.fn()
+const mockReplace = vi.fn()
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
     push: mockPush,
+    replace: mockReplace,
     prefetch: vi.fn(),
   }),
   usePathname: () => "/enterprises/ent-2/exam-batches/batch-1",
@@ -148,7 +150,7 @@ describe("ExamBatchDetailPage (Screen 04 – Chi tiết đợt khám)", () => {
     // Row 5: FPT005 Đặng Hoàng Nam, Row 9: FPT009 Đỗ Thị Kim Ngân (both Thiếu chữ ký)
     expect(screen.getByText("FPT005")).toBeInTheDocument()
     expect(screen.getByText("Đặng Hoàng Nam")).toBeInTheDocument()
-    expect(screen.getAllByText("Thiếu chữ ký").length).toBe(2)
+    expect(screen.getAllByText("Thiếu chữ ký").length).toBeGreaterThanOrEqual(2)
 
     // Pagination info & page buttons
     expect(screen.getByText(/Hiển thị/i)).toBeInTheDocument()

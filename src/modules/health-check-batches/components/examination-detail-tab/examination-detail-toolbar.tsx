@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Search, Info } from "lucide-react"
+import { Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import {
   Select,
@@ -70,7 +70,10 @@ export function ExaminationDetailToolbar({
               value={department}
               onValueChange={(val) => onDepartmentChange(val ?? "ALL")}
             >
-              <SelectTrigger className="h-9 text-xs rounded-lg border-border bg-card shadow-2xs">
+              <SelectTrigger
+                aria-label="Phòng ban"
+                className="h-9 text-xs rounded-lg border-border bg-card shadow-2xs"
+              >
                 <SelectValue placeholder="Phòng ban" />
               </SelectTrigger>
               <SelectContent>
@@ -89,7 +92,10 @@ export function ExaminationDetailToolbar({
               value={examStatus}
               onValueChange={(val) => onExamStatusChange(val ?? "ALL")}
             >
-              <SelectTrigger className="h-9 text-xs rounded-lg border-border bg-card shadow-2xs">
+              <SelectTrigger
+                aria-label="Tình trạng khám"
+                className="h-9 text-xs rounded-lg border-border bg-card shadow-2xs"
+              >
                 <SelectValue placeholder="Tình trạng khám" />
               </SelectTrigger>
               <SelectContent>
