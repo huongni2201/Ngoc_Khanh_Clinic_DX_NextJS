@@ -238,6 +238,13 @@ progressive disclosure
 
 Avoid excessive gradients, decorative dashboards, fake analytics, unnecessary cards, one-off custom primitives, and overly AI-looking layouts.
 
+Mandatory Color Token Policy:
+
+- **No custom / arbitrary colors**: Do NOT use arbitrary values (`bg-[#...]`, `text-[#...]`, `border-[#...]`), inline `style={{ color }}`, or arbitrary unmapped Tailwind palette classes (`bg-blue-500`, `text-slate-600`, etc.).
+- **Single source of truth (`src/app/globals.css`)**: ALL colors MUST come from semantic design tokens defined in `src/app/globals.css` (`bg-background`, `text-foreground`, `bg-card`, `text-card-foreground`, `bg-primary`, `text-primary-foreground`, `bg-muted`, `text-muted-foreground`, `bg-accent`, `text-accent-foreground`, `bg-destructive`, `border-border`, etc.).
+- **Extending tokens**: If a new semantic color is required, define it formally as a design token in `src/app/globals.css` (for both `:root` and `.dark` under `@theme inline`). Never create one-off colors in components.
+- **Accessibility**: Never communicate status by color alone.
+
 Interaction pattern:
 
 ```text

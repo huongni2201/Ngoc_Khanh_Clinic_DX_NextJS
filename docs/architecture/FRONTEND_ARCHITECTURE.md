@@ -108,6 +108,13 @@ current module
 
 See ADR-0002.
 
+## Styling & Color Tokens
+
+- **Single source of truth**: `src/app/globals.css`.
+- **No arbitrary colors**: Hardcoded hex/rgb/hsl values, arbitrary Tailwind classes (`bg-[#...]`, `text-[#...]`), inline style colors, or unmapped palette classes (`bg-blue-500`, `text-slate-600`) are strictly forbidden in components.
+- **Semantic tokens only**: Use defined semantic tokens (`bg-background`, `text-foreground`, `bg-card`, `text-card-foreground`, `bg-primary`, `text-primary-foreground`, `bg-destructive`, `border-border`, etc.).
+- **Token additions**: If a new clinic status color is required, it must be declared in `src/app/globals.css` (for both `:root` and `.dark`) rather than created ad-hoc.
+
 ## State Ownership
 
 ```text

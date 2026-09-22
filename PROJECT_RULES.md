@@ -441,6 +441,19 @@ accessible
 workflow-first
 ```
 
+### Color & Design Token Discipline — Mandatory
+
+- **No custom / arbitrary colors**: Forbidden to use arbitrary hex/rgb/hsl values (e.g. `#123456`, `rgb(...)`), Tailwind arbitrary values (e.g. `text-[#...]`, `bg-[#...]`, `border-[#...]`), inline style colors (`style={{ color: '...' }}`), or arbitrary unmapped palette classes (`bg-blue-500`, `text-slate-600`, `border-emerald-400`, etc.) in component code.
+- **Single source of truth (`src/app/globals.css`)**: All colors MUST strictly be derived from the semantic design tokens defined in `src/app/globals.css` (Tailwind `@theme inline` variables, mapped via `:root` and `.dark`):
+  - Surfaces / Backgrounds: `bg-background`, `bg-card`, `bg-popover`, `bg-muted`, `bg-accent`, `bg-secondary`, `bg-sidebar`
+  - Foregrounds / Text: `text-foreground`, `text-card-foreground`, `text-popover-foreground`, `text-muted-foreground`, `text-accent-foreground`, `text-secondary-foreground`, `text-sidebar-foreground`
+  - Actions / Primary: `bg-primary`, `text-primary-foreground`, `bg-sidebar-primary`, `text-sidebar-primary-foreground`
+  - Feedback / Destructive: `bg-destructive`, `text-destructive`, `text-destructive-foreground`
+  - Borders & Rings: `border-border`, `border-input`, `ring-ring`, `border-sidebar-border`, `ring-sidebar-ring`
+  - Visualizations: `text-chart-1` ... `text-chart-5`, `bg-chart-1` ... `bg-chart-5`
+- **Extending tokens**: If a new semantic color is genuinely required (e.g. clinic-specific status tokens like warning or success), it MUST be formally added as CSS variables in `src/app/globals.css` (for both `:root` and `.dark`) and registered under `@theme inline`, rather than invented ad-hoc inside a component.
+- **Color accessibility**: Never communicate status by color alone (always pair color with an icon, badge text, or descriptive label).
+
 Use progressive disclosure:
 
 ```text
@@ -449,8 +462,6 @@ Drawer → contextual details
 Modal  → short focused action
 Page   → complex multi-step task
 ```
-
-Never communicate status by color alone.
 
 ---
 
