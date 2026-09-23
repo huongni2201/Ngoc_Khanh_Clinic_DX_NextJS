@@ -101,14 +101,14 @@ export function AppSidebar({ className }: { className?: string }) {
               className={cn(
                 "group flex items-center gap-3.5 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors",
                 isActive
-                  ? "bg-sidebar-active-bg text-sidebar-active-fg font-semibold shadow-xs"
-                  : "text-secondary-foreground hover:bg-muted/70 hover:text-foreground"
+                  ? "bg-selected text-primary font-semibold shadow-xs"
+                  : "text-secondary-foreground hover:bg-hover hover:text-foreground"
               )}
             >
               <Icon
                 className={cn(
                   "size-5 shrink-0 transition-colors",
-                  isActive ? "text-sidebar-active-fg" : "text-secondary-foreground group-hover:text-foreground"
+                  isActive ? "text-primary" : "text-secondary-foreground group-hover:text-primary"
                 )}
               />
               <span className="truncate">{item.title}</span>

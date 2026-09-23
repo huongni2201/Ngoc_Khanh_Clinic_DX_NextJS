@@ -84,7 +84,7 @@ export function ExamBatchHeader({
               variant="outline"
               size="sm"
               onClick={onImportClick}
-              className="h-9 px-3.5 text-xs font-medium border-primary/40 text-primary hover:bg-primary/5 hover:text-primary transition-colors shadow-2xs cursor-pointer"
+              className="h-9 px-3.5 text-xs font-medium border-primary/40 text-primary hover:bg-hover hover:text-primary transition-colors shadow-2xs cursor-pointer"
             >
               <Upload className="size-3.5 mr-1.5 stroke-[2]" />
               Import nhân sự
@@ -94,7 +94,7 @@ export function ExamBatchHeader({
               variant="outline"
               size="sm"
               onClick={onDownloadTemplateClick}
-              className="h-9 px-3.5 text-xs font-medium border-primary/40 text-primary hover:bg-primary/5 hover:text-primary transition-colors shadow-2xs cursor-pointer"
+              className="h-9 px-3.5 text-xs font-medium border-primary/40 text-primary hover:bg-hover hover:text-primary transition-colors shadow-2xs cursor-pointer"
             >
               <Download className="size-3.5 mr-1.5 stroke-[2]" />
               Tải file mẫu

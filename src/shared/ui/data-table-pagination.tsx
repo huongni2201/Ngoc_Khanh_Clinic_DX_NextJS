@@ -1,8 +1,15 @@
 "use client"
 
 import * as React from "react"
-import { ChevronLeft, ChevronRight } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination"
 import { cn } from "@/lib/utils"
 
 export interface DataTablePaginationProps {
@@ -17,7 +24,8 @@ export interface DataTablePaginationProps {
 
 /**
  * Standard reusable pagination component across all data tables in Ngoc Khanh Clinic.
- * Complies with design tokens in globals.css, accessibility standards, and responsive breakpoints.
+ * Composes shadcn/ui Pagination primitives, complies with design tokens in globals.css,
+ * accessibility standards, and responsive breakpoints.
  */
 export function DataTablePagination({
   currentPage,
@@ -70,7 +78,7 @@ export function DataTablePagination({
     <div
       data-slot="data-table-pagination"
       className={cn(
-        "flex flex-col gap-4 py-2 sm:flex-row sm:items-center sm:justify-between text-xs",
+        "flex flex-col gap-3 py-1 sm:flex-row sm:items-center sm:justify-between text-xs",
         className
       )}
     >
@@ -87,76 +95,66 @@ export function DataTablePagination({
         )}
       </div>
 
-      {/* Page navigation on the right */}
+      {/* Page navigation on the right using shadcn/ui Pagination */}
       {totalPages > 1 && (
-        <nav
-          role="navigation"
-          aria-label="Phân trang"
-          className="flex items-center gap-1.5 select-none"
-        >
-          {/* Previous page button */}
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            aria-label="Trang trước"
-            disabled={currentPage <= 1}
-            onClick={() => onPageChange(currentPage - 1)}
-            className="size-8 p-0 rounded-lg border-border bg-card text-secondary-foreground hover:text-foreground cursor-pointer disabled:opacity-40 disabled:pointer-events-none shadow-2xs"
-          >
-            <ChevronLeft className="size-4" />
-          </Button>
-
-          {/* Number & ellipsis buttons */}
-          {pageNumbers.map((page, index) => {
-            if (page === "ellipsis") {
-              return (
-                <span
-                  key={`ellipsis-${index}`}
-                  aria-hidden="true"
-                  className="flex size-8 items-center justify-center text-xs text-muted-foreground"
-                >
-                  •••
-                </span>
-              )
-            }
-
-            const isActive = page === currentPage
-
-            return (
-              <Button
-                key={page}
+        <Pagination aria-label="Phân trang" className="mx-0 w-auto justify-end select-none">
+          <PaginationContent className="gap-1.5">
+            {/* Previous page button */}
+            <PaginationItem>
+              <PaginationPrevious
                 type="button"
-                variant={isActive ? "default" : "outline"}
-                size="sm"
-                aria-label={`Trang ${page}`}
-                aria-current={isActive ? "page" : undefined}
-                onClick={() => onPageChange(page)}
-                className={cn(
-                  "size-8 p-0 rounded-lg text-xs font-medium cursor-pointer transition-colors",
-                  isActive
-                    ? "bg-primary text-primary-foreground font-semibold shadow-xs"
-                    : "border-border bg-card text-secondary-foreground hover:bg-muted/70 hover:text-foreground shadow-2xs"
-                )}
-              >
-                {page}
-              </Button>
-            )
-          })}
+                aria-label="Trang trước"
+                disabled={currentPage <= 1}
+                onClick={() => onPageChange(currentPage - 1)}
+                className="size-8 p-0 rounded-lg border-border bg-card text-secondary-foreground hover:bg-hover hover:text-foreground cursor-pointer disabled:opacity-40 disabled:pointer-events-none shadow-2xs"
+              />
+            </PaginationItem>
 
-          {/* Next page button */}
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            aria-label="Trang sau"
-            disabled={currentPage >= totalPages}
-            onClick={() => onPageChange(currentPage + 1)}
-            className="size-8 p-0 rounded-lg border-border bg-card text-secondary-foreground hover:text-foreground cursor-pointer disabled:opacity-40 disabled:pointer-events-none shadow-2xs"
-          >
-            <ChevronRight className="size-4" />
-          </Button>
-        </nav>
+            {/* Number & ellipsis buttons */}
+            {pageNumbers.map((page, index) => {
+              if (page === "ellipsis") {
+                return (
+                  <PaginationItem key={`ellipsis-${index}`}>
+                    <PaginationEllipsis className="size-8" />
+                  </PaginationItem>
+                )
+              }
+
+              const isActive = page === currentPage
+
+              return (
+                <PaginationItem key={page}>
+                  <PaginationLink
+                    type="button"
+                    isActive={isActive}
+                    aria-label={`Trang ${page}`}
+                    aria-current={isActive ? "page" : undefined}
+                    onClick={() => onPageChange(page)}
+                    className={cn(
+                      "size-8 p-0 rounded-lg text-xs font-medium cursor-pointer transition-colors",
+                      isActive
+                        ? "bg-primary text-primary-foreground font-semibold shadow-xs hover:bg-primary/90 hover:text-primary-foreground"
+                        : "border-border bg-card text-secondary-foreground hover:bg-hover hover:text-foreground shadow-2xs"
+                    )}
+                  >
+                    {page}
+                  </PaginationLink>
+                </PaginationItem>
+              )
+            })}
+
+            {/* Next page button */}
+            <PaginationItem>
+              <PaginationNext
+                type="button"
+                aria-label="Trang sau"
+                disabled={currentPage >= totalPages}
+                onClick={() => onPageChange(currentPage + 1)}
+                className="size-8 p-0 rounded-lg border-border bg-card text-secondary-foreground hover:bg-hover hover:text-foreground cursor-pointer disabled:opacity-40 disabled:pointer-events-none shadow-2xs"
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
       )}
     </div>
   )

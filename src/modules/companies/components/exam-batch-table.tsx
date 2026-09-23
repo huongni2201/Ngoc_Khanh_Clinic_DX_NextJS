@@ -163,7 +163,7 @@ export function ExamBatchTable({
               <TableRow
                 key={batch.id}
                 onClick={() => handleRowClick(batch.id)}
-                className="border-b border-border/60 hover:bg-muted/30 cursor-pointer transition-colors"
+                className="border-b border-divider hover:bg-hover/60 cursor-pointer transition-colors"
               >
                 <TableCell className="px-4 py-3.5 text-center text-xs font-medium text-muted-foreground">
                   {index + 1}

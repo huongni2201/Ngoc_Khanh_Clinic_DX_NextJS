@@ -52,7 +52,7 @@ export function ExamBatchToolbar({
           type="button"
           variant="outline"
           onClick={onFilterClick}
-          className="h-9 rounded-lg px-3 text-xs font-medium text-foreground hover:bg-muted/50 shadow-2xs"
+          className="h-9 rounded-lg px-3 text-xs font-medium text-foreground hover:bg-hover shadow-2xs"
         >
           <Filter className="size-3.5 mr-1.5 text-muted-foreground" />
           Bộ lọc

@@ -114,15 +114,15 @@ export function ExaminationMatrixTable({
                       key={emp.id}
                       data-selected={isSelected}
                       className={cn(
-                        "group transition-colors hover:bg-muted/40",
-                        isSelected && "bg-primary/5 hover:bg-primary/10"
+                        "group border-b border-divider transition-colors hover:bg-hover/50",
+                        isSelected && "bg-selected hover:bg-hover/70"
                       )}
                     >
                       {/* Checkbox */}
                       <td
                         className={cn(
-                          "py-2.5 px-3.5 text-center sticky left-0 z-10 bg-card group-hover:bg-muted/40",
-                          isSelected && "bg-primary/5 group-hover:bg-primary/10"
+                          "py-2.5 px-3.5 text-center sticky left-0 z-10 bg-card group-hover:bg-hover/50",
+                          isSelected && "bg-selected group-hover:bg-hover/70"
                         )}
                       >
                         <Checkbox
@@ -135,8 +135,8 @@ export function ExaminationMatrixTable({
                       {/* Mã NV */}
                       <td
                         className={cn(
-                          "py-2.5 px-3.5 font-medium text-foreground whitespace-nowrap sticky left-[40px] z-10 bg-card group-hover:bg-muted/40",
-                          isSelected && "bg-primary/5 group-hover:bg-primary/10"
+                          "py-2.5 px-3.5 font-medium text-foreground whitespace-nowrap sticky left-[40px] z-10 bg-card group-hover:bg-hover/50",
+                          isSelected && "bg-selected group-hover:bg-hover/70"
                         )}
                       >
                         {emp.employeeCode}
@@ -145,8 +145,8 @@ export function ExaminationMatrixTable({
                       {/* Họ tên */}
                       <td
                         className={cn(
-                          "py-2.5 px-3.5 font-medium text-foreground whitespace-nowrap sticky left-[136px] z-10 bg-card group-hover:bg-muted/40 border-r border-border/60",
-                          isSelected && "bg-primary/5 group-hover:bg-primary/10"
+                          "py-2.5 px-3.5 font-medium text-foreground whitespace-nowrap sticky left-[136px] z-10 bg-card group-hover:bg-hover/50 border-r border-border/60",
+                          isSelected && "bg-selected group-hover:bg-hover/70"
                         )}
                       >
                         {emp.fullName}

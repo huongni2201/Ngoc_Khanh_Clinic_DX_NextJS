@@ -109,8 +109,8 @@ export function EmployeesTable({
                     <tr
                       key={emp.id}
                       className={cn(
-                        "transition-colors hover:bg-muted/40",
-                        isSelected && "bg-primary/5 hover:bg-primary/10"
+                        "border-b border-divider transition-colors hover:bg-hover/50",
+                        isSelected && "bg-selected hover:bg-hover/70"
                       )}
                     >
                       <td className="py-2.5 px-3.5 text-center">

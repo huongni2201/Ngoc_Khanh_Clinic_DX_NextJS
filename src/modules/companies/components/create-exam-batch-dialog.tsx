@@ -188,7 +188,7 @@ export function CreateExamBatchDialog({
             variant="outline"
             onClick={handleCancel}
             disabled={isPending}
-            className="h-9 sm:h-10 px-4 sm:px-5 text-xs sm:text-sm font-medium border-border/80 hover:bg-muted/60 rounded-lg shadow-2xs"
+            className="h-9 sm:h-10 px-4 sm:px-5 text-xs sm:text-sm font-medium border-border/80 hover:bg-hover rounded-lg shadow-2xs"
           >
             Hủy
           </Button>

@@ -67,8 +67,8 @@ export function EnterpriseListPage() {
   })
 
   return (
-    <div className="flex-1 flex flex-col justify-between space-y-6 w-full min-h-0">
-      <div className="space-y-6 flex-1 flex flex-col">
+    <div className="flex-1 flex flex-col justify-between space-y-3.5 w-full min-h-0">
+      <div className="space-y-3.5 flex-1 flex flex-col">
         {/* 1. Page Header */}
         <EnterprisePageHeader onOpenCreateDialog={() => setIsCreateOpen(true)} />
 
@@ -120,7 +120,7 @@ export function EnterpriseListPage() {
 
       {/* 4. Pagination */}
       {!isError && !isLoading && (data?.total || 0) > 0 && (
-        <div className="pt-2">
+        <div className="pt-1 mt-1">
           <DataTablePagination
             currentPage={data?.page || 1}
             pageSize={data?.pageSize || 10}

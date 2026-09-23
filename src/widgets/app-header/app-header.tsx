@@ -25,7 +25,7 @@ export function AppHeader({ className, onOpenMobileMenu }: AppHeaderProps) {
             type="button"
             onClick={onOpenMobileMenu}
             aria-label="Mở menu"
-            className="flex size-9 lg:hidden shrink-0 items-center justify-center rounded-lg text-secondary-foreground transition-colors hover:bg-muted/70 hover:text-foreground"
+            className="flex size-9 lg:hidden shrink-0 items-center justify-center rounded-lg text-secondary-foreground transition-colors hover:bg-hover hover:text-foreground"
           >
             <svg
               className="size-5"
@@ -54,7 +54,7 @@ export function AppHeader({ className, onOpenMobileMenu }: AppHeaderProps) {
         <button
           type="button"
           aria-label="Thông báo"
-          className="relative flex size-9 items-center justify-center rounded-lg text-secondary-foreground transition-colors hover:bg-muted/70 hover:text-foreground"
+          className="relative flex size-9 items-center justify-center rounded-lg text-secondary-foreground transition-colors hover:bg-hover hover:text-foreground"
         >
           <Bell className="size-5" />
           <span className="absolute -top-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground">
@@ -66,7 +66,7 @@ export function AppHeader({ className, onOpenMobileMenu }: AppHeaderProps) {
         <button
           type="button"
           aria-label="Trợ giúp"
-          className="flex size-9 items-center justify-center rounded-lg text-secondary-foreground transition-colors hover:bg-muted/70 hover:text-foreground"
+          className="flex size-9 items-center justify-center rounded-lg text-secondary-foreground transition-colors hover:bg-hover hover:text-foreground"
         >
           <HelpCircle className="size-5" />
         </button>

@@ -36,65 +36,97 @@ function PaginationItem({ ...props }: React.ComponentProps<"li">) {
 
 type PaginationLinkProps = {
   isActive?: boolean
-} & Pick<React.ComponentProps<typeof Button>, "size"> &
-  React.ComponentProps<"a">
+  href?: string
+} & React.ComponentProps<typeof Button>
 
 function PaginationLink({
   className,
   isActive,
   size = "icon",
+  variant,
+  href,
   ...props
 }: PaginationLinkProps) {
+  const resolvedVariant = variant ?? (isActive ? "default" : "outline")
+
+  if (href) {
+    return (
+      <Button
+        variant={resolvedVariant}
+        size={size}
+        className={cn("cursor-pointer", className)}
+        nativeButton={false}
+        render={
+          <a
+            href={href}
+            aria-current={isActive ? "page" : undefined}
+            data-slot="pagination-link"
+            data-active={isActive}
+          />
+        }
+        {...props}
+      />
+    )
+  }
+
   return (
     <Button
-      variant={isActive ? "outline" : "ghost"}
+      type="button"
+      variant={resolvedVariant}
       size={size}
-      className={cn(className)}
-      nativeButton={false}
-      render={
-        <a
-          aria-current={isActive ? "page" : undefined}
-          data-slot="pagination-link"
-          data-active={isActive}
-          {...props}
-        />
-      }
+      aria-current={isActive ? "page" : undefined}
+      data-slot="pagination-link"
+      data-active={isActive}
+      className={cn("cursor-pointer", className)}
+      {...props}
     />
   )
 }
 
 function PaginationPrevious({
   className,
-  text = "Previous",
+  text,
+  children,
+  size = "icon",
   ...props
 }: React.ComponentProps<typeof PaginationLink> & { text?: string }) {
   return (
     <PaginationLink
-      aria-label="Go to previous page"
-      size="default"
-      className={cn("pl-2!", className)}
+      aria-label="Trang trước"
+      size={size}
+      className={cn(className)}
       {...props}
     >
-      <HugeiconsIcon icon={ArrowLeft01Icon} strokeWidth={2} data-icon="inline-start" />
-      <span className="hidden sm:block">{text}</span>
+      {children ?? (
+        <>
+          <HugeiconsIcon icon={ArrowLeft01Icon} strokeWidth={2} data-icon="inline-start" />
+          {text && <span className="hidden sm:block">{text}</span>}
+        </>
+      )}
     </PaginationLink>
   )
 }
 
 function PaginationNext({
   className,
-  text = "Next",
+  text,
+  children,
+  size = "icon",
   ...props
 }: React.ComponentProps<typeof PaginationLink> & { text?: string }) {
   return (
     <PaginationLink
-      aria-label="Go to next page"
-      size="default"
-      className={cn("pr-2!", className)}
+      aria-label="Trang sau"
+      size={size}
+      className={cn(className)}
       {...props}
     >
-      <span className="hidden sm:block">{text}</span>
-      <HugeiconsIcon icon={ArrowRight01Icon} strokeWidth={2} data-icon="inline-end" />
+      {children ?? (
+        <>
+          {text && <span className="hidden sm:block">{text}</span>}
+          <HugeiconsIcon icon={ArrowRight01Icon} strokeWidth={2} data-icon="inline-end" />
+        </>
+      )}
     </PaginationLink>
   )
 }

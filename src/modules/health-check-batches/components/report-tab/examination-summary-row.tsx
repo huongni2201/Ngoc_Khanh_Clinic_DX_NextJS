@@ -8,7 +8,7 @@ export interface ExaminationSummaryRowProps {
 
 export function ExaminationSummaryRow({ item }: ExaminationSummaryRowProps) {
   return (
-    <tr className="transition-colors hover:bg-muted/30">
+    <tr className="border-b border-divider transition-colors hover:bg-hover/50">
       <td className="py-3 px-5 font-medium text-foreground text-left">
         {item.name}
       </td>

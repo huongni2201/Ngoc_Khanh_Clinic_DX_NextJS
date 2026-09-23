@@ -127,42 +127,42 @@ export function EnterpriseTable({
         <TableHeader>
           <TableRow className="bg-table-header-bg hover:bg-table-header-bg border-b border-border">
             {/* 1. STT */}
-            <TableHead className="h-11 px-3 text-xs font-semibold text-table-header-fg text-center w-12">
+            <TableHead className="h-10 px-3 text-xs font-bold text-table-header-fg text-center w-12">
               STT
             </TableHead>
 
             {/* 2. Tên doanh nghiệp */}
-            <TableHead className="h-11 px-4 text-xs font-semibold text-table-header-fg w-[26%]">
+            <TableHead className="h-10 px-4 text-xs font-bold text-table-header-fg w-[26%]">
               Tên doanh nghiệp
             </TableHead>
 
             {/* 3. Địa chỉ */}
-            <TableHead className="h-11 px-4 text-xs font-semibold text-table-header-fg w-[24%]">
+            <TableHead className="h-10 px-4 text-xs font-bold text-table-header-fg w-[24%]">
               Địa chỉ
             </TableHead>
 
             {/* 4. Người liên hệ */}
-            <TableHead className="h-11 px-4 text-xs font-semibold text-table-header-fg w-[16%]">
+            <TableHead className="h-10 px-4 text-xs font-bold text-table-header-fg w-[16%]">
               Người liên hệ
             </TableHead>
 
             {/* 5. Số đợt khám */}
-            <TableHead className="h-11 px-4 text-xs font-semibold text-table-header-fg text-center w-[9%]">
+            <TableHead className="h-10 px-4 text-xs font-bold text-table-header-fg text-center w-[9%]">
               Số đợt khám
             </TableHead>
 
             {/* 6. Trạng thái */}
-            <TableHead className="h-11 px-4 text-xs font-semibold text-table-header-fg w-[11%]">
+            <TableHead className="h-10 px-4 text-xs font-bold text-table-header-fg w-[11%]">
               Trạng thái
             </TableHead>
 
             {/* 7. Cập nhật gần nhất */}
-            <TableHead className="h-11 px-4 text-xs font-semibold text-table-header-fg w-[10%]">
+            <TableHead className="h-10 px-4 text-xs font-bold text-table-header-fg w-[10%]">
               Cập nhật gần nhất
             </TableHead>
 
             {/* 8. Thao tác */}
-            <TableHead className="h-11 px-3 text-xs font-semibold text-table-header-fg text-center w-12">
+            <TableHead className="h-10 px-3 text-xs font-bold text-table-header-fg text-center w-12">
               Thao tác
             </TableHead>
           </TableRow>
@@ -176,29 +176,29 @@ export function EnterpriseTable({
               <TableRow
                 key={enterprise.id}
                 onClick={() => handleRowClick(enterprise.id)}
-                className="group cursor-pointer border-b border-table-divider transition-colors hover:bg-table-header-bg/70"
+                className="group cursor-pointer border-b border-divider transition-colors hover:bg-hover/60"
               >
                 {/* 1. STT */}
-                <TableCell className="px-3 py-4.5 text-center text-xs font-mono text-muted-foreground">
+                <TableCell className="px-3 py-2.5 text-center text-xs font-mono text-muted-foreground">
                   {sttNumber}
                 </TableCell>
 
                 {/* 2. Tên doanh nghiệp (không có logo) */}
-                <TableCell className="px-4 py-4.5 whitespace-normal">
+                <TableCell className="px-4 py-2.5 whitespace-normal">
                   <span className="font-medium text-xs text-foreground group-hover:text-primary transition-colors line-clamp-2">
                     {enterprise.name}
                   </span>
                 </TableCell>
 
                 {/* 3. Địa chỉ */}
-                <TableCell className="px-4 py-4.5 text-xs text-muted-foreground whitespace-normal">
+                <TableCell className="px-4 py-2.5 text-xs text-muted-foreground whitespace-normal">
                   <span className="line-clamp-2" title={enterprise.address}>
                     {enterprise.address || "—"}
                   </span>
                 </TableCell>
 
                 {/* 4. Người liên hệ */}
-                <TableCell className="px-4 py-4.5">
+                <TableCell className="px-4 py-2.5">
                   <div className="flex flex-col text-xs">
                     <span className="font-medium text-foreground">
                       {enterprise.contactPerson}
@@ -210,15 +210,15 @@ export function EnterpriseTable({
                 </TableCell>
 
                 {/* 5. Số đợt khám */}
-                <TableCell className="px-4 py-4.5 text-center text-xs font-medium text-foreground">
+                <TableCell className="px-4 py-2.5 text-center text-xs font-medium text-foreground">
                   {enterprise.batchesCount}
                 </TableCell>
 
                 {/* 7. Trạng thái */}
-                <TableCell className="px-4 py-4.5">
+                <TableCell className="px-4 py-2.5">
                   <span
                     className={cn(
-                      "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium leading-none select-none",
+                      "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium leading-none select-none",
                       isInProgress
                         ? "bg-status-in-progress-bg text-status-in-progress"
                         : "bg-status-completed-bg text-status-completed"
@@ -237,19 +237,19 @@ export function EnterpriseTable({
                 </TableCell>
 
                 {/* 8. Cập nhật gần nhất */}
-                <TableCell className="px-4 py-4.5 text-xs text-muted-foreground">
+                <TableCell className="px-4 py-2.5 text-xs text-muted-foreground">
                   {enterprise.updatedAt}
                 </TableCell>
 
                 {/* 9. Thao tác */}
                 <TableCell
-                  className="px-3 py-4.5 text-center"
+                  className="px-3 py-2.5 text-center"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <DropdownMenu>
                     <DropdownMenuTrigger
                       aria-label="Thao tác"
-                      className="inline-flex size-8 items-center justify-center rounded-lg border border-border/80 bg-background text-muted-foreground cursor-pointer transition-colors hover:bg-muted/70 hover:text-foreground focus-visible:outline-hidden"
+                      className="inline-flex size-8 items-center justify-center rounded-lg border border-border/80 bg-background text-muted-foreground cursor-pointer transition-colors hover:bg-hover hover:text-foreground focus-visible:outline-hidden"
                     >
                       <MoreHorizontal className="size-4" />
                     </DropdownMenuTrigger>

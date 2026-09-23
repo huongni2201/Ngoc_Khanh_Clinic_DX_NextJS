@@ -87,7 +87,7 @@ export function EnterpriseFilters({
           type="button"
           variant="outline"
           onClick={onToggleAdvancedFilter}
-          className="h-10 rounded-lg border-border bg-card px-3.5 text-xs font-medium text-secondary-foreground shadow-2xs hover:bg-muted/70 hover:text-foreground"
+          className="h-10 rounded-lg border-border bg-card px-3.5 text-xs font-medium text-secondary-foreground shadow-2xs hover:bg-hover hover:text-foreground"
         >
           <Filter className="size-3.5 mr-1.5 text-muted-foreground" />
           Bộ lọc

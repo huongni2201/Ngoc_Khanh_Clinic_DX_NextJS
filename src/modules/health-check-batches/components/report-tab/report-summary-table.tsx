@@ -34,11 +34,11 @@ export function ReportSummaryTable({
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-table-divider">
+            <tbody className="divide-y divide-divider">
               {items.map((item) => (
                 <tr
                   key={item.examinationItemId}
-                  className="transition-colors hover:bg-muted/30"
+                  className="transition-colors hover:bg-hover/50"
                 >
                   <td className="py-3 px-4 font-medium text-foreground">
                     {item.name}

@@ -41,7 +41,7 @@ export function ExaminationItemRow({
   }
 
   return (
-    <tr className="border-b border-border/60 hover:bg-muted/30 transition-colors">
+    <tr className="border-b border-divider hover:bg-hover/50 transition-colors">
       {/* Checkbox column */}
       <td className="py-2.5 px-4 text-center align-middle w-14">
         <div className="flex items-center justify-center">
