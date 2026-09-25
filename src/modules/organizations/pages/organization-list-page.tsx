@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { OrganizationPageHeader } from "../components/organization-page-header"
 import { OrganizationCountersStrip } from "../components/organization-counters-strip"
 import { OrganizationTable } from "../components/organization-table"
-import { DataTablePagination } from "@/shared/ui"
+import { DataTablePagination, ScreenLayout } from "@/shared/ui"
 import { CreateOrganizationDialog } from "../components/create-organization-dialog"
 import { useOrganizations, useOrganizationCounters } from "../hooks/use-organizations"
 import type { OrganizationHealthExaminationStatus } from "../types"
@@ -75,7 +75,7 @@ export function OrganizationListPage() {
   const { data: counters, isLoading: isCountersLoading } = useOrganizationCounters()
 
   return (
-    <div className="flex flex-col flex-1 gap-5 w-full">
+    <ScreenLayout data-slot="organization-list-page">
       {/* 1. Page Header */}
       <OrganizationPageHeader onOpenCreateDialog={() => setIsCreateOpen(true)} />
 
@@ -142,7 +142,7 @@ export function OrganizationListPage() {
         open={isCreateOpen}
         onOpenChange={setIsCreateOpen}
       />
-    </div>
+    </ScreenLayout>
   )
 }
 

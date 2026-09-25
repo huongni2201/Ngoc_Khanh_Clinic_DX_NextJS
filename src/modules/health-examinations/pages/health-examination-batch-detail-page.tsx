@@ -5,7 +5,7 @@ import Link from "next/link"
 import { useSearchParams, useRouter, usePathname } from "next/navigation"
 import { AlertCircle, ArrowLeft, RefreshCw } from "@/shared/ui/product-icon"
 import { Button } from "@/components/ui/button"
-import { Skeleton } from "@/components/ui/skeleton"
+import { ScreenLayout, ScreenLoadingSkeleton } from "@/shared/ui"
 import { useOrganization } from "@/modules/organizations/hooks/use-organizations"
 import { useHealthExaminationBatchDetail } from "../hooks/use-health-examination-batches"
 import { HealthExaminationBatchHeader } from "../components/health-examination-batch-header"
@@ -91,55 +91,13 @@ export function HealthExaminationBatchDetailPage({
 
   // Loading skeleton matching visual structure
   if (isLoading) {
-    return (
-      <div className="w-full space-y-6 animate-pulse">
-        {/* Header Skeleton */}
-        <div className="space-y-2">
-          <Skeleton className="h-4 w-64" />
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-1">
-            <div className="space-y-1.5">
-              <Skeleton className="h-8 w-72 sm:w-96" />
-              <Skeleton className="h-4 w-52" />
-            </div>
-            <div className="flex gap-2">
-              <Skeleton className="h-9 w-32 rounded-lg" />
-              <Skeleton className="h-9 w-32 rounded-lg" />
-            </div>
-          </div>
-        </div>
-
-        {/* Summary Strip Skeleton */}
-        <div className="rounded-lg border border-border/80 bg-card p-4 ">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {Array.from({ length: 4 }).map((_, idx) => (
-              <div key={idx} className="flex items-center gap-3.5 px-4 py-2">
-                <Skeleton className="size-11 rounded-lg" />
-                <div className="space-y-1.5 flex-1">
-                  <Skeleton className="h-3 w-20" />
-                  <Skeleton className="h-4 w-28" />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Tab Navigation Skeleton */}
-        <div className="border-b border-border/80 pb-2.5 flex gap-8">
-          <Skeleton className="h-5 w-24" />
-          <Skeleton className="h-5 w-24" />
-          <Skeleton className="h-5 w-20" />
-        </div>
-
-        {/* Table Skeleton */}
-        <Skeleton className="h-96 w-full rounded-lg" />
-      </div>
-    )
+    return <ScreenLoadingSkeleton variant="detail" />
   }
 
   // Error state
   if (isErrorBatch || !batch) {
     return (
-      <div className="w-full py-16 text-center space-y-4">
+      <ScreenLayout data-slot="health-examination-batch-detail-error" className="items-center justify-center py-16 text-center">
         <div className="size-14 rounded-full bg-destructive/10 text-destructive flex items-center justify-center mx-auto">
           <AlertCircle className="size-7" />
         </div>
@@ -165,14 +123,14 @@ export function HealthExaminationBatchDetailPage({
             Thử lại
           </Button>
         </div>
-      </div>
+      </ScreenLayout>
     )
   }
 
   const organizationName = organization?.name || "Công ty Cổ phần FPT"
 
   return (
-    <div className="w-full space-y-6">
+    <ScreenLayout data-slot="health-examination-batch-detail-page" className="gap-6">
       {/* 1. Breadcrumbs, Title & Top-Right Actions */}
       <HealthExaminationBatchHeader
         batch={batch}
@@ -226,7 +184,7 @@ export function HealthExaminationBatchDetailPage({
         batchName={batch.name}
         onDownloadTemplate={handleDownloadTemplate}
       />
-    </div>
+    </ScreenLayout>
   )
 }
 

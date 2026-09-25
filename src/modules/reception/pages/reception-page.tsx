@@ -4,7 +4,7 @@ import * as React from "react"
 import { useSearchParams, useRouter, usePathname } from "next/navigation"
 import { AlertCircle, RefreshCw } from "@/shared/ui/product-icon"
 import { Button } from "@/components/ui/button"
-import { PageHeader } from "@/shared/ui"
+import { PageHeader, ScreenLayout } from "@/shared/ui"
 import { ReceptionHeaderActions } from "../components/reception-header-actions"
 import { ReceptionCountersStrip } from "../components/reception-counters-strip"
 import { ReceptionPatientTable } from "../components/reception-patient-table"
@@ -294,7 +294,7 @@ export function ReceptionPage() {
   }
 
   return (
-    <div className="flex flex-col flex-1 gap-5 w-full">
+    <ScreenLayout data-slot="reception-page">
       <PageHeader
         breadcrumbs={[{ label: "Bàn tiếp đón" }, { label: "Lễ tân" }]}
         title="Lễ tân"
@@ -434,7 +434,7 @@ export function ReceptionPage() {
         onProcessPayment={handleRowPayment}
         onPrintForm={handleRowPrint}
       />
-    </div>
+    </ScreenLayout>
   )
 }
 

@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import { Suspense } from "react"
-import { Skeleton } from "@/components/ui/skeleton"
 import { PaymentWorklistPage } from "@/modules/billing"
+import { ScreenLoadingSkeleton } from "@/shared/ui"
 import { AppShell } from "@/widgets/app-shell/app-shell"
 
 export const metadata: Metadata = {
@@ -10,5 +10,11 @@ export const metadata: Metadata = {
 }
 
 export default function BillingRoute() {
-  return <AppShell><Suspense fallback={<Skeleton className="h-96 w-full rounded-xl" />}><PaymentWorklistPage /></Suspense></AppShell>
+  return (
+    <AppShell>
+      <Suspense fallback={<ScreenLoadingSkeleton variant="worklist" />}>
+        <PaymentWorklistPage />
+      </Suspense>
+    </AppShell>
+  )
 }

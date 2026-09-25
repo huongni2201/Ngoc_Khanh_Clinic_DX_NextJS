@@ -14,7 +14,6 @@ export interface PrescribedItem {
   resultSummary?: string
   orderTime?: string
 }
-
 export interface VitalSigns {
   bp?: string
   pulse?: number
@@ -43,11 +42,18 @@ export interface DoctorEncounter {
   identificationNumber?: string
   address?: string
   priority?: "NORMAL" | "PRIORITY" | "EMERGENCY"
+  examType?: "SERVICE" | "ORGANIZATION"
+  checkinDate?: string
   vitalSigns?: VitalSigns
   prescribedItems?: PrescribedItem[]
   diagnosis?: string
   treatmentPlan?: string
   notes?: string
+}
+
+export interface NextDoctorAction {
+  actionType: "CONTINUE" | "NEXT" | "NONE"
+  encounter: DoctorEncounter | null
 }
 
 export interface DoctorCounters {
@@ -67,8 +73,8 @@ export interface DoctorFilterParams {
   page?: number
   pageSize?: number
   sortDirection?: "asc" | "desc"
-  priority?: string
-  examType?: string
+  priority?: "ALL" | "NORMAL" | "PRIORITY" | "EMERGENCY" | string
+  examType?: "ALL" | "SERVICE" | "ORGANIZATION" | string
 }
 
 export interface DoctorWorklistResponse {

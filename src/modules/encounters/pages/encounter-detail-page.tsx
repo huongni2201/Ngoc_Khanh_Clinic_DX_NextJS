@@ -5,8 +5,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { ArrowLeft, AlertCircle } from "@/shared/ui/product-icon"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Skeleton } from "@/components/ui/skeleton"
-import { PageHeader } from "@/shared/ui"
+import { PageHeader, ScreenLayout, ScreenLoadingSkeleton } from "@/shared/ui"
 import { useEncounterDetail } from "../hooks/use-encounter"
 import { EncounterHeaderCard } from "../components/encounter/encounter-header-card"
 import {
@@ -64,19 +63,12 @@ export function EncounterDetailPage() {
   }
 
   if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <Skeleton className="h-6 w-56" />
-        <Skeleton className="h-44 w-full rounded-lg" />
-        <Skeleton className="h-12 w-full rounded-lg" />
-        <Skeleton className="h-96 w-full rounded-lg" />
-      </div>
-    )
+    return <ScreenLoadingSkeleton variant="encounter" />
   }
 
   if (isError || !data) {
     return (
-      <div className="space-y-4">
+      <ScreenLayout data-slot="encounter-detail-error" className="gap-4">
         <Button
           variant="ghost"
           size="sm"
@@ -92,7 +84,7 @@ export function EncounterDetailPage() {
             {error instanceof Error ? error.message : "Không tìm thấy dữ liệu lượt khám."}
           </AlertDescription>
         </Alert>
-      </div>
+      </ScreenLayout>
     )
   }
 
@@ -120,7 +112,7 @@ export function EncounterDetailPage() {
   }
 
   return (
-    <div className="space-y-6 flex-1 pb-12">
+    <ScreenLayout data-slot="encounter-detail-page" className="gap-6 pb-12">
       <PageHeader
         breadcrumbs={[
           { label: "Bệnh nhân", href: "/patients" },
@@ -189,6 +181,6 @@ export function EncounterDetailPage() {
           <EncounterDocumentsView data={data} />
         ) : null}
       </div>
-    </div>
+    </ScreenLayout>
   )
 }

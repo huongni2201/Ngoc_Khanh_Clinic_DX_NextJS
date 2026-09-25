@@ -18,8 +18,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Skeleton } from "@/components/ui/skeleton"
-import { PageHeader } from "@/shared/ui"
+import { PageHeader, ScreenLayout, ScreenLoadingSkeleton } from "@/shared/ui"
 import { usePatient } from "../hooks/use-patients"
 import { EditPatientDialog } from "../components/edit-patient-dialog"
 import { PatientCheckInDialog } from "@/modules/reception"
@@ -42,18 +41,12 @@ export function PatientDetailPage() {
   const [isReceiveOpen, setIsReceiveOpen] = React.useState(false)
 
   if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <Skeleton className="h-6 w-48" />
-        <Skeleton className="h-32 w-full rounded-lg" />
-        <Skeleton className="h-64 w-full rounded-lg" />
-      </div>
-    )
+    return <ScreenLoadingSkeleton variant="detail" />
   }
 
   if (isError || !patient) {
     return (
-      <div className="space-y-4">
+      <ScreenLayout data-slot="patient-detail-error" className="gap-4">
         <Button
           variant="ghost"
           size="sm"
@@ -71,7 +64,7 @@ export function PatientDetailPage() {
               : "Không tìm thấy thông tin bệnh nhân yêu cầu."}
           </AlertDescription>
         </Alert>
-      </div>
+      </ScreenLayout>
     )
   }
 
@@ -80,7 +73,7 @@ export function PatientDetailPage() {
   const lastExamDisplay = formatDisplayDate(patient.lastExamDate)
 
   return (
-    <div className="space-y-6 flex-1">
+    <ScreenLayout data-slot="patient-detail-page" className="gap-6 pb-12">
       <PageHeader
         breadcrumbs={[
           { label: "Bệnh nhân", href: "/patients" },
@@ -204,6 +197,6 @@ export function PatientDetailPage() {
         initialPatient={patient}
         onSuccess={() => refetch()}
       />
-    </div>
+    </ScreenLayout>
   )
 }

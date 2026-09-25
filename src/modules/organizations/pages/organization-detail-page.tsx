@@ -3,8 +3,8 @@
 import * as React from "react"
 import Link from "next/link"
 import { AlertCircle, RefreshCw, ArrowLeft } from "@/shared/ui/product-icon"
-import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
+import { ScreenLayout, ScreenLoadingSkeleton } from "@/shared/ui"
 import { useOrganization } from "../hooks/use-organizations"
 import { OrganizationDetailHeader } from "../components/organization-detail-header"
 import { OrganizationSummaryStrip } from "../components/organization-summary-strip"
@@ -35,66 +35,13 @@ export function OrganizationDetailPage({
 
   // Loading skeleton state matching screen layout exactly
   if (isLoading) {
-    return (
-      <div className="w-full space-y-6 animate-pulse">
-        {/* Header Skeleton */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-52" />
-            <div className="flex items-center gap-3 pt-1">
-              <Skeleton className="h-8 w-64 sm:w-80" />
-              <Skeleton className="h-6 w-24 rounded-full" />
-            </div>
-            <Skeleton className="h-4 w-40" />
-          </div>
-          <div className="flex items-center gap-3 pt-1 sm:pt-0">
-            <Skeleton className="h-10 w-44 rounded-lg" />
-            <Skeleton className="h-10 w-36 rounded-lg" />
-          </div>
-        </div>
-
-        {/* Summary Strip Skeleton */}
-        <div className="rounded-lg border border-border/80 bg-card p-5 ">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-            {Array.from({ length: 4 }).map((_, idx) => (
-              <div key={idx} className="flex items-center gap-3.5">
-                <Skeleton className="size-10 rounded-lg" />
-                <div className="space-y-1.5 flex-1">
-                  <Skeleton className="h-3 w-20" />
-                  <Skeleton className="h-4 w-28" />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Tab Navigation Skeleton */}
-        <div className="border-b border-border/80 pb-3 flex gap-8">
-          <Skeleton className="h-5 w-20" />
-          <Skeleton className="h-5 w-20" />
-        </div>
-
-        {/* Info Card Skeleton */}
-        <div className="rounded-lg border border-border/80 bg-card p-6 sm:p-8  space-y-5">
-          <Skeleton className="h-6 w-48 mb-6" />
-          {Array.from({ length: 7 }).map((_, idx) => (
-            <div
-              key={idx}
-              className="flex flex-col sm:flex-row sm:items-center py-3 border-b border-border/40 gap-2 sm:gap-4"
-            >
-              <Skeleton className="h-4 w-40 sm:w-56 shrink-0" />
-              <Skeleton className="h-4 w-60 sm:w-96" />
-            </div>
-          ))}
-        </div>
-      </div>
-    )
+    return <ScreenLoadingSkeleton variant="detail" />
   }
 
   // Error state
   if (isError || !organization) {
     return (
-      <div className="w-full py-12 flex flex-col items-center justify-center text-center">
+      <ScreenLayout data-slot="organization-detail-error" className="items-center justify-center py-12 text-center">
         <div className="flex size-14 items-center justify-center rounded-full bg-destructive/10 text-destructive mb-4">
           <AlertCircle className="size-7" />
         </div>
@@ -120,12 +67,12 @@ export function OrganizationDetailPage({
             Thử lại
           </Button>
         </div>
-      </div>
+      </ScreenLayout>
     )
   }
 
   return (
-    <div className="w-full space-y-6">
+    <ScreenLayout data-slot="organization-detail-page" className="gap-6">
       {/* 1. Breadcrumbs, Titles, Status Badge & Actions */}
       <OrganizationDetailHeader
         organization={organization}
@@ -166,7 +113,7 @@ export function OrganizationDetailPage({
         onOpenChange={setIsCreateBatchDialogOpen}
         organization={organization}
       />
-    </div>
+    </ScreenLayout>
   )
 }
 

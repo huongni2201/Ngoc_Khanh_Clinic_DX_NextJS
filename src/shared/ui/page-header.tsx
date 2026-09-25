@@ -27,7 +27,7 @@ export function PageHeader({
   className,
 }: PageHeaderProps) {
   return (
-    <header className={cn("space-y-3", className)}>
+    <header className={cn("min-w-0 space-y-3", className)}>
       {breadcrumbs?.length ? (
         <nav aria-label="Breadcrumb">
           <ol className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
@@ -71,10 +71,10 @@ export function PageHeader({
         </nav>
       ) : null}
 
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0 space-y-1">
+      <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0 flex-1 space-y-1">
           <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-2xl font-semibold leading-[1.25] tracking-tight text-foreground">
+            <h1 className="text-pretty text-2xl font-semibold leading-[1.25] tracking-tight text-foreground">
               {title}
             </h1>
             {titleAccessory}

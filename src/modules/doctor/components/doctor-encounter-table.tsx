@@ -2,13 +2,7 @@ import * as React from "react"
 import {
   Info,
   Eye,
-  ClipboardList,
-  MoreHorizontal,
   ChevronDown,
-  Printer,
-  CalendarPlus,
-  DoorOpen,
-  Stethoscope,
   RefreshCw,
 } from "@/shared/ui/product-icon"
 import {
@@ -26,17 +20,51 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { DataTablePagination } from "@/shared/ui"
 import { DoctorStatusBadge } from "./doctor-status-badge"
-import { DoctorEncounter } from "../types"
+import { DoctorEncounter, DoctorEncounterStatus } from "../types"
 import { cn } from "@/lib/utils"
+
+function getPrimaryAction(status: DoctorEncounterStatus): {
+  label: string
+  variant: "default" | "outline" | "ghost"
+  className?: string
+} {
+  switch (status) {
+    case "WAITING_EXAM":
+      return {
+        label: "Bắt đầu khám",
+        variant: "default",
+        className: "bg-primary text-primary-foreground hover:bg-primary/90 shadow-2xs",
+      }
+    case "EXAMINING":
+      return {
+        label: "Tiếp tục khám",
+        variant: "default",
+        className: "bg-primary text-primary-foreground hover:bg-primary/90 shadow-2xs",
+      }
+    case "WAITING_CLS":
+      return {
+        label: "Xem kết quả",
+        variant: "outline",
+        className: "border-border bg-card text-foreground hover:bg-hover",
+      }
+    case "WAITING_CONCLUSION":
+      return {
+        label: "Kết luận",
+        variant: "default",
+        className: "bg-primary text-primary-foreground hover:bg-primary/90 shadow-2xs",
+      }
+    case "COMPLETED":
+    default:
+      return {
+        label: "Xem hồ sơ",
+        variant: "outline",
+        className: "border-border bg-card text-muted-foreground hover:text-foreground hover:bg-hover",
+      }
+  }
+}
+
 
 interface DoctorEncounterTableProps {
   encounters: DoctorEncounter[]
@@ -50,7 +78,6 @@ interface DoctorEncounterTableProps {
   onToggleSort: () => void
   onOpenEncounter: (encounter: DoctorEncounter) => void
   onQuickView: (encounter: DoctorEncounter) => void
-  onViewOrders: (encounter: DoctorEncounter) => void
   onResetFilters?: () => void
 }
 
@@ -66,7 +93,6 @@ export function DoctorEncounterTable({
   onToggleSort,
   onOpenEncounter,
   onQuickView,
-  onViewOrders,
   onResetFilters,
 }: DoctorEncounterTableProps) {
   return (
@@ -248,29 +274,14 @@ export function DoctorEncounterTable({
                     </TableCell>
 
                     {/* Hành động */}
-                    <TableCell className="w-[175px] min-w-[175px] px-2 pr-4 text-right whitespace-nowrap">
-                      <div className="flex items-center justify-end gap-1">
-                        {/* Phiếu chỉ định icon button */}
-                        <Tooltip>
-                          <TooltipTrigger
-                            type="button"
-                            onClick={() => onViewOrders(encounter)}
-                            className="size-7 p-0 text-secondary-foreground hover:text-foreground hover:bg-surface-alt rounded-lg cursor-pointer inline-flex items-center justify-center transition-colors"
-                            aria-label={`Xem phiếu chỉ định của ${encounter.patientName}`}
-                          >
-                            <ClipboardList className="size-4" />
-                          </TooltipTrigger>
-                          <TooltipContent side="top">
-                            <p className="text-xs">Phiếu chỉ định & CLS</p>
-                          </TooltipContent>
-                        </Tooltip>
-
+                    <TableCell className="w-[170px] px-2 pr-4 text-right whitespace-nowrap">
+                      <div className="flex items-center justify-end gap-1.5">
                         {/* Xem nhanh icon button */}
                         <Tooltip>
                           <TooltipTrigger
                             type="button"
                             onClick={() => onQuickView(encounter)}
-                            className="size-7 p-0 text-secondary-foreground hover:text-foreground hover:bg-surface-alt rounded-lg cursor-pointer inline-flex items-center justify-center transition-colors"
+                            className="size-8 p-0 text-secondary-foreground hover:text-foreground hover:bg-hover rounded-lg cursor-pointer inline-flex items-center justify-center transition-colors border border-transparent hover:border-border"
                             aria-label={`Xem nhanh thông tin ${encounter.patientName}`}
                           >
                             <Eye className="size-4" />
@@ -280,65 +291,24 @@ export function DoctorEncounterTable({
                           </TooltipContent>
                         </Tooltip>
 
-                        {/* Mở hồ sơ text button */}
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => onOpenEncounter(encounter)}
-                          className="h-7 px-1.5 text-xs font-semibold text-primary hover:text-primary hover:bg-selected rounded-md cursor-pointer shrink-0"
-                        >
-                          Mở hồ sơ
-                        </Button>
-
-                        {/* More menu ⋮ */}
-                        <DropdownMenu>
-                          <DropdownMenuTrigger
-                            type="button"
-                            className="size-7 p-0 text-secondary-foreground hover:text-foreground hover:bg-surface-alt rounded-lg cursor-pointer inline-flex items-center justify-center transition-colors focus-visible:outline-hidden"
-                            aria-label="Thao tác khác"
-                          >
-                            <MoreHorizontal className="size-4" />
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-48">
-                            <DropdownMenuItem
+                        {/* Status-aware primary contextual action */}
+                        {(() => {
+                          const action = getPrimaryAction(encounter.status)
+                          return (
+                            <Button
+                              type="button"
+                              variant={action.variant}
+                              size="sm"
                               onClick={() => onOpenEncounter(encounter)}
-                              className="cursor-pointer text-xs"
+                              className={cn(
+                                "h-8 px-2.5 text-xs font-semibold rounded-md cursor-pointer shrink-0 transition-colors",
+                                action.className
+                              )}
                             >
-                              <Stethoscope className="size-3.5 mr-2 text-primary" />
-                              <span>Bắt đầu / Khám bệnh</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => onViewOrders(encounter)}
-                              className="cursor-pointer text-xs"
-                            >
-                              <ClipboardList className="size-3.5 mr-2 text-secondary-foreground" />
-                              <span>Chỉ định cận lâm sàng</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              onClick={() => onQuickView(encounter)}
-                              className="cursor-pointer text-xs"
-                            >
-                              <DoorOpen className="size-3.5 mr-2 text-secondary-foreground" />
-                              <span>Chuyển phòng khám</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => onQuickView(encounter)}
-                              className="cursor-pointer text-xs"
-                            >
-                              <CalendarPlus className="size-3.5 mr-2 text-secondary-foreground" />
-                              <span>Hẹn ngày tái khám</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => onViewOrders(encounter)}
-                              className="cursor-pointer text-xs"
-                            >
-                              <Printer className="size-3.5 mr-2 text-secondary-foreground" />
-                              <span>In phiếu chỉ định</span>
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                              {action.label}
+                            </Button>
+                          )
+                        })()}
                       </div>
                     </TableCell>
                   </TableRow>

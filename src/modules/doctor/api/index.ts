@@ -3,6 +3,7 @@ import {
   DoctorCounters,
   DoctorFilterParams,
   DoctorWorklistResponse,
+  NextDoctorAction,
 } from "../types"
 
 export const initialDoctorEncounters: DoctorEncounter[] = [
@@ -15,6 +16,8 @@ export const initialDoctorEncounters: DoctorEncounter[] = [
     birthYear: 1989,
     gender: "Nữ",
     checkinTime: "08:15",
+    checkinDate: "25/09/2026",
+    examType: "SERVICE",
     roomName: "Nội tổng quát",
     chiefComplaint: "Tái khám tăng huyết áp",
     prescribedItemsCount: 4,
@@ -49,6 +52,8 @@ export const initialDoctorEncounters: DoctorEncounter[] = [
     birthYear: 1978,
     gender: "Nam",
     checkinTime: "08:25",
+    checkinDate: "25/09/2026",
+    examType: "SERVICE",
     roomName: "Tim mạch",
     chiefComplaint: "Đau ngực, khó thở nhẹ",
     prescribedItemsCount: 5,
@@ -84,6 +89,8 @@ export const initialDoctorEncounters: DoctorEncounter[] = [
     birthYear: 1995,
     gender: "Nữ",
     checkinTime: "08:40",
+    checkinDate: "25/09/2026",
+    examType: "SERVICE",
     roomName: "Nội tổng quát",
     chiefComplaint: "Đau bụng, rối loạn tiêu hóa",
     prescribedItemsCount: 3,
@@ -117,6 +124,8 @@ export const initialDoctorEncounters: DoctorEncounter[] = [
     birthYear: 2001,
     gender: "Nam",
     checkinTime: "09:00",
+    checkinDate: "25/09/2026",
+    examType: "SERVICE",
     roomName: "Tai mũi họng",
     chiefComplaint: "Viêm họng, sốt",
     prescribedItemsCount: 2,
@@ -150,6 +159,8 @@ export const initialDoctorEncounters: DoctorEncounter[] = [
     birthYear: 1968,
     gender: "Nữ",
     checkinTime: "09:10",
+    checkinDate: "25/09/2026",
+    examType: "ORGANIZATION",
     roomName: "Nội tổng quát",
     chiefComplaint: "Khám sức khỏe định kỳ",
     prescribedItemsCount: 6,
@@ -187,6 +198,8 @@ export const initialDoctorEncounters: DoctorEncounter[] = [
     birthYear: 1984,
     gender: "Nam",
     checkinTime: "09:20",
+    checkinDate: "25/09/2026",
+    examType: "SERVICE",
     roomName: "Cơ xương khớp",
     chiefComplaint: "Đau lưng kéo dài",
     prescribedItemsCount: 4,
@@ -221,6 +234,8 @@ export const initialDoctorEncounters: DoctorEncounter[] = [
     birthYear: 1992,
     gender: "Nữ",
     checkinTime: "09:30",
+    checkinDate: "25/09/2026",
+    examType: "SERVICE",
     roomName: "Nội tổng quát",
     chiefComplaint: "Chóng mặt, mệt mỏi",
     prescribedItemsCount: 3,
@@ -254,6 +269,8 @@ export const initialDoctorEncounters: DoctorEncounter[] = [
     birthYear: 1975,
     gender: "Nam",
     checkinTime: "09:45",
+    checkinDate: "25/09/2026",
+    examType: "ORGANIZATION",
     roomName: "Tim mạch",
     chiefComplaint: "Kiểm tra sau điều trị",
     prescribedItemsCount: 5,
@@ -338,6 +355,8 @@ export const initialDoctorEncounters: DoctorEncounter[] = [
       birthYear,
       gender: (isFemale ? "Nữ" : "Nam") as "Nam" | "Nữ",
       checkinTime: time,
+      checkinDate: "25/09/2026",
+      examType: (idx % 3 === 0 ? "ORGANIZATION" : "SERVICE") as DoctorEncounter["examType"],
       roomName: room,
       chiefComplaint: complaints[idx % complaints.length],
       prescribedItemsCount: 2 + (idx % 4),
@@ -346,7 +365,7 @@ export const initialDoctorEncounters: DoctorEncounter[] = [
       phoneNumber: `09${Math.floor(10000000 + Math.random() * 89999999)}`,
       identificationNumber: `001${birthYear}00${String(idx + 10).padStart(4, "0")}`,
       address: "Hà Nội",
-      priority: "NORMAL" as const,
+      priority: (idx === 12 ? "EMERGENCY" : idx % 4 === 0 ? "PRIORITY" : "NORMAL") as "NORMAL" | "PRIORITY" | "EMERGENCY",
       vitalSigns: {
         bp: "120/80 mmHg",
         pulse: 75,
@@ -358,7 +377,60 @@ export const initialDoctorEncounters: DoctorEncounter[] = [
       },
     }
   }),
+  // Encounters for other physicians to support realistic doctor filtering
+  ...Array.from({ length: 4 }, (_, idx) => ({
+    id: `enc-an-${idx + 1}`,
+    stt: 44 + idx,
+    encounterCode: `LK-2026-10${idx + 1}`,
+    patientId: `pat-an-${idx + 1}`,
+    patientName: `Nguyễn Hoàng ${idx + 1}`,
+    birthYear: 1985 + idx,
+    gender: "Nam" as const,
+    checkinTime: `10:1${idx}`,
+    checkinDate: "25/09/2026",
+    examType: "SERVICE" as const,
+    roomName: "Tim mạch",
+    chiefComplaint: "Khám chuyên khoa Tim mạch",
+    prescribedItemsCount: 2,
+    status: "WAITING_EXAM" as const,
+    assignedDoctor: "BS. Nguyễn Văn An",
+    phoneNumber: "0912 333 444",
+    identificationNumber: `00118500990${idx}`,
+    address: "Hà Nội",
+    priority: "NORMAL" as const,
+    vitalSigns: { bp: "120/80 mmHg", pulse: 75, temp: 36.6, spO2: 99 },
+  })),
+  ...Array.from({ length: 4 }, (_, idx) => ({
+    id: `enc-trang-${idx + 1}`,
+    stt: 48 + idx,
+    encounterCode: `LK-2026-10${idx + 5}`,
+    patientId: `pat-trang-${idx + 1}`,
+    patientName: `Lê Thúy ${idx + 1}`,
+    birthYear: 1990 + idx,
+    gender: "Nữ" as const,
+    checkinTime: `10:3${idx}`,
+    checkinDate: "25/09/2026",
+    examType: "ORGANIZATION" as const,
+    roomName: "Tai mũi họng",
+    chiefComplaint: "Khám sức khỏe đơn vị",
+    prescribedItemsCount: 3,
+    status: "WAITING_EXAM" as const,
+    assignedDoctor: "BS. Lê Thu Trang",
+    phoneNumber: "0988 555 666",
+    identificationNumber: `00119000880${idx}`,
+    address: "Hà Nội",
+    priority: "NORMAL" as const,
+    vitalSigns: { bp: "115/75 mmHg", pulse: 72, temp: 36.5, spO2: 98 },
+  })),
 ]
+
+const DEFAULT_ENCOUNTERS_SNAPSHOT = JSON.stringify(initialDoctorEncounters)
+
+export function resetMockDoctorEncounters() {
+  const restored = JSON.parse(DEFAULT_ENCOUNTERS_SNAPSHOT)
+  initialDoctorEncounters.length = 0
+  initialDoctorEncounters.push(...restored)
+}
 
 export const initialCounters: DoctorCounters = {
   waitingExam: 12,
@@ -399,12 +471,25 @@ export async function fetchDoctorWorklist(
   if (params.doctor && params.doctor !== "ALL") {
     if (params.doctor === "MY" || params.doctor === "Của tôi") {
       filtered = filtered.filter((item) => item.assignedDoctor.includes("Trần Minh Khoa"))
+    } else {
+      filtered = filtered.filter((item) => item.assignedDoctor === params.doctor)
     }
+  }
+
+  // Filter by date
+  const checkinDate = params.date?.trim()
+  if (checkinDate) {
+    filtered = filtered.filter((item) => item.checkinDate === checkinDate)
   }
 
   // Filter by priority
   if (params.priority && params.priority !== "ALL") {
     filtered = filtered.filter((item) => item.priority === params.priority)
+  }
+
+  // Filter by examType
+  if (params.examType && params.examType !== "ALL") {
+    filtered = filtered.filter((item) => item.examType === params.examType)
   }
 
   // Sort by time
@@ -422,20 +507,83 @@ export async function fetchDoctorWorklist(
   const startIndex = (page - 1) * pageSize
   const items = filtered.slice(startIndex, startIndex + pageSize)
 
+  const counters = await fetchDoctorCounters()
+
   return {
     items,
     total,
     page,
     pageSize,
     totalPages,
-    counters: initialCounters,
+    counters,
   }
 }
 
 export async function fetchDoctorCounters(): Promise<DoctorCounters> {
-  return initialCounters
+  const myEncounters = initialDoctorEncounters.filter((e) => e.assignedDoctor.includes("Trần Minh Khoa"))
+  const waitingExam = myEncounters.filter((e) => e.status === "WAITING_EXAM").length
+  const examining = myEncounters.filter((e) => e.status === "EXAMINING").length
+  const waitingCls = myEncounters.filter((e) => e.status === "WAITING_CLS").length
+  const waitingConclusion = myEncounters.filter((e) => e.status === "WAITING_CONCLUSION").length
+  const completed = myEncounters.filter((e) => e.status === "COMPLETED").length
+  return { waitingExam, examining, waitingCls, waitingConclusion, completed }
 }
 
 export async function fetchDoctorEncounterById(id: string): Promise<DoctorEncounter | null> {
   return initialDoctorEncounters.find((item) => item.id === id || item.encounterCode === id) ?? null
+}
+
+export async function fetchDoctorNextAction(doctorParam?: string): Promise<NextDoctorAction> {
+  let encounters = [...initialDoctorEncounters]
+  if (doctorParam && doctorParam !== "ALL") {
+    if (doctorParam === "MY" || doctorParam === "Của tôi") {
+      encounters = encounters.filter((item) => item.assignedDoctor.includes("Trần Minh Khoa"))
+    } else {
+      encounters = encounters.filter((item) => item.assignedDoctor === doctorParam)
+    }
+  }
+
+  // 1. Priority: Currently EXAMINING encounter
+  const examiningEncounter = encounters.find((item) => item.status === "EXAMINING")
+  if (examiningEncounter) {
+    return {
+      actionType: "CONTINUE",
+      encounter: examiningEncounter,
+    }
+  }
+
+  // 2. Next patient waiting for exam
+  const waitingEncounters = encounters.filter((item) => item.status === "WAITING_EXAM")
+  if (waitingEncounters.length > 0) {
+    const priorityWeights: Record<string, number> = {
+      EMERGENCY: 3,
+      PRIORITY: 2,
+      NORMAL: 1,
+    }
+    waitingEncounters.sort((a, b) => {
+      const pA = priorityWeights[a.priority ?? "NORMAL"] || 1
+      const pB = priorityWeights[b.priority ?? "NORMAL"] || 1
+      if (pA !== pB) {
+        return pB - pA
+      }
+      return a.checkinTime.localeCompare(b.checkinTime)
+    })
+    return {
+      actionType: "NEXT",
+      encounter: waitingEncounters[0],
+    }
+  }
+
+  return {
+    actionType: "NONE",
+    encounter: null,
+  }
+}
+
+export async function startDoctorEncounter(id: string): Promise<DoctorEncounter | null> {
+  const encounter = initialDoctorEncounters.find((item) => item.id === id || item.encounterCode === id)
+  if (encounter && encounter.status === "WAITING_EXAM") {
+    encounter.status = "EXAMINING"
+  }
+  return encounter ?? null
 }

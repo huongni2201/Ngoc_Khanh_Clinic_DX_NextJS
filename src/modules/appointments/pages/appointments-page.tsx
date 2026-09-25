@@ -4,7 +4,7 @@ import * as React from "react"
 import { useRouter, useSearchParams, usePathname } from "next/navigation"
 import { AlertCircle, RefreshCw } from "@/shared/ui/product-icon"
 import { Button } from "@/components/ui/button"
-import { PageHeader } from "@/shared/ui"
+import { PageHeader, ScreenLayout } from "@/shared/ui"
 import { AppointmentHeaderActions } from "../components/appointment-header-actions"
 import { AppointmentCountersStrip } from "../components/appointment-counters-strip"
 import { AppointmentTable } from "../components/appointment-table"
@@ -226,7 +226,7 @@ export function AppointmentsPage() {
   }
 
   return (
-    <div className="flex flex-col flex-1 gap-5 w-full">
+    <ScreenLayout data-slot="appointments-page">
       <PageHeader
         breadcrumbs={[
           { label: "Bàn tiếp đón", href: "/reception" },
@@ -363,7 +363,7 @@ export function AppointmentsPage() {
         onOpenChange={setIsCreatePatientOpen}
         onSuccess={handlePatientCreated}
       />
-    </div>
+    </ScreenLayout>
   )
 }
 

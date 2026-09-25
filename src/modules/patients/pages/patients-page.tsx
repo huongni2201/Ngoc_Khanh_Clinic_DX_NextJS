@@ -6,7 +6,7 @@ import { Plus, UserCheck, AlertCircle, RefreshCw } from "@/shared/ui/product-ico
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { DataTablePagination } from "@/shared/ui/data-table-pagination"
-import { PageHeader } from "@/shared/ui"
+import { PageHeader, ScreenLayout } from "@/shared/ui"
 import { PatientCountersStrip } from "../components/patient-counters-strip"
 import { PatientToolbar } from "../components/patient-toolbar"
 import { PatientTable } from "../components/patient-table"
@@ -139,7 +139,7 @@ export function PatientsPage() {
     ageGroupFilter !== "ALL"
 
   return (
-    <div className="flex flex-col flex-1 gap-5 w-full" data-slot="patients-page">
+    <ScreenLayout data-slot="patients-page">
       <PageHeader
         breadcrumbs={[{ label: "Bệnh nhân" }]}
         title="Danh sách bệnh nhân"
@@ -262,6 +262,6 @@ export function PatientsPage() {
           refetch()
         }}
       />
-    </div>
+    </ScreenLayout>
   )
 }

@@ -68,14 +68,14 @@ export function DoctorAdvancedFilterDialog({
                     ? "Bình thường"
                     : priority === "PRIORITY"
                     ? "Ưu tiên"
-                    : "Cấp cứu"}
+                    : "Khẩn cấp"}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="ALL">Tất cả mức độ</SelectItem>
-                <SelectItem value="NORMAL">Bình thường (Thứ tự tiếp nhận)</SelectItem>
-                <SelectItem value="PRIORITY">Ưu tiên (Người già, trẻ em, phụ nữ có thai)</SelectItem>
-                <SelectItem value="EMERGENCY">Cấp cứu / Cần can thiệp gấp</SelectItem>
+                <SelectItem value="NORMAL">Bình thường</SelectItem>
+                <SelectItem value="PRIORITY">Ưu tiên</SelectItem>
+                <SelectItem value="EMERGENCY">Khẩn cấp</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -90,18 +90,15 @@ export function DoctorAdvancedFilterDialog({
                 <SelectValue>
                   {examType === "ALL"
                     ? "Tất cả loại hình"
-                    : examType === "BHYT"
-                    ? "Khám Bảo hiểm y tế (BHYT)"
                     : examType === "SERVICE"
-                    ? "Khám Viện phí / Dịch vụ"
-                    : "Khám Doanh nghiệp định kỳ"}
+                    ? "Khám dịch vụ"
+                    : "Khám sức khỏe theo đơn vị"}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="ALL">Tất cả loại hình</SelectItem>
-                <SelectItem value="BHYT">Khám Bảo hiểm y tế (BHYT)</SelectItem>
-                <SelectItem value="SERVICE">Khám Viện phí / Dịch vụ</SelectItem>
-                <SelectItem value="CORPORATE">Khám sức khỏe Doanh nghiệp định kỳ</SelectItem>
+                <SelectItem value="SERVICE">Khám dịch vụ</SelectItem>
+                <SelectItem value="ORGANIZATION">Khám sức khỏe theo đơn vị</SelectItem>
               </SelectContent>
             </Select>
           </div>

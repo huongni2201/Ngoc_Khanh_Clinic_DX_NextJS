@@ -219,7 +219,7 @@ export function AppointmentDetailDialog({
                   onOpenChange(false)
                   onConfirmArrived(appointment)
                 }}
-                className="gap-1.5 text-xs bg-status-success hover:bg-status-success/90 text-white"
+                className="gap-1.5 text-xs bg-status-success hover:bg-status-success/90 text-primary-foreground"
               >
                 <CheckCircle2 className="size-3.5" />
                 Xác nhận đến

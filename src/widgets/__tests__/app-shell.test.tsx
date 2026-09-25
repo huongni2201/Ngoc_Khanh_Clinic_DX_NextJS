@@ -29,7 +29,7 @@ describe("AppShell", () => {
     expect(
       screen.getByRole("navigation", { name: "Điều hướng chính" })
     ).toBeInTheDocument()
-    expect(screen.getByRole("link", { name: "Doanh nghiệp" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Đơn vị" })).toHaveAttribute(
       "aria-current",
       "page"
     )

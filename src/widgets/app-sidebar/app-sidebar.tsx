@@ -6,13 +6,11 @@ import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react"
 import {
-  ChartLineData01Icon,
   Building03Icon,
+  CalendarDaysIcon,
   CheckListIcon,
   CreditCardIcon,
-  FileSpreadsheetIcon,
   Home01Icon,
-  Settings01Icon,
   UserCheck01Icon,
   UserGroupIcon,
 } from "@hugeicons/core-free-icons"
@@ -39,6 +37,11 @@ export function AppSidebar({ className }: { className?: string }) {
       icon: UserCheck01Icon,
     },
     {
+      title: "Lịch hẹn",
+      href: "/appointments",
+      icon: CalendarDaysIcon,
+    },
+    {
       title: "Bệnh nhân",
       href: "/patients",
       icon: UserGroupIcon,
@@ -49,29 +52,14 @@ export function AppSidebar({ className }: { className?: string }) {
       icon: CheckListIcon,
     },
     {
-      title: "Chỉ định",
-      href: "/prescriptions",
-      icon: FileSpreadsheetIcon,
-    },
-    {
       title: "Thanh toán",
       href: "/billing",
       icon: CreditCardIcon,
     },
     {
-      title: "Doanh nghiệp",
+      title: "Đơn vị",
       href: "/organizations",
       icon: Building03Icon,
-    },
-    {
-      title: "Báo cáo",
-      href: "/reports",
-      icon: ChartLineData01Icon,
-    },
-    {
-      title: "Cài đặt",
-      href: "/settings",
-      icon: Settings01Icon,
     },
   ]
 
@@ -95,7 +83,7 @@ export function AppSidebar({ className }: { className?: string }) {
           />
         </div>
         <div className="flex flex-col min-w-0">
-          <span className="text-sm font-semibold leading-snug tracking-tight text-white">
+          <span className="text-sm font-semibold leading-snug tracking-tight text-sidebar-primary-foreground">
             Ngọc Khánh Clinic
           </span>
           <span className="truncate text-xs leading-tight text-sidebar-foreground">
@@ -124,7 +112,7 @@ export function AppSidebar({ className }: { className?: string }) {
                 "group flex h-10 items-center justify-between rounded-md px-3 text-sm font-medium transition-colors",
                 isActive
                   ? "bg-sidebar-primary text-sidebar-primary-foreground font-semibold shadow-xs"
-                  : "text-sidebar-foreground hover:bg-white/5 hover:text-white"
+                  : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
               )}
             >
               <div className="flex items-center gap-3 min-w-0">
@@ -135,7 +123,7 @@ export function AppSidebar({ className }: { className?: string }) {
                     "size-[18px] shrink-0 transition-colors",
                     isActive
                       ? "text-sidebar-primary-foreground"
-                      : "text-sidebar-foreground group-hover:text-white"
+                      : "text-sidebar-foreground group-hover:text-sidebar-accent-foreground"
                   )}
                 />
                 <span className="truncate">{item.title}</span>

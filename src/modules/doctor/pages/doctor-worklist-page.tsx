@@ -1,21 +1,27 @@
 "use client"
 
 import * as React from "react"
-import { PageHeader } from "@/shared/ui"
+import { useRouter } from "next/navigation"
+import { PageHeader, ScreenLayout } from "@/shared/ui"
 import { Button } from "@/components/ui/button"
 import { RefreshCw, Filter, ChevronRight } from "@/shared/ui/product-icon"
 import { DoctorCountersStrip } from "../components/doctor-counters-strip"
 import { DoctorFilterToolbar } from "../components/doctor-filter-toolbar"
 import { DoctorEncounterTable } from "../components/doctor-encounter-table"
-import { DoctorEncounterDialog } from "../components/doctor-encounter-dialog"
 import { DoctorQuickViewSheet } from "../components/doctor-quick-view-sheet"
-import { DoctorOrdersDialog } from "../components/doctor-orders-dialog"
 import { DoctorAdvancedFilterDialog } from "../components/doctor-advanced-filter-dialog"
-import { useDoctorWorklist, useDoctorCounters } from "../hooks/use-doctor-worklist"
+import {
+  useDoctorWorklist,
+  useDoctorCounters,
+  useDoctorNextAction,
+  useStartDoctorEncounter,
+} from "../hooks/use-doctor-worklist"
 import { DoctorEncounter, DoctorEncounterStatus } from "../types"
 import { cn } from "@/lib/utils"
 
 export function DoctorWorklistPage() {
+  const router = useRouter()
+
   // Filter & Search State
   const [searchTerm, setSearchTerm] = React.useState<string>("")
   const [selectedRoom, setSelectedRoom] = React.useState<string>("ALL")
@@ -33,9 +39,7 @@ export function DoctorWorklistPage() {
 
   // Dialog & Sheet States
   const [selectedEncounter, setSelectedEncounter] = React.useState<DoctorEncounter | null>(null)
-  const [isEncounterDialogOpen, setIsEncounterDialogOpen] = React.useState<boolean>(false)
   const [isQuickViewOpen, setIsQuickViewOpen] = React.useState<boolean>(false)
-  const [isOrdersDialogOpen, setIsOrdersDialogOpen] = React.useState<boolean>(false)
   const [isRefreshing, setIsRefreshing] = React.useState<boolean>(false)
 
   // Server state via TanStack Query
@@ -62,6 +66,13 @@ export function DoctorWorklistPage() {
     refetch: refetchCounters,
   } = useDoctorCounters()
 
+  const {
+    data: nextAction,
+    refetch: refetchNextAction,
+  } = useDoctorNextAction(selectedDoctor)
+
+  const startEncounterMutation = useStartDoctorEncounter()
+
   const encounters = worklistData?.items ?? []
   const totalItems = worklistData?.total ?? 43
   const totalPages = worklistData?.totalPages ?? 6
@@ -69,7 +80,7 @@ export function DoctorWorklistPage() {
   // Refresh handler
   const handleRefresh = async () => {
     setIsRefreshing(true)
-    await Promise.all([refetchWorklist(), refetchCounters()])
+    await Promise.all([refetchWorklist(), refetchCounters(), refetchNextAction()])
     setTimeout(() => {
       setIsRefreshing(false)
     }, 400)
@@ -87,30 +98,31 @@ export function DoctorWorklistPage() {
     setCurrentPage(1)
   }
 
-  // Open Next Patient ("Mở lượt khám tiếp theo")
-  const handleOpenNextEncounter = () => {
-    // Priority: Next patient waiting for examination
-    const nextWaiting = encounters.find((item) => item.status === "WAITING_EXAM") || encounters[0]
-    if (nextWaiting) {
-      setSelectedEncounter(nextWaiting)
-      setIsEncounterDialogOpen(true)
+  // Header Contextual Action: "Tiếp tục lượt đang khám" hoặc "Khám bệnh nhân tiếp theo"
+  const handleNextAction = async () => {
+    if (!nextAction || nextAction.actionType === "NONE" || !nextAction.encounter) {
+      return
     }
+    const encounter = nextAction.encounter
+    if (nextAction.actionType === "NEXT") {
+      await startEncounterMutation.mutateAsync(encounter.id)
+    }
+    const tabParam = encounter.status === "WAITING_CLS" ? "?tab=lab" : ""
+    router.push(`/patients/${encounter.patientId}/encounters/${encounter.id}${tabParam}`)
   }
 
-  // Row Action Handlers
-  const handleOpenEncounter = (encounter: DoctorEncounter) => {
-    setSelectedEncounter(encounter)
-    setIsEncounterDialogOpen(true)
+  // Row Action Handlers: Navigate straight to Encounter Detail Workspace
+  const handleOpenEncounter = async (encounter: DoctorEncounter) => {
+    if (encounter.status === "WAITING_EXAM") {
+      await startEncounterMutation.mutateAsync(encounter.id)
+    }
+    const tabParam = encounter.status === "WAITING_CLS" ? "?tab=lab" : ""
+    router.push(`/patients/${encounter.patientId}/encounters/${encounter.id}${tabParam}`)
   }
 
   const handleQuickView = (encounter: DoctorEncounter) => {
     setSelectedEncounter(encounter)
     setIsQuickViewOpen(true)
-  }
-
-  const handleViewOrders = (encounter: DoctorEncounter) => {
-    setSelectedEncounter(encounter)
-    setIsOrdersDialogOpen(true)
   }
 
   const handleToggleSort = () => {
@@ -122,8 +134,9 @@ export function DoctorWorklistPage() {
     setCurrentPage(1)
   }
 
+
   return (
-    <div className="flex flex-col flex-1 gap-5 w-full">
+    <ScreenLayout data-slot="doctor-worklist-page">
       {/* PAGE HEADER */}
       <PageHeader
         breadcrumbs={[
@@ -158,15 +171,27 @@ export function DoctorWorklistPage() {
               <span>Bộ lọc nâng cao</span>
             </Button>
 
-            {/* Primary Action: Mở lượt khám tiếp theo */}
+            {/* Primary Action: Tiếp tục khám / Khám bệnh nhân tiếp theo */}
             <Button
               type="button"
               size="sm"
-              onClick={handleOpenNextEncounter}
-              className="h-9 gap-1.5 bg-primary text-xs font-semibold text-primary-foreground hover:bg-primary/90 shadow-2xs cursor-pointer"
+              onClick={handleNextAction}
+              disabled={!nextAction || nextAction.actionType === "NONE"}
+              title={
+                nextAction?.actionType === "CONTINUE"
+                  ? `Tiếp tục khám: ${nextAction.encounter?.patientName} (${nextAction.encounter?.encounterCode})`
+                  : nextAction?.actionType === "NEXT"
+                  ? `Khám tiếp theo: ${nextAction.encounter?.patientName} (${nextAction.encounter?.encounterCode})`
+                  : "Không có lượt khám chờ tiếp theo"
+              }
+              className="h-9 gap-1.5 bg-primary text-xs font-semibold text-primary-foreground hover:bg-primary/90 shadow-2xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <ChevronRight className="size-4" />
-              <span>Mở lượt khám tiếp theo</span>
+              <span>
+                {nextAction?.actionType === "CONTINUE"
+                  ? "Tiếp tục lượt đang khám"
+                  : "Khám bệnh nhân tiếp theo"}
+              </span>
             </Button>
           </div>
         }
@@ -220,22 +245,10 @@ export function DoctorWorklistPage() {
         onToggleSort={handleToggleSort}
         onOpenEncounter={handleOpenEncounter}
         onQuickView={handleQuickView}
-        onViewOrders={handleViewOrders}
         onResetFilters={handleResetFilters}
       />
 
-      {/* MODAL 01: Mở hồ sơ / Mở lượt khám tiếp theo */}
-      <DoctorEncounterDialog
-        encounter={selectedEncounter}
-        open={isEncounterDialogOpen}
-        onOpenChange={setIsEncounterDialogOpen}
-        onCompleteEncounter={() => {
-          refetchWorklist()
-          refetchCounters()
-        }}
-      />
-
-      {/* DRAWER 02: Xem nhanh thông tin bệnh nhân */}
+      {/* DRAWER 01: Xem nhanh thông tin bệnh nhân */}
       <DoctorQuickViewSheet
         encounter={selectedEncounter}
         open={isQuickViewOpen}
@@ -243,14 +256,7 @@ export function DoctorWorklistPage() {
         onOpenEncounter={handleOpenEncounter}
       />
 
-      {/* MODAL 03: Phiếu chỉ định cận lâm sàng */}
-      <DoctorOrdersDialog
-        encounter={selectedEncounter}
-        open={isOrdersDialogOpen}
-        onOpenChange={setIsOrdersDialogOpen}
-      />
-
-      {/* MODAL 04: Bộ lọc nâng cao */}
+      {/* MODAL 02: Bộ lọc nâng cao */}
       <DoctorAdvancedFilterDialog
         open={isAdvancedFilterOpen}
         onOpenChange={setIsAdvancedFilterOpen}
@@ -268,6 +274,6 @@ export function DoctorWorklistPage() {
           refetchWorklist()
         }}
       />
-    </div>
+    </ScreenLayout>
   )
 }

@@ -5,14 +5,16 @@ import { describe, it, expect, vi, beforeEach } from "vitest"
 import "@testing-library/jest-dom/vitest"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { DoctorWorklistPage } from "../pages/doctor-worklist-page"
+import { resetMockDoctorEncounters } from "../api"
 import { AppSidebar } from "@/widgets/app-sidebar/app-sidebar"
 import { AppHeader } from "@/widgets/app-header/app-header"
 
 // Mock next/navigation
+const mockPush = vi.fn()
 const mockPathname = vi.fn(() => "/doctor")
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
-    push: vi.fn(),
+    push: mockPush,
     replace: vi.fn(),
     prefetch: vi.fn(),
   }),
@@ -43,6 +45,7 @@ function renderWithClient(ui: React.ReactElement) {
 describe("Doctor Worklist — Danh sách lượt khám", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    resetMockDoctorEncounters()
     mockPathname.mockReturnValue("/doctor")
   })
 
@@ -58,11 +61,9 @@ describe("Doctor Worklist — Danh sách lượt khám", () => {
     expect(screen.getByRole("link", { name: /Lễ tân/i })).toBeInTheDocument()
     expect(screen.getByRole("link", { name: /Bệnh nhân/i })).toBeInTheDocument()
     expect(screen.getByRole("link", { name: /Lượt khám/i })).toBeInTheDocument()
-    expect(screen.getByRole("link", { name: /Chỉ định/i })).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: /Lịch hẹn/i })).toBeInTheDocument()
     expect(screen.getByRole("link", { name: /Thanh toán/i })).toBeInTheDocument()
-    expect(screen.getByRole("link", { name: /Doanh nghiệp/i })).toBeInTheDocument()
-    expect(screen.getByRole("link", { name: /Báo cáo/i })).toBeInTheDocument()
-    expect(screen.getByRole("link", { name: /Cài đặt/i })).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: /Đơn vị/i })).toBeInTheDocument()
 
     // Verify Lượt khám is highlighted active
     const activeLink = screen.getByRole("link", { name: /Lượt khám/i })
@@ -94,7 +95,7 @@ describe("Doctor Worklist — Danh sách lượt khám", () => {
     expect(screen.getByRole("button", { name: /Làm mới/i })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: /Bộ lọc nâng cao/i })).toBeInTheDocument()
     expect(
-      screen.getByRole("button", { name: /Mở lượt khám tiếp theo/i })
+      screen.getByRole("button", { name: /Tiếp tục lượt đang khám|Khám bệnh nhân tiếp theo/i })
     ).toBeInTheDocument()
   })
 
@@ -185,7 +186,7 @@ describe("Doctor Worklist — Danh sách lượt khám", () => {
     expect(screen.getByText("43")).toBeInTheDocument()
   })
 
-  it("opens DoctorEncounterDialog when clicking 'Mở lượt khám tiếp theo'", async () => {
+  it("navigates to encounter detail when clicking header action", async () => {
     const user = userEvent.setup()
     renderWithClient(<DoctorWorklistPage />)
 
@@ -193,17 +194,16 @@ describe("Doctor Worklist — Danh sách lượt khám", () => {
       expect(screen.getByText("Trần Thị Hương")).toBeInTheDocument()
     })
 
-    const nextBtn = screen.getByRole("button", { name: /Mở lượt khám tiếp theo/i })
+    const nextBtn = screen.getByRole("button", { name: /Tiếp tục lượt đang khám|Khám bệnh nhân tiếp theo/i })
     await user.click(nextBtn)
 
     await waitFor(() => {
-      expect(screen.getByRole("dialog")).toBeInTheDocument()
-      expect(screen.getByText(/Hồ sơ khám: Trần Thị Hương/i)).toBeInTheDocument()
-      expect(screen.getByText("Chỉ số sinh hiệu ban đầu")).toBeInTheDocument()
+      expect(mockPush).toHaveBeenCalled()
+      expect(mockPush.mock.calls[0][0]).toMatch(/\/patients\/.*\/encounters\/.*/)
     })
   })
 
-  it("opens DoctorQuickViewSheet when clicking the quick view eye icon", async () => {
+  it("opens DoctorQuickViewSheet when clicking the quick view eye icon and can navigate to encounter detail", async () => {
     const user = userEvent.setup()
     renderWithClient(<DoctorWorklistPage />)
 
@@ -218,9 +218,14 @@ describe("Doctor Worklist — Danh sách lượt khám", () => {
       expect(screen.getByRole("dialog")).toBeInTheDocument()
       expect(screen.getByText("Thông tin tiếp nhận")).toBeInTheDocument()
     })
+
+    const detailBtn = screen.getByRole("button", { name: /Mở hồ sơ chi tiết/i })
+    await user.click(detailBtn)
+
+    expect(mockPush).toHaveBeenCalledWith("/patients/pat-001/encounters/enc-001")
   })
 
-  it("opens DoctorOrdersDialog when clicking the clipboard icon", async () => {
+  it("renders status-aware primary actions in table rows and navigates directly to Encounter Detail", async () => {
     const user = userEvent.setup()
     renderWithClient(<DoctorWorklistPage />)
 
@@ -228,16 +233,21 @@ describe("Doctor Worklist — Danh sách lượt khám", () => {
       expect(screen.getByText("Trần Thị Hương")).toBeInTheDocument()
     })
 
-    const ordersBtn = screen.getByRole("button", { name: /Xem phiếu chỉ định của Trần Thị Hương/i })
-    await user.click(ordersBtn)
+    // Check status-aware button labels exist
+    expect(screen.getAllByRole("button", { name: "Bắt đầu khám" }).length).toBeGreaterThan(0)
+    expect(screen.getAllByRole("button", { name: "Tiếp tục khám" }).length).toBeGreaterThan(0)
+    expect(screen.getAllByRole("button", { name: "Xem kết quả" }).length).toBeGreaterThan(0)
+    expect(screen.getAllByRole("button", { name: "Kết luận" }).length).toBeGreaterThan(0)
+    expect(screen.getAllByRole("button", { name: "Xem hồ sơ" }).length).toBeGreaterThan(0)
 
-    await waitFor(() => {
-      expect(screen.getByRole("dialog")).toBeInTheDocument()
-      expect(screen.getByText("Phiếu chỉ định cận lâm sàng")).toBeInTheDocument()
-    })
+    // Click "Bắt đầu khám" for Trần Thị Hương
+    const startBtn = screen.getAllByRole("button", { name: "Bắt đầu khám" })[0]
+    await user.click(startBtn)
+
+    expect(mockPush).toHaveBeenCalledWith("/patients/pat-001/encounters/enc-001")
   })
 
-  it("opens DoctorAdvancedFilterDialog when clicking 'Bộ lọc nâng cao'", async () => {
+  it("opens DoctorAdvancedFilterDialog when clicking 'Bộ lọc nâng cao' with clean business options", async () => {
     const user = userEvent.setup()
     renderWithClient(<DoctorWorklistPage />)
 
@@ -248,6 +258,9 @@ describe("Doctor Worklist — Danh sách lượt khám", () => {
       expect(screen.getByRole("dialog")).toBeInTheDocument()
       expect(screen.getByText("Mức độ ưu tiên lâm sàng")).toBeInTheDocument()
       expect(screen.getByText("Loại hình khám")).toBeInTheDocument()
+      // Business rules: No BHYT, No corporate alias, No children in priority
+      expect(screen.queryByText(/BHYT/i)).not.toBeInTheDocument()
+      expect(screen.queryByText(/trẻ em/i)).not.toBeInTheDocument()
     })
   })
 
@@ -266,5 +279,38 @@ describe("Doctor Worklist — Danh sách lượt khám", () => {
       expect(screen.getByText("Nguyễn Văn Bình")).toBeInTheDocument()
       expect(screen.queryByText("Trần Thị Hương")).not.toBeInTheDocument()
     })
+  })
+
+  it("supports accurate doctor, date, and examType filtering in API", async () => {
+    const { fetchDoctorWorklist, fetchDoctorNextAction, startDoctorEncounter } = await import("../api")
+
+    // Doctor filter
+    const anResult = await fetchDoctorWorklist({ doctor: "BS. Nguyễn Văn An" })
+    expect(anResult.items.length).toBeGreaterThan(0)
+    anResult.items.forEach((item) => {
+      expect(item.assignedDoctor).toBe("BS. Nguyễn Văn An")
+    })
+
+    // Exam type filter
+    const orgResult = await fetchDoctorWorklist({ examType: "ORGANIZATION" })
+    expect(orgResult.items.length).toBeGreaterThan(0)
+    orgResult.items.forEach((item) => {
+      expect(item.examType).toBe("ORGANIZATION")
+    })
+
+    // Date filter
+    const dateResult = await fetchDoctorWorklist({ date: "25/09/2026" })
+    expect(dateResult.items.length).toBeGreaterThan(0)
+    const invalidDateResult = await fetchDoctorWorklist({ date: "01/01/2099" })
+    expect(invalidDateResult.items.length).toBe(0)
+
+    // Next Action Rule: Prioritize EXAMINING, then WAITING_EXAM by clinical priority
+    const nextAction1 = await fetchDoctorNextAction("Của tôi")
+    expect(nextAction1.actionType).toBe("CONTINUE")
+    expect(nextAction1.encounter?.patientName).toBe("Nguyễn Văn Bình")
+
+    // Start another encounter
+    const started = await startDoctorEncounter("enc-001")
+    expect(started?.status).toBe("EXAMINING")
   })
 })
