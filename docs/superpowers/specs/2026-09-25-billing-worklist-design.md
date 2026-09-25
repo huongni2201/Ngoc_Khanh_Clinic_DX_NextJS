@@ -35,6 +35,7 @@ The change is successful when the receptionist can:
 
 - Accounting reports or end-of-day reconciliation.
 - Refunds, partial payments, split payments, insurance settlement, and corporate invoicing.
+- Designing or printing a legally usable payment receipt before a receipt contract/template exists.
 - Editing clinical service charges from the payment screen.
 - A frontend webhook receiver. Payment-provider webhooks terminate at the backend.
 - Browser storage as a source of truth for payment state.
@@ -90,7 +91,7 @@ Row actions are status-dependent:
 ```text
 UNPAID   -> Collect payment
 PENDING  -> View payment
-PAID     -> View receipt
+PAID     -> View payment
 EXPIRED  -> Reopen and create a new transfer intent
 FAILED   -> Inspect
 ```
@@ -120,7 +121,7 @@ The backend remains authoritative. Duplicate webhook delivery and duplicate paym
 - Replace the QR area with a compact success state.
 - Show amount, paid time, method, and transaction reference when available.
 - Lock payment controls.
-- Offer `Print receipt` and `Done` actions.
+- Offer `Print receipt` only when a real receipt renderer/document capability is supplied; otherwise offer `Done` and never substitute the examination-form print dialog.
 
 ### Closing while pending
 
@@ -208,6 +209,7 @@ Tests cover:
 - closing a pending transfer without changing its status;
 - reopening a pending transfer with current data;
 - transitioning a pending payment to paid and invalidating all relevant queries;
+- preventing the payment flow from opening the examination-form print dialog as a receipt;
 - preventing cash or transfer payment duplication;
 - loading, empty, error, and already-paid dialog states;
 - keyboard-accessible payment-method selection and dialog closure.
