@@ -10,7 +10,7 @@ import {
   Info,
   Scan,
   CircleDot,
-} from "lucide-react"
+} from "@/shared/ui/product-icon"
 import { EncounterDetailData } from "../../types/encounter"
 
 interface EncounterLabOrdersViewProps {
@@ -20,19 +20,19 @@ interface EncounterLabOrdersViewProps {
 
 function getServiceIcon(category: string, name: string) {
   if (name.includes("máu") || name.includes("CBC")) {
-    return <Droplet className="size-4 text-rose-500" />
+    return <Droplet className="size-4 text-status-danger" />
   }
   if (name.includes("Sinh hóa")) {
-    return <FlaskConical className="size-4 text-amber-500" />
+    return <FlaskConical className="size-4 text-status-warning" />
   }
   if (name.includes("Siêu âm")) {
     return <CircleDot className="size-4 text-primary" />
   }
   if (name.includes("X-quang")) {
-    return <Scan className="size-4 text-indigo-500" />
+    return <Scan className="size-4 text-primary" />
   }
   if (name.includes("Điện tâm đồ") || name.includes("ECG")) {
-    return <Activity className="size-4 text-emerald-500" />
+    return <Activity className="size-4 text-status-success" />
   }
   return <FileText className="size-4 text-primary" />
 }
@@ -42,14 +42,14 @@ export function EncounterLabOrdersView({ data, onViewDetail }: EncounterLabOrder
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-border bg-card p-6 shadow-xs">
+      <div className="rounded-lg border border-border bg-card p-6 ">
         {/* Title */}
         <h2 className="text-base font-bold text-foreground">
           Danh sách kết quả cận lâm sàng
         </h2>
 
         {/* Info Banner matching reference */}
-        <div className="mt-4 flex items-center gap-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-xs text-primary">
+        <div className="mt-4 flex items-center gap-3 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3 text-xs text-primary">
           <Info className="size-4 shrink-0" />
           <p>
             Danh sách kết quả cận lâm sàng chỉ hiển thị các chỉ định trong lượt khám{" "}
@@ -59,7 +59,7 @@ export function EncounterLabOrdersView({ data, onViewDetail }: EncounterLabOrder
         </div>
 
         {/* Orders Table */}
-        <div className="mt-5 overflow-x-auto rounded-xl border border-border">
+        <div className="mt-5 overflow-x-auto rounded-lg border border-border">
           <table className="w-full text-left text-xs border-collapse">
             <thead className="bg-muted/50 text-muted-foreground font-semibold border-b border-border">
               <tr>
@@ -89,8 +89,8 @@ export function EncounterLabOrdersView({ data, onViewDetail }: EncounterLabOrder
                     {order.performedAt}
                   </td>
                   <td className="py-3.5 px-4">
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 border border-emerald-200">
-                      <span className="size-1.5 rounded-full bg-emerald-600" />
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-status-success-bg px-2.5 py-0.5 text-xs font-semibold text-status-success border border-status-success/30">
+                      <span className="size-1.5 rounded-full bg-status-success" />
                       {order.statusLabel}
                     </span>
                   </td>

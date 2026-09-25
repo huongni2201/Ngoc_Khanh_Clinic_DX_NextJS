@@ -17,7 +17,7 @@ export function ExaminationSummaryTable({
 }: ExaminationSummaryTableProps) {
   if (isLoading) {
     return (
-      <div className="rounded-xl border border-border bg-card shadow-2xs overflow-hidden">
+      <div className="rounded-lg border border-border bg-card  overflow-hidden">
         <div className="p-4 space-y-3">
           {Array.from({ length: 7 }).map((_, idx) => (
             <div key={idx} className="flex justify-between items-center py-2">
@@ -37,7 +37,7 @@ export function ExaminationSummaryTable({
   }
 
   return (
-    <div className="rounded-xl border border-border bg-card shadow-2xs overflow-hidden">
+    <div className="rounded-lg border border-border bg-card  overflow-hidden">
       <div className="overflow-x-auto scrollbar-thin">
         <table className="w-full text-xs sm:text-sm border-collapse">
           <thead>

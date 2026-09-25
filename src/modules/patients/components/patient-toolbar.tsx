@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Search, Filter, X, RotateCcw } from "lucide-react"
+import { Search, Filter, X, RotateCcw } from "@/shared/ui/product-icon"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import {
@@ -85,7 +85,7 @@ export function PatientToolbar({
           value={searchTerm}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder="Tìm kiếm theo mã bệnh nhân, họ tên, số điện thoại, số định danh..."
-          className="h-10 w-full rounded-xl border-border bg-card pl-10 pr-9 text-xs text-foreground placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring shadow-xs"
+          className="h-10 w-full rounded-lg border-border bg-card pl-10 pr-9 text-xs text-foreground placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring "
         />
         {searchTerm && (
           <button
@@ -108,7 +108,7 @@ export function PatientToolbar({
             if (val) onGenderChange(val)
           }}
         >
-          <SelectTrigger className="h-10 w-[150px] rounded-xl border-border bg-card text-xs text-foreground shadow-xs font-normal">
+          <SelectTrigger className="h-10 w-[150px] rounded-lg border-border bg-card text-xs text-foreground  font-normal">
             <span className="truncate">{getGenderText(selectedGender)}</span>
           </SelectTrigger>
           <SelectContent>
@@ -126,7 +126,7 @@ export function PatientToolbar({
             if (val) onAgeGroupChange(val)
           }}
         >
-          <SelectTrigger className="h-10 w-[160px] rounded-xl border-border bg-card text-xs text-foreground shadow-xs font-normal">
+          <SelectTrigger className="h-10 w-[160px] rounded-lg border-border bg-card text-xs text-foreground  font-normal">
             <span className="truncate">{getAgeGroupText(selectedAgeGroup)}</span>
           </SelectTrigger>
           <SelectContent>
@@ -140,14 +140,14 @@ export function PatientToolbar({
 
         {/* Filter Quick Action / Popover Button */}
         <Popover>
-          <PopoverTrigger className="h-10 inline-flex items-center justify-center rounded-xl border border-border bg-card px-3 text-xs font-medium text-foreground hover:bg-hover hover:text-primary shadow-xs cursor-pointer">
+          <PopoverTrigger className="h-10 inline-flex items-center justify-center rounded-lg border border-border bg-card px-3 text-xs font-medium text-foreground hover:bg-hover hover:text-primary  cursor-pointer">
             <Filter className="mr-1.5 size-4 text-secondary-foreground" />
             Bộ lọc
             {hasActiveFilters && (
               <span className="ml-1.5 flex size-2 rounded-full bg-primary" />
             )}
           </PopoverTrigger>
-          <PopoverContent align="end" className="w-64 p-3 rounded-xl shadow-lg">
+          <PopoverContent align="end" className="w-64 p-3 rounded-lg shadow-lg">
             <div className="space-y-3">
               <div className="flex items-center justify-between border-b border-border pb-2">
                 <span className="text-xs font-semibold text-foreground">Bộ lọc nâng cao</span>
@@ -190,7 +190,7 @@ export function PatientToolbar({
             variant="ghost"
             size="sm"
             onClick={onResetFilters}
-            className="h-10 px-2.5 text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-xl"
+            className="h-10 px-2.5 text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg"
             title="Xóa tất cả bộ lọc"
           >
             <RotateCcw className="size-3.5 mr-1" />

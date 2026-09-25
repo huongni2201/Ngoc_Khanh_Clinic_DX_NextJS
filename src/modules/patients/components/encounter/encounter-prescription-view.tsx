@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Printer, Download, FileText } from "lucide-react"
+import { Printer, Download, FileText } from "@/shared/ui/product-icon"
 import { Button } from "@/components/ui/button"
 import { EncounterDetailData } from "../../types/encounter"
 import { PrintPrescriptionDialog } from "./print-prescription-dialog"
@@ -26,7 +26,7 @@ export function EncounterPrescriptionView({
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-border bg-card p-6 shadow-xs">
+      <div className="rounded-lg border border-border bg-card p-6 ">
         {/* Header row */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pb-5 border-b border-border">
           <h2 className="text-base font-bold text-foreground">
@@ -38,7 +38,7 @@ export function EncounterPrescriptionView({
               variant="outline"
               size="sm"
               onClick={() => setModalOpen(true)}
-              className="h-9 rounded-xl border-border px-3.5 text-xs font-medium text-foreground hover:bg-muted transition-colors"
+              className="h-9 rounded-lg border-border px-3.5 text-xs font-medium text-foreground hover:bg-muted transition-colors"
             >
               <Printer className="mr-1.5 size-4 text-primary" />
               In đơn thuốc
@@ -47,7 +47,7 @@ export function EncounterPrescriptionView({
               variant="outline"
               size="sm"
               onClick={() => alert("Đang kết xuất đơn thuốc ra định dạng PDF...")}
-              className="h-9 rounded-xl border-border px-3.5 text-xs font-medium text-foreground hover:bg-muted transition-colors"
+              className="h-9 rounded-lg border-border px-3.5 text-xs font-medium text-foreground hover:bg-muted transition-colors"
             >
               <Download className="mr-1.5 size-4 text-primary" />
               Xuất PDF
@@ -56,7 +56,7 @@ export function EncounterPrescriptionView({
         </div>
 
         {/* Prescription Table matching reference screenshot */}
-        <div className="mt-5 overflow-x-auto rounded-xl border border-border">
+        <div className="mt-5 overflow-x-auto rounded-lg border border-border">
           <table className="w-full text-left text-xs border-collapse">
             <thead className="bg-muted/50 text-muted-foreground font-semibold border-b border-border">
               <tr>
@@ -100,7 +100,7 @@ export function EncounterPrescriptionView({
         </div>
 
         {/* Doctor Note Box */}
-        <div className="mt-6 rounded-xl border border-primary/20 bg-primary/5 p-4.5">
+        <div className="mt-6 rounded-lg border border-primary/20 bg-primary/5 p-4.5">
           <div className="flex items-center gap-2 text-primary font-semibold text-xs">
             <FileText className="size-4 shrink-0" />
             <span>Ghi chú của bác sĩ</span>

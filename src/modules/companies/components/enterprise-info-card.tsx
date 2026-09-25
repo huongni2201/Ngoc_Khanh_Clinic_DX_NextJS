@@ -40,7 +40,7 @@ export function EnterpriseInfoCard({ enterprise }: EnterpriseInfoCardProps) {
   ]
 
   return (
-    <div className="w-full rounded-xl border border-border bg-card p-6 sm:p-8 shadow-2xs">
+    <div className="w-full rounded-lg border border-border bg-card p-6 sm:p-8 ">
       <h2 className="text-lg font-bold tracking-tight text-foreground mb-4 sm:mb-6">
         Thông tin doanh nghiệp
       </h2>

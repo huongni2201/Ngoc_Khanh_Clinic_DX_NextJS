@@ -3,7 +3,7 @@
 import * as React from "react"
 import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { AlertCircle, Loader2, UserCog, Info } from "lucide-react"
+import { AlertCircle, Loader2, Info } from "@/shared/ui/product-icon"
 import {
   Dialog,
   DialogContent,
@@ -113,13 +113,8 @@ export function EditPatientDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-2xl rounded-2xl p-6 sm:p-7 shadow-xl">
-        <DialogHeader className="space-y-1.5 pb-2 border-b border-border">
-          <div className="flex items-center gap-3">
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-              <UserCog className="size-5" />
-            </div>
-            <div>
+      <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl">
+        <DialogHeader className="shrink-0 border-b border-border px-6 pb-4 pt-6">
               <DialogTitle className="text-xl font-bold tracking-tight text-foreground">
                 Chỉnh sửa thông tin bệnh nhân
               </DialogTitle>
@@ -130,10 +125,13 @@ export function EditPatientDialog({
                 </span>{" "}
                 ({patient?.patientCode})
               </DialogDescription>
-            </div>
-          </div>
         </DialogHeader>
 
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="flex min-h-0 flex-1 flex-col"
+        >
+          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-5">
         {serverError && (
           <Alert variant="destructive" className="py-2.5">
             <AlertCircle className="size-4" />
@@ -148,7 +146,6 @@ export function EditPatientDialog({
           </span>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-1">
           {/* Row: Patient Code (Readonly) & Full Name */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
@@ -328,7 +325,8 @@ export function EditPatientDialog({
             </div>
           </div>
 
-          <DialogFooter className="pt-3 border-t border-border gap-2 sm:gap-0">
+          </div>
+          <DialogFooter className="shrink-0 border-t border-border px-6 py-4">
             <Button
               type="button"
               variant="outline"

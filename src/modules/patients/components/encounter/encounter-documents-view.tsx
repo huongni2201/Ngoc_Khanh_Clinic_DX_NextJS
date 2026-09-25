@@ -7,7 +7,7 @@ import {
   Eye,
   Printer,
   Upload,
-} from "lucide-react"
+} from "@/shared/ui/product-icon"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { EncounterDetailData } from "../../types/encounter"
@@ -21,7 +21,7 @@ export function EncounterDocumentsView({ data }: EncounterDocumentsViewProps) {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-border bg-card p-6 shadow-xs">
+      <div className="rounded-lg border border-border bg-card p-6 ">
         {/* Header */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pb-5 border-b border-border">
           <div>
@@ -37,7 +37,7 @@ export function EncounterDocumentsView({ data }: EncounterDocumentsViewProps) {
             variant="outline"
             size="sm"
             onClick={() => alert("Tính năng tải lên tài liệu mới cho lượt khám...")}
-            className="h-9 rounded-xl border-border px-3.5 text-xs font-medium text-foreground hover:bg-muted"
+            className="h-9 rounded-lg border-border px-3.5 text-xs font-medium text-foreground hover:bg-muted"
           >
             <Upload className="mr-1.5 size-3.5 text-primary" />
             Tải lên tài liệu
@@ -45,7 +45,7 @@ export function EncounterDocumentsView({ data }: EncounterDocumentsViewProps) {
         </div>
 
         {/* Documents Table */}
-        <div className="mt-5 overflow-x-auto rounded-xl border border-border">
+        <div className="mt-5 overflow-x-auto rounded-lg border border-border">
           <table className="w-full text-left text-xs border-collapse">
             <thead className="bg-muted/50 text-muted-foreground font-semibold border-b border-border">
               <tr>

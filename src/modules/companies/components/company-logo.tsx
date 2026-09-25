@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Building2 } from "lucide-react"
+import { Building2 } from "@/shared/ui/product-icon"
 
 interface CompanyLogoProps {
   type?: string

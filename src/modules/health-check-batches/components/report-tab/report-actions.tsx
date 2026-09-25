@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { FileSpreadsheet, Download } from "lucide-react"
+import { FileSpreadsheet, Download } from "@/shared/ui/product-icon"
 import { Button } from "@/components/ui/button"
 
 interface ReportActionsProps {
@@ -20,7 +20,7 @@ export function ReportActions({
         variant="outline"
         size="sm"
         onClick={onExportDetailHorizontal}
-        className="h-8 sm:h-9 px-3 text-xs font-medium border-border/90 hover:bg-hover text-secondary-foreground hover:text-foreground transition-colors shadow-2xs cursor-pointer"
+        className="h-8 sm:h-9 px-3 text-xs font-medium border-border/90 hover:bg-hover text-secondary-foreground hover:text-foreground transition-colors  cursor-pointer"
       >
         <FileSpreadsheet className="size-3.5 mr-1.5 text-primary stroke-[2]" />
         Xuất Excel chi tiết (ngang)
@@ -30,7 +30,7 @@ export function ReportActions({
         variant="outline"
         size="sm"
         onClick={onExportSummaryVertical}
-        className="h-8 sm:h-9 px-3 text-xs font-medium border-border/90 hover:bg-hover text-secondary-foreground hover:text-foreground transition-colors shadow-2xs cursor-pointer"
+        className="h-8 sm:h-9 px-3 text-xs font-medium border-border/90 hover:bg-hover text-secondary-foreground hover:text-foreground transition-colors  cursor-pointer"
       >
         <Download className="size-3.5 mr-1.5 text-primary stroke-[2]" />
         Xuất Excel tổng hợp (dọc)

@@ -100,7 +100,7 @@ export function EmployeesTab({
       {/* 2. Table / Loading Skeleton */}
       {isLoading ? (
         <div className="space-y-3">
-          <Skeleton className="h-96 w-full rounded-xl" />
+          <Skeleton className="h-96 w-full rounded-lg" />
           <div className="flex justify-between items-center pt-2">
             <Skeleton className="h-4 w-48" />
             <Skeleton className="h-8 w-64" />

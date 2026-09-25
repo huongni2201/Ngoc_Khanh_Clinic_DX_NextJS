@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useRouter } from "next/navigation"
-import { Eye, Edit3, Search } from "lucide-react"
+import { Eye, Edit3, Search } from "@/shared/ui/product-icon"
 import {
   Table,
   TableHeader,
@@ -129,7 +129,7 @@ export function EnterpriseTable({
 
   if (isLoading) {
     return (
-      <div className="flex flex-col flex-1 rounded-xl border border-border bg-card overflow-hidden shadow-2xs">
+      <div className="flex flex-col flex-1 rounded-lg border border-border bg-card overflow-hidden ">
         {renderCardHeader(totalItems ?? 0)}
         <Table className="w-full">
           <TableHeader>
@@ -200,7 +200,7 @@ export function EnterpriseTable({
 
   if (enterprises.length === 0) {
     return (
-      <div className="flex flex-col flex-1 rounded-xl border border-border bg-card overflow-hidden shadow-2xs">
+      <div className="flex flex-col flex-1 rounded-lg border border-border bg-card overflow-hidden ">
         {renderCardHeader(0)}
         <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
           <p className="text-sm font-medium text-foreground">Không tìm thấy doanh nghiệp nào</p>
@@ -213,7 +213,7 @@ export function EnterpriseTable({
   }
 
   return (
-    <div className="flex flex-col flex-1 rounded-xl border border-border bg-card overflow-hidden shadow-2xs">
+    <div className="flex flex-col flex-1 rounded-lg border border-border bg-card overflow-hidden ">
       {renderCardHeader()}
       <Table className="w-full">
         <TableHeader>
@@ -343,7 +343,7 @@ export function EnterpriseTable({
                       variant="outline"
                       size="sm"
                       onClick={() => handleRowClick(enterprise.id)}
-                      className="size-7.5 p-0 text-secondary-foreground hover:text-foreground hover:bg-surface-alt border-border rounded-lg cursor-pointer shadow-2xs"
+                      className="size-7.5 p-0 text-secondary-foreground hover:text-foreground hover:bg-surface-alt border-border rounded-lg cursor-pointer "
                       title={`Xem chi tiết - ${enterprise.name}`}
                       aria-label={`Xem chi tiết cho ${enterprise.name}`}
                     >
@@ -353,7 +353,7 @@ export function EnterpriseTable({
                     <Button
                       variant="outline"
                       size="sm"
-                      className="size-7.5 p-0 text-secondary-foreground hover:text-foreground hover:bg-surface-alt border-border rounded-lg cursor-pointer shadow-2xs"
+                      className="size-7.5 p-0 text-secondary-foreground hover:text-foreground hover:bg-surface-alt border-border rounded-lg cursor-pointer "
                       title={`Chỉnh sửa - ${enterprise.name}`}
                       aria-label={`Chỉnh sửa cho ${enterprise.name}`}
                     >

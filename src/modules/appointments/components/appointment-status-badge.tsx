@@ -7,7 +7,7 @@ import {
   Stethoscope,
   XCircle,
   AlertTriangle,
-} from "lucide-react"
+} from "@/shared/ui/product-icon"
 import { Badge } from "@/components/ui/badge"
 import { AppointmentStatus } from "../types"
 import { cn } from "@/lib/utils"

@@ -1,10 +1,10 @@
 "use client"
 
 import * as React from "react"
-import Link from "next/link"
 import { useRouter, useSearchParams, usePathname } from "next/navigation"
-import { Home, ChevronRight, AlertCircle, RefreshCw } from "lucide-react"
+import { AlertCircle, RefreshCw } from "@/shared/ui/product-icon"
 import { Button } from "@/components/ui/button"
+import { PageHeader } from "@/shared/ui"
 import { AppointmentHeaderActions } from "../components/appointment-header-actions"
 import { AppointmentCountersStrip } from "../components/appointment-counters-strip"
 import { AppointmentTable } from "../components/appointment-table"
@@ -226,52 +226,21 @@ export function AppointmentsPage() {
 
   return (
     <div className="flex flex-col flex-1 gap-5 w-full">
-      {/* 1. Breadcrumbs & Page Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        {/* Breadcrumbs & Titles */}
-        <div className="space-y-1.5">
-          {/* Breadcrumb navigation */}
-          <nav
-            aria-label="Breadcrumb"
-            className="flex items-center gap-1.5 text-xs text-muted-foreground"
-          >
-            <Link
-              href="/dashboard"
-              className="flex items-center hover:text-foreground transition-colors"
-            >
-              <Home className="size-3.5" />
-            </Link>
-            <ChevronRight className="size-3.5 text-muted-foreground/60" />
-            <Link
-              href="/reception"
-              className="hover:text-foreground transition-colors"
-            >
-              Bàn tiếp đón
-            </Link>
-            <ChevronRight className="size-3.5 text-muted-foreground/60" />
-            <span className="font-medium text-foreground">Lịch hẹn</span>
-          </nav>
-
-          {/* Header Titles */}
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">
-              Lịch hẹn
-            </h1>
-            <p className="text-sm text-secondary-foreground">
-              Danh sách quản lý lịch hẹn khám bệnh và điều phối tiếp nhận
-            </p>
-          </div>
-        </div>
-
-        {/* Top Right Action Buttons */}
-        <div>
+      <PageHeader
+        breadcrumbs={[
+          { label: "Bàn tiếp đón", href: "/reception" },
+          { label: "Lịch hẹn" },
+        ]}
+        title="Lịch hẹn"
+        description="Danh sách quản lý lịch hẹn khám bệnh và điều phối tiếp nhận"
+        actions={
           <AppointmentHeaderActions
             onOpenCreateAppointment={handleOpenCreate}
             onOpenFindPatient={() => setIsPatientSearchOpen(true)}
             onOpenCreatePatient={() => setIsCreatePatientOpen(true)}
           />
-        </div>
-      </div>
+        }
+      />
 
       {/* 2. Compact Operational Counters Strip (Height 76px) */}
       <AppointmentCountersStrip
@@ -283,7 +252,7 @@ export function AppointmentsPage() {
 
       {/* 3. Error state */}
       {isError && (
-        <div className="p-4 rounded-xl border border-destructive/30 bg-destructive/5 flex items-center justify-between gap-3 text-xs text-destructive">
+        <div className="p-4 rounded-lg border border-destructive/30 bg-destructive/5 flex items-center justify-between gap-3 text-xs text-destructive">
           <div className="flex items-center gap-2">
             <AlertCircle className="size-4 shrink-0" />
             <span>

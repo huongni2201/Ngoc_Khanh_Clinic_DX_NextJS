@@ -7,7 +7,7 @@ import {
   FlaskConical,
   CheckCircle2,
   XCircle,
-} from "lucide-react"
+} from "@/shared/ui/product-icon"
 import { Badge } from "@/components/ui/badge"
 import { ReceptionStatus } from "../types"
 import { cn } from "@/lib/utils"

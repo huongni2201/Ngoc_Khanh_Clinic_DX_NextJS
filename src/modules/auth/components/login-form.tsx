@@ -4,7 +4,7 @@ import * as React from "react"
 import Link from "next/link"
 import { useForm, Controller } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { User, Lock, Eye, EyeOff, Loader2, AlertCircle } from "lucide-react"
+import { User, Lock, Eye, EyeOff, Loader2, AlertCircle } from "@/shared/ui/product-icon"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -89,12 +89,13 @@ export function LoginForm({
           <Input
             id="username"
             type="text"
+            required
             autoComplete="username"
             disabled={isBusy}
             placeholder="Nhập tên đăng nhập"
             aria-invalid={Boolean(errors.username)}
             aria-describedby={errors.username ? "username-error" : undefined}
-            className="h-11 sm:h-12 pl-10 pr-3.5 rounded-lg border-border bg-background text-xs sm:text-sm shadow-none placeholder:text-muted-foreground focus-visible:bg-card focus-visible:ring-2 focus-visible:ring-ring/30"
+            className="h-10 pl-10 pr-3.5 text-sm"
             {...register("username", {
               onChange: handleInputChange,
             })}
@@ -127,12 +128,13 @@ export function LoginForm({
           <Input
             id="password"
             type={showPassword ? "text" : "password"}
+            required
             autoComplete="current-password"
             disabled={isBusy}
             placeholder="Nhập mật khẩu"
             aria-invalid={Boolean(errors.password)}
             aria-describedby={errors.password ? "password-error" : undefined}
-            className="h-11 sm:h-12 pl-10 pr-11 rounded-lg border-border bg-background text-xs sm:text-sm shadow-none placeholder:text-muted-foreground focus-visible:bg-card focus-visible:ring-2 focus-visible:ring-ring/30"
+            className="h-10 pl-10 pr-11 text-sm"
             {...register("password", {
               onChange: handleInputChange,
             })}
@@ -196,7 +198,7 @@ export function LoginForm({
       <Button
         type="submit"
         disabled={!isValid || isBusy}
-        className="w-full h-11 sm:h-12 rounded-lg font-medium text-xs sm:text-sm cursor-pointer shadow-xs transition-all mt-1"
+        className="mt-1 h-10 w-full"
       >
         {isBusy ? (
           <>

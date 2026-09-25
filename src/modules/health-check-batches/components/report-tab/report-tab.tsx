@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { AlertCircle, RefreshCw, FileQuestion } from "lucide-react"
+import { AlertCircle, RefreshCw, FileQuestion } from "@/shared/ui/product-icon"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ReportHeader } from "./report-header"
@@ -38,7 +38,7 @@ export function ReportTab({ batchId, batchName }: ReportTabProps) {
   // 1. Error state (does not break page header or layout)
   if (isError) {
     return (
-      <Card className="rounded-xl border border-border bg-card shadow-2xs overflow-hidden">
+      <Card className="rounded-lg border border-border bg-card  overflow-hidden">
         <ReportHeader
           onExportDetailHorizontal={handleExportDetailHorizontal}
           onExportSummaryVertical={handleExportSummaryVertical}
@@ -59,7 +59,7 @@ export function ReportTab({ batchId, batchName }: ReportTabProps) {
           <Button
             size="sm"
             onClick={() => refetch()}
-            className="text-xs h-9 shadow-xs cursor-pointer"
+            className="text-xs h-9  cursor-pointer"
           >
             <RefreshCw className="size-3.5 mr-1.5" />
             Thử lại
@@ -72,7 +72,7 @@ export function ReportTab({ batchId, batchName }: ReportTabProps) {
   // 2. Loading state
   if (isLoading) {
     return (
-      <Card className="rounded-xl border border-border bg-card shadow-2xs overflow-hidden">
+      <Card className="rounded-lg border border-border bg-card  overflow-hidden">
         <ReportHeader
           onExportDetailHorizontal={handleExportDetailHorizontal}
           onExportSummaryVertical={handleExportSummaryVertical}
@@ -92,7 +92,7 @@ export function ReportTab({ batchId, batchName }: ReportTabProps) {
   // 3. Empty state
   if (isEmpty) {
     return (
-      <Card className="rounded-xl border border-border bg-card shadow-2xs overflow-hidden">
+      <Card className="rounded-lg border border-border bg-card  overflow-hidden">
         <ReportHeader
           onExportDetailHorizontal={handleExportDetailHorizontal}
           onExportSummaryVertical={handleExportSummaryVertical}
@@ -118,7 +118,7 @@ export function ReportTab({ batchId, batchName }: ReportTabProps) {
 
   // 4. Normal populated state (matching reference image)
   return (
-    <Card className="rounded-xl border border-border bg-card shadow-2xs overflow-hidden">
+    <Card className="rounded-lg border border-border bg-card  overflow-hidden">
       {/* Card Header with Title and Export Actions */}
       <ReportHeader
         onExportDetailHorizontal={handleExportDetailHorizontal}

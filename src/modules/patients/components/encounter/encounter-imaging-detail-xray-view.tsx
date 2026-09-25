@@ -13,7 +13,7 @@ import {
   CheckCircle2,
   FileCheck,
   ShieldCheck,
-} from "lucide-react"
+} from "@/shared/ui/product-icon"
 import { Button } from "@/components/ui/button"
 import { EncounterDetailData } from "../../types/encounter"
 
@@ -38,7 +38,7 @@ export function EncounterImagingDetailXRayView({
           variant="outline"
           size="sm"
           onClick={onBack}
-          className="h-9 rounded-xl border-border px-3 text-xs font-medium text-foreground hover:bg-muted w-fit"
+          className="h-9 rounded-lg border-border px-3 text-xs font-medium text-foreground hover:bg-muted w-fit"
         >
           <ArrowLeft className="mr-1.5 size-4" />
           Quay lại danh sách dịch vụ chẩn đoán
@@ -49,7 +49,7 @@ export function EncounterImagingDetailXRayView({
             variant="outline"
             size="sm"
             onClick={() => alert("Gửi lệnh in kết quả chẩn đoán hình ảnh...")}
-            className="h-9 rounded-xl border-border px-3.5 text-xs font-medium text-foreground hover:bg-muted"
+            className="h-9 rounded-lg border-border px-3.5 text-xs font-medium text-foreground hover:bg-muted"
           >
             <Printer className="mr-1.5 size-4 text-primary" />
             In kết quả
@@ -58,7 +58,7 @@ export function EncounterImagingDetailXRayView({
             variant="outline"
             size="sm"
             onClick={() => alert("Đang tải file gốc DICOM (.dcm)...")}
-            className="h-9 rounded-xl border-border px-3.5 text-xs font-medium text-foreground hover:bg-muted"
+            className="h-9 rounded-lg border-border px-3.5 text-xs font-medium text-foreground hover:bg-muted"
           >
             <Download className="mr-1.5 size-4 text-primary" />
             Tải file DICOM
@@ -67,10 +67,10 @@ export function EncounterImagingDetailXRayView({
       </div>
 
       {/* Main Container */}
-      <div className="rounded-2xl border border-border bg-card p-6 shadow-xs">
+      <div className="rounded-lg border border-border bg-card p-6 ">
         {/* Title */}
         <div className="flex items-center gap-3 pb-5 border-b border-border">
-          <div className="flex size-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-100">
+          <div className="flex size-10 items-center justify-center rounded-lg bg-info-bg text-primary border border-info/30">
             <Scan className="size-5" />
           </div>
           <div>
@@ -78,8 +78,8 @@ export function EncounterImagingDetailXRayView({
               <h2 className="text-base font-bold text-foreground">
                 {diagnosticReportXRay.serviceName}
               </h2>
-              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700 border border-emerald-200">
-                <CheckCircle2 className="size-3 text-emerald-600" />
+              <span className="inline-flex items-center gap-1 rounded-full bg-status-success-bg px-2 py-0.5 text-xs font-semibold text-status-success border border-status-success/30">
+                <CheckCircle2 className="size-3 text-status-success" />
                 Hoàn tất
               </span>
             </div>
@@ -90,7 +90,7 @@ export function EncounterImagingDetailXRayView({
         </div>
 
         {/* Imaging Metadata Grid */}
-        <div className="mt-5 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5 rounded-xl bg-muted/30 p-4 border border-border/60 text-xs">
+        <div className="mt-5 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5 rounded-lg bg-muted/30 p-4 border border-border/60 text-xs">
           <div>
             <p className="text-[11px] text-muted-foreground font-medium">Kỹ thuật chụp</p>
             <p className="font-semibold text-foreground mt-0.5">{diagnosticReportXRay.technique}</p>
@@ -122,12 +122,12 @@ export function EncounterImagingDetailXRayView({
         {/* 2-Column: Left = Image Viewer, Right = Findings & Conclusion */}
         <div className="mt-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* LEFT: Image Viewer Frame (6 cols) */}
-          <div className="lg:col-span-6 flex flex-col rounded-xl border border-slate-800 bg-slate-950 overflow-hidden shadow-md">
+          <div className="lg:col-span-6 flex flex-col rounded-lg border border-border bg-foreground overflow-hidden ">
             {/* Viewer HUD Toolbar */}
-            <div className="flex items-center justify-between border-b border-slate-800 bg-slate-900/90 px-3 py-2 text-slate-300">
+            <div className="flex items-center justify-between border-b border-border bg-foreground px-3 py-2 text-background/80">
               <div className="flex items-center gap-2 text-[11px] font-mono">
                 <span className="font-bold text-white">DR X-RAY</span>
-                <span className="text-slate-500">|</span>
+                <span className="text-muted-foreground">|</span>
                 <span>PA CHEST ERECT</span>
               </div>
 
@@ -136,27 +136,27 @@ export function EncounterImagingDetailXRayView({
                   type="button"
                   title="Thu nhỏ"
                   onClick={() => setZoomLevel((z) => Math.max(z - 15, 70))}
-                  className="flex size-7 items-center justify-center rounded text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
+                  className="flex size-7 items-center justify-center rounded text-background/70 hover:bg-background/10 hover:text-background transition-colors"
                 >
                   <ZoomOut className="size-3.5" />
                 </button>
-                <span className="text-[10px] font-mono w-10 text-center text-slate-400">
+                <span className="text-[10px] font-mono w-10 text-center text-background/70">
                   {zoomLevel}%
                 </span>
                 <button
                   type="button"
                   title="Phóng to"
                   onClick={() => setZoomLevel((z) => Math.min(z + 15, 160))}
-                  className="flex size-7 items-center justify-center rounded text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
+                  className="flex size-7 items-center justify-center rounded text-background/70 hover:bg-background/10 hover:text-background transition-colors"
                 >
                   <ZoomIn className="size-3.5" />
                 </button>
-                <div className="h-4 w-px bg-slate-800 mx-1" />
+                <div className="h-4 w-px bg-background/20 mx-1" />
                 <button
                   type="button"
                   title="Đảo màu tương phản"
                   onClick={() => setIsInverted((v) => !v)}
-                  className="flex size-7 items-center justify-center rounded text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
+                  className="flex size-7 items-center justify-center rounded text-background/70 hover:bg-background/10 hover:text-background transition-colors"
                 >
                   <Contrast className="size-3.5" />
                 </button>
@@ -167,7 +167,7 @@ export function EncounterImagingDetailXRayView({
                     setZoomLevel(100)
                     setIsInverted(false)
                   }}
-                  className="flex size-7 items-center justify-center rounded text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
+                  className="flex size-7 items-center justify-center rounded text-background/70 hover:bg-background/10 hover:text-background transition-colors"
                 >
                   <RotateCw className="size-3.5" />
                 </button>
@@ -177,7 +177,7 @@ export function EncounterImagingDetailXRayView({
             {/* Viewer Stage with Anatomical Radiograph Simulation */}
             <div
               className={`relative flex items-center justify-center min-h-[420px] p-6 overflow-hidden transition-all ${
-                isInverted ? "bg-slate-100" : "bg-black"
+                isInverted ? "bg-background" : "bg-foreground"
               }`}
             >
               {/* Radiograph Anatomical SVG */}
@@ -194,7 +194,7 @@ export function EncounterImagingDetailXRayView({
                   viewBox="0 0 360 380"
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
-                  className="drop-shadow-lg"
+                  className=""
                 >
                   {/* Background Soft Lung Fields */}
                   <rect width="360" height="380" fill="#05070a" rx="12" />
@@ -264,10 +264,10 @@ export function EncounterImagingDetailXRayView({
               </div>
 
               {/* HUD Overlay details */}
-              <div className="absolute bottom-3 left-3 text-[10px] font-mono text-slate-400 bg-slate-900/80 px-2 py-1 rounded">
+              <div className="absolute bottom-3 left-3 text-[10px] font-mono text-background/70 bg-foreground/80 px-2 py-1 rounded">
                 BN000123 • HUNG, NGUYEN VAN • M39
               </div>
-              <div className="absolute bottom-3 right-3 text-[10px] font-mono text-slate-400 bg-slate-900/80 px-2 py-1 rounded">
+              <div className="absolute bottom-3 right-3 text-[10px] font-mono text-background/70 bg-foreground/80 px-2 py-1 rounded">
                 16/09/2024 14:00:22 • 120kV 3.2mAs
               </div>
             </div>
@@ -276,7 +276,7 @@ export function EncounterImagingDetailXRayView({
           {/* RIGHT: Detailed findings & Conclusion (6 cols) */}
           <div className="lg:col-span-6 space-y-5">
             {/* Description Points */}
-            <div className="rounded-xl border border-border bg-card p-5 text-xs">
+            <div className="rounded-lg border border-border bg-card p-5 text-xs">
               <h3 className="font-bold text-sm text-foreground mb-3 flex items-center gap-2">
                 <FileCheck className="size-4 text-primary" />
                 Mô tả hình ảnh X-quang
@@ -292,21 +292,21 @@ export function EncounterImagingDetailXRayView({
             </div>
 
             {/* Conclusion Box */}
-            <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-5 text-xs">
-              <p className="font-bold text-emerald-900 text-xs uppercase tracking-wider">
+            <div className="rounded-lg border border-status-success/30 bg-status-success-bg p-5 text-xs">
+              <p className="font-bold text-status-success text-xs uppercase tracking-wider">
                 Kết luận chẩn đoán hình ảnh
               </p>
-              <p className="mt-2 text-sm font-bold text-emerald-950">
+              <p className="mt-2 text-sm font-bold text-status-success">
                 {diagnosticReportXRay.conclusion}
               </p>
-              <div className="mt-3 pt-3 border-t border-emerald-200/80 text-emerald-800">
+              <div className="mt-3 pt-3 border-t border-status-success/30 text-status-success">
                 <span className="font-semibold">Đề nghị: </span>
                 <span>{diagnosticReportXRay.recommendation}</span>
               </div>
             </div>
 
             {/* Doctor Signature Block */}
-            <div className="rounded-xl border border-border bg-muted/20 p-4 text-xs flex items-center justify-between">
+            <div className="rounded-lg border border-border bg-muted/20 p-4 text-xs flex items-center justify-between">
               <div>
                 <p className="text-[11px] text-muted-foreground">Bác sĩ đọc kết quả</p>
                 <p className="font-bold text-foreground text-sm mt-0.5">
@@ -314,8 +314,8 @@ export function EncounterImagingDetailXRayView({
                 </p>
                 <p className="text-[11px] text-muted-foreground">Chuyên khoa Chẩn đoán hình ảnh</p>
               </div>
-              <div className="flex items-center gap-1.5 text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200 text-[11px] font-semibold">
-                <ShieldCheck className="size-3.5 text-emerald-600" />
+              <div className="flex items-center gap-1.5 text-status-success bg-status-success-bg px-2.5 py-1 rounded-lg border border-status-success/30 text-[11px] font-semibold">
+                <ShieldCheck className="size-3.5 text-status-success" />
                 <span>Đã ký số điện tử</span>
               </div>
             </div>

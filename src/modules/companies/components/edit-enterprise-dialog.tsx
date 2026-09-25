@@ -94,8 +94,8 @@ export function EditEnterpriseDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg p-6 max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-lg">
+        <DialogHeader className="shrink-0 border-b border-border px-6 pb-4 pt-6">
           <DialogTitle className="text-base font-bold text-foreground">
             Chỉnh sửa doanh nghiệp
           </DialogTitle>
@@ -104,7 +104,11 @@ export function EditEnterpriseDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-2">
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="flex min-h-0 flex-1 flex-col"
+        >
+          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-5">
           {/* Tên doanh nghiệp * */}
           <div className="space-y-1.5">
             <Label htmlFor="edit-name" className="text-xs font-medium text-foreground">
@@ -229,7 +233,8 @@ export function EditEnterpriseDialog({
             )}
           </div>
 
-          <DialogFooter className="pt-3 gap-2 sm:gap-0">
+          </div>
+          <DialogFooter className="shrink-0 border-t border-border px-6 py-4">
             <Button
               type="button"
               variant="outline"
@@ -241,7 +246,7 @@ export function EditEnterpriseDialog({
             <Button
               type="submit"
               disabled={isPending}
-              className="h-9 text-xs font-medium shadow-xs"
+              className="h-9 text-xs font-medium "
             >
               {isPending ? "Đang lưu..." : "Lưu thay đổi"}
             </Button>

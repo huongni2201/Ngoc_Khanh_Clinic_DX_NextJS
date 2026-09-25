@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { UseFormReturn, useFieldArray } from "react-hook-form"
-import { Info } from "lucide-react"
+import { Info } from "@/shared/ui/product-icon"
 import { MasterExaminationItem } from "@/modules/health-examinations"
 import { CreateHealthExaminationBatchFormValues } from "../schemas"
 import { ExaminationItemRow } from "./examination-item-row"
@@ -61,7 +61,7 @@ export function ExaminationItemPriceTable({
       </div>
 
       {/* Table Container */}
-      <div className="rounded-lg border border-border/80 overflow-hidden bg-card shadow-2xs">
+      <div className="rounded-lg border border-border/80 overflow-hidden bg-card ">
         <div className="overflow-x-auto">
           <table className="w-full text-xs sm:text-sm border-collapse">
             <thead>

@@ -11,7 +11,7 @@ import {
   Filter,
   Calendar,
   Building2,
-} from "lucide-react"
+} from "@/shared/ui/product-icon"
 import {
   Table,
   TableBody,
@@ -83,7 +83,7 @@ export function AppointmentTable({
   ]
 
   return (
-    <div className="flex flex-col flex-1 rounded-xl border border-border bg-card shadow-2xs overflow-hidden">
+    <div className="flex flex-col flex-1 rounded-lg border border-border bg-card  overflow-hidden">
       {/* Top Header of Appointments Table: Title & Tabs */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between border-b border-border px-5 pt-4 pb-0 gap-3">
         <div className="flex items-center gap-2">
@@ -369,7 +369,7 @@ export function AppointmentTable({
                             size="sm"
                             variant="outline"
                             onClick={() => onCheckInAppointment(apt)}
-                            className="size-7.5 p-0 text-secondary-foreground hover:text-foreground hover:bg-surface-alt border-border rounded-lg cursor-pointer transition-colors shadow-2xs"
+                            className="size-7.5 p-0 text-secondary-foreground hover:text-foreground hover:bg-surface-alt border-border rounded-lg cursor-pointer transition-colors "
                             title={`Tiếp nhận vào khám - ${apt.patientName}`}
                             aria-label={`Tiếp nhận vào khám cho ${apt.patientName}`}
                           >
@@ -384,7 +384,7 @@ export function AppointmentTable({
                             size="sm"
                             variant="outline"
                             onClick={() => onConfirmArrived(apt)}
-                            className="size-7.5 p-0 text-secondary-foreground hover:text-foreground hover:bg-surface-alt border-border rounded-lg cursor-pointer transition-colors shadow-2xs"
+                            className="size-7.5 p-0 text-secondary-foreground hover:text-foreground hover:bg-surface-alt border-border rounded-lg cursor-pointer transition-colors "
                             title={`Xác nhận đã đến - ${apt.patientName}`}
                             aria-label={`Xác nhận đã đến cho ${apt.patientName}`}
                           >
@@ -398,7 +398,7 @@ export function AppointmentTable({
                           size="sm"
                           variant="outline"
                           onClick={() => onViewAppointment(apt)}
-                          className="size-7.5 p-0 text-secondary-foreground hover:text-foreground hover:bg-surface-alt border-border rounded-lg cursor-pointer transition-colors shadow-2xs"
+                          className="size-7.5 p-0 text-secondary-foreground hover:text-foreground hover:bg-surface-alt border-border rounded-lg cursor-pointer transition-colors "
                           title={`Xem chi tiết - ${apt.patientName}`}
                           aria-label={`Xem chi tiết cho ${apt.patientName}`}
                         >
@@ -412,7 +412,7 @@ export function AppointmentTable({
                             size="sm"
                             variant="outline"
                             onClick={() => onEditAppointment(apt)}
-                            className="size-7.5 p-0 text-secondary-foreground hover:text-foreground hover:bg-surface-alt border-border rounded-lg cursor-pointer transition-colors shadow-2xs"
+                            className="size-7.5 p-0 text-secondary-foreground hover:text-foreground hover:bg-surface-alt border-border rounded-lg cursor-pointer transition-colors "
                             title={`Chỉnh sửa lịch hẹn - ${apt.patientName}`}
                             aria-label={`Chỉnh sửa cho ${apt.patientName}`}
                           >
@@ -427,7 +427,7 @@ export function AppointmentTable({
                             size="sm"
                             variant="outline"
                             onClick={() => onCancelAppointment(apt)}
-                            className="size-7.5 p-0 text-secondary-foreground hover:text-destructive hover:border-destructive/30 hover:bg-destructive/10 border-border rounded-lg cursor-pointer transition-colors shadow-2xs"
+                            className="size-7.5 p-0 text-secondary-foreground hover:text-destructive hover:border-destructive/30 hover:bg-destructive/10 border-border rounded-lg cursor-pointer transition-colors "
                             title={`Hủy lịch hẹn - ${apt.patientName}`}
                             aria-label={`Hủy lịch hẹn cho ${apt.patientName}`}
                           >

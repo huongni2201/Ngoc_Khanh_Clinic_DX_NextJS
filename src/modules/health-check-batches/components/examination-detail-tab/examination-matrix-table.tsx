@@ -47,7 +47,7 @@ export function ExaminationMatrixTable({
   return (
     <div className="space-y-4">
       {/* Table Container with Horizontal Scroll */}
-      <div className="rounded-xl border border-border bg-card shadow-2xs overflow-hidden">
+      <div className="rounded-lg border border-border bg-card  overflow-hidden">
         <div className="overflow-x-auto scrollbar-thin">
           <table className="w-full text-xs border-collapse min-w-[1000px]">
             <thead>

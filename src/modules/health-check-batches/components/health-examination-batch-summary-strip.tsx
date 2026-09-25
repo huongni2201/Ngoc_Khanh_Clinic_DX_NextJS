@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Building2, Calendar, Users, ListChecks } from "lucide-react"
+import { Building2, Calendar, Users, ListChecks } from "@/shared/ui/product-icon"
 import { Card, CardContent } from "@/components/ui/card"
 import { HealthExaminationBatch } from "../types"
 
@@ -15,7 +15,7 @@ export function HealthExaminationBatchSummaryStrip({
   enterpriseName,
 }: HealthExaminationBatchSummaryStripProps) {
   return (
-    <Card className="rounded-xl border border-border bg-card shadow-2xs overflow-hidden">
+    <Card className="rounded-lg border border-border bg-card  overflow-hidden">
       <CardContent className="p-0">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-border/70">
           {/* 1. Doanh nghiệp */}

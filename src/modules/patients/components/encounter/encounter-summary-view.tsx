@@ -13,7 +13,7 @@ import {
   FileCheck,
   ChevronRight,
   Info,
-} from "lucide-react"
+} from "@/shared/ui/product-icon"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { EncounterDetailData } from "../../types/encounter"
@@ -32,7 +32,7 @@ export function EncounterSummaryView({ data, onNavigateTab }: EncounterSummaryVi
       {/* LEFT COLUMN: Lý do khám, Triệu chứng, Khám lâm sàng & Sinh hiệu (7 cols) */}
       <div className="lg:col-span-7 space-y-6">
         {/* Card 1: Lý do khám & Triệu chứng */}
-        <div className="rounded-2xl border border-border bg-card p-6 shadow-xs">
+        <div className="rounded-lg border border-border bg-card p-6 ">
           <div className="flex items-center gap-2.5 pb-4 border-b border-border">
             <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
               <ClipboardList className="size-4" />
@@ -52,7 +52,7 @@ export function EncounterSummaryView({ data, onNavigateTab }: EncounterSummaryVi
               </p>
             </div>
 
-            <div className="rounded-xl bg-muted/40 p-3.5 border border-border/50">
+            <div className="rounded-lg bg-muted/40 p-3.5 border border-border/50">
               <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                 Quá trình bệnh lý & Triệu chứng khởi phát
               </p>
@@ -73,7 +73,7 @@ export function EncounterSummaryView({ data, onNavigateTab }: EncounterSummaryVi
         </div>
 
         {/* Card 2: Khám lâm sàng & Sinh hiệu */}
-        <div className="rounded-2xl border border-border bg-card p-6 shadow-xs">
+        <div className="rounded-lg border border-border bg-card p-6 ">
           <div className="flex items-center gap-2.5 pb-4 border-b border-border">
             <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
               <Activity className="size-4" />
@@ -86,10 +86,10 @@ export function EncounterSummaryView({ data, onNavigateTab }: EncounterSummaryVi
           {/* Vitals Grid */}
           <div className="mt-4 grid grid-cols-3 sm:grid-cols-6 gap-2.5">
             {/* Mạch */}
-            <div className="rounded-xl border border-border/70 bg-background p-2.5 flex flex-col justify-between">
+            <div className="rounded-lg border border-border/70 bg-background p-2.5 flex flex-col justify-between">
               <div className="flex items-center justify-between text-muted-foreground">
                 <span className="text-[10px] font-medium">Mạch</span>
-                <Heart className="size-3.5 text-rose-500" />
+                <Heart className="size-3.5 text-status-danger" />
               </div>
               <div className="mt-1">
                 <span className="text-lg font-bold tracking-tight text-foreground">{vitals.heartRate}</span>
@@ -98,7 +98,7 @@ export function EncounterSummaryView({ data, onNavigateTab }: EncounterSummaryVi
             </div>
 
             {/* Huyết áp */}
-            <div className="rounded-xl border border-border/70 bg-background p-2.5 flex flex-col justify-between">
+            <div className="rounded-lg border border-border/70 bg-background p-2.5 flex flex-col justify-between">
               <div className="flex items-center justify-between text-muted-foreground">
                 <span className="text-[10px] font-medium">Huyết áp</span>
                 <Activity className="size-3.5 text-primary" />
@@ -110,10 +110,10 @@ export function EncounterSummaryView({ data, onNavigateTab }: EncounterSummaryVi
             </div>
 
             {/* Thân nhiệt */}
-            <div className="rounded-xl border border-border/70 bg-background p-2.5 flex flex-col justify-between">
+            <div className="rounded-lg border border-border/70 bg-background p-2.5 flex flex-col justify-between">
               <div className="flex items-center justify-between text-muted-foreground">
                 <span className="text-[10px] font-medium">Nhiệt độ</span>
-                <Thermometer className="size-3.5 text-amber-500" />
+                <Thermometer className="size-3.5 text-status-warning" />
               </div>
               <div className="mt-1">
                 <span className="text-lg font-bold tracking-tight text-foreground">{vitals.temperature}</span>
@@ -122,7 +122,7 @@ export function EncounterSummaryView({ data, onNavigateTab }: EncounterSummaryVi
             </div>
 
             {/* Nhịp thở */}
-            <div className="rounded-xl border border-border/70 bg-background p-2.5 flex flex-col justify-between">
+            <div className="rounded-lg border border-border/70 bg-background p-2.5 flex flex-col justify-between">
               <div className="flex items-center justify-between text-muted-foreground">
                 <span className="text-[10px] font-medium">Nhịp thở</span>
                 <Wind className="size-3.5 text-cyan-600" />
@@ -134,21 +134,21 @@ export function EncounterSummaryView({ data, onNavigateTab }: EncounterSummaryVi
             </div>
 
             {/* Thể trạng BMI */}
-            <div className="rounded-xl border border-border/70 bg-background p-2.5 flex flex-col justify-between">
+            <div className="rounded-lg border border-border/70 bg-background p-2.5 flex flex-col justify-between">
               <div className="flex items-center justify-between text-muted-foreground">
                 <span className="text-[10px] font-medium">BMI</span>
-                <Scale className="size-3.5 text-emerald-600" />
+                <Scale className="size-3.5 text-status-success" />
               </div>
               <div className="mt-1 flex items-baseline gap-1">
                 <span className="text-lg font-bold tracking-tight text-foreground">{vitals.bmi}</span>
-                <span className="text-[10px] font-medium text-emerald-700">
+                <span className="text-[10px] font-medium text-status-success">
                   {vitals.bmiClassification}
                 </span>
               </div>
             </div>
 
             {/* SpO2 */}
-            <div className="rounded-xl border border-border/70 bg-background p-2.5 flex flex-col justify-between">
+            <div className="rounded-lg border border-border/70 bg-background p-2.5 flex flex-col justify-between">
               <div className="flex items-center justify-between text-muted-foreground">
                 <span className="text-[10px] font-medium">SpO2</span>
                 <CheckCircle2 className="size-3.5 text-teal-600" />
@@ -199,7 +199,7 @@ export function EncounterSummaryView({ data, onNavigateTab }: EncounterSummaryVi
       {/* RIGHT COLUMN: Chẩn đoán, chỉ định dịch vụ chẩn đoán, kết luận & hướng điều trị (5 cols) */}
       <div className="lg:col-span-5 space-y-6">
         {/* Card 1: Chẩn đoán tóm tắt */}
-        <div className="rounded-2xl border border-border bg-card p-6 shadow-xs">
+        <div className="rounded-lg border border-border bg-card p-6 ">
           <div className="flex items-center justify-between pb-3.5 border-b border-border">
             <div className="flex items-center gap-2">
               <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
@@ -221,7 +221,7 @@ export function EncounterSummaryView({ data, onNavigateTab }: EncounterSummaryVi
             {diagnoses.map((diag) => (
               <div
                 key={diag.id}
-                className="rounded-xl border border-border/70 p-3 bg-background"
+                className="rounded-lg border border-border/70 p-3 bg-background"
               >
                 <div className="flex items-center justify-between gap-2">
                   <Badge
@@ -248,7 +248,7 @@ export function EncounterSummaryView({ data, onNavigateTab }: EncounterSummaryVi
         </div>
 
         {/* Card 2: Cận lâm sàng chính đã làm */}
-        <div className="rounded-2xl border border-border bg-card p-6 shadow-xs">
+        <div className="rounded-lg border border-border bg-card p-6 ">
           <div className="flex items-center justify-between pb-3.5 border-b border-border">
             <div className="flex items-center gap-2">
               <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
@@ -278,8 +278,8 @@ export function EncounterSummaryView({ data, onNavigateTab }: EncounterSummaryVi
                     {order.summaryResult}
                   </p>
                 </div>
-                <span className="inline-flex shrink-0 items-center gap-1 text-[11px] font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                  <span className="size-1 rounded-full bg-emerald-600" />
+                <span className="inline-flex shrink-0 items-center gap-1 text-[11px] font-medium text-status-success bg-status-success-bg px-2 py-0.5 rounded-full border border-status-success/30">
+                  <span className="size-1 rounded-full bg-status-success" />
                   {order.statusLabel}
                 </span>
               </div>
@@ -288,7 +288,7 @@ export function EncounterSummaryView({ data, onNavigateTab }: EncounterSummaryVi
         </div>
 
         {/* Card 3: Kết luận & Hướng điều trị */}
-        <div className="rounded-2xl border border-border bg-card p-6 shadow-xs">
+        <div className="rounded-lg border border-border bg-card p-6 ">
           <div className="flex items-center gap-2 pb-3.5 border-b border-border">
             <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
               <Info className="size-4" />
@@ -306,7 +306,7 @@ export function EncounterSummaryView({ data, onNavigateTab }: EncounterSummaryVi
               </p>
             </div>
 
-            <div className="rounded-xl bg-primary/5 p-3 border border-primary/15">
+            <div className="rounded-lg bg-primary/5 p-3 border border-primary/15">
               <p className="text-[11px] font-semibold text-primary uppercase tracking-wider">
                 Lời dặn của bác sĩ
               </p>

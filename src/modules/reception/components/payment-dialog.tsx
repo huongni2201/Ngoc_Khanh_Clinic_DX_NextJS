@@ -10,7 +10,7 @@ import {
   User,
   Copy,
   Check,
-} from "lucide-react"
+} from "@/shared/ui/product-icon"
 import {
   Dialog,
   DialogContent,
@@ -110,7 +110,7 @@ export function PaymentDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-3xl md:max-w-4xl max-w-[calc(100%-2rem)] p-6 sm:p-7 max-h-[92vh] flex flex-col gap-0 rounded-2xl shadow-xl overflow-hidden bg-card border-border">
+      <DialogContent className="sm:max-w-3xl md:max-w-4xl max-w-[calc(100%-2rem)] p-6 sm:p-7 max-h-[92vh] flex flex-col gap-0 rounded-lg shadow-xl overflow-hidden bg-card border-border">
         {/* Header */}
         <DialogHeader className="pb-4 shrink-0 text-left border-b border-border/80">
           <DialogTitle className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
@@ -131,7 +131,7 @@ export function PaymentDialog({
           )}
 
           {/* Patient Context Summary Banner */}
-          <div className="p-3.5 rounded-xl border border-border/80 bg-surface-alt/50 flex items-center justify-between gap-4 flex-wrap">
+          <div className="p-3.5 rounded-lg border border-border/80 bg-surface-alt/50 flex items-center justify-between gap-4 flex-wrap">
             <div className="flex items-center gap-3">
               <div className="size-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs shrink-0">
                 <User className="size-4" />
@@ -190,7 +190,7 @@ export function PaymentDialog({
               </div>
 
               {/* Invoice Breakdown Card */}
-              <div className="border border-border rounded-xl overflow-hidden bg-card shadow-2xs">
+              <div className="border border-border rounded-lg overflow-hidden bg-card ">
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-surface-alt/70 hover:bg-surface-alt/70 border-b border-border">
@@ -291,7 +291,7 @@ export function PaymentDialog({
                     type="button"
                     onClick={() => setPaymentMethod("CASH")}
                     className={cn(
-                      "flex items-center gap-2.5 p-2.5 rounded-xl border text-left cursor-pointer transition-all",
+                      "flex items-center gap-2.5 p-2.5 rounded-lg border text-left cursor-pointer transition-all",
                       paymentMethod === "CASH"
                         ? "border-primary bg-selected ring-1 ring-primary text-foreground font-semibold"
                         : "border-border bg-card hover:bg-hover/60 text-secondary-foreground"
@@ -312,7 +312,7 @@ export function PaymentDialog({
                     type="button"
                     onClick={() => setPaymentMethod("TRANSFER")}
                     className={cn(
-                      "flex items-center gap-2.5 p-2.5 rounded-xl border text-left cursor-pointer transition-all",
+                      "flex items-center gap-2.5 p-2.5 rounded-lg border text-left cursor-pointer transition-all",
                       paymentMethod === "TRANSFER"
                         ? "border-primary bg-selected ring-1 ring-primary text-foreground font-semibold"
                         : "border-border bg-card hover:bg-hover/60 text-secondary-foreground"
@@ -333,7 +333,7 @@ export function PaymentDialog({
 
               {/* Dynamic Payment Detail View */}
               {paymentMethod === "TRANSFER" ? (
-                <div className="p-3 rounded-xl border border-primary/30 bg-selected/40 space-y-2.5 text-xs animate-in fade-in-50">
+                <div className="p-3 rounded-lg border border-primary/30 bg-selected/40 space-y-2.5 text-xs animate-in fade-in-50">
                   <div className="flex items-center justify-between pb-1 border-b border-primary/20">
                     <span className="font-semibold text-primary flex items-center gap-1.5 text-[11px]">
                       <QrCode className="size-3.5" />
@@ -346,7 +346,7 @@ export function PaymentDialog({
 
                   <div className="flex gap-3 items-center">
                     {/* Visual QR Code Display */}
-                    <div className="size-20 rounded-lg bg-card p-1 border border-border shrink-0 flex items-center justify-center shadow-2xs">
+                    <div className="size-20 rounded-lg bg-card p-1 border border-border shrink-0 flex items-center justify-center ">
                       <svg className="size-full text-foreground" viewBox="0 0 100 100" fill="currentColor">
                         {/* Top-left corner finder */}
                         <rect x="10" y="10" width="24" height="24" rx="3" fill="none" stroke="currentColor" strokeWidth="6" />
@@ -403,7 +403,7 @@ export function PaymentDialog({
                   </div>
                 </div>
               ) : (
-                <div className="p-3 rounded-xl border border-border/80 bg-surface-alt/40 space-y-1.5 text-xs animate-in fade-in-50">
+                <div className="p-3 rounded-lg border border-border/80 bg-surface-alt/40 space-y-1.5 text-xs animate-in fade-in-50">
                   <div className="flex items-center justify-between text-secondary-foreground">
                     <span>Số tiền cần thu tại quầy:</span>
                     <span className="font-mono font-bold text-primary text-sm">
@@ -417,7 +417,7 @@ export function PaymentDialog({
               )}
 
               {/* Receipt Toggle */}
-              <div className="flex items-center space-x-2 p-2.5 rounded-xl border border-border/80 bg-card">
+              <div className="flex items-center space-x-2 p-2.5 rounded-lg border border-border/80 bg-card">
                 <Checkbox
                   id="printReceipt"
                   checked={printReceipt}
@@ -434,7 +434,7 @@ export function PaymentDialog({
 
               {/* Double-check Confirmation Prompt */}
               {isConfirming && (
-                <Alert className="bg-selected border-primary/40 p-3 text-xs rounded-xl animate-in fade-in-50">
+                <Alert className="bg-selected border-primary/40 p-3 text-xs rounded-lg animate-in fade-in-50">
                   <CheckCircle2 className="size-4 text-primary shrink-0 mt-0.5" />
                   <AlertDescription className="text-foreground leading-relaxed text-[11px]">
                     Bạn có chắc chắn muốn xác nhận đã thu số tiền{" "}
@@ -460,7 +460,7 @@ export function PaymentDialog({
             variant="outline"
             onClick={() => onOpenChange(false)}
             disabled={isPending}
-            className="h-9 sm:h-10 px-4 sm:px-5 text-xs sm:text-sm font-medium border-border/80 hover:bg-hover rounded-lg shadow-2xs cursor-pointer"
+            className="h-9 sm:h-10 px-4 sm:px-5 text-xs sm:text-sm font-medium border-border/80 hover:bg-hover rounded-lg  cursor-pointer"
           >
             Hủy
           </Button>
@@ -470,7 +470,7 @@ export function PaymentDialog({
               type="button"
               onClick={() => setIsConfirming(true)}
               disabled={isPending || invoice?.isPaid}
-              className="h-9 sm:h-10 px-4 sm:px-5 text-xs sm:text-sm font-medium rounded-lg shadow-xs cursor-pointer"
+              className="h-9 sm:h-10 px-4 sm:px-5 text-xs sm:text-sm font-medium rounded-lg  cursor-pointer"
             >
               {invoice?.isPaid ? "Đã thanh toán" : "Xác nhận thu tiền"}
             </Button>
@@ -479,7 +479,7 @@ export function PaymentDialog({
               type="button"
               onClick={handleProceedPayment}
               disabled={isPending}
-              className="h-9 sm:h-10 px-4 sm:px-5 text-xs sm:text-sm font-medium rounded-lg shadow-xs cursor-pointer"
+              className="h-9 sm:h-10 px-4 sm:px-5 text-xs sm:text-sm font-medium rounded-lg  cursor-pointer"
             >
               {isPending && <Loader2 className="size-3.5 mr-2 animate-spin" />}
               {isPending ? "Đang ghi nhận..." : "Đồng ý thu tiền"}

@@ -4,7 +4,7 @@ import * as React from "react"
 import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { AlertCircle, Loader2 } from "lucide-react"
+import { AlertCircle, Loader2 } from "@/shared/ui/product-icon"
 import {
   Dialog,
   DialogContent,
@@ -142,7 +142,7 @@ export function CreateHealthExaminationBatchDialog({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
-        className="sm:max-w-[720px] max-w-[calc(100%-2rem)] p-6 sm:p-7 max-h-[92vh] flex flex-col gap-0 rounded-2xl shadow-xl overflow-hidden"
+        className="sm:max-w-[720px] max-w-[calc(100%-2rem)] p-6 sm:p-7 max-h-[92vh] flex flex-col gap-0 rounded-lg shadow-xl overflow-hidden"
         showCloseButton={true}
       >
         {/* Header */}
@@ -188,7 +188,7 @@ export function CreateHealthExaminationBatchDialog({
             variant="outline"
             onClick={handleCancel}
             disabled={isPending}
-            className="h-9 sm:h-10 px-4 sm:px-5 text-xs sm:text-sm font-medium border-border/80 hover:bg-hover rounded-lg shadow-2xs"
+            className="h-9 sm:h-10 px-4 sm:px-5 text-xs sm:text-sm font-medium border-border/80 hover:bg-hover rounded-lg "
           >
             Hủy
           </Button>
@@ -196,7 +196,7 @@ export function CreateHealthExaminationBatchDialog({
             type="submit"
             form="create-health-examination-batch-form"
             disabled={isPending}
-            className="h-9 sm:h-10 px-4 sm:px-5 text-xs sm:text-sm font-medium rounded-lg shadow-xs"
+            className="h-9 sm:h-10 px-4 sm:px-5 text-xs sm:text-sm font-medium rounded-lg "
           >
             {isPending && <Loader2 className="size-3.5 mr-2 animate-spin" />}
             Tạo đợt khám

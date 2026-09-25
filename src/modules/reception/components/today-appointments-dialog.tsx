@@ -9,7 +9,7 @@ import {
   ExternalLink,
   Clock,
   Filter,
-} from "lucide-react"
+} from "@/shared/ui/product-icon"
 import {
   Dialog,
   DialogContent,
@@ -116,7 +116,7 @@ export function TodayAppointmentsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-5xl md:max-w-6xl lg:max-w-[1200px] w-full max-w-[calc(100%-2rem)] p-6 max-h-[90vh] flex flex-col gap-0 rounded-2xl shadow-xl overflow-hidden bg-card border-border">
+      <DialogContent className="sm:max-w-5xl md:max-w-6xl lg:max-w-[1200px] w-full max-w-[calc(100%-2rem)] p-6 max-h-[90vh] flex flex-col gap-0 rounded-lg shadow-xl overflow-hidden bg-card border-border">
         {/* Header */}
         <DialogHeader className="pb-4 shrink-0 text-left border-b border-border/80">
           <div className="flex items-center justify-between">
@@ -321,7 +321,7 @@ export function TodayAppointmentsDialog({
                                 onOpenChange(false)
                                 onCheckInAppointment(apt)
                               }}
-                              className="gap-1.5 h-7 px-2.5 text-xs bg-primary hover:bg-primary/90 text-primary-foreground font-medium shadow-2xs cursor-pointer"
+                              className="gap-1.5 h-7 px-2.5 text-xs bg-primary hover:bg-primary/90 text-primary-foreground font-medium  cursor-pointer"
                             >
                               <UserCheck className="size-3.5" />
                               <span>Tiếp nhận</span>
@@ -363,7 +363,7 @@ export function TodayAppointmentsDialog({
             type="button"
             variant="outline"
             onClick={() => onOpenChange(false)}
-            className="h-9 sm:h-10 px-4 sm:px-5 text-xs sm:text-sm font-medium border-border/80 hover:bg-hover rounded-lg shadow-2xs cursor-pointer"
+            className="h-9 sm:h-10 px-4 sm:px-5 text-xs sm:text-sm font-medium border-border/80 hover:bg-hover rounded-lg  cursor-pointer"
           >
             Đóng
           </Button>

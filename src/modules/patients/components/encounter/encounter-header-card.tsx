@@ -1,15 +1,7 @@
 "use client"
 
 import * as React from "react"
-import {
-  User,
-  Calendar,
-  Stethoscope,
-  UserCheck,
-  MapPin,
-  FileText,
-  Pencil,
-} from "lucide-react"
+import { Pencil } from "@/shared/ui/product-icon"
 import { Button } from "@/components/ui/button"
 import { EncounterDetailData } from "../../types/encounter"
 
@@ -22,20 +14,19 @@ export function EncounterHeaderCard({ data, onEditClick }: EncounterHeaderCardPr
   const { patient, encounter } = data
 
   return (
-    <div className="rounded-2xl border border-border bg-card p-6 shadow-xs">
-      {/* Top row: Avatar, Name, Status, IDs, Action */}
+    <section
+      aria-label="Thông tin lượt khám"
+      className="rounded-lg border border-border bg-card px-5 py-4"
+    >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
-          <div className="flex size-14 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary border border-primary/20">
-            <User className="size-7" />
-          </div>
           <div>
             <div className="flex flex-wrap items-center gap-3">
-              <h1 className="text-xl font-bold tracking-tight text-foreground">
+              <h2 className="text-base font-semibold tracking-tight text-foreground">
                 {patient.fullName}
-              </h1>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 border border-emerald-200">
-                <span className="size-1.5 rounded-full bg-emerald-600" />
+              </h2>
+              <span className="inline-flex items-center gap-1.5 rounded-md bg-status-success-bg px-2 py-0.5 text-xs font-medium text-status-success border border-status-success/30">
+                <span className="size-1.5 rounded-full bg-status-success" />
                 {encounter.statusLabel}
               </span>
             </div>
@@ -56,21 +47,15 @@ export function EncounterHeaderCard({ data, onEditClick }: EncounterHeaderCardPr
             variant="outline"
             size="sm"
             onClick={onEditClick}
-            className="h-9 rounded-xl border-border px-3.5 text-xs font-medium hover:text-primary transition-colors"
           >
-            <Pencil className="mr-1.5 size-3.5" />
+            <Pencil className="size-4" />
             Chỉnh sửa
           </Button>
         </div>
       </div>
 
-      {/* Bottom row: 5 metadata blocks */}
-      <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 border-t border-border pt-5">
-        {/* Ngày khám */}
-        <div className="flex items-center gap-3">
-          <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-            <Calendar className="size-4" />
-          </div>
+      <div className="mt-4 grid grid-cols-2 gap-4 border-t border-border pt-4 sm:grid-cols-3 lg:grid-cols-5 lg:gap-0">
+        <div>
           <div>
             <p className="text-[11px] text-muted-foreground font-medium">Ngày khám</p>
             <p className="text-xs font-semibold text-foreground">{encounter.examDate}</p>
@@ -78,10 +63,7 @@ export function EncounterHeaderCard({ data, onEditClick }: EncounterHeaderCardPr
         </div>
 
         {/* Loại khám */}
-        <div className="flex items-center gap-3">
-          <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-            <Stethoscope className="size-4" />
-          </div>
+        <div className="lg:border-l lg:border-border lg:pl-5">
           <div>
             <p className="text-[11px] text-muted-foreground font-medium">Loại khám</p>
             <p className="text-xs font-semibold text-foreground">{encounter.examType}</p>
@@ -89,10 +71,7 @@ export function EncounterHeaderCard({ data, onEditClick }: EncounterHeaderCardPr
         </div>
 
         {/* Bác sĩ khám */}
-        <div className="flex items-center gap-3">
-          <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-            <UserCheck className="size-4" />
-          </div>
+        <div className="lg:border-l lg:border-border lg:pl-5">
           <div>
             <p className="text-[11px] text-muted-foreground font-medium">Bác sĩ khám</p>
             <p className="text-xs font-semibold text-foreground">{encounter.physicianName}</p>
@@ -100,10 +79,7 @@ export function EncounterHeaderCard({ data, onEditClick }: EncounterHeaderCardPr
         </div>
 
         {/* Phòng khám */}
-        <div className="flex items-center gap-3">
-          <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-            <MapPin className="size-4" />
-          </div>
+        <div className="lg:border-l lg:border-border lg:pl-5">
           <div>
             <p className="text-[11px] text-muted-foreground font-medium">Phòng khám</p>
             <p className="text-xs font-semibold text-foreground">{encounter.room}</p>
@@ -111,10 +87,7 @@ export function EncounterHeaderCard({ data, onEditClick }: EncounterHeaderCardPr
         </div>
 
         {/* Chẩn đoán chính */}
-        <div className="col-span-2 sm:col-span-1 flex items-center gap-3">
-          <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-            <FileText className="size-4" />
-          </div>
+        <div className="col-span-2 sm:col-span-1 lg:border-l lg:border-border lg:pl-5">
           <div>
             <p className="text-[11px] text-muted-foreground font-medium">Chẩn đoán chính</p>
             <p className="text-xs font-semibold text-foreground truncate max-w-[150px]" title={encounter.primaryDiagnosis}>
@@ -123,6 +96,6 @@ export function EncounterHeaderCard({ data, onEditClick }: EncounterHeaderCardPr
           </div>
         </div>
       </div>
-    </div>
+    </section>
   )
 }

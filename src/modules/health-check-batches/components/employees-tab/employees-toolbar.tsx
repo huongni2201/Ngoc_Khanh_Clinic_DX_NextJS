@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Search } from "lucide-react"
+import { Search } from "@/shared/ui/product-icon"
 import { Input } from "@/components/ui/input"
 import {
   Select,
@@ -56,7 +56,7 @@ export function EmployeesToolbar({
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder="Tìm theo mã NV, họ tên, CCCD, số điện thoại..."
-          className="h-9 w-full rounded-lg border-border bg-card pl-9 pr-4 text-xs shadow-2xs placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring"
+          className="h-9 w-full rounded-lg border-border bg-card pl-9 pr-4 text-xs  placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring"
         />
       </div>
 
@@ -68,7 +68,7 @@ export function EmployeesToolbar({
             value={department}
             onValueChange={(val) => onDepartmentChange(val ?? "ALL")}
           >
-            <SelectTrigger className="h-9 text-xs rounded-lg border-border bg-card shadow-2xs">
+            <SelectTrigger className="h-9 text-xs rounded-lg border-border bg-card ">
               <SelectValue placeholder="Phòng ban" />
             </SelectTrigger>
             <SelectContent>
@@ -87,7 +87,7 @@ export function EmployeesToolbar({
             value={profileStatus}
             onValueChange={(val) => onProfileStatusChange(val ?? "ALL")}
           >
-            <SelectTrigger className="h-9 text-xs rounded-lg border-border bg-card shadow-2xs">
+            <SelectTrigger className="h-9 text-xs rounded-lg border-border bg-card ">
               <SelectValue placeholder="Trạng thái hồ sơ" />
             </SelectTrigger>
             <SelectContent>

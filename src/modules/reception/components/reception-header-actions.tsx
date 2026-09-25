@@ -4,7 +4,7 @@ import {
   Search,
   UserCheck,
   Calendar,
-} from "lucide-react"
+} from "@/shared/ui/product-icon"
 import { Button } from "@/components/ui/button"
 
 interface ReceptionHeaderActionsProps {
@@ -23,50 +23,41 @@ export function ReceptionHeaderActions({
   todayAppointmentsCount = 0,
 }: ReceptionHeaderActionsProps) {
   return (
-    <div className="flex items-center gap-2.5 flex-wrap">
-      {/* Primary CTA: Tiếp nhận bệnh nhân */}
-      <Button
-        onClick={onOpenReceivePatient}
-        className="gap-2 h-10 rounded-lg px-4 font-medium text-xs sm:text-sm shadow-xs cursor-pointer"
-      >
-        <UserCheck className="size-4 stroke-[2]" />
-        <span>Tiếp nhận bệnh nhân</span>
-      </Button>
-
-      {/* Action: Lịch hẹn hôm nay */}
+    <div className="flex flex-wrap items-center gap-2">
       {onOpenTodayAppointments && (
         <Button
           variant="outline"
           onClick={onOpenTodayAppointments}
-          className="gap-2 h-10 rounded-lg px-3.5 font-medium border-border/80 hover:bg-hover text-foreground text-xs sm:text-sm shadow-2xs cursor-pointer relative"
         >
-          <Calendar className="size-4 text-primary stroke-[2]" />
-          <span>Lịch hẹn hôm nay</span>
+          <Calendar className="size-4" />
+          Lịch hẹn hôm nay
           {todayAppointmentsCount > 0 && (
-            <span className="inline-flex items-center justify-center size-5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold">
-              {todayAppointmentsCount}
+            <span aria-label={`${todayAppointmentsCount} lịch chờ xử lý`}>
+              ({todayAppointmentsCount})
             </span>
           )}
         </Button>
       )}
 
-      {/* Secondary Actions: White surface + border */}
       <Button
         variant="outline"
         onClick={onOpenFindPatient}
-        className="gap-2 h-10 rounded-lg px-4 font-medium border-border/80 hover:bg-hover text-foreground text-xs sm:text-sm shadow-2xs cursor-pointer"
       >
-        <Search className="size-4 text-muted-foreground stroke-[2]" />
-        <span>Tìm bệnh nhân</span>
+        <Search className="size-4" />
+        Tìm bệnh nhân
       </Button>
 
       <Button
         variant="outline"
         onClick={onOpenCreatePatient}
-        className="gap-2 h-10 rounded-lg px-4 font-medium border-border/80 hover:bg-hover text-foreground text-xs sm:text-sm shadow-2xs cursor-pointer"
       >
-        <UserPlus className="size-4 text-muted-foreground stroke-[2]" />
-        <span>Tạo bệnh nhân mới</span>
+        <UserPlus className="size-4" />
+        Tạo bệnh nhân mới
+      </Button>
+
+      <Button onClick={onOpenReceivePatient}>
+        <UserCheck className="size-4" />
+        Tiếp nhận bệnh nhân
       </Button>
     </div>
   )

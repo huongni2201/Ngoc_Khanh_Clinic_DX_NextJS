@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { FileText, Stethoscope } from "lucide-react"
+import { FileText, Stethoscope } from "@/shared/ui/product-icon"
 import { Badge } from "@/components/ui/badge"
 import { EncounterDetailData } from "../../types/encounter"
 
@@ -14,11 +14,11 @@ export function EncounterDiagnosisView({ data }: EncounterDiagnosisViewProps) {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-border bg-card p-6 shadow-xs">
+      <div className="rounded-lg border border-border bg-card p-6 ">
         {/* Table Header */}
         <div className="flex items-center justify-between pb-5 border-b border-border">
           <div className="flex items-center gap-2.5">
-            <div className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
               <Stethoscope className="size-5" />
             </div>
             <div>
@@ -33,7 +33,7 @@ export function EncounterDiagnosisView({ data }: EncounterDiagnosisViewProps) {
         </div>
 
         {/* Diagnosis Table */}
-        <div className="mt-5 overflow-x-auto rounded-xl border border-border">
+        <div className="mt-5 overflow-x-auto rounded-lg border border-border">
           <table className="w-full text-left text-xs border-collapse">
             <thead className="bg-muted/50 text-muted-foreground font-semibold border-b border-border">
               <tr>
@@ -80,7 +80,7 @@ export function EncounterDiagnosisView({ data }: EncounterDiagnosisViewProps) {
         </div>
 
         {/* Doctor Clinical Reasoning Callout */}
-        <div className="mt-6 rounded-xl border border-primary/20 bg-primary/5 p-4.5">
+        <div className="mt-6 rounded-lg border border-primary/20 bg-primary/5 p-4.5">
           <div className="flex items-center gap-2 text-primary font-semibold text-xs">
             <FileText className="size-4 shrink-0" />
             <span>Nhận xét lâm sàng & Biện luận của bác sĩ</span>

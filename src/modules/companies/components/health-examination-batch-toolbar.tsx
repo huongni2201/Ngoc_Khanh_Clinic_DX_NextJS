@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Search, Filter, ChevronDown } from "lucide-react"
+import { Search, Filter, ChevronDown } from "@/shared/ui/product-icon"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 
@@ -29,7 +29,7 @@ export function HealthExaminationBatchToolbar({
           placeholder="Tìm kiếm đợt khám..."
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="h-9 pl-9 text-xs sm:text-sm bg-background shadow-2xs"
+          className="h-9 pl-9 text-xs sm:text-sm bg-background "
         />
       </div>
 
@@ -39,7 +39,7 @@ export function HealthExaminationBatchToolbar({
           <select
             value={status}
             onChange={(e) => onStatusChange(e.target.value)}
-            className="h-9 appearance-none rounded-lg border border-input bg-background pl-3 pr-8 text-xs font-medium text-foreground shadow-2xs outline-none hover:border-input focus:border-primary focus:ring-1 focus:ring-primary/20"
+            className="h-9 appearance-none rounded-lg border border-input bg-background pl-3 pr-8 text-xs font-medium text-foreground  outline-none hover:border-input focus:border-primary focus:ring-1 focus:ring-primary/20"
           >
             <option value="ALL">Tất cả trạng thái</option>
             <option value="IN_PROGRESS">Đang khám</option>
@@ -52,7 +52,7 @@ export function HealthExaminationBatchToolbar({
           type="button"
           variant="outline"
           onClick={onFilterClick}
-          className="h-9 rounded-lg px-3 text-xs font-medium text-foreground hover:bg-hover shadow-2xs"
+          className="h-9 rounded-lg px-3 text-xs font-medium text-foreground hover:bg-hover "
         >
           <Filter className="size-3.5 mr-1.5 text-muted-foreground" />
           Bộ lọc

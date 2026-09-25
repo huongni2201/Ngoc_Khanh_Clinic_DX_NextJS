@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useRouter } from "next/navigation"
-import { MoreHorizontal, UserCheck, CalendarPlus } from "lucide-react"
+import { MoreHorizontal, UserCheck, CalendarPlus } from "@/shared/ui/product-icon"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
   DropdownMenu,
@@ -77,7 +77,7 @@ export function EmployeesTable({
   return (
     <div className="space-y-4">
       {/* Table Container with Horizontal Scroll */}
-      <div className="rounded-xl border border-border bg-card shadow-2xs overflow-hidden">
+      <div className="rounded-lg border border-border bg-card  overflow-hidden">
         <div className="overflow-x-auto scrollbar-thin">
           <table className="w-full text-xs border-collapse min-w-[1250px]">
             <thead>

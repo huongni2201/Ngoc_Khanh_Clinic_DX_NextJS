@@ -8,7 +8,7 @@ import {
   AlertCircle,
   CheckCircle2,
   Loader2,
-} from "lucide-react"
+} from "@/shared/ui/product-icon"
 import {
   Dialog,
   DialogContent,
@@ -100,7 +100,7 @@ export function ImportEmployeesDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[540px] p-6 rounded-2xl shadow-xl overflow-hidden">
+      <DialogContent className="sm:max-w-[540px] p-6 rounded-lg shadow-xl overflow-hidden">
         <DialogHeader className="pb-3 text-left">
           <DialogTitle className="text-lg sm:text-xl font-bold tracking-tight text-foreground">
             Import danh sách nhân sự
@@ -128,7 +128,7 @@ export function ImportEmployeesDialog({
           {/* Upload Dropzone */}
           <div
             onClick={() => fileInputRef.current?.click()}
-            className="border-2 border-dashed border-border hover:border-primary/60 rounded-xl p-6 text-center cursor-pointer transition-colors bg-muted/20 hover:bg-primary/5 flex flex-col items-center justify-center space-y-2"
+            className="border-2 border-dashed border-border hover:border-primary/60 rounded-lg p-6 text-center cursor-pointer transition-colors bg-muted/20 hover:bg-primary/5 flex flex-col items-center justify-center space-y-2"
           >
             <input
               ref={fileInputRef}
@@ -198,7 +198,7 @@ export function ImportEmployeesDialog({
             size="sm"
             onClick={handleImport}
             disabled={isPending || !selectedFile}
-            className="text-xs h-9 shadow-xs"
+            className="text-xs h-9 "
           >
             {isPending && <Loader2 className="size-3.5 mr-1.5 animate-spin" />}
             Tiến hành import

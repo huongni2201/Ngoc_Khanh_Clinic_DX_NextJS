@@ -8,7 +8,7 @@ import {
   Droplet,
   CheckCircle2,
   ShieldCheck,
-} from "lucide-react"
+} from "@/shared/ui/product-icon"
 import { Button } from "@/components/ui/button"
 import { EncounterDetailData, LabIndicatorResult } from "../../types/encounter"
 
@@ -28,7 +28,7 @@ export function EncounterLabDetailCBCView({ data, onBack }: EncounterLabDetailCB
           variant="outline"
           size="sm"
           onClick={onBack}
-          className="h-9 rounded-xl border-border px-3 text-xs font-medium text-foreground hover:bg-muted w-fit"
+          className="h-9 rounded-lg border-border px-3 text-xs font-medium text-foreground hover:bg-muted w-fit"
         >
           <ArrowLeft className="mr-1.5 size-4" />
           Quay lại danh sách dịch vụ chẩn đoán
@@ -39,7 +39,7 @@ export function EncounterLabDetailCBCView({ data, onBack }: EncounterLabDetailCB
             variant="outline"
             size="sm"
             onClick={() => alert("Gửi lệnh in phiếu kết quả xét nghiệm...")}
-            className="h-9 rounded-xl border-border px-3.5 text-xs font-medium text-foreground hover:bg-muted"
+            className="h-9 rounded-lg border-border px-3.5 text-xs font-medium text-foreground hover:bg-muted"
           >
             <Printer className="mr-1.5 size-4 text-primary" />
             In phiếu kết quả
@@ -48,7 +48,7 @@ export function EncounterLabDetailCBCView({ data, onBack }: EncounterLabDetailCB
             variant="outline"
             size="sm"
             onClick={() => alert("Tải xuống phiếu kết quả dạng PDF...")}
-            className="h-9 rounded-xl border-border px-3.5 text-xs font-medium text-foreground hover:bg-muted"
+            className="h-9 rounded-lg border-border px-3.5 text-xs font-medium text-foreground hover:bg-muted"
           >
             <Download className="mr-1.5 size-4 text-primary" />
             Xuất PDF
@@ -57,10 +57,10 @@ export function EncounterLabDetailCBCView({ data, onBack }: EncounterLabDetailCB
       </div>
 
       {/* Main Lab Result Card */}
-      <div className="rounded-2xl border border-border bg-card p-6 shadow-xs">
+      <div className="rounded-lg border border-border bg-card p-6 ">
         {/* Header Title */}
         <div className="flex items-center gap-3 pb-5 border-b border-border">
-          <div className="flex size-10 items-center justify-center rounded-xl bg-rose-50 text-rose-600 border border-rose-100">
+          <div className="flex size-10 items-center justify-center rounded-lg bg-status-danger-bg text-status-danger border border-status-danger/30">
             <Droplet className="size-5" />
           </div>
           <div>
@@ -68,8 +68,8 @@ export function EncounterLabDetailCBCView({ data, onBack }: EncounterLabDetailCB
               <h2 className="text-base font-bold text-foreground">
                 {laboratoryReportCBC.serviceName}
               </h2>
-              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700 border border-emerald-200">
-                <CheckCircle2 className="size-3 text-emerald-600" />
+              <span className="inline-flex items-center gap-1 rounded-full bg-status-success-bg px-2 py-0.5 text-xs font-semibold text-status-success border border-status-success/30">
+                <CheckCircle2 className="size-3 text-status-success" />
                 {laboratoryReportCBC.statusLabel}
               </span>
             </div>
@@ -80,7 +80,7 @@ export function EncounterLabDetailCBCView({ data, onBack }: EncounterLabDetailCB
         </div>
 
         {/* Specimen & Process Meta Grid */}
-        <div className="mt-5 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5 rounded-xl bg-muted/30 p-4 border border-border/60 text-xs">
+        <div className="mt-5 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5 rounded-lg bg-muted/30 p-4 border border-border/60 text-xs">
           <div>
             <p className="text-[11px] text-muted-foreground font-medium">Bác sĩ chỉ định</p>
             <p className="font-semibold text-foreground mt-0.5">{laboratoryReportCBC.orderingPhysician}</p>
@@ -108,7 +108,7 @@ export function EncounterLabDetailCBCView({ data, onBack }: EncounterLabDetailCB
         </div>
 
         {/* Indicator Table */}
-        <div className="mt-6 overflow-x-auto rounded-xl border border-border">
+        <div className="mt-6 overflow-x-auto rounded-lg border border-border">
           <table className="w-full text-left text-xs border-collapse">
             <thead className="bg-muted/50 text-muted-foreground font-semibold border-b border-border">
               <tr>
@@ -143,8 +143,8 @@ export function EncounterLabDetailCBCView({ data, onBack }: EncounterLabDetailCB
                     {ind.referenceRange}
                   </td>
                   <td className="py-3 px-4 text-center">
-                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 border border-emerald-200">
-                      <span className="size-1 rounded-full bg-emerald-600" />
+                    <span className="inline-flex items-center gap-1 rounded-full bg-status-success-bg px-2 py-0.5 text-[11px] font-semibold text-status-success border border-status-success/30">
+                      <span className="size-1 rounded-full bg-status-success" />
                       {ind.evaluationLabel}
                     </span>
                   </td>
@@ -156,7 +156,7 @@ export function EncounterLabDetailCBCView({ data, onBack }: EncounterLabDetailCB
 
         {/* Conclusion and Clinical Validation */}
         <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 text-xs">
+          <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 text-xs">
             <p className="font-semibold text-primary uppercase tracking-wider text-[11px]">
               Kết luận xét nghiệm
             </p>
@@ -168,9 +168,9 @@ export function EncounterLabDetailCBCView({ data, onBack }: EncounterLabDetailCB
             </p>
           </div>
 
-          <div className="rounded-xl border border-border bg-muted/20 p-4 text-xs flex flex-col justify-between">
+          <div className="rounded-lg border border-border bg-muted/20 p-4 text-xs flex flex-col justify-between">
             <div className="flex items-center gap-2 text-muted-foreground">
-              <ShieldCheck className="size-4 text-emerald-600" />
+              <ShieldCheck className="size-4 text-status-success" />
               <span>Kết quả đã kiểm tra chất lượng nội bộ và duyệt điện tử</span>
             </div>
             <div className="mt-3 pt-3 border-t border-border flex items-center justify-between">

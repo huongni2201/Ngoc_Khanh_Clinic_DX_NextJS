@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Search, UserPlus, AlertCircle, Loader2, Check } from "lucide-react"
+import { Search, UserPlus, AlertCircle, Loader2, Check } from "@/shared/ui/product-icon"
 import {
   Dialog,
   DialogContent,
@@ -60,7 +60,7 @@ export function PatientSearchDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-3xl md:max-w-4xl max-w-[calc(100%-2rem)] p-6 sm:p-7 max-h-[92vh] flex flex-col gap-0 rounded-2xl shadow-xl overflow-hidden bg-card border-border">
+      <DialogContent className="sm:max-w-3xl md:max-w-4xl max-w-[calc(100%-2rem)] p-6 sm:p-7 max-h-[92vh] flex flex-col gap-0 rounded-lg shadow-xl overflow-hidden bg-card border-border">
         <DialogHeader className="pb-4 shrink-0 text-left border-b border-border/80">
           <DialogTitle className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
             Tìm bệnh nhân
@@ -249,7 +249,7 @@ export function PatientSearchDialog({
             type="button"
             variant="outline"
             onClick={() => onOpenChange(false)}
-            className="h-9 sm:h-10 px-4 sm:px-5 text-xs sm:text-sm font-medium border-border/80 hover:bg-hover rounded-lg shadow-2xs cursor-pointer"
+            className="h-9 sm:h-10 px-4 sm:px-5 text-xs sm:text-sm font-medium border-border/80 hover:bg-hover rounded-lg  cursor-pointer"
           >
             Đóng
           </Button>

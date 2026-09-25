@@ -1,17 +1,12 @@
 "use client"
 
 import * as React from "react"
-import Link from "next/link"
 import { useParams, useRouter, useSearchParams } from "next/navigation"
-import {
-  Home,
-  ChevronRight,
-  ArrowLeft,
-  AlertCircle,
-} from "lucide-react"
+import { ArrowLeft, AlertCircle } from "@/shared/ui/product-icon"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
+import { PageHeader } from "@/shared/ui"
 import { useEncounterDetail } from "../hooks/use-encounter"
 import { EncounterHeaderCard } from "../components/encounter/encounter-header-card"
 import {
@@ -72,9 +67,9 @@ export function EncounterDetailPage() {
     return (
       <div className="space-y-6">
         <Skeleton className="h-6 w-56" />
-        <Skeleton className="h-44 w-full rounded-2xl" />
-        <Skeleton className="h-12 w-full rounded-xl" />
-        <Skeleton className="h-96 w-full rounded-2xl" />
+        <Skeleton className="h-44 w-full rounded-lg" />
+        <Skeleton className="h-12 w-full rounded-lg" />
+        <Skeleton className="h-96 w-full rounded-lg" />
       </div>
     )
   }
@@ -126,64 +121,25 @@ export function EncounterDetailPage() {
 
   return (
     <div className="space-y-6 flex-1 pb-12">
-      {/* Breadcrumbs */}
-      <nav aria-label="Đường dẫn" className="flex items-center gap-1.5 text-xs text-muted-foreground flex-wrap">
-        <Link
-          href="/dashboard"
-          className="flex items-center gap-1 hover:text-foreground transition-colors"
-        >
-          <Home className="size-3.5" />
-          <span className="sr-only">Trang chủ</span>
-        </Link>
-        <ChevronRight className="size-3 text-muted-foreground/60" />
-        <Link href="/patients" className="hover:text-foreground transition-colors">
-          Bệnh nhân
-        </Link>
-        <ChevronRight className="size-3 text-muted-foreground/60" />
-        <Link
-          href={`/patients/${patientId}`}
-          className="hover:text-foreground transition-colors"
-        >
-          {data.patient.fullName}
-        </Link>
-        <ChevronRight className="size-3 text-muted-foreground/60" />
-        <span className="font-medium text-foreground">Lượt khám {encounterId}</span>
-        {subView === "cbc" && (
-          <>
-            <ChevronRight className="size-3 text-muted-foreground/60" />
-            <button
-              type="button"
-              onClick={handleBackToLabOrders}
-              className="hover:text-foreground transition-colors"
-            >
-              Cận lâm sàng
-            </button>
-            <ChevronRight className="size-3 text-muted-foreground/60" />
-            <span className="font-semibold text-primary">Công thức máu (CBC)</span>
-          </>
-        )}
-        {subView === "xray" && (
-          <>
-            <ChevronRight className="size-3 text-muted-foreground/60" />
-            <button
-              type="button"
-              onClick={handleBackToLabOrders}
-              className="hover:text-foreground transition-colors"
-            >
-              Cận lâm sàng
-            </button>
-            <ChevronRight className="size-3 text-muted-foreground/60" />
-            <span className="font-semibold text-primary">X-quang ngực thẳng</span>
-          </>
-        )}
-      </nav>
-
-      {/* Main Page Title Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">
-          {getPageTitle()}
-        </h1>
-      </div>
+      <PageHeader
+        breadcrumbs={[
+          { label: "Bệnh nhân", href: "/patients" },
+          { label: data.patient.fullName, href: `/patients/${patientId}` },
+          ...(subView
+            ? [
+                { label: `Lượt khám ${encounterId}`, href: `?tab=lab` },
+                {
+                  label:
+                    subView === "cbc"
+                      ? "Công thức máu (CBC)"
+                      : "X-quang ngực thẳng",
+                },
+              ]
+            : [{ label: `Lượt khám ${encounterId}` }]),
+        ]}
+        title={getPageTitle()}
+        description={`Bệnh nhân ${data.patient.fullName}`}
+      />
 
       {/* Persistent Encounter Header Summary Card */}
       <EncounterHeaderCard

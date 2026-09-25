@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useSearchParams, useRouter, usePathname } from "next/navigation"
-import { AlertCircle, RefreshCw } from "lucide-react"
+import { AlertCircle, RefreshCw } from "@/shared/ui/product-icon"
 import { Button } from "@/components/ui/button"
 import { EnterprisePageHeader } from "../components/enterprise-page-header"
 import { EnterpriseCountersStrip } from "../components/enterprise-counters-strip"
@@ -86,7 +86,7 @@ export function EnterpriseListPage() {
 
       {/* Error State */}
       {isError && (
-        <div className="p-4 rounded-xl border border-destructive/30 bg-destructive/5 flex items-center justify-between gap-3 text-xs text-destructive">
+        <div className="p-4 rounded-lg border border-destructive/30 bg-destructive/5 flex items-center justify-between gap-3 text-xs text-destructive">
           <div className="flex items-center gap-2">
             <AlertCircle className="size-4 shrink-0" />
             <span>Có lỗi xảy ra trong quá trình truy xuất dữ liệu từ máy chủ.</span>

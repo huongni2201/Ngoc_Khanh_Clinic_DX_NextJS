@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useRouter } from "next/navigation"
-import { MoreHorizontal, Eye, Plus, CalendarDays } from "lucide-react"
+import { MoreHorizontal, Eye, Plus, CalendarDays } from "@/shared/ui/product-icon"
 import {
   Table,
   TableHeader,
@@ -42,7 +42,7 @@ export function HealthExaminationBatchTable({
 
   if (isLoading) {
     return (
-      <div className="rounded-xl border border-border bg-card overflow-hidden shadow-2xs">
+      <div className="rounded-lg border border-border bg-card overflow-hidden ">
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/50 border-b border-border">
@@ -103,7 +103,7 @@ export function HealthExaminationBatchTable({
 
   if (batches.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/80 bg-card py-14 px-4 text-center">
+      <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border/80 bg-card py-14 px-4 text-center">
         <div className="flex size-12 items-center justify-center rounded-full bg-muted/60 text-muted-foreground mb-3">
           <CalendarDays className="size-6 stroke-[1.5]" />
         </div>
@@ -117,7 +117,7 @@ export function HealthExaminationBatchTable({
           <Button
             type="button"
             onClick={onCreateClick}
-            className="h-9 rounded-lg px-3.5 text-xs font-medium shadow-xs"
+            className="h-9 rounded-lg px-3.5 text-xs font-medium "
           >
             <Plus className="size-3.5 mr-1.5 stroke-[2.5]" />
             Tạo đợt khám mới
@@ -128,7 +128,7 @@ export function HealthExaminationBatchTable({
   }
 
   return (
-    <div className="rounded-xl border border-border bg-card overflow-hidden shadow-2xs">
+    <div className="rounded-lg border border-border bg-card overflow-hidden ">
       <Table>
         <TableHeader>
           <TableRow className="bg-muted/50 border-b border-border">

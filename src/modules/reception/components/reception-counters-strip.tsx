@@ -1,11 +1,4 @@
 import * as React from "react"
-import {
-  Users,
-  Stethoscope,
-  CreditCard,
-  FlaskConical,
-  CheckCircle2,
-} from "lucide-react"
 import { ReceptionCounters } from "../types"
 import { cn } from "@/lib/utils"
 
@@ -27,9 +20,6 @@ export function ReceptionCountersStrip({
       key: "WAITING_RECEPTION",
       label: "Chờ tiếp nhận",
       count: counters?.waitingReception ?? 8,
-      icon: Users,
-      iconColor: "text-status-warning",
-      bgColor: "bg-card",
       borderColor: "border-border",
       hoverBorder: "hover:border-status-warning/40",
       activeRing: "ring-1 ring-status-warning border-status-warning/60",
@@ -38,9 +28,6 @@ export function ReceptionCountersStrip({
       key: "EXAMINING",
       label: "Đang khám",
       count: counters?.examining ?? 3,
-      icon: Stethoscope,
-      iconColor: "text-primary",
-      bgColor: "bg-card",
       borderColor: "border-border",
       hoverBorder: "hover:border-primary/40",
       activeRing: "ring-1 ring-primary border-primary/60",
@@ -49,9 +36,6 @@ export function ReceptionCountersStrip({
       key: "WAITING_PAYMENT",
       label: "Chờ thu phí",
       count: counters?.waitingPayment ?? 2,
-      icon: CreditCard,
-      iconColor: "text-status-warning",
-      bgColor: "bg-card",
       borderColor: "border-border",
       hoverBorder: "hover:border-status-warning/40",
       activeRing: "ring-1 ring-status-warning border-status-warning/60",
@@ -60,9 +44,6 @@ export function ReceptionCountersStrip({
       key: "WAITING_RESULT",
       label: "Chờ kết quả",
       count: counters?.waitingResult ?? 1,
-      icon: FlaskConical,
-      iconColor: "text-secondary-foreground",
-      bgColor: "bg-card",
       borderColor: "border-border",
       hoverBorder: "hover:border-border",
       activeRing: "ring-1 ring-secondary-foreground border-border",
@@ -71,9 +52,6 @@ export function ReceptionCountersStrip({
       key: "COMPLETED",
       label: "Hoàn tất hôm nay",
       count: counters?.completedToday ?? 28,
-      icon: CheckCircle2,
-      iconColor: "text-status-success",
-      bgColor: "bg-card",
       borderColor: "border-border",
       hoverBorder: "hover:border-status-success/40",
       activeRing: "ring-1 ring-status-success border-status-success/60",
@@ -81,9 +59,8 @@ export function ReceptionCountersStrip({
   ]
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-      {items.map((item) => {
-        const Icon = item.icon
+    <div className="grid grid-cols-2 gap-0 overflow-hidden rounded-lg sm:grid-cols-3 lg:grid-cols-5">
+      {items.map((item, index) => {
         const isActive = activeStatusKey === item.key
 
         return (
@@ -91,12 +68,13 @@ export function ReceptionCountersStrip({
             key={item.key}
             type="button"
             onClick={() => onFilterStatus && onFilterStatus(item.key)}
+            aria-pressed={isActive}
             className={cn(
-              "flex items-center justify-between px-4 py-3 rounded-xl border bg-card text-left transition-all h-[76px] cursor-pointer",
+              "flex h-[72px] items-center border bg-card px-4 py-3 text-left transition-colors cursor-pointer",
               item.borderColor,
               item.hoverBorder,
               isActive && item.activeRing,
-              "hover:shadow-2xs"
+              index > 0 && "-ml-px"
             )}
           >
             <div className="flex flex-col min-w-0 pr-2">
@@ -112,9 +90,6 @@ export function ReceptionCountersStrip({
               </span>
             </div>
 
-            <div className="size-8.5 rounded-lg bg-surface-alt flex items-center justify-center shrink-0 border border-border/40">
-              <Icon className={cn("size-4", item.iconColor)} />
-            </div>
           </button>
         )
       })}

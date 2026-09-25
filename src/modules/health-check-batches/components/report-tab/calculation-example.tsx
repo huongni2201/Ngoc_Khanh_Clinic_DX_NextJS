@@ -1,10 +1,10 @@
 import * as React from "react"
-import { Info } from "lucide-react"
+import { Info } from "@/shared/ui/product-icon"
 
 export function CalculationExample() {
   return (
-    <div className="rounded-xl border border-primary/20 bg-primary/[0.05] p-4 flex items-center gap-3">
-      <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-2xs">
+    <div className="rounded-lg border border-primary/20 bg-primary/[0.05] p-4 flex items-center gap-3">
+      <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground ">
         <Info className="size-3.5 stroke-[2.5]" />
       </div>
       <div className="space-y-0.5">

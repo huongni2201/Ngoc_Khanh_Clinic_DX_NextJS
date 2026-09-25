@@ -1,13 +1,9 @@
 "use client"
 
 import * as React from "react"
-import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
 import {
-  Home,
-  ChevronRight,
   ArrowLeft,
-  User,
   Pencil,
   ClipboardPlus,
   Phone,
@@ -17,12 +13,13 @@ import {
   Clock,
   FileText,
   AlertCircle,
-} from "lucide-react"
+} from "@/shared/ui/product-icon"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
+import { PageHeader } from "@/shared/ui"
 import { usePatient } from "../hooks/use-patients"
 import { EditPatientDialog } from "../components/edit-patient-dialog"
 import { ReceivePatientDialog } from "@/modules/reception"
@@ -48,8 +45,8 @@ export function PatientDetailPage() {
     return (
       <div className="space-y-6">
         <Skeleton className="h-6 w-48" />
-        <Skeleton className="h-32 w-full rounded-2xl" />
-        <Skeleton className="h-64 w-full rounded-2xl" />
+        <Skeleton className="h-32 w-full rounded-lg" />
+        <Skeleton className="h-64 w-full rounded-lg" />
       </div>
     )
   }
@@ -84,80 +81,46 @@ export function PatientDetailPage() {
 
   return (
     <div className="space-y-6 flex-1">
-      {/* Breadcrumbs */}
-      <nav aria-label="Đường dẫn" className="flex items-center gap-1.5 text-xs text-muted-foreground">
-        <Link
-          href="/dashboard"
-          className="flex items-center gap-1 hover:text-foreground transition-colors"
-        >
-          <Home className="size-3.5" />
-          <span className="sr-only">Trang chủ</span>
-        </Link>
-        <ChevronRight className="size-3 text-muted-foreground/60" />
-        <Link href="/patients" className="hover:text-foreground transition-colors">
-          Bệnh nhân
-        </Link>
-        <ChevronRight className="size-3 text-muted-foreground/60" />
-        <span className="font-medium text-foreground">{patient.fullName}</span>
-      </nav>
-
-      {/* Top Banner / Summary Card */}
-      <div className="rounded-2xl border border-border bg-card p-6 shadow-xs">
-        <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-          {/* Patient Bio */}
-          <div className="flex items-center gap-4">
-            <div className="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-              <User className="size-8" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2.5">
-                <h1 className="text-xl font-bold tracking-tight text-foreground">
-                  {patient.fullName}
-                </h1>
-                <Badge variant="outline" className="font-mono text-xs font-semibold">
-                  {patient.patientCode}
-                </Badge>
-              </div>
-              <p className="mt-1 text-xs text-muted-foreground flex flex-wrap items-center gap-3">
-                <span>{getGenderLabel(patient.gender)}</span>
-                <span>•</span>
-                <span>{dobDisplay} ({age} tuổi)</span>
-                <span>•</span>
-                <span>Lần khám gần nhất: <strong className="text-foreground">{lastExamDisplay}</strong></span>
-              </p>
-            </div>
-          </div>
-
-          {/* Action CTAs */}
-          <div className="flex flex-wrap items-center gap-2.5">
+      <PageHeader
+        breadcrumbs={[
+          { label: "Bệnh nhân", href: "/patients" },
+          { label: patient.fullName },
+        ]}
+        title={patient.fullName}
+        titleAccessory={
+          <Badge variant="outline" className="font-mono text-xs font-semibold">
+            {patient.patientCode}
+          </Badge>
+        }
+        description={`${getGenderLabel(patient.gender)} · ${dobDisplay} (${age} tuổi) · Lần khám gần nhất: ${lastExamDisplay}`}
+        actions={
+          <>
             <Button
               variant="outline"
               onClick={() => router.push("/patients")}
-              className="h-9 rounded-xl border-border text-xs font-medium"
             >
-              <ArrowLeft className="mr-1.5 size-4" />
+              <ArrowLeft className="size-4" />
               Danh sách
             </Button>
             <Button
               variant="outline"
               onClick={() => setIsEditOpen(true)}
-              className="h-9 rounded-xl border-border text-xs font-medium hover:text-primary"
             >
-              <Pencil className="mr-1.5 size-4" />
+              <Pencil className="size-4" />
               Sửa thông tin
             </Button>
-            <Button
-              onClick={() => setIsReceiveOpen(true)}
-              className="h-9 rounded-xl bg-primary text-xs font-semibold text-primary-foreground hover:bg-primary/90"
-            >
-              <ClipboardPlus className="mr-1.5 size-4" />
+            <Button onClick={() => setIsReceiveOpen(true)}>
+              <ClipboardPlus className="size-4" />
               Tiếp nhận khám
             </Button>
-          </div>
-        </div>
+          </>
+        }
+      />
 
-        {/* Administrative Details Grid */}
-        <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 border-t border-border pt-5">
+      <section
+        aria-label="Thông tin hành chính"
+        className="grid grid-cols-1 gap-4 rounded-lg border border-border bg-card px-5 py-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-0"
+      >
           <div className="flex items-center gap-3 text-xs">
             <CreditCard className="size-4 text-muted-foreground shrink-0" />
             <div>
@@ -166,7 +129,7 @@ export function PatientDetailPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3 text-xs">
+          <div className="flex items-center gap-3 text-xs lg:border-l lg:border-border lg:pl-5">
             <Phone className="size-4 text-muted-foreground shrink-0" />
             <div>
               <p className="text-[11px] text-muted-foreground">Số điện thoại</p>
@@ -174,7 +137,7 @@ export function PatientDetailPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3 text-xs">
+          <div className="flex items-center gap-3 text-xs lg:border-l lg:border-border lg:pl-5">
             <Mail className="size-4 text-muted-foreground shrink-0" />
             <div>
               <p className="text-[11px] text-muted-foreground">Email</p>
@@ -184,7 +147,7 @@ export function PatientDetailPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3 text-xs">
+          <div className="flex items-center gap-3 text-xs lg:border-l lg:border-border lg:pl-5">
             <MapPin className="size-4 text-muted-foreground shrink-0" />
             <div>
               <p className="text-[11px] text-muted-foreground">Địa chỉ</p>
@@ -193,17 +156,16 @@ export function PatientDetailPage() {
               </p>
             </div>
           </div>
-        </div>
-      </div>
+      </section>
 
       {/* Tabs for Medical History */}
       <Tabs defaultValue="encounters" className="w-full">
-        <TabsList className="h-10 bg-muted/70 p-1 rounded-xl">
-          <TabsTrigger value="encounters" className="text-xs rounded-lg">
+        <TabsList>
+          <TabsTrigger value="encounters">
             <Clock className="mr-1.5 size-3.5" />
             Lịch sử khám bệnh
           </TabsTrigger>
-          <TabsTrigger value="records" className="text-xs rounded-lg">
+          <TabsTrigger value="records">
             <FileText className="mr-1.5 size-3.5" />
             Hồ sơ y tế & Chẩn đoán
           </TabsTrigger>
@@ -214,7 +176,7 @@ export function PatientDetailPage() {
         </TabsContent>
 
         <TabsContent value="records" className="mt-4">
-          <div className="rounded-2xl border border-border bg-card p-6 shadow-xs text-center">
+          <div className="rounded-lg border border-border bg-card p-6  text-center">
             <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground mb-3">
               <FileText className="size-6" />
             </div>

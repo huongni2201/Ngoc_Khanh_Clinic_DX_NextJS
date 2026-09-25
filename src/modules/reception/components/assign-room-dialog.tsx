@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { AlertCircle, Loader2, CheckCircle2 } from "lucide-react"
+import { AlertCircle, Loader2, CheckCircle2 } from "@/shared/ui/product-icon"
 import {
   Dialog,
   DialogContent,
@@ -79,7 +79,7 @@ export function AssignRoomDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-3xl md:max-w-4xl max-w-[calc(100%-2rem)] p-6 sm:p-7 max-h-[92vh] flex flex-col gap-0 rounded-2xl shadow-xl overflow-hidden bg-card border-border">
+      <DialogContent className="sm:max-w-3xl md:max-w-4xl max-w-[calc(100%-2rem)] p-6 sm:p-7 max-h-[92vh] flex flex-col gap-0 rounded-lg shadow-xl overflow-hidden bg-card border-border">
         <DialogHeader className="pb-4 shrink-0 text-left border-b border-border/80">
           <DialogTitle className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
             Phân phòng / Bác sĩ
@@ -98,7 +98,7 @@ export function AssignRoomDialog({
           )}
 
           {/* Patient and Encounter Context Info */}
-          <div className="p-3.5 rounded-xl border border-border bg-surface-alt/60 space-y-1.5">
+          <div className="p-3.5 rounded-lg border border-border bg-surface-alt/60 space-y-1.5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-bold text-foreground">
@@ -163,9 +163,9 @@ export function AssignRoomDialog({
                       key={room.id}
                       onClick={() => setSelectedRoomId(room.id)}
                       className={cn(
-                        "p-3.5 rounded-xl border cursor-pointer transition-all flex flex-col justify-between gap-3 text-left",
+                        "p-3.5 rounded-lg border cursor-pointer transition-all flex flex-col justify-between gap-3 text-left",
                         isSelected
-                          ? "border-primary bg-selected ring-1 ring-primary shadow-xs"
+                          ? "border-primary bg-selected ring-1 ring-primary "
                           : "border-border bg-card hover:bg-hover/60 hover:border-border/80"
                       )}
                     >
@@ -223,7 +223,7 @@ export function AssignRoomDialog({
             variant="outline"
             onClick={() => onOpenChange(false)}
             disabled={isPending}
-            className="h-9 sm:h-10 px-4 sm:px-5 text-xs sm:text-sm font-medium border-border/80 hover:bg-hover rounded-lg shadow-2xs cursor-pointer"
+            className="h-9 sm:h-10 px-4 sm:px-5 text-xs sm:text-sm font-medium border-border/80 hover:bg-hover rounded-lg  cursor-pointer"
           >
             Hủy
           </Button>
@@ -231,7 +231,7 @@ export function AssignRoomDialog({
             type="button"
             onClick={handleConfirm}
             disabled={isPending || !selectedRoomId}
-            className="h-9 sm:h-10 px-4 sm:px-5 text-xs sm:text-sm font-medium rounded-lg shadow-xs cursor-pointer"
+            className="h-9 sm:h-10 px-4 sm:px-5 text-xs sm:text-sm font-medium rounded-lg  cursor-pointer"
           >
             {isPending && <Loader2 className="size-3.5 mr-2 animate-spin" />}
             {isPending ? "Đang phân phòng..." : "Xác nhận phân phòng"}

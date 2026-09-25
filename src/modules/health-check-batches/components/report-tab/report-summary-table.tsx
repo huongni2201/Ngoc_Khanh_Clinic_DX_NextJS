@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Calculator } from "lucide-react"
+import { Calculator } from "@/shared/ui/product-icon"
 import { formatVND } from "@/shared/ui"
 import { HealthExaminationBatchReportItem } from "../../types"
 
@@ -17,7 +17,7 @@ export function ReportSummaryTable({
   return (
     <div className="space-y-5">
       {/* Summary Table */}
-      <div className="rounded-xl border border-border bg-card shadow-2xs overflow-hidden">
+      <div className="rounded-lg border border-border bg-card  overflow-hidden">
         <div className="overflow-x-auto scrollbar-thin">
           <table className="w-full text-xs sm:text-sm border-collapse">
             <thead>
@@ -70,7 +70,7 @@ export function ReportSummaryTable({
       </div>
 
       {/* Calculation Formula Callout Box */}
-      <div className="rounded-xl border border-border/80 bg-muted/20 p-4 sm:p-5 flex items-start gap-3.5">
+      <div className="rounded-lg border border-border/80 bg-muted/20 p-4 sm:p-5 flex items-start gap-3.5">
         <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary mt-0.5">
           <Calculator className="size-4 stroke-[2]" />
         </div>

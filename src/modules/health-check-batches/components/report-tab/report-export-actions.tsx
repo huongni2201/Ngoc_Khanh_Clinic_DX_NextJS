@@ -1,5 +1,5 @@
 import * as React from "react"
-import { Download, Loader2 } from "lucide-react"
+import { Download, Loader2 } from "@/shared/ui/product-icon"
 import { Button } from "@/components/ui/button"
 import {
   Tooltip,
@@ -32,7 +32,7 @@ export function ReportExportActions({
       size="sm"
       disabled={disabled || isExportingDetail}
       onClick={onExportDetailHorizontal}
-      className="h-9 px-3.5 text-xs font-medium border-primary/50 text-primary hover:bg-primary/5 hover:text-primary transition-colors shadow-2xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+      className="h-9 px-3.5 text-xs font-medium border-primary/50 text-primary hover:bg-primary/5 hover:text-primary transition-colors  cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
     >
       {isExportingDetail ? (
         <Loader2 className="size-3.5 mr-1.5 animate-spin" />
@@ -50,7 +50,7 @@ export function ReportExportActions({
       size="sm"
       disabled={disabled || isExportingSummary}
       onClick={onExportSummaryVertical}
-      className="h-9 px-3.5 text-xs font-medium border-primary/50 text-primary hover:bg-primary/5 hover:text-primary transition-colors shadow-2xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+      className="h-9 px-3.5 text-xs font-medium border-primary/50 text-primary hover:bg-primary/5 hover:text-primary transition-colors  cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
     >
       {isExportingSummary ? (
         <Loader2 className="size-3.5 mr-1.5 animate-spin" />

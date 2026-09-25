@@ -1,12 +1,12 @@
 "use client"
 
 import * as React from "react"
-import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Home, ChevronRight, Plus, UserCheck, AlertCircle, RefreshCw } from "lucide-react"
+import { Plus, UserCheck, AlertCircle, RefreshCw } from "@/shared/ui/product-icon"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { DataTablePagination } from "@/shared/ui/data-table-pagination"
+import { PageHeader } from "@/shared/ui"
 import { PatientCountersStrip } from "../components/patient-counters-strip"
 import { PatientToolbar } from "../components/patient-toolbar"
 import { PatientTable } from "../components/patient-table"
@@ -140,58 +140,26 @@ export function PatientsPage() {
 
   return (
     <div className="flex flex-col flex-1 gap-5 w-full" data-slot="patients-page">
-      {/* 1. Breadcrumbs & Page Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        {/* Breadcrumbs & Titles */}
-        <div className="space-y-1.5">
-          {/* Breadcrumb navigation */}
-          <nav
-            aria-label="Breadcrumb"
-            className="flex items-center gap-1.5 text-xs text-muted-foreground"
-          >
-            <Link
-              href="/dashboard"
-              className="flex items-center hover:text-foreground transition-colors"
-            >
-              <Home className="size-3.5" />
-            </Link>
-            <ChevronRight className="size-3.5 text-muted-foreground/60" />
-            <span className="font-medium text-foreground">Bệnh nhân</span>
-          </nav>
-
-          {/* Header Titles */}
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">
-              Danh sách bệnh nhân
-            </h1>
-            <p className="text-sm text-secondary-foreground">
-              Quản lý thông tin hồ sơ bệnh nhân của phòng khám.
-            </p>
-          </div>
-        </div>
-
-        {/* Right: Actions Buttons */}
-        <div className="flex flex-wrap items-center gap-2.5">
-          {/* Secondary CTA: Tiếp nhận bệnh nhân */}
+      <PageHeader
+        breadcrumbs={[{ label: "Bệnh nhân" }]}
+        title="Danh sách bệnh nhân"
+        description="Quản lý thông tin hồ sơ bệnh nhân của phòng khám."
+        actions={
+          <>
           <Button
             variant="outline"
             onClick={handleOpenReceiveGeneral}
-            className="gap-2 h-10 rounded-lg border-border/80 hover:bg-hover text-foreground px-4 text-xs sm:text-sm font-medium shadow-2xs cursor-pointer"
           >
-            <UserCheck className="size-4 stroke-[2]" />
-            <span>Tiếp nhận bệnh nhân</span>
+            <UserCheck className="size-4" />
+            Tiếp nhận bệnh nhân
           </Button>
-
-          {/* Primary CTA: Tạo bệnh nhân mới */}
-          <Button
-            onClick={() => setIsCreateOpen(true)}
-            className="gap-2 h-10 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground px-4 text-xs sm:text-sm font-medium shadow-xs cursor-pointer"
-          >
-            <Plus className="size-4 stroke-[2]" />
-            <span>Tạo bệnh nhân mới</span>
+          <Button onClick={() => setIsCreateOpen(true)}>
+            <Plus className="size-4" />
+            Tạo bệnh nhân mới
           </Button>
-        </div>
-      </div>
+          </>
+        }
+      />
 
       {/* 2.5. Operational Counters Strip */}
       <PatientCountersStrip
@@ -216,7 +184,7 @@ export function PatientsPage() {
 
       {/* 4. Error state if query fails */}
       {isError && (
-        <Alert variant="destructive" className="rounded-xl">
+        <Alert variant="destructive" className="rounded-lg">
           <AlertCircle className="size-4" />
           <AlertDescription className="flex items-center justify-between text-xs">
             <span>

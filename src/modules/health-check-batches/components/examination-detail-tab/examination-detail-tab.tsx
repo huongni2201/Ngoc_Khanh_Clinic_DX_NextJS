@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { AlertCircle, RefreshCw } from "lucide-react"
+import { AlertCircle, RefreshCw } from "@/shared/ui/product-icon"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ExaminationDetailToolbar } from "./examination-detail-toolbar"
@@ -88,7 +88,7 @@ export function ExaminationDetailTab({ batchId }: ExaminationDetailTabProps) {
 
       {/* 2. Error State */}
       {isError ? (
-        <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-8 text-center space-y-3">
+        <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-8 text-center space-y-3">
           <div className="size-10 rounded-full bg-destructive/10 text-destructive flex items-center justify-center mx-auto">
             <AlertCircle className="size-5" />
           </div>
@@ -102,7 +102,7 @@ export function ExaminationDetailTab({ batchId }: ExaminationDetailTabProps) {
             variant="outline"
             size="sm"
             onClick={() => refetch()}
-            className="text-xs h-8 shadow-xs"
+            className="text-xs h-8 "
           >
             <RefreshCw className="size-3.5 mr-1.5" />
             Thử lại
@@ -111,7 +111,7 @@ export function ExaminationDetailTab({ batchId }: ExaminationDetailTabProps) {
       ) : isLoading ? (
         /* 3. Loading Skeleton */
         <div className="space-y-3">
-          <div className="rounded-xl border border-border bg-card shadow-2xs overflow-hidden p-4 space-y-3">
+          <div className="rounded-lg border border-border bg-card  overflow-hidden p-4 space-y-3">
             <Skeleton className="h-9 w-full rounded-md" />
             {Array.from({ length: 8 }).map((_, i) => (
               <Skeleton key={i} className="h-8 w-full rounded-md" />

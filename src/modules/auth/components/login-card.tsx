@@ -1,6 +1,6 @@
 import * as React from "react"
 import Image from "next/image"
-import { Headphones } from "lucide-react"
+import { Headphones } from "@/shared/ui/product-icon"
 import { LoginForm } from "./login-form"
 import { LoginFormValues } from "../schemas/login.schema"
 
@@ -18,9 +18,9 @@ export function LoginCard({
   onClearServerError,
 }: LoginCardProps) {
   return (
-    <div className="relative z-10 w-full max-w-[480px] sm:max-w-[520px] rounded-2xl border border-login-card-border bg-card p-6 sm:p-10 shadow-xs transition-shadow">
+    <div className="relative z-10 w-full max-w-[440px] rounded-lg border border-border bg-card p-6 sm:p-8">
       {/* 1. Header: Clinic Logo & Brand */}
-      <div className="flex items-center justify-center gap-3.5 mb-6 sm:mb-8">
+      <div className="mb-7 flex items-center gap-3.5">
         <div className="relative size-12 sm:size-14 shrink-0">
           <Image
             src="/images/logo.png"
@@ -42,8 +42,8 @@ export function LoginCard({
       </div>
 
       {/* 2. Title & Subtitle */}
-      <div className="text-center space-y-1 mb-6 sm:mb-8">
-        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+      <div className="mb-6 space-y-1 text-left">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
           Đăng nhập hệ thống
         </h1>
         <p className="text-xs sm:text-sm text-muted-foreground">
@@ -60,7 +60,7 @@ export function LoginCard({
       />
 
       {/* 4. Card Footer: Support Notice */}
-      <div className="mt-6 sm:mt-8 pt-4 border-t border-border/60 flex items-center justify-center gap-2 text-xs text-muted-foreground">
+      <div className="mt-7 flex items-center gap-2 border-t border-border pt-4 text-xs text-muted-foreground">
         <Headphones className="size-4 text-primary shrink-0" aria-hidden="true" />
         <span>Cần hỗ trợ? Liên hệ quản trị viên hệ thống.</span>
       </div>

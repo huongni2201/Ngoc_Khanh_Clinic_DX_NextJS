@@ -55,10 +55,10 @@ function PaginationLink({
   const resolvedVariant = variant ?? (isActive ? "default" : "ghost")
 
   const linkClasses = cn(
-    "cursor-pointer select-none text-xs transition-colors rounded-lg",
-    size === "icon" && "size-8 min-w-8 p-0 font-medium",
+    "cursor-pointer select-none text-xs transition-colors rounded-md",
+    size === "icon" && "size-9 min-w-9 p-0 font-medium",
     isActive
-      ? "bg-primary text-primary-foreground font-semibold border border-transparent shadow-xs hover:bg-primary/90 hover:text-primary-foreground dark:bg-primary dark:text-primary-foreground"
+      ? "bg-primary text-primary-foreground font-semibold border border-transparent hover:bg-primary/90 hover:text-primary-foreground dark:bg-primary dark:text-primary-foreground"
       : "text-secondary-foreground hover:text-foreground hover:bg-surface-alt font-normal",
     disabled && "cursor-not-allowed opacity-50 pointer-events-none text-muted-foreground",
     className
@@ -112,7 +112,7 @@ function PaginationPrevious({
       size="default"
       variant="ghost"
       className={cn(
-        "h-8 gap-1.5 px-2 text-xs font-normal text-secondary-foreground hover:text-foreground hover:bg-surface-alt cursor-pointer disabled:text-muted-foreground disabled:opacity-50 disabled:pointer-events-none mr-1.5",
+        "h-9 gap-1.5 px-2.5 text-xs font-normal text-secondary-foreground hover:text-foreground hover:bg-surface-alt cursor-pointer disabled:text-muted-foreground disabled:opacity-50 disabled:pointer-events-none mr-1.5",
         className
       )}
       {...props}
@@ -144,7 +144,7 @@ function PaginationNext({
       size="default"
       variant="ghost"
       className={cn(
-        "h-8 gap-1.5 px-2 text-xs font-normal text-secondary-foreground hover:text-foreground hover:bg-surface-alt cursor-pointer disabled:text-muted-foreground disabled:opacity-50 disabled:pointer-events-none ml-1.5",
+        "h-9 gap-1.5 px-2.5 text-xs font-normal text-secondary-foreground hover:text-foreground hover:bg-surface-alt cursor-pointer disabled:text-muted-foreground disabled:opacity-50 disabled:pointer-events-none ml-1.5",
         className
       )}
       {...props}
@@ -173,7 +173,7 @@ function PaginationEllipsis({
       aria-hidden
       data-slot="pagination-ellipsis"
       className={cn(
-        "flex size-8 items-center justify-center text-muted-foreground select-none [&_svg:not([class*='size-'])]:size-4",
+        "flex size-9 items-center justify-center text-muted-foreground select-none [&_svg:not([class*='size-'])]:size-4",
         className
       )}
       {...props}

@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Search, Filter } from "lucide-react"
+import { Search, Filter } from "@/shared/ui/product-icon"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import {
@@ -55,7 +55,7 @@ export function EnterpriseFilters({
           value={searchValue}
           onChange={(e) => setSearchValue(e.target.value)}
           placeholder="Tìm theo tên doanh nghiệp, mã, người liên hệ..."
-          className="h-10 w-full rounded-lg border-border bg-card pl-10 pr-4 text-xs text-foreground shadow-2xs placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring"
+          className="h-10 w-full rounded-lg border-border bg-card pl-10 pr-4 text-xs text-foreground  placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring"
         />
       </div>
 
@@ -66,7 +66,7 @@ export function EnterpriseFilters({
           value={status}
           onValueChange={(val) => onStatusChange(val || "ALL")}
         >
-          <SelectTrigger className="h-10 min-w-36 rounded-lg border-border bg-card px-3 text-xs text-foreground shadow-2xs">
+          <SelectTrigger className="h-10 min-w-36 rounded-lg border-border bg-card px-3 text-xs text-foreground ">
             <SelectValue placeholder="Trạng thái">
               {status === "IN_PROGRESS"
                 ? "Đang khám"
@@ -87,7 +87,7 @@ export function EnterpriseFilters({
           type="button"
           variant="outline"
           onClick={onToggleAdvancedFilter}
-          className="h-10 rounded-lg border-border bg-card px-3.5 text-xs font-medium text-secondary-foreground shadow-2xs hover:bg-hover hover:text-foreground"
+          className="h-10 rounded-lg border-border bg-card px-3.5 text-xs font-medium text-secondary-foreground  hover:bg-hover hover:text-foreground"
         >
           <Filter className="size-3.5 mr-1.5 text-muted-foreground" />
           Bộ lọc

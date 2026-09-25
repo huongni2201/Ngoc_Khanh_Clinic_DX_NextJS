@@ -1,10 +1,10 @@
 "use client"
 
 import * as React from "react"
-import Link from "next/link"
 import { useSearchParams, useRouter, usePathname } from "next/navigation"
-import { Home, ChevronRight, AlertCircle, RefreshCw } from "lucide-react"
+import { AlertCircle, RefreshCw } from "@/shared/ui/product-icon"
 import { Button } from "@/components/ui/button"
+import { PageHeader } from "@/shared/ui"
 import { ReceptionHeaderActions } from "../components/reception-header-actions"
 import { ReceptionCountersStrip } from "../components/reception-counters-strip"
 import { ReceptionPatientTable } from "../components/reception-patient-table"
@@ -295,40 +295,11 @@ export function ReceptionPage() {
 
   return (
     <div className="flex flex-col flex-1 gap-5 w-full">
-      {/* Breadcrumb & Page Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        {/* Breadcrumbs & Titles */}
-        <div className="space-y-1.5">
-          {/* Breadcrumb navigation */}
-          <nav
-            aria-label="Breadcrumb"
-            className="flex items-center gap-1.5 text-xs text-muted-foreground"
-          >
-            <Link
-              href="/dashboard"
-              className="flex items-center hover:text-foreground transition-colors"
-            >
-              <Home className="size-3.5" />
-            </Link>
-            <ChevronRight className="size-3.5 text-muted-foreground/60" />
-            <span className="hover:text-foreground transition-colors">Bàn tiếp đón</span>
-            <ChevronRight className="size-3.5 text-muted-foreground/60" />
-            <span className="font-medium text-foreground">Lễ tân</span>
-          </nav>
-
-          {/* Header Titles */}
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">
-              Lễ tân
-            </h1>
-            <p className="text-sm text-secondary-foreground">
-              Danh sách tiếp nhận bệnh nhân và điều phối phòng khám hôm nay
-            </p>
-          </div>
-        </div>
-
-        {/* Top Right Action: Reception Header Actions */}
-        <div>
+      <PageHeader
+        breadcrumbs={[{ label: "Bàn tiếp đón" }, { label: "Lễ tân" }]}
+        title="Lễ tân"
+        description="Danh sách tiếp nhận bệnh nhân và điều phối phòng khám hôm nay"
+        actions={
           <ReceptionHeaderActions
             onOpenReceivePatient={handleOpenReceiveWithCleanState}
             onOpenFindPatient={handleOpenFindPatient}
@@ -336,8 +307,8 @@ export function ReceptionPage() {
             onOpenTodayAppointments={() => setIsTodayAppointmentsOpen(true)}
             todayAppointmentsCount={todayPendingAppointmentsCount}
           />
-        </div>
-      </div>
+        }
+      />
 
       {/* Compact Operational Counters Strip (Height 72-88px) */}
       <ReceptionCountersStrip
@@ -349,7 +320,7 @@ export function ReceptionPage() {
 
       {/* Error state if worklist fetch fails */}
       {isErrorWorklist && (
-        <div className="p-4 rounded-xl border border-destructive/30 bg-destructive/5 flex items-center justify-between gap-3 text-xs text-destructive">
+        <div className="p-4 rounded-lg border border-destructive/30 bg-destructive/5 flex items-center justify-between gap-3 text-xs text-destructive">
           <div className="flex items-center gap-2">
             <AlertCircle className="size-4 shrink-0" />
             <span>

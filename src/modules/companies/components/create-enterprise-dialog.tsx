@@ -64,8 +64,8 @@ export function CreateEnterpriseDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md p-6">
-        <DialogHeader>
+      <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-md">
+        <DialogHeader className="shrink-0 border-b border-border px-6 pb-4 pt-6">
           <DialogTitle className="text-base font-bold text-foreground">
             Thêm doanh nghiệp mới
           </DialogTitle>
@@ -74,7 +74,11 @@ export function CreateEnterpriseDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-2">
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="flex min-h-0 flex-1 flex-col"
+        >
+          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-5">
           {/* Tên doanh nghiệp * */}
           <div className="space-y-1.5">
             <Label htmlFor="name" className="text-xs font-medium text-foreground">
@@ -168,7 +172,8 @@ export function CreateEnterpriseDialog({
             />
           </div>
 
-          <DialogFooter className="pt-3 gap-2 sm:gap-0">
+          </div>
+          <DialogFooter className="shrink-0 border-t border-border px-6 py-4">
             <Button
               type="button"
               variant="outline"
@@ -180,7 +185,7 @@ export function CreateEnterpriseDialog({
             <Button
               type="submit"
               disabled={isPending}
-              className="h-9 text-xs font-medium shadow-xs"
+              className="h-9 text-xs font-medium "
             >
               {isPending ? "Đang tạo..." : "Tạo doanh nghiệp"}
             </Button>

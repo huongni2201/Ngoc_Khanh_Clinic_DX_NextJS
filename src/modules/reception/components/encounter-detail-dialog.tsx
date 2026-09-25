@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Printer, CreditCard, DoorOpen, Clock } from "lucide-react"
+import { Printer, CreditCard, DoorOpen, Clock } from "@/shared/ui/product-icon"
 import {
   Dialog,
   DialogContent,
@@ -44,7 +44,7 @@ export function EncounterDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-3xl md:max-w-4xl max-w-[calc(100%-2rem)] p-6 sm:p-7 max-h-[92vh] flex flex-col gap-0 rounded-2xl shadow-xl overflow-hidden bg-card border-border">
+      <DialogContent className="sm:max-w-3xl md:max-w-4xl max-w-[calc(100%-2rem)] p-6 sm:p-7 max-h-[92vh] flex flex-col gap-0 rounded-lg shadow-xl overflow-hidden bg-card border-border">
         <DialogHeader className="pb-4 shrink-0 text-left border-b border-border/80">
           <div className="flex items-center justify-between">
             <div>
@@ -67,7 +67,7 @@ export function EncounterDetailDialog({
               <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground block">
                 Thông tin người bệnh
               </span>
-              <div className="p-4 rounded-xl border border-border bg-surface-alt/50 space-y-3">
+              <div className="p-4 rounded-lg border border-border bg-surface-alt/50 space-y-3">
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <span className="text-sm font-bold text-foreground block">
@@ -105,7 +105,7 @@ export function EncounterDetailDialog({
               </div>
 
               {/* Progress Milestones */}
-              <div className="p-3.5 rounded-xl border border-border/70 bg-surface-alt/30 space-y-2 text-xs">
+              <div className="p-3.5 rounded-lg border border-border/70 bg-surface-alt/30 space-y-2 text-xs">
                 <span className="font-semibold text-foreground text-[11px] block">
                   Tiến trình phục vụ trong ngày:
                 </span>
@@ -127,7 +127,7 @@ export function EncounterDetailDialog({
               <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground block">
                 Điều phối chuyên môn
               </span>
-              <div className="space-y-2.5 border border-border rounded-xl p-4 text-xs bg-card">
+              <div className="space-y-2.5 border border-border rounded-lg p-4 text-xs bg-card">
                 <div className="flex items-center justify-between pb-2 border-b border-border/60">
                   <div className="flex items-center gap-1.5 text-muted-foreground">
                     <Clock className="size-3.5" />
@@ -190,7 +190,7 @@ export function EncounterDetailDialog({
             type="button"
             variant="outline"
             onClick={() => onOpenChange(false)}
-            className="h-9 sm:h-10 px-4 sm:px-5 text-xs sm:text-sm font-medium border-border/80 hover:bg-hover rounded-lg shadow-2xs cursor-pointer"
+            className="h-9 sm:h-10 px-4 sm:px-5 text-xs sm:text-sm font-medium border-border/80 hover:bg-hover rounded-lg  cursor-pointer"
           >
             Đóng
           </Button>
@@ -204,7 +204,7 @@ export function EncounterDetailDialog({
                   onOpenChange(false)
                   onPrintForm(encounter)
                 }}
-                className="gap-2 h-9 sm:h-10 px-4 sm:px-5 text-xs sm:text-sm font-medium border-border/80 hover:bg-hover rounded-lg shadow-2xs cursor-pointer"
+                className="gap-2 h-9 sm:h-10 px-4 sm:px-5 text-xs sm:text-sm font-medium border-border/80 hover:bg-hover rounded-lg  cursor-pointer"
               >
                 <Printer className="size-4" />
                 In phiếu
@@ -218,7 +218,7 @@ export function EncounterDetailDialog({
                   onOpenChange(false)
                   onAssignRoom(encounter)
                 }}
-                className="gap-2 h-9 sm:h-10 px-4 sm:px-5 text-xs sm:text-sm font-medium rounded-lg shadow-xs cursor-pointer"
+                className="gap-2 h-9 sm:h-10 px-4 sm:px-5 text-xs sm:text-sm font-medium rounded-lg  cursor-pointer"
               >
                 <DoorOpen className="size-4" />
                 Phân phòng
@@ -232,7 +232,7 @@ export function EncounterDetailDialog({
                   onOpenChange(false)
                   onProcessPayment(encounter)
                 }}
-                className="gap-2 h-9 sm:h-10 px-4 sm:px-5 text-xs sm:text-sm font-medium rounded-lg shadow-xs cursor-pointer"
+                className="gap-2 h-9 sm:h-10 px-4 sm:px-5 text-xs sm:text-sm font-medium rounded-lg  cursor-pointer"
               >
                 <CreditCard className="size-4" />
                 Thu phí

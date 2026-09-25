@@ -3,7 +3,7 @@
 import * as React from "react"
 import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Edit, AlertCircle, Loader2, Trash2 } from "lucide-react"
+import { Edit, AlertCircle, Loader2, Trash2 } from "@/shared/ui/product-icon"
 import {
   Dialog,
   DialogContent,
@@ -153,7 +153,7 @@ export function EditAppointmentDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-3xl md:max-w-4xl w-full p-0 gap-0 overflow-hidden bg-card border-border sm:rounded-xl">
+      <DialogContent className="sm:max-w-3xl md:max-w-4xl w-full p-0 gap-0 overflow-hidden bg-card border-border sm:rounded-lg">
         <DialogHeader className="px-6 pt-6 pb-4 border-b border-border bg-card">
           <div className="flex items-center gap-2.5">
             <div className="size-8 rounded-lg bg-surface-alt flex items-center justify-center text-primary">
@@ -186,7 +186,7 @@ export function EditAppointmentDialog({
                   1. Người bệnh
                 </span>
 
-                <div className="p-4 rounded-xl border border-border bg-surface-alt/50 space-y-2.5">
+                <div className="p-4 rounded-lg border border-border bg-surface-alt/50 space-y-2.5">
                   <div className="space-y-0.5">
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-bold text-foreground">
@@ -219,7 +219,7 @@ export function EditAppointmentDialog({
 
                 {/* Cancellation Confirmation Alert */}
                 {isConfirmingCancel && (
-                  <Alert variant="destructive" className="py-3 text-xs rounded-xl space-y-2">
+                  <Alert variant="destructive" className="py-3 text-xs rounded-lg space-y-2">
                     <AlertCircle className="size-4" />
                     <AlertDescription className="space-y-2">
                       <p>Bạn có chắc chắn muốn hủy lịch hẹn này?</p>

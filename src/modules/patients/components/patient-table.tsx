@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Eye, Pencil, ClipboardPlus, UserX, Search, Plus, RotateCcw } from "lucide-react"
+import { Eye, Pencil, ClipboardPlus, UserX, Search, Plus, RotateCcw } from "@/shared/ui/product-icon"
 import {
   Table,
   TableBody,
@@ -58,7 +58,7 @@ export function PatientTable({
 
   if (isLoading) {
     return (
-      <div className="rounded-xl border border-border bg-card overflow-hidden shadow-xs">
+      <div className="rounded-lg border border-border bg-card overflow-hidden ">
         <Table>
           <TableHeader>
             <TableRow className="bg-surface-alt/40 hover:bg-surface-alt/40 border-b border-border">
@@ -106,7 +106,7 @@ export function PatientTable({
   // Empty state when filtered has 0 results
   if (patients.length === 0 && isFiltered) {
     return (
-      <div className="rounded-xl border border-border bg-card p-12 text-center shadow-xs">
+      <div className="rounded-lg border border-border bg-card p-12 text-center ">
         <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground mb-3">
           <Search className="size-6" />
         </div>
@@ -144,7 +144,7 @@ export function PatientTable({
   // Empty state when system has no patients at all
   if (patients.length === 0) {
     return (
-      <div className="rounded-xl border border-border bg-card p-12 text-center shadow-xs">
+      <div className="rounded-lg border border-border bg-card p-12 text-center ">
         <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary mb-3">
           <UserX className="size-6" />
         </div>
@@ -171,7 +171,7 @@ export function PatientTable({
   return (
     <div
       className={cn(
-          "rounded-xl border border-border bg-card overflow-hidden shadow-xs",
+          "rounded-lg border border-border bg-card overflow-hidden ",
           className
         )}
       >
@@ -302,7 +302,7 @@ export function PatientTable({
                         size="sm"
                         variant="outline"
                         onClick={() => onViewPatient(patient)}
-                        className="size-7.5 p-0 text-secondary-foreground hover:text-foreground hover:bg-surface-alt border-border rounded-lg cursor-pointer transition-colors shadow-2xs"
+                        className="size-7.5 p-0 text-secondary-foreground hover:text-foreground hover:bg-surface-alt border-border rounded-lg cursor-pointer transition-colors "
                         title={`Xem hồ sơ của ${patient.fullName}`}
                         aria-label={`Xem hồ sơ bệnh nhân ${patient.fullName}`}
                       >
@@ -315,7 +315,7 @@ export function PatientTable({
                         size="sm"
                         variant="outline"
                         onClick={() => onEditPatient(patient)}
-                        className="size-7.5 p-0 text-secondary-foreground hover:text-foreground hover:bg-surface-alt border-border rounded-lg cursor-pointer transition-colors shadow-2xs"
+                        className="size-7.5 p-0 text-secondary-foreground hover:text-foreground hover:bg-surface-alt border-border rounded-lg cursor-pointer transition-colors "
                         title={`Chỉnh sửa thông tin của ${patient.fullName}`}
                         aria-label={`Chỉnh sửa thông tin bệnh nhân ${patient.fullName}`}
                       >
@@ -328,7 +328,7 @@ export function PatientTable({
                         size="sm"
                         variant="outline"
                         onClick={() => onReceivePatient(patient)}
-                        className="size-7.5 p-0 text-secondary-foreground hover:text-foreground hover:bg-surface-alt border-border rounded-lg cursor-pointer transition-colors shadow-2xs"
+                        className="size-7.5 p-0 text-secondary-foreground hover:text-foreground hover:bg-surface-alt border-border rounded-lg cursor-pointer transition-colors "
                         title={`Tiếp nhận ${patient.fullName}`}
                         aria-label={`Tiếp nhận bệnh nhân ${patient.fullName}`}
                       >

@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { UseFormReturn, Controller } from "react-hook-form"
-import { CalendarIcon } from "lucide-react"
+import { CalendarIcon } from "@/shared/ui/product-icon"
 import { format, parse } from "date-fns"
 import { vi } from "date-fns/locale/vi"
 import { Input } from "@/components/ui/input"
@@ -126,7 +126,7 @@ export function HealthExaminationBatchBasicInfoSection({
                           id="batch-examDate"
                           aria-label="Chọn ngày khám"
                           className={cn(
-                            "flex h-9 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-1 text-xs sm:text-sm shadow-2xs transition-colors hover:border-input focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary/20",
+                            "flex h-9 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-1 text-xs sm:text-sm  transition-colors hover:border-input focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary/20",
                             !field.value && "text-muted-foreground",
                             errors.examDate &&
                               "border-destructive focus-visible:ring-destructive/20"

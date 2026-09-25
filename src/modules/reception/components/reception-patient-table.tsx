@@ -9,7 +9,7 @@ import {
   Printer,
   Search,
   Filter,
-} from "lucide-react"
+} from "@/shared/ui/product-icon"
 import {
   Table,
   TableBody,
@@ -181,7 +181,7 @@ export function ReceptionPatientTable({
   }
 
   return (
-    <div className="flex flex-col flex-1 rounded-xl border border-border bg-card shadow-2xs overflow-hidden">
+    <div className="flex flex-col flex-1 rounded-lg border border-border bg-card  overflow-hidden">
       {/* Top Header of Work Area: Title & Tabs */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between border-b border-border px-5 pt-4 pb-0 gap-3">
         <div className="flex items-center gap-2">

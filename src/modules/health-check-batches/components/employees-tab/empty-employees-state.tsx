@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Users, Upload, Download } from "lucide-react"
+import { Users, Upload, Download } from "@/shared/ui/product-icon"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 
@@ -15,7 +15,7 @@ export function EmptyEmployeesState({
   onDownloadTemplateClick,
 }: EmptyEmployeesStateProps) {
   return (
-    <Card className="rounded-xl border border-border bg-card shadow-2xs">
+    <Card className="rounded-lg border border-border bg-card ">
       <CardContent className="py-16 px-4">
         <div className="flex flex-col items-center justify-center text-center max-w-md mx-auto">
           <div className="flex size-14 items-center justify-center rounded-full bg-primary/10 text-primary mb-4">
@@ -33,7 +33,7 @@ export function EmptyEmployeesState({
               variant="outline"
               size="sm"
               onClick={onDownloadTemplateClick}
-              className="h-9 px-4 text-xs font-medium border-primary/40 text-primary hover:bg-primary/5 hover:text-primary transition-colors shadow-2xs cursor-pointer"
+              className="h-9 px-4 text-xs font-medium border-primary/40 text-primary hover:bg-primary/5 hover:text-primary transition-colors  cursor-pointer"
             >
               <Download className="size-3.5 mr-1.5 stroke-[2]" />
               Tải file mẫu
@@ -42,7 +42,7 @@ export function EmptyEmployeesState({
               type="button"
               size="sm"
               onClick={onImportClick}
-              className="h-9 px-4 text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shadow-xs cursor-pointer"
+              className="h-9 px-4 text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors  cursor-pointer"
             >
               <Upload className="size-3.5 mr-1.5 stroke-[2]" />
               Import nhân sự

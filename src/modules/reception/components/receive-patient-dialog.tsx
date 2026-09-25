@@ -3,7 +3,7 @@
 import * as React from "react"
 import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Search, AlertCircle, Loader2 } from "lucide-react"
+import { Search, AlertCircle, Loader2 } from "@/shared/ui/product-icon"
 import {
   Dialog,
   DialogContent,
@@ -33,7 +33,7 @@ import {
 import { useReceivePatient, useExaminationRooms } from "../hooks/use-reception"
 import { Patient } from "@/modules/patients"
 import { Encounter } from "../types"
-import { Calendar, Building2 } from "lucide-react"
+import { Calendar, Building2 } from "@/shared/ui/product-icon"
 
 export interface ReceiveAppointmentContext {
   appointmentId: string
@@ -203,7 +203,7 @@ export function ReceivePatientDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-3xl md:max-w-4xl max-w-[calc(100%-2rem)] p-6 sm:p-7 max-h-[92vh] flex flex-col gap-0 rounded-2xl shadow-xl overflow-hidden bg-card border-border">
+      <DialogContent className="sm:max-w-3xl md:max-w-4xl max-w-[calc(100%-2rem)] p-6 sm:p-7 max-h-[92vh] flex flex-col gap-0 rounded-lg shadow-xl overflow-hidden bg-card border-border">
         <DialogHeader className="pb-4 shrink-0 text-left border-b border-border/80">
           <DialogTitle className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
             Tiếp nhận bệnh nhân
@@ -223,7 +223,7 @@ export function ReceivePatientDialog({
             )}
 
             {appointmentInfo && (
-              <div className="p-3 rounded-xl border border-primary/30 bg-selected flex items-center justify-between text-xs text-primary">
+              <div className="p-3 rounded-lg border border-primary/30 bg-selected flex items-center justify-between text-xs text-primary">
                 <div className="flex items-center gap-2">
                   <Calendar className="size-4 shrink-0 text-primary" />
                   <span>
@@ -261,7 +261,7 @@ export function ReceivePatientDialog({
                 </div>
 
                 {selectedPatient ? (
-                  <div className="p-4 rounded-xl border border-border bg-surface-alt/50 space-y-3">
+                  <div className="p-4 rounded-lg border border-border bg-surface-alt/50 space-y-3">
                     <div className="flex items-start justify-between gap-2">
                       <div>
                         <div className="text-sm font-bold text-foreground">
@@ -310,7 +310,7 @@ export function ReceivePatientDialog({
                     </div>
                   </div>
                 ) : (
-                  <div className="p-6 rounded-xl border border-dashed border-border bg-surface-alt/40 flex flex-col items-center justify-center text-center gap-2.5">
+                  <div className="p-6 rounded-lg border border-dashed border-border bg-surface-alt/40 flex flex-col items-center justify-center text-center gap-2.5">
                     <p className="text-xs text-muted-foreground">
                       Chưa chọn bệnh nhân để tiếp nhận
                     </p>
@@ -505,14 +505,14 @@ export function ReceivePatientDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
               disabled={isPending}
-              className="h-9 sm:h-10 px-4 sm:px-5 text-xs sm:text-sm font-medium border-border/80 hover:bg-hover rounded-lg shadow-2xs cursor-pointer"
+              className="h-9 sm:h-10 px-4 sm:px-5 text-xs sm:text-sm font-medium border-border/80 hover:bg-hover rounded-lg  cursor-pointer"
             >
               Hủy
             </Button>
             <Button
               type="submit"
               disabled={isPending || !selectedPatient}
-              className="h-9 sm:h-10 px-4 sm:px-5 text-xs sm:text-sm font-medium rounded-lg shadow-xs cursor-pointer"
+              className="h-9 sm:h-10 px-4 sm:px-5 text-xs sm:text-sm font-medium rounded-lg  cursor-pointer"
             >
               {isPending && <Loader2 className="size-3.5 mr-2 animate-spin" />}
               {isPending ? "Đang tiếp nhận..." : "Tiếp nhận"}

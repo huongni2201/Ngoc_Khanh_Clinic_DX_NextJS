@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { useSearchParams, useRouter, usePathname } from "next/navigation"
-import { AlertCircle, ArrowLeft, RefreshCw } from "lucide-react"
+import { AlertCircle, ArrowLeft, RefreshCw } from "@/shared/ui/product-icon"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useEnterprise } from "@/modules/companies/hooks/use-enterprises"
@@ -109,7 +109,7 @@ export function HealthExaminationBatchDetailPage({
         </div>
 
         {/* Summary Strip Skeleton */}
-        <div className="rounded-xl border border-border/80 bg-card p-4 shadow-2xs">
+        <div className="rounded-lg border border-border/80 bg-card p-4 ">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {Array.from({ length: 4 }).map((_, idx) => (
               <div key={idx} className="flex items-center gap-3.5 px-4 py-2">
@@ -131,7 +131,7 @@ export function HealthExaminationBatchDetailPage({
         </div>
 
         {/* Table Skeleton */}
-        <Skeleton className="h-96 w-full rounded-xl" />
+        <Skeleton className="h-96 w-full rounded-lg" />
       </div>
     )
   }
@@ -159,7 +159,7 @@ export function HealthExaminationBatchDetailPage({
           <Button
             size="sm"
             onClick={() => refetchBatch()}
-            className="text-xs h-9 shadow-xs"
+            className="text-xs h-9 "
           >
             <RefreshCw className="size-3.5 mr-1.5" />
             Thử lại

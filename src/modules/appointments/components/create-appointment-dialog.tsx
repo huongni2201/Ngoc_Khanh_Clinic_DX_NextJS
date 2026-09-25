@@ -11,7 +11,7 @@ import {
   Loader2,
   Building2,
   User,
-} from "lucide-react"
+} from "@/shared/ui/product-icon"
 import {
   Dialog,
   DialogContent,
@@ -356,7 +356,7 @@ export function CreateAppointmentDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-3xl md:max-w-4xl w-full p-0 gap-0 overflow-hidden bg-card border-border sm:rounded-xl">
+      <DialogContent className="sm:max-w-3xl md:max-w-4xl w-full p-0 gap-0 overflow-hidden bg-card border-border sm:rounded-lg">
         <DialogHeader className="px-6 pt-6 pb-4 border-b border-border bg-card">
           <div className="flex items-center gap-2.5">
             <div className="size-8 rounded-lg bg-surface-alt flex items-center justify-center text-primary">
@@ -390,7 +390,7 @@ export function CreateAppointmentDialog({
                 className={cn(
                   "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer",
                   appointmentType === "INDIVIDUAL"
-                    ? "bg-card text-foreground shadow-xs font-semibold"
+                    ? "bg-card text-foreground  font-semibold"
                     : "text-muted-foreground hover:text-foreground"
                 )}
               >
@@ -403,7 +403,7 @@ export function CreateAppointmentDialog({
                 className={cn(
                   "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer",
                   appointmentType === "ENTERPRISE"
-                    ? "bg-card text-primary shadow-xs font-semibold"
+                    ? "bg-card text-primary  font-semibold"
                     : "text-muted-foreground hover:text-foreground"
                 )}
               >
@@ -433,7 +433,7 @@ export function CreateAppointmentDialog({
                     </div>
 
                     {selectedPatient ? (
-                      <div className="p-4 rounded-xl border border-border bg-surface-alt/50 space-y-3">
+                      <div className="p-4 rounded-lg border border-border bg-surface-alt/50 space-y-3">
                         <div className="space-y-0.5">
                           <div className="flex items-center gap-2">
                             <span className="text-xs font-bold text-foreground">
@@ -475,7 +475,7 @@ export function CreateAppointmentDialog({
                         )}
                       </div>
                     ) : (
-                      <div className="p-6 rounded-xl border border-dashed border-border bg-surface-alt/40 flex flex-col items-center justify-center text-center gap-2.5">
+                      <div className="p-6 rounded-lg border border-dashed border-border bg-surface-alt/40 flex flex-col items-center justify-center text-center gap-2.5">
                         <span className="text-xs text-muted-foreground">
                           Chưa chọn hồ sơ bệnh nhân
                         </span>
@@ -612,7 +612,7 @@ export function CreateAppointmentDialog({
 
                     {/* Linked patient card */}
                     {selectedPatient && (
-                      <div className="p-3.5 rounded-xl border border-border bg-surface-alt/50 space-y-2">
+                      <div className="p-3.5 rounded-lg border border-border bg-surface-alt/50 space-y-2">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-1.5 text-primary text-xs font-semibold">
                             <Building2 className="size-3.5" />
@@ -663,7 +663,7 @@ export function CreateAppointmentDialog({
                   </p>
                 )}
 
-                <div className="p-3.5 rounded-xl border border-border/70 bg-surface-alt/30 space-y-1.5 text-xs">
+                <div className="p-3.5 rounded-lg border border-border/70 bg-surface-alt/30 space-y-1.5 text-xs">
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground">Nguồn lịch hẹn:</span>
                     <Badge variant="outline" className="bg-card text-foreground font-medium text-[10px]">

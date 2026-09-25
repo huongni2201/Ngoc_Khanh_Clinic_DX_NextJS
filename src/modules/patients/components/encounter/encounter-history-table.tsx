@@ -9,7 +9,7 @@ import {
   ChevronRight,
   Calendar,
   ChevronLeft,
-} from "lucide-react"
+} from "@/shared/ui/product-icon"
 import { Button } from "@/components/ui/button"
 import { mockPatientEncounters } from "../../api/encounter-mock-data"
 
@@ -22,7 +22,7 @@ export function EncounterHistoryTable({ patientId }: EncounterHistoryTableProps)
   const encounters = mockPatientEncounters
 
   return (
-    <div className="rounded-2xl border border-border bg-card p-6 shadow-xs space-y-4">
+    <div className="rounded-lg border border-border bg-card p-6  space-y-4">
       {/* Table Header Controls */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h3 className="text-base font-bold text-foreground">
@@ -56,7 +56,7 @@ export function EncounterHistoryTable({ patientId }: EncounterHistoryTableProps)
       </div>
 
       {/* Encounters Table */}
-      <div className="overflow-x-auto rounded-xl border border-border">
+      <div className="overflow-x-auto rounded-lg border border-border">
         <table className="w-full text-left text-xs border-collapse">
           <thead className="bg-muted/50 text-muted-foreground font-semibold border-b border-border">
             <tr>
@@ -101,13 +101,13 @@ export function EncounterHistoryTable({ patientId }: EncounterHistoryTableProps)
                   </td>
                   <td className="py-3.5 px-4">
                     {isCancelled ? (
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-2.5 py-0.5 text-xs font-semibold text-rose-700 border border-rose-200">
-                        <span className="size-1.5 rounded-full bg-rose-600" />
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-status-danger-bg px-2.5 py-0.5 text-xs font-semibold text-status-danger border border-status-danger/30">
+                        <span className="size-1.5 rounded-full bg-status-danger" />
                         {enc.statusLabel}
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 border border-emerald-200">
-                        <span className="size-1.5 rounded-full bg-emerald-600" />
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-status-success-bg px-2.5 py-0.5 text-xs font-semibold text-status-success border border-status-success/30">
+                        <span className="size-1.5 rounded-full bg-status-success" />
                         {enc.statusLabel}
                       </span>
                     )}

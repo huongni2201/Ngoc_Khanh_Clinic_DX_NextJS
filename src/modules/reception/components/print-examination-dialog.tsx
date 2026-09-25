@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import Image from "next/image"
-import { Printer, Check } from "lucide-react"
+import { Printer, Check } from "@/shared/ui/product-icon"
 import {
   Dialog,
   DialogContent,
@@ -63,7 +63,7 @@ export function PrintExaminationDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-3xl md:max-w-4xl max-w-[calc(100%-2rem)] p-6 sm:p-7 max-h-[92vh] flex flex-col gap-0 rounded-2xl shadow-xl overflow-hidden bg-card border-border">
+      <DialogContent className="sm:max-w-3xl md:max-w-4xl max-w-[calc(100%-2rem)] p-6 sm:p-7 max-h-[92vh] flex flex-col gap-0 rounded-lg shadow-xl overflow-hidden bg-card border-border">
         {/* Header */}
         <DialogHeader className="pb-4 shrink-0 text-left border-b border-border/80">
           <DialogTitle className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
@@ -144,8 +144,8 @@ export function PrintExaminationDialog({
         </div>
 
         {/* Print Preview Container (Authentic Medical Sheet Style) */}
-        <div className="p-6 flex-1 overflow-y-auto bg-muted/40 rounded-xl my-2 border border-border/60">
-          <div className="bg-card border border-border/80 rounded-xl p-7 sm:p-9 shadow-md max-w-[620px] mx-auto space-y-5 text-foreground print:border-none print:shadow-none print:p-0">
+        <div className="p-6 flex-1 overflow-y-auto bg-muted/40 rounded-lg my-2 border border-border/60">
+          <div className="mx-auto max-w-[620px] space-y-5 rounded-lg border border-border bg-card p-7 text-foreground sm:p-9 print:border-none print:p-0">
             {/* Header with official logo and clinic info */}
             <div className="flex items-start justify-between border-b border-border pb-3.5 gap-3">
               <div className="flex items-start gap-3">
@@ -333,14 +333,14 @@ export function PrintExaminationDialog({
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
-              className="h-9 sm:h-10 px-4 sm:px-5 text-xs sm:text-sm font-medium border-border/80 hover:bg-hover rounded-lg shadow-2xs cursor-pointer"
+              className="h-9 sm:h-10 px-4 sm:px-5 text-xs sm:text-sm font-medium border-border/80 hover:bg-hover rounded-lg  cursor-pointer"
             >
               Đóng
             </Button>
             <Button
               type="button"
               onClick={handlePrint}
-              className="h-9 sm:h-10 px-4 sm:px-5 text-xs sm:text-sm font-medium rounded-lg shadow-xs cursor-pointer gap-2"
+              className="h-9 sm:h-10 px-4 sm:px-5 text-xs sm:text-sm font-medium rounded-lg  cursor-pointer gap-2"
             >
               {isPrinted ? (
                 <>

@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Eye, Edit, UserCheck, CheckCircle2, Calendar, MapPin, User, Building2 } from "lucide-react"
+import { Eye, Edit, UserCheck, CheckCircle2, Calendar, MapPin, User, Building2 } from "@/shared/ui/product-icon"
 import {
   Dialog,
   DialogContent,
@@ -36,7 +36,7 @@ export function AppointmentDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl md:max-w-3xl w-full p-0 gap-0 overflow-hidden bg-card border-border sm:rounded-xl">
+      <DialogContent className="sm:max-w-2xl md:max-w-3xl w-full p-0 gap-0 overflow-hidden bg-card border-border sm:rounded-lg">
         <DialogHeader className="px-6 pt-6 pb-4 border-b border-border bg-card">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
@@ -64,7 +64,7 @@ export function AppointmentDetailDialog({
               <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground block">
                 Thông tin người bệnh
               </span>
-              <div className="p-4 rounded-xl border border-border bg-surface-alt/50 space-y-2.5">
+              <div className="p-4 rounded-lg border border-border bg-surface-alt/50 space-y-2.5">
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-bold text-foreground">
@@ -132,7 +132,7 @@ export function AppointmentDetailDialog({
               <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground block">
                 Chi tiết lịch khám
               </span>
-              <div className="border border-border rounded-xl p-4 space-y-2.5 bg-card">
+              <div className="border border-border rounded-lg p-4 space-y-2.5 bg-card">
                 <div className="flex items-center justify-between pb-2 border-b border-border/60">
                   <div className="flex items-center gap-1.5 text-muted-foreground">
                     <Calendar className="size-3.5" />

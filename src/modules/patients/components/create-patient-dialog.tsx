@@ -3,7 +3,7 @@
 import * as React from "react"
 import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { AlertCircle, Loader2 } from "lucide-react"
+import { AlertCircle, Loader2 } from "@/shared/ui/product-icon"
 import {
   Dialog,
   DialogContent,
@@ -99,7 +99,7 @@ export function CreatePatientDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-3xl md:max-w-4xl max-w-[calc(100%-2rem)] p-6 sm:p-7 max-h-[92vh] flex flex-col gap-0 rounded-2xl shadow-xl overflow-hidden bg-card border-border">
+      <DialogContent className="sm:max-w-3xl md:max-w-4xl max-w-[calc(100%-2rem)] p-6 sm:p-7 max-h-[92vh] flex flex-col gap-0 rounded-lg shadow-xl overflow-hidden bg-card border-border">
         <DialogHeader className="pb-4 shrink-0 text-left border-b border-border/80">
           <DialogTitle className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
             Tạo bệnh nhân mới
@@ -284,14 +284,14 @@ export function CreatePatientDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
               disabled={isPending}
-              className="h-9 sm:h-10 px-4 sm:px-5 text-xs sm:text-sm font-medium border-border/80 hover:bg-hover rounded-lg shadow-2xs cursor-pointer"
+              className="h-9 sm:h-10 px-4 sm:px-5 text-xs sm:text-sm font-medium border-border/80 hover:bg-hover rounded-lg  cursor-pointer"
             >
               Hủy
             </Button>
             <Button
               type="submit"
               disabled={isPending}
-              className="h-9 sm:h-10 px-4 sm:px-5 text-xs sm:text-sm font-medium rounded-lg shadow-xs cursor-pointer"
+              className="h-9 sm:h-10 px-4 sm:px-5 text-xs sm:text-sm font-medium rounded-lg  cursor-pointer"
             >
               {isPending && <Loader2 className="size-3.5 mr-2 animate-spin" />}
               {isPending ? "Đang xử lý..." : "Tạo bệnh nhân"}

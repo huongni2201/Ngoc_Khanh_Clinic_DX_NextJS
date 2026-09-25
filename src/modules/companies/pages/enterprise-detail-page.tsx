@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { AlertCircle, RefreshCw, ArrowLeft } from "lucide-react"
+import { AlertCircle, RefreshCw, ArrowLeft } from "@/shared/ui/product-icon"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import { useEnterprise } from "../hooks/use-enterprises"
@@ -54,7 +54,7 @@ export function EnterpriseDetailPage({
         </div>
 
         {/* Summary Strip Skeleton */}
-        <div className="rounded-xl border border-border/80 bg-card p-5 shadow-2xs">
+        <div className="rounded-lg border border-border/80 bg-card p-5 ">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             {Array.from({ length: 4 }).map((_, idx) => (
               <div key={idx} className="flex items-center gap-3.5">
@@ -75,7 +75,7 @@ export function EnterpriseDetailPage({
         </div>
 
         {/* Info Card Skeleton */}
-        <div className="rounded-xl border border-border/80 bg-card p-6 sm:p-8 shadow-2xs space-y-5">
+        <div className="rounded-lg border border-border/80 bg-card p-6 sm:p-8  space-y-5">
           <Skeleton className="h-6 w-48 mb-6" />
           {Array.from({ length: 7 }).map((_, idx) => (
             <div
@@ -114,7 +114,7 @@ export function EnterpriseDetailPage({
           <Button
             size="sm"
             onClick={() => refetch()}
-            className="text-xs h-9 shadow-xs"
+            className="text-xs h-9 "
           >
             <RefreshCw className="size-3.5 mr-1.5" />
             Thử lại
