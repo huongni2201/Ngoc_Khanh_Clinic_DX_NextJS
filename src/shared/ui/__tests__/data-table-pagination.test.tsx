@@ -28,13 +28,13 @@ describe("DataTablePagination (shadcn/ui Composition)", () => {
         totalItems={35}
         totalPages={4}
         onPageChange={vi.fn()}
-        entityName="doanh nghiệp"
+        entityName="đơn vị"
       />
     )
 
     expect(screen.getByText(/Hiển thị/i)).toBeInTheDocument()
     expect(screen.getByText("35")).toBeInTheDocument()
-    expect(screen.getByText(/doanh nghiệp/i)).toBeInTheDocument()
+    expect(screen.getByText(/đơn vị/i)).toBeInTheDocument()
 
     const nav = screen.getByRole("navigation", { name: "Phân trang" })
     expect(nav).toBeInTheDocument()
@@ -132,3 +132,4 @@ describe("DataTablePagination (shadcn/ui Composition)", () => {
     expect(screen.getAllByText("More pages").length).toBeGreaterThanOrEqual(1)
   })
 })
+

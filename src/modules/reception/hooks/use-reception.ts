@@ -2,25 +2,21 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import {
   fetchReceptionWorklist,
   fetchReceptionCounters,
-  fetchExaminationRooms,
+  fetchClinicRooms,
   fetchEncounterById,
-  receivePatient,
+  checkInPatient,
   assignRoomAndDoctor,
-  fetchInvoiceByEncounter,
-  processPayment,
 } from "../api"
 import {
   ReceptionFilterParams,
-  ReceivePatientDto,
+  PatientCheckInRequest,
   AssignRoomDto,
-  ProcessPaymentDto,
 } from "../types"
 
 export const RECEPTION_WORKLIST_KEY = ["reception", "worklist"]
 export const RECEPTION_COUNTERS_KEY = ["reception", "counters"]
 export const EXAMINATION_ROOMS_KEY = ["reception", "rooms"]
 export const ENCOUNTER_DETAIL_KEY = (id: string) => ["reception", "encounter", id]
-export const INVOICE_DETAIL_KEY = (id: string) => ["reception", "invoice", id]
 
 export function useReceptionWorklist(params?: ReceptionFilterParams) {
   return useQuery({
@@ -37,10 +33,10 @@ export function useReceptionCounters() {
   })
 }
 
-export function useExaminationRooms() {
+export function useClinicRooms() {
   return useQuery({
     queryKey: EXAMINATION_ROOMS_KEY,
-    queryFn: () => fetchExaminationRooms(),
+    queryFn: () => fetchClinicRooms(),
   })
 }
 
@@ -52,11 +48,11 @@ export function useEncounter(id?: string) {
   })
 }
 
-export function useReceivePatient() {
+export function usePatientCheckIn() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (dto: ReceivePatientDto) => receivePatient(dto),
+    mutationFn: (dto: PatientCheckInRequest) => checkInPatient(dto),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: RECEPTION_WORKLIST_KEY })
       queryClient.invalidateQueries({ queryKey: RECEPTION_COUNTERS_KEY })
@@ -71,29 +67,6 @@ export function useAssignRoom() {
     mutationFn: (dto: AssignRoomDto) => assignRoomAndDoctor(dto),
     onSuccess: (updated) => {
       queryClient.setQueryData(ENCOUNTER_DETAIL_KEY(updated.id), updated)
-      queryClient.invalidateQueries({ queryKey: RECEPTION_WORKLIST_KEY })
-      queryClient.invalidateQueries({ queryKey: RECEPTION_COUNTERS_KEY })
-    },
-  })
-}
-
-export function useInvoice(encounterId?: string) {
-  return useQuery({
-    queryKey: INVOICE_DETAIL_KEY(encounterId || ""),
-    queryFn: () => fetchInvoiceByEncounter(encounterId!),
-    enabled: !!encounterId,
-  })
-}
-
-export function useProcessPayment() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: (dto: ProcessPaymentDto) => processPayment(dto),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: INVOICE_DETAIL_KEY(variables.encounterId),
-      })
       queryClient.invalidateQueries({ queryKey: RECEPTION_WORKLIST_KEY })
       queryClient.invalidateQueries({ queryKey: RECEPTION_COUNTERS_KEY })
     },

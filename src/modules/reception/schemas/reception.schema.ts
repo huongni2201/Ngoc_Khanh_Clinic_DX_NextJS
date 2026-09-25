@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-export const receivePatientSchema = z.object({
+export const patientCheckInSchema = z.object({
   patientId: z.string().min(1, "Vui lòng chọn bệnh nhân"),
   examinationType: z.string().min(1, "Vui lòng chọn loại khám"),
   roomId: z.string().optional(),
@@ -20,7 +20,7 @@ export const receivePatientSchema = z.object({
   printAfterReception: z.boolean(),
 })
 
-export type ReceivePatientFormValues = z.infer<typeof receivePatientSchema>
+export type PatientCheckInFormValues = z.infer<typeof patientCheckInSchema>
 
 export const assignRoomSchema = z.object({
   encounterId: z.string().min(1, "Vui lòng chỉ định lượt khám"),

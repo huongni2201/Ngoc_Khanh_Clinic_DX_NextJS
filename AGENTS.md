@@ -22,11 +22,11 @@ Repository rules and accepted ADRs override generic skill examples.
 The current priority is **enterprise / corporate health checks first**.
 
 ```text
-Company
+Organization
   ↓
-Health Check Batch
+Health Examination Batch
   ↓
-Employee Roster
+Participant Roster
   ↓
 Excel Import
   ↓
@@ -38,7 +38,7 @@ Mẫu số 03 Preview
   ↓
 Bulk Print
   ↓
-Employee Check-in
+Participant Check-in
   ↓
 Patient Link/Create
   ↓
@@ -189,17 +189,17 @@ See ADR-0004.
 Corporate hierarchy:
 
 ```text
-Company
-  └── HealthCheckBatch
-        └── CompanyEmployee
+Organization
+  └── HealthExaminationBatch
+        └── HealthExaminationParticipant
 ```
 
-`CompanyEmployee` is not automatically a `Patient`.
+`HealthExaminationParticipant` is not automatically a `Patient`.
 
 Correct flow:
 
 ```text
-CompanyEmployee arrives
+HealthExaminationParticipant arrives
   ↓
 Search Patient by identity
   ├── found     → link
@@ -346,7 +346,7 @@ Vitest + Testing Library
 Playwright for critical E2E flows
 ```
 
-Critical business behavior includes Excel mapping/validation, under-18 rejection, duplicate CCCD handling, bulk selection, Mẫu số 03 mapping, print-batch preparation, and employee check-in.
+Critical business behavior includes Excel mapping/validation, under-18 rejection, duplicate CCCD handling, bulk selection, Mẫu số 03 mapping, print-batch preparation, and participant check-in.
 
 ---
 
@@ -370,6 +370,14 @@ Follow this sequence:
 ```
 
 Do not start by creating files blindly.
+
+## 13.1 Medical terminology contract
+
+Use the canonical vocabulary in `src/config/medical-terminology.ts` and the
+medical terminology migration plan. New domain code must use `Organization`,
+`Encounter`, `HealthExaminationBatch`, `ClinicalService`, and `ServiceRequest`.
+`Enterprise` is a legacy alias and must not be added to new code. Preserve
+Vietnamese user-facing copy unless the owning feature explicitly changes it.
 
 ---
 

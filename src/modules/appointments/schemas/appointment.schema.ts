@@ -19,12 +19,14 @@ export const createAppointmentSchema = z.object({
     .max(500, "Ghi chú không được vượt quá 500 ký tự")
     .optional()
     .or(z.literal("")),
-  type: z.enum(["INDIVIDUAL", "ENTERPRISE"]).optional(),
-  enterpriseId: z.string().optional().or(z.literal("")),
-  enterpriseName: z.string().optional().or(z.literal("")),
-  batchId: z.string().optional().or(z.literal("")),
-  batchName: z.string().optional().or(z.literal("")),
-  employeeCode: z.string().optional().or(z.literal("")),
+  careProgram: z
+    .enum(["INDIVIDUAL", "ORGANIZATION_HEALTH_EXAMINATION"])
+    .optional(),
+  organizationId: z.string().optional().or(z.literal("")),
+  organizationName: z.string().optional().or(z.literal("")),
+  healthExaminationBatchId: z.string().optional().or(z.literal("")),
+  healthExaminationBatchName: z.string().optional().or(z.literal("")),
+  participantCode: z.string().optional().or(z.literal("")),
 })
 
 export type CreateAppointmentFormValues = z.infer<
@@ -52,3 +54,4 @@ export const editAppointmentSchema = z.object({
 })
 
 export type EditAppointmentFormValues = z.infer<typeof editAppointmentSchema>
+

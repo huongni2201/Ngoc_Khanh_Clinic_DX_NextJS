@@ -38,25 +38,25 @@ import {
   type CreateAppointmentFormValues,
 } from "../schemas/appointment.schema"
 import { useCreateAppointment } from "../hooks/use-appointments"
-import { useExaminationRooms } from "@/modules/reception"
-import { useEnterprises } from "@/modules/companies/hooks/use-enterprises"
+import { useClinicRooms } from "@/modules/reception"
+import { useOrganizations } from "@/modules/organizations/hooks/use-organizations"
 import {
-  useEnterpriseHealthExaminationBatches,
-  useHealthExaminationBatchEmployees,
+  useOrganizationHealthExaminationBatches,
+  useHealthExaminationBatchParticipants,
 } from "@/modules/health-examinations/hooks/use-health-examination-batches"
 import { searchPatients, createPatient } from "@/modules/patients/api"
 import { Patient } from "@/modules/patients"
-import { Appointment, AppointmentType } from "../types"
+import { Appointment, CareProgram } from "../types"
 import { cn } from "@/lib/utils"
 
 interface CreateAppointmentDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   initialPatient?: Patient | null
-  initialEnterpriseId?: string
-  initialBatchId?: string
-  initialEmployeeCode?: string
-  initialType?: AppointmentType
+  initialOrganizationId?: string
+  initialHealthExaminationBatchId?: string
+  initialParticipantCode?: string
+  initialCareProgram?: CareProgram
   onOpenPatientSearch?: () => void
   onOpenCreatePatient?: () => void
   onSuccess?: (created: Appointment) => void
@@ -64,7 +64,7 @@ interface CreateAppointmentDialogProps {
 
 const APPOINTMENT_EXAM_TYPES = [
   "Khám tổng quát",
-  "Khám sức khỏe doanh nghiệp",
+  "Khám sức khỏe đơn vị",
   "Nội tổng quát",
   "Tim mạch",
   "Cơ xương khớp",
@@ -79,47 +79,47 @@ export function CreateAppointmentDialog({
   open,
   onOpenChange,
   initialPatient,
-  initialEnterpriseId,
-  initialBatchId,
-  initialEmployeeCode,
-  initialType = "INDIVIDUAL",
+  initialOrganizationId,
+  initialHealthExaminationBatchId,
+  initialParticipantCode,
+  initialCareProgram = "INDIVIDUAL",
   onOpenPatientSearch,
   onOpenCreatePatient,
   onSuccess,
 }: CreateAppointmentDialogProps) {
-  const [appointmentType, setAppointmentType] =
-    React.useState<AppointmentType>(initialType)
+  const [careProgram, setCareProgram] =
+    React.useState<CareProgram>(initialCareProgram)
   const [patientOverride, setPatientOverride] = React.useState<Patient | null>(null)
   const selectedPatient = patientOverride ?? initialPatient ?? null
   const [serverError, setServerError] = React.useState<string | null>(null)
 
-  // Enterprise selection state
-  const [selectedEnterpriseId, setSelectedEnterpriseId] = React.useState<string>(
-    initialEnterpriseId || ""
+  // Organization selection state
+  const [selectedOrganizationId, setSelectedOrganizationId] = React.useState<string>(
+    initialOrganizationId || ""
   )
-  const [selectedBatchId, setSelectedBatchId] = React.useState<string>(
-    initialBatchId || ""
+  const [selectedHealthExaminationBatchId, setSelectedHealthExaminationBatchId] = React.useState<string>(
+    initialHealthExaminationBatchId || ""
   )
-  const [selectedEmployeeCode, setSelectedEmployeeCode] = React.useState<string>(
-    initialEmployeeCode || ""
+  const [selectedParticipantCode, setSelectedParticipantCode] = React.useState<string>(
+    initialParticipantCode || ""
   )
-  const [isLinkingEmployee, setIsLinkingEmployee] = React.useState(false)
+  const [isLinkingParticipant, setIsLinkingParticipant] = React.useState(false)
 
   // Data queries
-  const { data: rooms } = useExaminationRooms()
-  const { data: enterprisesData } = useEnterprises()
-  const enterprises = React.useMemo(
-    () => enterprisesData?.data || [],
-    [enterprisesData?.data]
+  const { data: rooms } = useClinicRooms()
+  const { data: organizationsData } = useOrganizations()
+  const organizations = React.useMemo(
+    () => organizationsData?.data || [],
+    [organizationsData?.data]
   )
-  const { data: batchesData } = useEnterpriseHealthExaminationBatches(selectedEnterpriseId)
+  const { data: batchesData } = useOrganizationHealthExaminationBatches(selectedOrganizationId)
   const batches = React.useMemo(() => batchesData?.data || [], [batchesData?.data])
-  const { data: employeesData } = useHealthExaminationBatchEmployees(selectedBatchId, {
+  const { data: participantsData } = useHealthExaminationBatchParticipants(selectedHealthExaminationBatchId, {
     pageSize: 100,
   })
-  const employees = React.useMemo(
-    () => employeesData?.data || [],
-    [employeesData?.data]
+  const participants = React.useMemo(
+    () => participantsData?.data || [],
+    [participantsData?.data]
   )
 
   const createMutation = useCreateAppointment()
@@ -144,10 +144,10 @@ export function CreateAppointmentDialog({
       date: defaultDate,
       time: defaultTime,
       notes: "",
-      type: initialType,
-      enterpriseId: initialEnterpriseId || "",
-      batchId: initialBatchId || "",
-      employeeCode: initialEmployeeCode || "",
+      careProgram: initialCareProgram,
+      organizationId: initialOrganizationId || "",
+      healthExaminationBatchId: initialHealthExaminationBatchId || "",
+      participantCode: initialParticipantCode || "",
     },
   })
 
@@ -158,83 +158,85 @@ export function CreateAppointmentDialog({
   if (open !== prevOpen) {
     setPrevOpen(open)
     if (open) {
-      if (initialType) setAppointmentType(initialType)
-      if (initialEnterpriseId) setSelectedEnterpriseId(initialEnterpriseId)
-      if (initialBatchId) setSelectedBatchId(initialBatchId)
-      if (initialEmployeeCode) setSelectedEmployeeCode(initialEmployeeCode)
+      if (initialCareProgram) setCareProgram(initialCareProgram)
+      if (initialOrganizationId) setSelectedOrganizationId(initialOrganizationId)
+      if (initialHealthExaminationBatchId) setSelectedHealthExaminationBatchId(initialHealthExaminationBatchId)
+      if (initialParticipantCode) setSelectedParticipantCode(initialParticipantCode)
     }
   }
 
-  const linkEmployeeToPatient = React.useCallback(
-    async (emp: (typeof employees)[0]) => {
+  const linkParticipantToPatient = React.useCallback(
+    async (participant: (typeof participants)[0]) => {
       try {
-        setIsLinkingEmployee(true)
+        setIsLinkingParticipant(true)
         setServerError(null)
 
         // Search existing patient by CCCD or phone
-        const queryKey = emp.cccd || emp.phone
+        const queryKey = participant.identificationNumber || participant.phoneNumber || ""
         const existing = await searchPatients(queryKey)
         const matched = existing.find(
           (p) =>
-            (emp.cccd && p.identificationNumber === emp.cccd) ||
-            (emp.phone && p.phoneNumber === emp.phone)
+            (participant.identificationNumber &&
+              p.identificationNumber === participant.identificationNumber) ||
+            (participant.phoneNumber && p.phoneNumber === participant.phoneNumber)
         )
 
         let linkedPatient: Patient
         if (matched) {
           linkedPatient = matched
         } else {
-          // Auto-create patient from employee roster per domain rules
+          // Auto-create a patient only when this participant has no linked patient.
           linkedPatient = await createPatient({
-            fullName: emp.fullName,
-            dateOfBirth: emp.dob || "1990-01-01",
-            gender: emp.gender === "Nữ" ? "FEMALE" : "MALE",
-            identificationNumber: emp.cccd || `CCCD-${emp.employeeCode}`,
-            phoneNumber: emp.phone || "0900000000",
-            address: emp.address || "Hà Nội",
+            fullName: participant.fullName,
+            dateOfBirth: participant.dateOfBirth || "1990-01-01",
+            gender: participant.gender === "Nữ" ? "FEMALE" : "MALE",
+            identificationNumber:
+              participant.identificationNumber || `CCCD-${participant.participantCode}`,
+            phoneNumber: participant.phoneNumber || "0900000000",
+            address: participant.address || "Hà Nội",
           })
         }
 
         setPatientOverride(linkedPatient)
         setValue("patientId", linkedPatient.id, { shouldValidate: true })
-        setValue("examinationType", "Khám sức khỏe doanh nghiệp", {
+        setValue("examinationType", "Khám sức khỏe đơn vị", {
           shouldValidate: true,
         })
 
-        const ent = enterprises.find((e) => e.id === selectedEnterpriseId)
-        const batch = batches.find((b) => b.id === selectedBatchId)
+        const ent = organizations.find((e) => e.id === selectedOrganizationId)
+        const batch = batches.find((b) => b.id === selectedHealthExaminationBatchId)
 
-        setValue("type", "ENTERPRISE")
-        setValue("enterpriseId", selectedEnterpriseId)
-        setValue("enterpriseName", ent?.name || "")
-        setValue("batchId", selectedBatchId)
-        setValue("batchName", batch?.name || "")
-        setValue("employeeCode", emp.employeeCode)
+        setValue("careProgram", "ORGANIZATION_HEALTH_EXAMINATION")
+        setValue("organizationId", selectedOrganizationId)
+        setValue("organizationName", ent?.name || "")
+        setValue("healthExaminationBatchId", selectedHealthExaminationBatchId)
+        setValue("healthExaminationBatchName", batch?.name || "")
+        setValue("participantCode", participant.participantCode || "")
       } catch (err) {
         setServerError(
-          (err as Error)?.message || "Không thể liên kết nhân sự với hồ sơ bệnh nhân"
+          (err as Error)?.message || "Không thể liên kết người khám với hồ sơ bệnh nhân"
         )
       } finally {
-        setIsLinkingEmployee(false)
+        setIsLinkingParticipant(false)
       }
     },
-    [batches, enterprises, selectedBatchId, selectedEnterpriseId, setValue]
+    [batches, organizations, selectedHealthExaminationBatchId, selectedOrganizationId, setValue]
   )
 
   // Synchronize form fields when opening
   React.useEffect(() => {
     if (open) {
-      if (initialType) {
-        setValue("type", initialType)
+      if (initialCareProgram) {
+        setValue("careProgram", initialCareProgram)
       }
-      if (initialEnterpriseId) {
-        setValue("enterpriseId", initialEnterpriseId)
+      if (initialOrganizationId) {
+        setValue("organizationId", initialOrganizationId)
       }
-      if (initialBatchId) {
-        setValue("batchId", initialBatchId)
+      if (initialHealthExaminationBatchId) {
+        setValue("healthExaminationBatchId", initialHealthExaminationBatchId)
       }
-      if (initialEmployeeCode) {
-        setValue("employeeCode", initialEmployeeCode)
+      if (initialParticipantCode) {
+        setValue("participantCode", initialParticipantCode)
       }
       if (selectedPatient?.id) {
         setValue("patientId", selectedPatient.id)
@@ -242,26 +244,26 @@ export function CreateAppointmentDialog({
     }
   }, [
     open,
-    initialType,
-    initialEnterpriseId,
-    initialBatchId,
-    initialEmployeeCode,
+    initialCareProgram,
+    initialOrganizationId,
+    initialHealthExaminationBatchId,
+    initialParticipantCode,
     selectedPatient?.id,
     setValue,
   ])
 
-  // Auto-link initial employee if provided
+  // Auto-link the initial participant if provided
   React.useEffect(() => {
-    if (open && initialEmployeeCode && employees.length > 0 && !selectedPatient) {
-      const emp = employees.find((e) => e.employeeCode === initialEmployeeCode)
-      if (emp) {
+    if (open && initialParticipantCode && participants.length > 0 && !selectedPatient) {
+      const participant = participants.find((item) => item.participantCode === initialParticipantCode)
+      if (participant) {
         const timer = setTimeout(() => {
-          void linkEmployeeToPatient(emp)
+          void linkParticipantToPatient(participant)
         }, 0)
         return () => clearTimeout(timer)
       }
     }
-  }, [open, initialEmployeeCode, employees, selectedPatient, linkEmployeeToPatient])
+  }, [open, initialParticipantCode, participants, selectedPatient, linkParticipantToPatient])
 
   React.useEffect(() => {
     if (selectedPatient?.id) {
@@ -269,31 +271,29 @@ export function CreateAppointmentDialog({
     }
   }, [selectedPatient?.id, setValue])
 
-  const handleSelectEmployee = (empCode: string) => {
-    setSelectedEmployeeCode(empCode)
-    const emp = employees.find((e) => e.employeeCode === empCode)
-    if (emp) {
-      linkEmployeeToPatient(emp)
+  const handleSelectParticipant = (participantCode: string) => {
+    setSelectedParticipantCode(participantCode)
+    const participant = participants.find((item) => item.participantCode === participantCode)
+    if (participant) {
+      linkParticipantToPatient(participant)
     }
   }
 
-  const handleSwitchType = (type: AppointmentType) => {
-    setAppointmentType(type)
-    setValue("type", type)
+  const handleSwitchCareProgram = (program: CareProgram) => {
+    setCareProgram(program)
+    setValue("careProgram", program)
     setServerError(null)
 
-    if (type === "INDIVIDUAL") {
+    if (program === "INDIVIDUAL") {
       setValue("examinationType", "Khám tổng quát")
-      setValue("enterpriseId", "")
-      setValue("enterpriseName", "")
-      setValue("batchId", "")
-      setValue("batchName", "")
-      setValue("employeeCode", "")
-      if (appointmentType === "ENTERPRISE") {
-        setPatientOverride(null)
-      }
+      setValue("organizationId", "")
+      setValue("organizationName", "")
+      setValue("healthExaminationBatchId", "")
+      setValue("healthExaminationBatchName", "")
+      setValue("participantCode", "")
     } else {
-      setValue("examinationType", "Khám sức khỏe doanh nghiệp")
+      setPatientOverride(null)
+      setValue("examinationType", "Khám sức khỏe đơn vị")
     }
   }
 
@@ -301,9 +301,9 @@ export function CreateAppointmentDialog({
     if (!isOpen) {
       setServerError(null)
       setPatientOverride(null)
-      setSelectedEnterpriseId("")
-      setSelectedBatchId("")
-      setSelectedEmployeeCode("")
+      setSelectedOrganizationId("")
+      setSelectedHealthExaminationBatchId("")
+      setSelectedParticipantCode("")
       reset()
     }
     onOpenChange(isOpen)
@@ -318,8 +318,8 @@ export function CreateAppointmentDialog({
     try {
       setServerError(null)
 
-      const ent = enterprises.find((e) => e.id === selectedEnterpriseId)
-      const batch = batches.find((b) => b.id === selectedBatchId)
+      const ent = organizations.find((e) => e.id === selectedOrganizationId)
+      const batch = batches.find((b) => b.id === selectedHealthExaminationBatchId)
 
       const created = await createMutation.mutateAsync({
         patientId: selectedPatient.id,
@@ -329,17 +329,24 @@ export function CreateAppointmentDialog({
         date: data.date,
         time: data.time,
         notes: data.notes || undefined,
-        source: "RECEPTION",
-        type: appointmentType,
-        enterpriseId:
-          appointmentType === "ENTERPRISE" ? selectedEnterpriseId : undefined,
-        enterpriseName:
-          appointmentType === "ENTERPRISE" ? ent?.name : undefined,
-        batchId: appointmentType === "ENTERPRISE" ? selectedBatchId : undefined,
-        batchName:
-          appointmentType === "ENTERPRISE" ? batch?.name : undefined,
-        employeeCode:
-          appointmentType === "ENTERPRISE" ? selectedEmployeeCode : undefined,
+        bookingChannel: "FRONT_DESK",
+        careProgram,
+        organizationId:
+          careProgram === "ORGANIZATION_HEALTH_EXAMINATION"
+            ? selectedOrganizationId
+            : undefined,
+        organizationName:
+          careProgram === "ORGANIZATION_HEALTH_EXAMINATION" ? ent?.name : undefined,
+        healthExaminationBatchId:
+          careProgram === "ORGANIZATION_HEALTH_EXAMINATION"
+            ? selectedHealthExaminationBatchId
+            : undefined,
+        healthExaminationBatchName:
+          careProgram === "ORGANIZATION_HEALTH_EXAMINATION" ? batch?.name : undefined,
+        participantCode:
+          careProgram === "ORGANIZATION_HEALTH_EXAMINATION"
+            ? selectedParticipantCode
+            : undefined,
       })
 
       onOpenChange(false)
@@ -382,14 +389,14 @@ export function CreateAppointmentDialog({
               </Alert>
             )}
 
-            {/* Appointment Type Toggle: Khám cá nhân vs Khám doanh nghiệp */}
+            {/* Appointment Type Toggle: Khám cá nhân vs Khám đơn vị */}
             <div className="flex items-center gap-2 p-1 bg-surface-alt rounded-lg w-fit border border-border">
               <button
                 type="button"
-                onClick={() => handleSwitchType("INDIVIDUAL")}
+                onClick={() => handleSwitchCareProgram("INDIVIDUAL")}
                 className={cn(
                   "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer",
-                  appointmentType === "INDIVIDUAL"
+                  careProgram === "INDIVIDUAL"
                     ? "bg-card text-foreground  font-semibold"
                     : "text-muted-foreground hover:text-foreground"
                 )}
@@ -399,23 +406,23 @@ export function CreateAppointmentDialog({
               </button>
               <button
                 type="button"
-                onClick={() => handleSwitchType("ENTERPRISE")}
+                onClick={() => handleSwitchCareProgram("ORGANIZATION_HEALTH_EXAMINATION")}
                 className={cn(
                   "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer",
-                  appointmentType === "ENTERPRISE"
+                  careProgram === "ORGANIZATION_HEALTH_EXAMINATION"
                     ? "bg-card text-primary  font-semibold"
                     : "text-muted-foreground hover:text-foreground"
                 )}
               >
                 <Building2 className="size-3.5" />
-                <span>Khám doanh nghiệp</span>
+                <span>Khám đơn vị</span>
               </button>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
               {/* Left Column (5 cols): Patient Info & Metadata */}
               <div className="md:col-span-5 space-y-3.5">
-                {appointmentType === "INDIVIDUAL" ? (
+                {careProgram === "INDIVIDUAL" ? (
                   <>
                     <div className="flex items-center justify-between">
                       <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -509,32 +516,32 @@ export function CreateAppointmentDialog({
                     )}
                   </>
                 ) : (
-                  /* Enterprise Workflow */
+                  /* Organization Workflow */
                   <div className="space-y-3">
                     <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground block">
                       1. Chọn đoàn & Nhân viên
                     </span>
 
-                    {/* Enterprise select */}
+                    {/* Organization select */}
                     <div className="space-y-1">
                       <Label className="text-xs font-medium text-foreground">
-                        Doanh nghiệp <span className="text-destructive">*</span>
+                        Đơn vị <span className="text-destructive">*</span>
                       </Label>
                       <Select
-                        value={selectedEnterpriseId}
+                        value={selectedOrganizationId}
                         onValueChange={(val) => {
-                          setSelectedEnterpriseId(val || "")
-                          setSelectedBatchId("")
-                          setSelectedEmployeeCode("")
+                          setSelectedOrganizationId(val || "")
+                          setSelectedHealthExaminationBatchId("")
+                          setSelectedParticipantCode("")
                           setPatientOverride(null)
                         }}
                         disabled={isPending}
                       >
                         <SelectTrigger className="h-8.5 text-xs bg-card">
-                          <SelectValue placeholder="-- Chọn công ty / doanh nghiệp --" />
+                          <SelectValue placeholder="-- Chọn công ty / đơn vị --" />
                         </SelectTrigger>
                         <SelectContent>
-                          {enterprises.map((ent) => (
+                          {organizations.map((ent) => (
                             <SelectItem key={ent.id} value={ent.id}>
                               {ent.name}
                             </SelectItem>
@@ -549,20 +556,20 @@ export function CreateAppointmentDialog({
                         Đợt khám sức khỏe <span className="text-destructive">*</span>
                       </Label>
                       <Select
-                        value={selectedBatchId}
+                        value={selectedHealthExaminationBatchId}
                         onValueChange={(val) => {
-                          setSelectedBatchId(val || "")
-                          setSelectedEmployeeCode("")
+                          setSelectedHealthExaminationBatchId(val || "")
+                          setSelectedParticipantCode("")
                           setPatientOverride(null)
                         }}
-                        disabled={!selectedEnterpriseId || isPending}
+                        disabled={!selectedOrganizationId || isPending}
                       >
                         <SelectTrigger className="h-8.5 text-xs bg-card">
                           <SelectValue
                             placeholder={
-                              selectedEnterpriseId
+                              selectedOrganizationId
                                 ? "-- Chọn đợt khám --"
-                                : "Vui lòng chọn doanh nghiệp trước"
+                                : "Vui lòng chọn đơn vị trước"
                             }
                           />
                         </SelectTrigger>
@@ -576,24 +583,24 @@ export function CreateAppointmentDialog({
                       </Select>
                     </div>
 
-                    {/* Employee select */}
+                    {/* Participant select */}
                     <div className="space-y-1">
                       <Label className="text-xs font-medium text-foreground">
                         Nhân viên trong đợt khám{" "}
                         <span className="text-destructive">*</span>
                       </Label>
                       <Select
-                        value={selectedEmployeeCode}
+                        value={selectedParticipantCode}
                         onValueChange={(val) => {
-                          if (val) handleSelectEmployee(val)
+                          if (val) handleSelectParticipant(val)
                         }}
-                        disabled={!selectedBatchId || isPending || isLinkingEmployee}
+                        disabled={!selectedHealthExaminationBatchId || isPending || isLinkingParticipant}
                       >
                         <SelectTrigger className="h-8.5 text-xs bg-card">
                           <SelectValue
                             placeholder={
-                              selectedBatchId
-                                ? isLinkingEmployee
+                              selectedHealthExaminationBatchId
+                                ? isLinkingParticipant
                                 ? "Đang liên kết hồ sơ..."
                                 : "-- Chọn nhân viên khám --"
                                 : "Vui lòng chọn đợt khám trước"
@@ -601,9 +608,9 @@ export function CreateAppointmentDialog({
                           />
                         </SelectTrigger>
                         <SelectContent>
-                          {employees.map((emp) => (
-                            <SelectItem key={emp.id} value={emp.employeeCode}>
-                              {emp.employeeCode} - {emp.fullName} ({emp.department})
+                          {participants.map((participant) => (
+                            <SelectItem key={participant.id} value={participant.participantCode || participant.id}>
+                              {participant.participantCode || participant.id} - {participant.fullName} ({participant.organizationUnit})
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -622,7 +629,7 @@ export function CreateAppointmentDialog({
                             variant="outline"
                             className="bg-card text-primary font-mono text-[10px]"
                           >
-                            {selectedEmployeeCode}
+                            {selectedParticipantCode}
                           </Badge>
                         </div>
                         <div className="space-y-1 text-xs">
@@ -844,3 +851,5 @@ export function CreateAppointmentDialog({
     </Dialog>
   )
 }
+
+

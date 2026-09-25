@@ -47,7 +47,7 @@ describe("LoginPage & LoginForm (Ngọc Khánh Clinic Login Screen)", () => {
     expect(screen.getByText("Ngọc Khánh")).toBeInTheDocument()
     expect(screen.getByText("Clinic")).toBeInTheDocument()
     expect(
-      screen.getByText("Quản lý khám sức khỏe doanh nghiệp")
+      screen.getByText("Quản lý khám sức khỏe đơn vị")
     ).toBeInTheDocument()
 
     // Title & Subtitle
@@ -182,3 +182,4 @@ describe("LoginPage & LoginForm (Ngọc Khánh Clinic Login Screen)", () => {
     })
   })
 })
+

@@ -101,7 +101,7 @@ export const MoneyInput = React.forwardRef<HTMLInputElement, MoneyInputProps>(
         onChange={handleChange}
         onFocus={handleFocus}
         className={cn(
-          "h-9 w-full rounded-md border border-input px-3 py-1 text-xs sm:text-sm font-normal transition-colors shadow-2xs outline-none",
+          "h-9 w-full rounded-md border border-input px-3 py-1 text-xs sm:text-sm font-normal transition-colors  outline-none",
           disabled
             ? "bg-muted/60 text-muted-foreground border-border/60 cursor-not-allowed select-none"
             : "bg-background text-foreground hover:border-input focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary/20",

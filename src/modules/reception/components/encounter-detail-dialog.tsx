@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { ReceptionStatusBadge } from "./reception-status-badge"
+import { ReceptionWorklistStageBadge } from "./reception-worklist-stage-badge"
 import { Encounter } from "../types"
 import { cn } from "@/lib/utils"
 
@@ -56,7 +56,7 @@ export function EncounterDetailDialog({
               </DialogDescription>
             </div>
 
-            <ReceptionStatusBadge status={encounter.status} />
+            <ReceptionWorklistStageBadge stage={encounter.worklistStage ?? "WAITING_EXAMINATION"} />
           </div>
         </DialogHeader>
 
@@ -211,7 +211,7 @@ export function EncounterDetailDialog({
               </Button>
             )}
 
-            {encounter.status === "RECEIVED" && onAssignRoom && (
+            {encounter.checkInStatus === "CHECKED_IN" && !encounter.roomId && onAssignRoom && (
               <Button
                 type="button"
                 onClick={() => {
@@ -225,7 +225,7 @@ export function EncounterDetailDialog({
               </Button>
             )}
 
-            {encounter.status === "WAITING_PAYMENT" && onProcessPayment && (
+            {encounter.paymentStatus === "PENDING" && onProcessPayment && (
               <Button
                 type="button"
                 onClick={() => {

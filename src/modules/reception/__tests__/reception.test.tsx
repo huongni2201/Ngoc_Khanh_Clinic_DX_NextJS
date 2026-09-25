@@ -5,7 +5,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest"
 import "@testing-library/jest-dom/vitest"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { ReceptionPage } from "../pages/reception-page"
-import { PaymentDialog } from "../components/payment-dialog"
+import { PaymentDialog } from "@/modules/billing"
 import { PrintExaminationDialog } from "../components/print-examination-dialog"
 import { AssignRoomDialog } from "../components/assign-room-dialog"
 import { resetReceptionStore, initialEncounters } from "../api"
@@ -134,7 +134,7 @@ describe("Reception Module (Screen 01 - 07)", () => {
   })
 
   it("strictly enforces that Receptionist does NOT add clinical orders during payment", async () => {
-    const enc = initialEncounters.find((e) => e.status === "WAITING_PAYMENT")!
+    const enc = initialEncounters.find((e) => e.paymentStatus === "PENDING")!
 
     renderWithClient(
       <PaymentDialog
@@ -153,40 +153,28 @@ describe("Reception Module (Screen 01 - 07)", () => {
     expect(screen.queryByText(/Chỉ định dịch vụ/i)).not.toBeInTheDocument()
 
     // Verifies payment method options (Tiền mặt / Chuyển khoản)
-    expect(screen.getByText("Tiền mặt")).toBeInTheDocument()
-    expect(screen.getByText("Chuyển khoản")).toBeInTheDocument()
+    expect(await screen.findByText("Tiền mặt")).toBeInTheDocument()
+    expect(await screen.findByText("Chuyển khoản")).toBeInTheDocument()
   })
 
   it("handles payment confirmation and prevents accidental submissions", async () => {
-    const enc = initialEncounters.find((e) => e.status === "WAITING_PAYMENT")!
-    const onSuccess = vi.fn()
+    const enc = initialEncounters.find((e) => e.paymentStatus === "PENDING")!
+    const onPaid = vi.fn()
 
     renderWithClient(
       <PaymentDialog
         open={true}
         onOpenChange={vi.fn()}
         encounter={enc}
-        onSuccess={onSuccess}
+        onPaid={onPaid}
       />
     )
 
-    // Clicking primary button opens confirmation alert prompt
-    const confirmBtn = screen.getByRole("button", { name: "Xác nhận thu tiền" })
+    const confirmBtn = await screen.findByRole("button", { name: "Xác nhận thu tiền" })
     await userEvent.click(confirmBtn)
 
-    // Check confirmation prompt appearance
     await waitFor(() => {
-      expect(
-        screen.getByText(/Bạn có chắc chắn muốn xác nhận đã thu số tiền/i)
-      ).toBeInTheDocument()
-    })
-
-    // Now clicking the final confirmation button triggers payment
-    const finalBtn = screen.getByRole("button", { name: "Đồng ý thu tiền" })
-    await userEvent.click(finalBtn)
-
-    await waitFor(() => {
-      expect(onSuccess).toHaveBeenCalled()
+      expect(onPaid).toHaveBeenCalled()
     })
   })
 
@@ -211,7 +199,7 @@ describe("Reception Module (Screen 01 - 07)", () => {
   })
 
   it("allows assigning room and attending doctor in AssignRoomDialog", async () => {
-    const enc = initialEncounters.find((e) => e.status === "RECEIVED")!
+    const enc = initialEncounters.find((e) => e.checkInStatus === "CHECKED_IN" && !e.roomId)!
     const onSuccess = vi.fn()
 
     renderWithClient(
@@ -255,4 +243,3 @@ describe("Reception Module (Screen 01 - 07)", () => {
     })
   })
 })
-

@@ -79,7 +79,7 @@ export function TodayAppointmentsDialog({
 
       // Type filter
       if (typeFilter !== "ALL") {
-        if ((apt.type || "INDIVIDUAL") !== typeFilter) return false
+        if (apt.careProgram !== typeFilter) return false
       }
 
       // Search term
@@ -89,15 +89,16 @@ export function TodayAppointmentsDialog({
         const matchCode = apt.patientCode.toLowerCase().includes(q)
         const matchPhone = apt.phoneNumber.includes(q)
         const matchAppt = apt.appointmentCode.toLowerCase().includes(q)
-        const matchCompany = apt.enterpriseName?.toLowerCase().includes(q) || false
-        const matchEmpCode = apt.employeeCode?.toLowerCase().includes(q) || false
+        const matchCompany = apt.organizationName?.toLowerCase().includes(q) || false
+        const matchParticipantCode =
+          apt.participantCode?.toLowerCase().includes(q) || false
         if (
           !matchName &&
           !matchCode &&
           !matchPhone &&
           !matchAppt &&
           !matchCompany &&
-          !matchEmpCode
+          !matchParticipantCode
         ) {
           return false
         }
@@ -172,7 +173,7 @@ export function TodayAppointmentsDialog({
               <SelectContent>
                 <SelectItem value="ALL">Tất cả đối tượng</SelectItem>
                 <SelectItem value="INDIVIDUAL">Khám cá nhân</SelectItem>
-                <SelectItem value="ENTERPRISE">Khám doanh nghiệp</SelectItem>
+                <SelectItem value="ORGANIZATION">Khám đơn vị</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -187,7 +188,7 @@ export function TodayAppointmentsDialog({
                   Giờ hẹn
                 </TableHead>
                 <TableHead className="min-w-[220px] text-[11px] font-semibold text-foreground h-9 px-3">
-                  Người bệnh / Doanh nghiệp
+                  Người bệnh / Đơn vị
                 </TableHead>
                 <TableHead className="w-28 text-[11px] font-semibold text-foreground h-9 px-3">
                   Số điện thoại
@@ -256,7 +257,7 @@ export function TodayAppointmentsDialog({
                         {apt.time}
                       </TableCell>
 
-                      {/* Người bệnh / Doanh nghiệp */}
+                      {/* Người bệnh / Đơn vị */}
                       <TableCell className="px-3 py-2.5">
                         <div className="flex flex-col">
                           <span className="text-xs font-bold text-foreground">
@@ -266,20 +267,20 @@ export function TodayAppointmentsDialog({
                             <span>{apt.patientCode}</span>
                             <span>•</span>
                             <span>Sinh {apt.birthYear}</span>
-                            {apt.employeeCode && (
+                            {apt.participantCode && (
                               <>
                                 <span>•</span>
                                 <span className="text-primary font-semibold">
-                                  {apt.employeeCode}
+                                  {apt.participantCode}
                                 </span>
                               </>
                             )}
                           </div>
-                          {apt.enterpriseName && (
+                          {apt.organizationName && (
                             <div className="flex items-center gap-1 mt-0.5 text-[11px] text-primary">
                               <Building2 className="size-3 shrink-0" />
-                              <span className="font-medium break-words leading-tight" title={apt.enterpriseName}>
-                                {apt.enterpriseName}
+                              <span className="font-medium break-words leading-tight" title={apt.organizationName}>
+                                {apt.organizationName}
                               </span>
                             </div>
                           )}
@@ -372,3 +373,4 @@ export function TodayAppointmentsDialog({
     </Dialog>
   )
 }
+

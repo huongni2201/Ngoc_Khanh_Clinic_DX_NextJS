@@ -8,8 +8,9 @@ import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react"
 import {
   ChartLineData01Icon,
   Building03Icon,
-  Calendar03Icon,
+  CheckListIcon,
   CreditCardIcon,
+  FileSpreadsheetIcon,
   Home01Icon,
   Settings01Icon,
   UserCheck01Icon,
@@ -38,24 +39,29 @@ export function AppSidebar({ className }: { className?: string }) {
       icon: UserCheck01Icon,
     },
     {
-      title: "Lịch hẹn",
-      href: "/appointments",
-      icon: Calendar03Icon,
-    },
-    {
       title: "Bệnh nhân",
       href: "/patients",
       icon: UserGroupIcon,
     },
     {
-      title: "Doanh nghiệp",
-      href: "/enterprises",
-      icon: Building03Icon,
+      title: "Lượt khám",
+      href: "/doctor",
+      icon: CheckListIcon,
+    },
+    {
+      title: "Chỉ định",
+      href: "/prescriptions",
+      icon: FileSpreadsheetIcon,
     },
     {
       title: "Thanh toán",
       href: "/billing",
       icon: CreditCardIcon,
+    },
+    {
+      title: "Doanh nghiệp",
+      href: "/organizations",
+      icon: Building03Icon,
     },
     {
       title: "Báo cáo",
@@ -89,11 +95,11 @@ export function AppSidebar({ className }: { className?: string }) {
           />
         </div>
         <div className="flex flex-col min-w-0">
-          <span className="text-sm font-semibold leading-snug tracking-tight text-foreground">
+          <span className="text-sm font-semibold leading-snug tracking-tight text-white">
             Ngọc Khánh Clinic
           </span>
-          <span className="truncate text-xs leading-tight text-muted-foreground">
-            Quản lý phòng khám
+          <span className="truncate text-xs leading-tight text-sidebar-foreground">
+            Hệ thống quản lý phòng khám
           </span>
         </div>
       </div>
@@ -104,6 +110,8 @@ export function AppSidebar({ className }: { className?: string }) {
           const isActive =
             item.href === "/dashboard"
               ? pathname === "/dashboard" || pathname === "/"
+              : item.href === "/doctor"
+              ? pathname.startsWith("/doctor") || pathname.startsWith("/encounters")
               : pathname.startsWith(item.href)
 
           return (
@@ -113,21 +121,25 @@ export function AppSidebar({ className }: { className?: string }) {
               prefetch={false}
               aria-current={isActive ? "page" : undefined}
               className={cn(
-                "group flex h-10 items-center gap-3 rounded-md px-3 text-sm font-medium transition-colors",
+                "group flex h-10 items-center justify-between rounded-md px-3 text-sm font-medium transition-colors",
                 isActive
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground font-semibold"
-                  : "text-secondary-foreground hover:bg-hover hover:text-foreground"
+                  ? "bg-sidebar-primary text-sidebar-primary-foreground font-semibold shadow-xs"
+                  : "text-sidebar-foreground hover:bg-white/5 hover:text-white"
               )}
             >
-              <HugeiconsIcon
-                icon={item.icon}
-                strokeWidth={1.8}
-                className={cn(
-                  "size-[18px] shrink-0 transition-colors",
-                  isActive ? "text-primary" : "text-secondary-foreground group-hover:text-primary"
-                )}
-              />
-              <span className="truncate">{item.title}</span>
+              <div className="flex items-center gap-3 min-w-0">
+                <HugeiconsIcon
+                  icon={item.icon}
+                  strokeWidth={1.8}
+                  className={cn(
+                    "size-[18px] shrink-0 transition-colors",
+                    isActive
+                      ? "text-sidebar-primary-foreground"
+                      : "text-sidebar-foreground group-hover:text-white"
+                  )}
+                />
+                <span className="truncate">{item.title}</span>
+              </div>
             </Link>
           )
         })}
@@ -135,3 +147,4 @@ export function AppSidebar({ className }: { className?: string }) {
     </aside>
   )
 }
+

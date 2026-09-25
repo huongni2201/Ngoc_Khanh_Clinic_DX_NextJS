@@ -9,11 +9,10 @@ import { ReceptionHeaderActions } from "../components/reception-header-actions"
 import { ReceptionCountersStrip } from "../components/reception-counters-strip"
 import { ReceptionPatientTable } from "../components/reception-patient-table"
 import {
-  ReceivePatientDialog,
-  type ReceiveAppointmentContext,
-} from "../components/receive-patient-dialog"
+  PatientCheckInDialog,
+  type PatientCheckInAppointmentContext,
+} from "../components/patient-check-in-dialog"
 import { AssignRoomDialog } from "../components/assign-room-dialog"
-import { PaymentDialog } from "../components/payment-dialog"
 import { PrintExaminationDialog } from "../components/print-examination-dialog"
 import { EncounterDetailDialog } from "../components/encounter-detail-dialog"
 import { TodayAppointmentsDialog } from "../components/today-appointments-dialog"
@@ -25,7 +24,7 @@ import {
 import {
   useReceptionWorklist,
   useReceptionCounters,
-  useExaminationRooms,
+  useClinicRooms,
 } from "../hooks/use-reception"
 import {
   useAppointments,
@@ -33,6 +32,7 @@ import {
   type Appointment,
 } from "@/modules/appointments"
 import { Encounter, ReceptionTab } from "../types"
+import { PaymentDialog } from "@/modules/billing"
 
 export function ReceptionPage() {
   const router = useRouter()
@@ -63,7 +63,7 @@ export function ReceptionPage() {
     refetch: refetchCounters,
   } = useReceptionCounters()
 
-  const { data: rooms = [] } = useExaminationRooms()
+  const { data: rooms = [] } = useClinicRooms()
 
   // Appointments synchronization
   const { data: todayAppointments = [], refetch: refetchAppointments } =
@@ -93,7 +93,7 @@ export function ReceptionPage() {
   const [selectedPatient, setSelectedPatient] = React.useState<Patient | null>(null)
   const [selectedEncounter, setSelectedEncounter] = React.useState<Encounter | null>(null)
   const [appointmentContext, setAppointmentContext] =
-    React.useState<ReceiveAppointmentContext | null>(null)
+    React.useState<PatientCheckInAppointmentContext | null>(null)
 
   // Handlers for Header Actions
   const handleOpenReceiveWithCleanState = () => {
@@ -169,7 +169,7 @@ export function ReceptionPage() {
             roomId: apt.roomId,
             physicianId: apt.physicianId,
             notes: apt.notes,
-            enterpriseName: apt.enterpriseName,
+            organizationName: apt.organizationName,
           })
           setIsReceivePatientOpen(true)
         }
@@ -178,7 +178,7 @@ export function ReceptionPage() {
           (a) =>
             a.patientCode === incomingCheckinCode ||
             a.phoneNumber === incomingCheckinCode ||
-            a.employeeCode === incomingCheckinCode
+            a.participantCode === incomingCheckinCode
         )
         if (apt) {
           setSelectedPatient({
@@ -199,7 +199,7 @@ export function ReceptionPage() {
             roomId: apt.roomId,
             physicianId: apt.physicianId,
             notes: apt.notes,
-            enterpriseName: apt.enterpriseName,
+            organizationName: apt.organizationName,
           })
           setIsReceivePatientOpen(true)
         }
@@ -228,7 +228,7 @@ export function ReceptionPage() {
       roomId: apt.roomId,
       physicianId: apt.physicianId,
       notes: apt.notes,
-      enterpriseName: apt.enterpriseName,
+      organizationName: apt.organizationName,
     })
     setIsTodayAppointmentsOpen(false)
     setIsReceivePatientOpen(true)
@@ -278,14 +278,14 @@ export function ReceptionPage() {
 
   // Counter filter click
   const handleCounterFilter = (statusKey: string) => {
-    if (statusKey === "WAITING_RECEPTION") {
-      setActiveTab("WAITING_RECEPTION")
-    } else if (statusKey === "EXAMINING") {
-      setActiveTab("EXAMINING")
+    if (statusKey === "WAITING_CHECK_IN") {
+      setActiveTab("WAITING_CHECK_IN")
+    } else if (statusKey === "IN_EXAMINATION") {
+      setActiveTab("IN_EXAMINATION")
     } else if (statusKey === "WAITING_PAYMENT") {
       setActiveTab("WAITING_PAYMENT")
-    } else if (statusKey === "WAITING_RESULT") {
-      setActiveTab("WAITING_RESULT")
+    } else if (statusKey === "WAITING_DIAGNOSTIC_RESULTS") {
+      setActiveTab("WAITING_DIAGNOSTIC_RESULTS")
     } else if (statusKey === "COMPLETED") {
       setActiveTab("COMPLETED")
     } else {
@@ -374,7 +374,7 @@ export function ReceptionPage() {
       />
 
       {/* Screen 04: Tiếp nhận bệnh nhân / Tạo Encounter */}
-      <ReceivePatientDialog
+      <PatientCheckInDialog
         open={isReceivePatientOpen}
         onOpenChange={(isOpen) => {
           setIsReceivePatientOpen(isOpen)
@@ -412,12 +412,9 @@ export function ReceptionPage() {
         open={isPaymentOpen}
         onOpenChange={setIsPaymentOpen}
         encounter={selectedEncounter}
-        onSuccess={(_, shouldPrintReceipt) => {
+        onPaid={() => {
           refetchWorklist()
           refetchCounters()
-          if (shouldPrintReceipt && selectedEncounter) {
-            setIsPrintFormOpen(true)
-          }
         }}
       />
 
@@ -440,3 +437,4 @@ export function ReceptionPage() {
     </div>
   )
 }
+

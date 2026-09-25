@@ -36,7 +36,7 @@ export function LoginCard({
             Ngọc Khánh <span className="text-primary font-bold">Clinic</span>
           </h2>
           <p className="text-xs sm:text-sm text-muted-foreground leading-snug">
-            Quản lý khám sức khỏe doanh nghiệp
+            Quản lý khám sức khỏe đơn vị
           </p>
         </div>
       </div>
@@ -67,3 +67,4 @@ export function LoginCard({
     </div>
   )
 }
+

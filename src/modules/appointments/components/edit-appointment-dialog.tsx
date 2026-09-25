@@ -33,7 +33,7 @@ import {
   useUpdateAppointment,
   useCancelAppointment,
 } from "../hooks/use-appointments"
-import { useExaminationRooms } from "@/modules/reception"
+import { useClinicRooms } from "@/modules/reception"
 import { Appointment } from "../types"
 
 interface EditAppointmentDialogProps {
@@ -64,7 +64,7 @@ export function EditAppointmentDialog({
   const [serverError, setServerError] = React.useState<string | null>(null)
   const [isConfirmingCancel, setIsConfirmingCancel] = React.useState(false)
 
-  const { data: rooms } = useExaminationRooms()
+  const { data: rooms } = useClinicRooms()
   const updateMutation = useUpdateAppointment(appointment?.id || "")
   const cancelMutation = useCancelAppointment()
 
@@ -212,7 +212,7 @@ export function EditAppointmentDialog({
                       variant="outline"
                       className="bg-card text-secondary-foreground text-[10px]"
                     >
-                      {appointment.source === "ONLINE" ? "Đặt online" : "Lễ tân tạo"}
+                      {appointment.bookingChannel === "ONLINE" ? "Đặt online" : "Lễ tân tạo"}
                     </Badge>
                   </div>
                 </div>

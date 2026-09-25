@@ -53,5 +53,3 @@ export interface PatientCounters {
   femaleCount: number
   elderlyCount: number
 }
-
-export * from "./encounter"

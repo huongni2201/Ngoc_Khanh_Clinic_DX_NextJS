@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 import { AppShell } from "../app-shell/app-shell"
 
 vi.mock("next/navigation", () => ({
-  usePathname: vi.fn(() => "/enterprises"),
+  usePathname: vi.fn(() => "/organizations"),
 }))
 
 vi.mock("next/image", () => ({
@@ -39,5 +39,9 @@ describe("AppShell", () => {
     expect(screen.getByRole("main")).toContainElement(
       screen.getByText("Nội dung")
     )
+    expect(
+      screen.getByRole("link", { name: "Bỏ qua đến nội dung chính" })
+    ).toHaveAttribute("href", "#main-content")
   })
 })
+

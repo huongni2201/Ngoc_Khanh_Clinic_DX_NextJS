@@ -1,6 +1,12 @@
-import { PatientGender } from "@/modules/patients"
+import type { PatientGender } from "@/modules/patients"
+import type { DiagnosticWorkflowStatus, EncounterStatus } from "@/modules/encounters/types"
+import type { PaymentStatus } from "@/modules/billing/types"
+import type { ReceptionWorklistStage } from "../lib/reception-worklist-stage"
 
-export type ReceptionStatus =
+export type CheckInStatus = "NOT_CHECKED_IN" | "CHECKED_IN"
+
+/** Transport-only status used while the reception mock/API is migrated. */
+export type LegacyReceptionStatus =
   | "WAITING_RECEPTION"
   | "RECEIVED"
   | "WAITING_EXAM"
@@ -12,11 +18,12 @@ export type ReceptionStatus =
 
 export type ReceptionTab =
   | "ALL"
-  | "WAITING_RECEPTION"
-  | "WAITING_EXAM"
-  | "EXAMINING"
+  | "WAITING_CHECK_IN"
+  | "WAITING_EXAMINATION"
+  | "IN_EXAMINATION"
   | "WAITING_PAYMENT"
-  | "WAITING_RESULT"
+  | "WAITING_DIAGNOSTIC_RESULTS"
+  | "READY_FOR_CONCLUSION"
   | "COMPLETED"
 
 export interface Encounter {
@@ -38,12 +45,23 @@ export interface Encounter {
   physicianName?: string
   reasonForVisit?: string
   notes?: string
-  status: ReceptionStatus
+  checkInStatus: CheckInStatus
+  encounterStatus: EncounterStatus
+  paymentStatus?: PaymentStatus
+  diagnosticWorkflowStatus?: DiagnosticWorkflowStatus
+  worklistStage?: ReceptionWorklistStage
   printFormOnCheckIn?: boolean
   createdAt: string
 }
 
-export interface ExaminationRoom {
+export type LegacyReceptionEncounter = Omit<
+  Encounter,
+  "checkInStatus" | "encounterStatus" | "paymentStatus" | "diagnosticWorkflowStatus" | "worklistStage"
+> & {
+  status: LegacyReceptionStatus
+}
+
+export interface ClinicRoom {
   id: string
   name: string
   department: string
@@ -54,7 +72,8 @@ export interface ExaminationRoom {
   estimatedWaitTime: string
 }
 
-export interface BillableItem {
+/** Legacy billing payload owned by the reception transport adapter. */
+export interface LegacyBillableItem {
   id: string
   name: string
   unitPrice: number
@@ -63,14 +82,14 @@ export interface BillableItem {
   category?: string
 }
 
-export interface Invoice {
+export interface LegacyReceptionInvoice {
   id: string
   encounterId: string
   encounterCode: string
   patientId: string
   patientName: string
   patientCode: string
-  items: BillableItem[]
+  items: LegacyBillableItem[]
   subtotal: number
   discount: number
   total: number
@@ -93,10 +112,9 @@ export interface ReceptionFilterParams {
   search?: string
   roomId?: string
   physicianId?: string
-  status?: ReceptionStatus
 }
 
-export interface ReceivePatientDto {
+export interface PatientCheckInRequest {
   patientId: string
   examinationType: string
   roomId?: string

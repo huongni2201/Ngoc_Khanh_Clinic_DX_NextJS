@@ -60,6 +60,10 @@
   --color-status-success-bg: var(--status-success-bg);
   --color-status-warning: var(--status-warning);
   --color-status-warning-bg: var(--status-warning-bg);
+  --color-status-cls: var(--status-cls);
+  --color-status-cls-bg: var(--status-cls-bg);
+  --color-status-conclusion: var(--status-conclusion);
+  --color-status-conclusion-bg: var(--status-conclusion-bg);
   --color-sidebar-active-bg: var(--sidebar-active-bg);
   --color-sidebar-active-fg: var(--sidebar-active-fg);
   --color-popover-foreground: var(--popover-foreground);
@@ -130,14 +134,18 @@
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
   --radius: 0.625rem;
-  --sidebar: #ffffff;
-  --sidebar-foreground: #475569;
+  --sidebar: #0f1e36;
+  --sidebar-foreground: #94a3b8;
   --sidebar-primary: #2563eb;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #eff6ff;
-  --sidebar-accent-foreground: #2563eb;
-  --sidebar-border: #e2e8f0;
+  --sidebar-accent: #2563eb;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #1e293b;
   --sidebar-ring: #2563eb;
+  --status-cls: #8b5cf6;
+  --status-cls-bg: #f5f3ff;
+  --status-conclusion: #d97706;
+  --status-conclusion-bg: #fffbeb;
   --login-card-border: #e2e8f0;
   --login-decor-shape: #e0edff;
 }
@@ -202,6 +210,10 @@
   --sidebar-accent-foreground: #f8fafc;
   --sidebar-border: #1e293b;
   --sidebar-ring: #3b82f6;
+  --status-cls: #a78bfa;
+  --status-cls-bg: rgba(139, 92, 246, 0.2);
+  --status-conclusion: #fbbf24;
+  --status-conclusion-bg: rgba(245, 158, 11, 0.2);
   --login-card-border: #1e293b;
   --login-decor-shape: #192642;
 }

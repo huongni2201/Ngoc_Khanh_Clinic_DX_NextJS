@@ -45,8 +45,8 @@ interface AppointmentTableProps {
   onDoctorChange: (physicianId: string) => void
   selectedExamType: string
   onExamTypeChange: (type: string) => void
-  selectedType?: string
-  onTypeChange?: (type: string) => void
+  selectedCareProgram?: string
+  onCareProgramChange?: (program: string) => void
   onViewAppointment: (apt: Appointment) => void
   onEditAppointment: (apt: Appointment) => void
   onConfirmArrived: (apt: Appointment) => void
@@ -65,8 +65,8 @@ export function AppointmentTable({
   onDoctorChange,
   selectedExamType,
   onExamTypeChange,
-  selectedType = "ALL",
-  onTypeChange,
+  selectedCareProgram = "ALL",
+  onCareProgramChange,
   onViewAppointment,
   onEditAppointment,
   onConfirmArrived,
@@ -133,11 +133,11 @@ export function AppointmentTable({
         <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
           <Filter className="size-3.5 text-primary shrink-0 hidden sm:block" />
 
-          {/* Type Filter: Cá nhân vs Doanh nghiệp */}
-          {onTypeChange && (
+          {/* Type Filter: Cá nhân vs Đơn vị */}
+          {onCareProgramChange && (
             <Select
-              value={selectedType}
-              onValueChange={(val) => onTypeChange(val || "ALL")}
+              value={selectedCareProgram}
+              onValueChange={(val) => onCareProgramChange(val || "ALL")}
             >
               <SelectTrigger className="h-8.5 text-xs bg-card border-border w-full sm:w-40">
                 <SelectValue placeholder="Tất cả đối tượng" />
@@ -145,7 +145,7 @@ export function AppointmentTable({
               <SelectContent>
                 <SelectItem value="ALL">Tất cả đối tượng</SelectItem>
                 <SelectItem value="INDIVIDUAL">Khám cá nhân</SelectItem>
-                <SelectItem value="ENTERPRISE">Khám doanh nghiệp</SelectItem>
+                <SelectItem value="ORGANIZATION_HEALTH_EXAMINATION">Khám đơn vị</SelectItem>
               </SelectContent>
             </Select>
           )}
@@ -180,8 +180,8 @@ export function AppointmentTable({
               <SelectItem value="ALL">Tất cả loại khám</SelectItem>
               <SelectItem value="Khám tổng quát">Khám tổng quát</SelectItem>
               <SelectItem value="Nội tổng quát">Nội tổng quát</SelectItem>
-              <SelectItem value="Khám sức khỏe doanh nghiệp">
-                Khám sức khỏe doanh nghiệp
+              <SelectItem value="Khám sức khỏe đơn vị">
+                Khám sức khỏe đơn vị
               </SelectItem>
               <SelectItem value="Tim mạch">Tim mạch</SelectItem>
               <SelectItem value="Cơ xương khớp">Cơ xương khớp</SelectItem>
@@ -264,15 +264,15 @@ export function AppointmentTable({
               </TableRow>
             ) : (
               appointments.map((apt) => {
-                const sourceBadge =
-                  apt.type === "ENTERPRISE" || apt.source === "ENTERPRISE" ? (
+                const bookingChannelBadge =
+                  apt.careProgram === "ORGANIZATION_HEALTH_EXAMINATION" ? (
                     <Badge
                       variant="outline"
                       className="bg-selected text-primary border-primary/20 text-[10px] font-medium"
                     >
                       Khám đoàn DN
                     </Badge>
-                  ) : apt.source === "ONLINE" ? (
+                  ) : apt.bookingChannel === "ONLINE" ? (
                     <Badge
                       variant="outline"
                       className="bg-surface-alt text-primary border-primary/20 text-[10px] font-normal"
@@ -308,20 +308,20 @@ export function AppointmentTable({
                           <span>{apt.patientCode}</span>
                           <span>•</span>
                           <span>Sinh {apt.birthYear}</span>
-                          {apt.employeeCode && (
+                          {apt.participantCode && (
                             <>
                               <span>•</span>
                               <span className="text-primary font-semibold">
-                                {apt.employeeCode}
+                                {apt.participantCode}
                               </span>
                             </>
                           )}
                         </div>
-                        {apt.enterpriseName && (
+                        {apt.organizationName && (
                           <div className="flex items-center gap-1 mt-1 text-[11px] text-primary">
                             <Building2 className="size-3 shrink-0" />
-                            <span className="font-medium break-words leading-tight" title={apt.enterpriseName}>
-                              {apt.enterpriseName}
+                            <span className="font-medium break-words leading-tight" title={apt.organizationName}>
+                              {apt.organizationName}
                             </span>
                           </div>
                         )}
@@ -350,7 +350,7 @@ export function AppointmentTable({
 
                     {/* Nguồn đặt lịch */}
                     <TableCell className="px-2 py-3 text-center">
-                      {sourceBadge}
+                      {bookingChannelBadge}
                     </TableCell>
 
                     {/* Trạng thái */}
@@ -447,3 +447,4 @@ export function AppointmentTable({
     </div>
   )
 }
+

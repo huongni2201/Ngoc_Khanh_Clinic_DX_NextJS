@@ -1,7 +1,15 @@
-/**
- * Canonical Health Examination feature entry point.
- *
- * The legacy directory remains as a compatibility location until the
- * frontend workspace can complete its user-owned folder move.
- */
-export * from "../health-check-batches"
+export * from "./types"
+export * from "./api"
+export * from "./hooks/use-health-examination-batches"
+export { HealthExaminationBatchDetailPage } from "./pages/health-examination-batch-detail-page"
+export { HealthExaminationBatchHeader } from "./components/health-examination-batch-header"
+export { HealthExaminationBatchSummaryStrip } from "./components/health-examination-batch-summary-strip"
+export { HealthExaminationBatchTabs, type HealthExaminationBatchTabType } from "./components/health-examination-batch-tabs"
+export { ReportTab } from "./components/report-tab/report-tab"
+export { ReportHeader } from "./components/report-tab/report-header"
+export { ReportExportActions } from "./components/report-tab/report-export-actions"
+export { ExaminationSummaryTable } from "./components/report-tab/examination-summary-table"
+export { ExaminationSummaryRow } from "./components/report-tab/examination-summary-row"
+export { ReportTotalRow } from "./components/report-tab/report-total-row"
+export { CalculationExample } from "./components/report-tab/calculation-example"
+export * from "./utils/export-excel"

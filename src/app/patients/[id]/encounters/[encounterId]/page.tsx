@@ -2,7 +2,7 @@ import * as React from "react"
 import { Metadata } from "next"
 import { Suspense } from "react"
 import { AppShell } from "@/widgets/app-shell/app-shell"
-import { EncounterDetailPage } from "@/modules/patients/pages/encounter-detail-page"
+import { EncounterDetailPage } from "@/modules/encounters/pages/encounter-detail-page"
 import { Skeleton } from "@/components/ui/skeleton"
 
 export const metadata: Metadata = {

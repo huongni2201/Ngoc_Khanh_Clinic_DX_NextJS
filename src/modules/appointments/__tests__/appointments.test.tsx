@@ -61,7 +61,7 @@ describe("Appointments Module (Lịch hẹn)", () => {
     })
   })
 
-  it("creates an appointment with source automatically recorded as 'RECEPTION' (Lễ tân tạo)", async () => {
+  it("creates an appointment with booking channel automatically recorded as front desk", async () => {
     const created = await createAppointment({
       patientId: "pat-001",
       examinationType: "Khám tổng quát",
@@ -70,10 +70,10 @@ describe("Appointments Module (Lịch hẹn)", () => {
       date: "2026-09-25",
       time: "08:30",
       notes: "Hẹn khám sức khỏe",
-      source: "RECEPTION",
+      bookingChannel: "FRONT_DESK",
     })
 
-    expect(created.source).toBe("RECEPTION")
+    expect(created.bookingChannel).toBe("FRONT_DESK")
     expect(created.appointmentCode).toMatch(/^LH-/)
     expect(created.patientName).toBe("Nguyễn Văn Minh")
   })
@@ -128,46 +128,46 @@ describe("Appointments Module (Lịch hẹn)", () => {
     expect(screen.getByText("Nguyễn Văn Minh")).toBeInTheDocument()
     expect(screen.getByText("BN001256")).toBeInTheDocument()
     expect(screen.getByText("Khám cá nhân")).toBeInTheDocument()
-    expect(screen.getByText("Khám doanh nghiệp")).toBeInTheDocument()
+    expect(screen.getByText("Khám đơn vị")).toBeInTheDocument()
   })
 
-  it("renders CreateAppointmentDialog in Enterprise mode and displays corporate selectors", async () => {
+  it("renders CreateAppointmentDialog in Organization mode and displays corporate selectors", async () => {
     renderWithClient(
       <CreateAppointmentDialog
         open={true}
         onOpenChange={vi.fn()}
-        initialType="ENTERPRISE"
+        initialCareProgram="ORGANIZATION_HEALTH_EXAMINATION"
       />
     )
 
-    expect(screen.getByText("Khám doanh nghiệp")).toBeInTheDocument()
+    expect(screen.getByText("Khám đơn vị")).toBeInTheDocument()
     expect(screen.getByText("1. Chọn đoàn & Nhân viên")).toBeInTheDocument()
-    expect(screen.getByText("Doanh nghiệp")).toBeInTheDocument()
+    expect(screen.getByText("Đơn vị")).toBeInTheDocument()
     expect(screen.getByText("Đợt khám sức khỏe")).toBeInTheDocument()
     expect(screen.getByText("Nhân viên trong đợt khám")).toBeInTheDocument()
   })
 
-  it("supports creating enterprise appointment with enterprise and employee metadata", async () => {
+  it("supports creating organization appointment with organization and employee metadata", async () => {
     const created = await createAppointment({
       patientId: "pat-103",
-      examinationType: "Khám sức khỏe doanh nghiệp",
+      examinationType: "Khám sức khỏe đơn vị",
       physicianId: "doc-04",
       roomId: "room-104",
       date: "2026-09-26",
       time: "09:30",
-      type: "ENTERPRISE",
-      enterpriseId: "ent-1",
-      enterpriseName: "Công ty Cổ phần FPT",
-      batchId: "batch-1",
-      batchName: "Khám sức khỏe định kỳ 2026",
-      employeeCode: "FPT001",
-      source: "ENTERPRISE",
+      careProgram: "ORGANIZATION_HEALTH_EXAMINATION",
+      organizationId: "ent-1",
+      organizationName: "Công ty Cổ phần FPT",
+      healthExaminationBatchId: "batch-1",
+      healthExaminationBatchName: "Khám sức khỏe định kỳ 2026",
+      participantCode: "FPT001",
+      bookingChannel: "IMPORT",
     })
 
-    expect(created.type).toBe("ENTERPRISE")
-    expect(created.enterpriseName).toBe("Công ty Cổ phần FPT")
-    expect(created.employeeCode).toBe("FPT001")
-    expect(created.source).toBe("ENTERPRISE")
+    expect(created.careProgram).toBe("ORGANIZATION_HEALTH_EXAMINATION")
+    expect(created.organizationName).toBe("Công ty Cổ phần FPT")
+    expect(created.participantCode).toBe("FPT001")
+    expect(created.bookingChannel).toBe("IMPORT")
   })
 
   it("renders operational counters strip matching Reception with 5 key metric cards", async () => {
@@ -177,7 +177,7 @@ describe("Appointments Module (Lịch hẹn)", () => {
       expect(screen.getByText("Lịch hẹn hôm nay")).toBeInTheDocument()
       expect(screen.getByText("Đã xác nhận")).toBeInTheDocument()
       expect(screen.getByText("Đã đến phòng khám")).toBeInTheDocument()
-      expect(screen.getByText("Đoàn doanh nghiệp")).toBeInTheDocument()
+      expect(screen.getByText("Đoàn đơn vị")).toBeInTheDocument()
       expect(screen.getByText("Đã khám / Tiếp nhận")).toBeInTheDocument()
     })
   })
@@ -209,4 +209,5 @@ describe("Appointments Module (Lịch hẹn)", () => {
     expect(viewButtons.length).toBeGreaterThan(0)
   })
 })
+
 

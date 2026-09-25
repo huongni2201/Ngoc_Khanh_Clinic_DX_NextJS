@@ -1,4 +1,4 @@
-import { PatientGender } from "@/modules/patients"
+import type { PatientGender } from "@/modules/patients"
 
 export type AppointmentStatus =
   | "BOOKED"
@@ -9,9 +9,8 @@ export type AppointmentStatus =
   | "CANCELLED"
   | "NO_SHOW"
 
-export type AppointmentType = "INDIVIDUAL" | "ENTERPRISE"
-
-export type AppointmentSource = "RECEPTION" | "ONLINE" | "ENTERPRISE"
+export type CareProgram = "INDIVIDUAL" | "ORGANIZATION_HEALTH_EXAMINATION"
+export type BookingChannel = "FRONT_DESK" | "ONLINE" | "IMPORT" | "OTHER"
 
 export type AppointmentTab =
   | "ALL"
@@ -25,7 +24,7 @@ export interface AppointmentCounters {
   today: number
   confirmed: number
   arrived: number
-  enterprise: number
+  organization: number
   examined: number
 }
 
@@ -45,14 +44,14 @@ export interface Appointment {
   physicianName: string
   roomId: string
   roomName: string
-  source: AppointmentSource
+  bookingChannel: BookingChannel
+  careProgram: CareProgram
   status: AppointmentStatus
-  type?: AppointmentType
-  enterpriseId?: string
-  enterpriseName?: string
-  batchId?: string
-  batchName?: string
-  employeeCode?: string
+  organizationId?: string
+  organizationName?: string
+  healthExaminationBatchId?: string
+  healthExaminationBatchName?: string
+  participantCode?: string
   notes?: string
   createdAt: string
 }
@@ -64,8 +63,8 @@ export interface AppointmentFilterParams {
   examinationType?: string
   status?: AppointmentStatus
   search?: string
-  type?: AppointmentType | "ALL"
-  enterpriseId?: string
+  careProgram?: CareProgram | "ALL"
+  organizationId?: string
 }
 
 export interface CreateAppointmentDto {
@@ -76,13 +75,13 @@ export interface CreateAppointmentDto {
   date: string
   time: string
   notes?: string
-  source?: AppointmentSource
-  type?: AppointmentType
-  enterpriseId?: string
-  enterpriseName?: string
-  batchId?: string
-  batchName?: string
-  employeeCode?: string
+  bookingChannel?: BookingChannel
+  careProgram?: CareProgram
+  organizationId?: string
+  organizationName?: string
+  healthExaminationBatchId?: string
+  healthExaminationBatchName?: string
+  participantCode?: string
 }
 
 export interface UpdateAppointmentDto {

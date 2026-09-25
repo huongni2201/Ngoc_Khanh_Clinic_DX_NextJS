@@ -400,5 +400,3 @@ export async function fetchPatientCounters(): Promise<PatientCounters> {
     elderlyCount,
   }
 }
-
-export * from "./encounter-mock-data"

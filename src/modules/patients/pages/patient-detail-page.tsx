@@ -22,14 +22,14 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { PageHeader } from "@/shared/ui"
 import { usePatient } from "../hooks/use-patients"
 import { EditPatientDialog } from "../components/edit-patient-dialog"
-import { ReceivePatientDialog } from "@/modules/reception"
+import { PatientCheckInDialog } from "@/modules/reception"
 import {
   formatDisplayDate,
   calculatePatientAge,
   formatPhoneNumber,
   getGenderLabel,
 } from "../lib/patient-formatters"
-import { EncounterHistoryTable } from "../components/encounter/encounter-history-table"
+import { EncounterHistoryTable } from "@/modules/encounters/components/encounter/encounter-history-table"
 
 export function PatientDetailPage() {
   const router = useRouter()
@@ -198,7 +198,7 @@ export function PatientDetailPage() {
         onSuccess={() => refetch()}
       />
 
-      <ReceivePatientDialog
+      <PatientCheckInDialog
         open={isReceiveOpen}
         onOpenChange={setIsReceiveOpen}
         initialPatient={patient}

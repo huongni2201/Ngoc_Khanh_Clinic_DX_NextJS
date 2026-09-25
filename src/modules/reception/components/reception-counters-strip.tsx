@@ -17,7 +17,7 @@ export function ReceptionCountersStrip({
 }: ReceptionCountersStripProps) {
   const items = [
     {
-      key: "WAITING_RECEPTION",
+      key: "WAITING_CHECK_IN",
       label: "Chờ tiếp nhận",
       count: counters?.waitingReception ?? 8,
       borderColor: "border-border",
@@ -25,7 +25,7 @@ export function ReceptionCountersStrip({
       activeRing: "ring-1 ring-status-warning border-status-warning/60",
     },
     {
-      key: "EXAMINING",
+      key: "IN_EXAMINATION",
       label: "Đang khám",
       count: counters?.examining ?? 3,
       borderColor: "border-border",
@@ -41,7 +41,7 @@ export function ReceptionCountersStrip({
       activeRing: "ring-1 ring-status-warning border-status-warning/60",
     },
     {
-      key: "WAITING_RESULT",
+      key: "WAITING_DIAGNOSTIC_RESULTS",
       label: "Chờ kết quả",
       count: counters?.waitingResult ?? 1,
       borderColor: "border-border",

@@ -12,7 +12,7 @@ import { PatientToolbar } from "../components/patient-toolbar"
 import { PatientTable } from "../components/patient-table"
 import { CreatePatientDialog } from "../components/create-patient-dialog"
 import { EditPatientDialog } from "../components/edit-patient-dialog"
-import { ReceivePatientDialog } from "@/modules/reception"
+import { PatientCheckInDialog } from "@/modules/reception"
 import { useSearchPatients, usePatientCounters } from "../hooks/use-patients"
 import { Patient, PatientAgeGroup, PatientGender } from "../types"
 
@@ -254,7 +254,7 @@ export function PatientsPage() {
         }}
       />
 
-      <ReceivePatientDialog
+      <PatientCheckInDialog
         open={isReceiveOpen}
         onOpenChange={setIsReceiveOpen}
         initialPatient={selectedPatientForReceive}

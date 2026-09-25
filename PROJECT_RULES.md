@@ -9,20 +9,20 @@ This is a **real production clinic application**.
 Current MVP priority:
 
 ```text
-Company
-→ Health Check Batch
-→ Employee Roster
+Organization
+→ Health Examination Batch
+→ Participant Roster
 → Excel Import
 → Validation
 → Bulk Selection
 → Mẫu số 03 Preview
 → Bulk Print
-→ Employee Check-in
+→ Participant Check-in
 → Patient Link/Create
 → Encounter
 ```
 
-Enterprise/corporate health checks are the current primary vertical slice.
+Organization/corporate health checks are the current primary vertical slice.
 
 ---
 
@@ -92,9 +92,9 @@ Initial modules may include:
 
 ```text
 auth/
-companies/
-health-check-batches/
-employees/
+organizations/
+health-examinations/
+participants/ (owned by health-examinations)
 health-check-print/
 ```
 
@@ -231,7 +231,7 @@ Each module should expose its public contract through `index.ts`.
 Preferred:
 
 ```ts
-import { CompanyListPage, type Company } from '@/modules/companies'
+import { OrganizationListPage, type Organization } from '@/modules/organizations'
 ```
 
 Avoid deep cross-module imports and circular dependencies.
@@ -316,22 +316,22 @@ Do not mark entire route trees as client components unnecessarily.
 
 ## 10. Domain Rules
 
-Enterprise hierarchy:
+Organization health-examination hierarchy:
 
 ```text
-Company
-  └── HealthCheckBatch
-        └── CompanyEmployee
+Organization
+  └── HealthExaminationBatch
+        └── HealthExaminationParticipant
 ```
 
-`CompanyEmployee` and `Patient` are separate concepts.
+`HealthExaminationParticipant` and `Patient` are separate concepts.
 
 Do not create Patient records for all imported employees.
 
 Correct check-in flow:
 
 ```text
-CompanyEmployee
+HealthExaminationParticipant
 ↓
 Search Patient
 ├── found → Link
@@ -349,8 +349,8 @@ Primary routes should evolve around:
 ```text
 /login
 /health-check
-/health-check/companies/[companyId]
-/health-check/companies/[companyId]/batches/[batchId]
+/organizations/[organizationId]
+/organizations/[organizationId]/health-examination-batches/[batchId]
 /health-check/print/preview
 ```
 
@@ -543,6 +543,17 @@ functions/vars    camelCase
 real constants    UPPER_SNAKE_CASE
 ```
 
+Canonical clinic vocabulary:
+
+- `Organization` is the domain term for an external unit participating in a group health examination; generic UI copy is “Đơn vị”.
+- `Encounter` is the actual care interaction and is distinct from `Appointment` scheduling.
+- `HealthExaminationBatch` is the group examination program/batch.
+- `ClinicalService` is the catalog term for billable or performable clinic services.
+- `ServiceRequest` is a clinical order; reports and results must not be named orders.
+- `Enterprise` is legacy terminology and must not be introduced in new code.
+- `Payment` is a transaction, `PaymentReceipt` is proof of collection, and `Invoice` is the charge artifact.
+- `ReceptionWorklistStage` is a derived workflow/presentation state; do not use it as `EncounterStatus`, `PaymentStatus`, or diagnostic state.
+
 ---
 
 ## 22. Component Boundaries
@@ -563,7 +574,7 @@ Avoid premature optimization, but prevent obvious issues: server pagination for 
 
 Use Vitest + Testing Library. Use Playwright for critical E2E workflows.
 
-Critical tests include company creation, health-check batch creation, Excel validation, under-18 rejection, duplicate identity, bulk selection, Mẫu số 03 mapping, print-batch preparation and employee check-in.
+Critical tests include organization creation, health-examination batch creation, Excel validation, under-18 rejection, duplicate identity, bulk selection, Mẫu số 03 mapping, print-batch preparation and participant check-in.
 
 Tests verify behavior through public interfaces, not implementation details.
 
@@ -587,7 +598,7 @@ Do not add packages because they are trendy.
 
 ## 26. No Demo Data in Production Paths
 
-Do not hard-code fake companies, employees, patients, encounters, payments or results inside production components.
+Do not hard-code fake organizations, participants, patients, encounters, payments or results inside production components.
 
 Use test fixtures, test mocks or backend seed data.
 
@@ -631,17 +642,17 @@ For UI work also verify reuse search, loading/empty/error states, accessibility 
 1. Frontend foundation
 2. App shell/providers
 3. HTTP client/API conventions
-4. Company List
-5. Company Detail
-6. Health Check Batch
-7. Employee Roster
+4. Organization List
+5. Organization Detail
+6. Health Examination Batch
+7. Participant Roster
 8. Excel Import Wizard
 9. Employee Validation
 10. Bulk Selection
 11. Mẫu số 03 Renderer
 12. Print Preview
 13. Bulk Print
-14. Employee Check-in
+14. Participant Check-in
 15. Patient Link/Create
 16. Encounter
 17. Doctor Workflow

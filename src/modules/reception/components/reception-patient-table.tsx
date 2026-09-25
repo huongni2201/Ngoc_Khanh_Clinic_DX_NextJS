@@ -27,8 +27,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { ReceptionStatusBadge } from "./reception-status-badge"
-import { Encounter, ReceptionTab, ExaminationRoom } from "../types"
+import { ReceptionWorklistStageBadge } from "./reception-worklist-stage-badge"
+import { Encounter, ReceptionTab, ClinicRoom } from "../types"
 import { cn } from "@/lib/utils"
 
 interface ReceptionPatientTableProps {
@@ -36,7 +36,7 @@ interface ReceptionPatientTableProps {
   isLoading: boolean
   activeTab: ReceptionTab
   onTabChange: (tab: ReceptionTab) => void
-  rooms: ExaminationRoom[]
+  rooms: ClinicRoom[]
   selectedRoomId: string
   onRoomChange: (roomId: string) => void
   searchTerm: string
@@ -67,18 +67,19 @@ export function ReceptionPatientTable({
 }: ReceptionPatientTableProps) {
   const tabs: { key: ReceptionTab; label: string }[] = [
     { key: "ALL", label: "Tất cả" },
-    { key: "WAITING_RECEPTION", label: "Chờ tiếp nhận" },
-    { key: "WAITING_EXAM", label: "Chờ khám" },
-    { key: "EXAMINING", label: "Đang khám" },
+    { key: "WAITING_CHECK_IN", label: "Chờ tiếp nhận" },
+    { key: "WAITING_EXAMINATION", label: "Chờ khám" },
+    { key: "IN_EXAMINATION", label: "Đang khám" },
     { key: "WAITING_PAYMENT", label: "Chờ thu phí" },
-    { key: "WAITING_RESULT", label: "Chờ kết quả" },
+    { key: "WAITING_DIAGNOSTIC_RESULTS", label: "Chờ kết quả" },
+    { key: "READY_FOR_CONCLUSION", label: "Chờ kết luận" },
     { key: "COMPLETED", label: "Hoàn tất" },
   ]
 
   // Render context-sensitive primary button for each row (Unified Neutral Icon Button)
   const renderRowPrimaryAction = (encounter: Encounter) => {
-    switch (encounter.status) {
-      case "WAITING_RECEPTION":
+    switch (encounter.worklistStage) {
+      case "WAITING_CHECK_IN":
         return (
           <Button
             size="sm"
@@ -92,7 +93,7 @@ export function ReceptionPatientTable({
             <span className="sr-only">Tiếp nhận</span>
           </Button>
         )
-      case "RECEIVED":
+      case "WAITING_EXAMINATION":
         return (
           <Button
             size="sm"
@@ -106,8 +107,7 @@ export function ReceptionPatientTable({
             <span className="sr-only">Phân phòng</span>
           </Button>
         )
-      case "WAITING_EXAM":
-      case "EXAMINING":
+      case "IN_EXAMINATION":
         return (
           <Button
             size="sm"
@@ -135,7 +135,8 @@ export function ReceptionPatientTable({
             <span className="sr-only">Thu phí</span>
           </Button>
         )
-      case "WAITING_RESULT":
+      case "WAITING_DIAGNOSTIC_RESULTS":
+      case "READY_FOR_CONCLUSION":
         return (
           <Button
             size="sm"
@@ -386,7 +387,7 @@ export function ReceptionPatientTable({
 
                     {/* Trạng thái */}
                     <TableCell className="px-4 py-3 text-center">
-                      <ReceptionStatusBadge status={encounter.status} />
+                      <ReceptionWorklistStageBadge stage={encounter.worklistStage ?? "WAITING_EXAMINATION"} />
                     </TableCell>
 
                     {/* Thao tác: Toàn bộ là icon buttons đồng bộ, bỏ dropdown ... */}
@@ -409,7 +410,7 @@ export function ReceptionPatientTable({
                         </Button>
 
                         {/* 3. Nút bổ trợ: Nếu trạng thái chính là Thu phí thì hiển thị Xem chi tiết, ngược lại là Thu phí */}
-                        {encounter.status === "WAITING_PAYMENT" ? (
+                        {encounter.worklistStage === "WAITING_PAYMENT" ? (
                           <Button
                             variant="outline"
                             size="sm"

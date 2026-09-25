@@ -4,6 +4,7 @@ import "./globals.css";
 import { cn } from "@/lib/utils";
 
 import { QueryProvider } from "@/providers/query-provider";
+import { PaymentCompletionNotifier } from "@/modules/billing";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -13,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Ngọc Khánh Clinic — Quản lý khám sức khỏe doanh nghiệp",
-  description: "Hệ thống quản lý khám sức khỏe định kỳ doanh nghiệp Ngọc Khánh Clinic",
+  title: "Ngọc Khánh Clinic — Quản lý khám sức khỏe đơn vị",
+  description: "Hệ thống quản lý khám sức khỏe định kỳ đơn vị Ngọc Khánh Clinic",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -24,8 +25,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       className={cn("h-full", "antialiased", geistMono.variable, "font-sans", inter.variable)}
     >
       <body className="h-full flex flex-col bg-background text-foreground overflow-hidden">
-        <QueryProvider>{children}</QueryProvider>
+        <QueryProvider>{children}<PaymentCompletionNotifier /></QueryProvider>
       </body>
     </html>
   );
 }
+

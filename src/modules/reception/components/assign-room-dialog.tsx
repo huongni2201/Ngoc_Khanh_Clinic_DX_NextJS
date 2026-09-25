@@ -13,8 +13,8 @@ import {
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { useExaminationRooms, useAssignRoom } from "../hooks/use-reception"
-import { Encounter, ExaminationRoom } from "../types"
+import { useClinicRooms, useAssignRoom } from "../hooks/use-reception"
+import { Encounter } from "../types"
 import { cn } from "@/lib/utils"
 
 interface AssignRoomDialogProps {
@@ -30,7 +30,7 @@ export function AssignRoomDialog({
   encounter,
   onSuccess,
 }: AssignRoomDialogProps) {
-  const { data: rooms, isLoading: isLoadingRooms } = useExaminationRooms()
+  const { data: rooms, isLoading: isLoadingRooms } = useClinicRooms()
   const assignRoomMutation = useAssignRoom()
 
   const defaultRoomId = encounter?.roomId || (rooms && rooms.length > 0 ? rooms[0].id : "")
@@ -154,7 +154,7 @@ export function AssignRoomDialog({
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {rooms?.map((room: ExaminationRoom) => {
+                {rooms?.map((room) => {
                   const isSelected = selectedRoomId === room.id
                   const isAvailable = room.status === "ACTIVE"
 
@@ -163,7 +163,7 @@ export function AssignRoomDialog({
                       key={room.id}
                       onClick={() => setSelectedRoomId(room.id)}
                       className={cn(
-                        "p-3.5 rounded-lg border cursor-pointer transition-all flex flex-col justify-between gap-3 text-left",
+                        "p-3.5 rounded-lg border cursor-pointer transition-colors flex flex-col justify-between gap-3 text-left",
                         isSelected
                           ? "border-primary bg-selected ring-1 ring-primary "
                           : "border-border bg-card hover:bg-hover/60 hover:border-border/80"

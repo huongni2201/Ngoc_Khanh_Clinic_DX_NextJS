@@ -23,16 +23,16 @@ import {
   useConfirmArrived,
   useCancelAppointment,
 } from "../hooks/use-appointments"
-import { Appointment, AppointmentTab, AppointmentType } from "../types"
+import { Appointment, AppointmentTab, CareProgram } from "../types"
 
 export function AppointmentsPage() {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
-  const enterpriseIdParam = searchParams?.get("enterpriseId") || undefined
-  const batchIdParam = searchParams?.get("batchId") || undefined
-  const employeeCodeParam = searchParams?.get("employeeCode") || undefined
+  const organizationIdParam = searchParams?.get("organizationId") || undefined
+  const healthExaminationBatchIdParam = searchParams?.get("healthExaminationBatchId") || undefined
+  const participantCodeParam = searchParams?.get("participantCode") || undefined
   const createParam = searchParams?.get("create") === "true"
 
   // URL state synchronization
@@ -40,9 +40,9 @@ export function AppointmentsPage() {
   const searchTerm = searchParams?.get("q") || ""
   const selectedDoctorId = searchParams?.get("physicianId") || "ALL"
   const selectedExamType = searchParams?.get("examType") || "ALL"
-  const selectedType =
-    (searchParams?.get("type") as AppointmentType | "ALL") ||
-    (enterpriseIdParam ? "ENTERPRISE" : "ALL")
+  const selectedCareProgram =
+    (searchParams?.get("careProgram") as CareProgram | "ALL") ||
+    (organizationIdParam ? "ORGANIZATION_HEALTH_EXAMINATION" : "ALL")
   const page = parseInt(searchParams?.get("page") || "1", 10)
   const pageSize = 10
 
@@ -52,7 +52,7 @@ export function AppointmentsPage() {
       q?: string
       physicianId?: string
       examType?: string
-      type?: string
+      careProgram?: string
       page?: number
     }) => {
       const current = new URLSearchParams(
@@ -95,11 +95,11 @@ export function AppointmentsPage() {
         current.set("page", "1")
       }
 
-      if (newParams.type !== undefined) {
-        if (newParams.type && newParams.type !== "ALL") {
-          current.set("type", newParams.type)
+      if (newParams.careProgram !== undefined) {
+        if (newParams.careProgram && newParams.careProgram !== "ALL") {
+          current.set("careProgram", newParams.careProgram)
         } else {
-          current.delete("type")
+          current.delete("careProgram")
         }
         current.set("page", "1")
       }
@@ -140,8 +140,9 @@ export function AppointmentsPage() {
     search: searchTerm,
     physicianId: selectedDoctorId !== "ALL" ? selectedDoctorId : undefined,
     examinationType: selectedExamType !== "ALL" ? selectedExamType : undefined,
-    type: selectedType !== "ALL" ? (selectedType as AppointmentType) : undefined,
-    enterpriseId: enterpriseIdParam,
+    careProgram:
+      selectedCareProgram !== "ALL" ? (selectedCareProgram as CareProgram) : undefined,
+    organizationId: organizationIdParam,
   })
 
   const {
@@ -215,12 +216,12 @@ export function AppointmentsPage() {
       updateUrlParams({ tab: "UPCOMING" })
     } else if (key === "ARRIVED") {
       updateUrlParams({ tab: "ARRIVED" })
-    } else if (key === "ENTERPRISE") {
-      updateUrlParams({ type: "ENTERPRISE" })
+    } else if (key === "ORGANIZATION") {
+      updateUrlParams({ careProgram: "ORGANIZATION_HEALTH_EXAMINATION" })
     } else if (key === "EXAMINED") {
       updateUrlParams({ tab: "EXAMINED" })
     } else {
-      updateUrlParams({ tab: "ALL", type: "ALL" })
+      updateUrlParams({ tab: "ALL", careProgram: "ALL" })
     }
   }
 
@@ -286,8 +287,8 @@ export function AppointmentsPage() {
             onDoctorChange={(doc) => updateUrlParams({ physicianId: doc })}
             selectedExamType={selectedExamType}
             onExamTypeChange={(exam) => updateUrlParams({ examType: exam })}
-            selectedType={selectedType}
-            onTypeChange={(t) => updateUrlParams({ type: t })}
+            selectedCareProgram={selectedCareProgram}
+            onCareProgramChange={(program) => updateUrlParams({ careProgram: program })}
             onViewAppointment={handleViewAppointment}
             onEditAppointment={handleEditAppointment}
             onConfirmArrived={handleConfirmArrived}
@@ -316,10 +317,12 @@ export function AppointmentsPage() {
         open={isCreateOpen}
         onOpenChange={setIsCreateOpen}
         initialPatient={selectedPatientForAppt}
-        initialEnterpriseId={enterpriseIdParam}
-        initialBatchId={batchIdParam}
-        initialEmployeeCode={employeeCodeParam}
-        initialType={enterpriseIdParam ? "ENTERPRISE" : "INDIVIDUAL"}
+        initialOrganizationId={organizationIdParam}
+        initialHealthExaminationBatchId={healthExaminationBatchIdParam}
+        initialParticipantCode={participantCodeParam}
+        initialCareProgram={
+          organizationIdParam ? "ORGANIZATION_HEALTH_EXAMINATION" : "INDIVIDUAL"
+        }
         onOpenPatientSearch={() => setIsPatientSearchOpen(true)}
         onOpenCreatePatient={() => setIsCreatePatientOpen(true)}
         onSuccess={() => refetch()}
@@ -363,3 +366,4 @@ export function AppointmentsPage() {
     </div>
   )
 }
+

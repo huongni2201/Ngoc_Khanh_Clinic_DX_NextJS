@@ -87,24 +87,24 @@ export function AppointmentDetailDialog({
                   </div>
                 </div>
 
-                {appointment.enterpriseName && (
+                {appointment.organizationName && (
                   <div className="pt-2 border-t border-border/60 space-y-1 text-xs">
                     <div className="flex items-center gap-1 text-[11px] font-semibold text-primary">
                       <Building2 className="size-3 shrink-0" />
-                      <span>Thông tin doanh nghiệp</span>
+                      <span>Thông tin đơn vị</span>
                     </div>
                     <div className="space-y-0.5 text-secondary-foreground">
                       <div>
-                        Đơn vị: <strong className="text-foreground">{appointment.enterpriseName}</strong>
+                        Đơn vị: <strong className="text-foreground">{appointment.organizationName}</strong>
                       </div>
-                      {appointment.batchName && (
+                      {appointment.healthExaminationBatchName && (
                         <div>
-                          Đợt khám: <span className="text-foreground">{appointment.batchName}</span>
+                          Đợt khám: <span className="text-foreground">{appointment.healthExaminationBatchName}</span>
                         </div>
                       )}
-                      {appointment.employeeCode && (
+                      {appointment.participantCode && (
                         <div>
-                          Mã NV: <strong className="font-mono text-primary">{appointment.employeeCode}</strong>
+                          Mã người khám: <strong className="font-mono text-primary">{appointment.participantCode}</strong>
                         </div>
                       )}
                     </div>
@@ -117,9 +117,9 @@ export function AppointmentDetailDialog({
                     variant="outline"
                     className="bg-card text-secondary-foreground text-[10px]"
                   >
-                    {appointment.type === "ENTERPRISE" || appointment.source === "ENTERPRISE"
+                    {appointment.careProgram === "ORGANIZATION_HEALTH_EXAMINATION"
                       ? "Khám đoàn DN"
-                      : appointment.source === "ONLINE"
+                      : appointment.bookingChannel === "ONLINE"
                       ? "Đặt online"
                       : "Lễ tân tạo"}
                   </Badge>
@@ -249,3 +249,4 @@ export function AppointmentDetailDialog({
     </Dialog>
   )
 }
+

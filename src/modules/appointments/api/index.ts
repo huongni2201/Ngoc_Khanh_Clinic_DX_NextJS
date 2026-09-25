@@ -10,7 +10,7 @@ import { initialRooms } from "@/modules/reception"
 
 const todayStr = "2026-09-24"
 
-const initialAppointments: Appointment[] = [
+const legacyInitialAppointments = [
   {
     id: "apt-001",
     appointmentCode: "LH-260924-001",
@@ -88,15 +88,15 @@ const initialAppointments: Appointment[] = [
     birthYear: 1979,
     date: todayStr,
     time: "10:00",
-    examinationType: "Khám sức khỏe doanh nghiệp",
+    examinationType: "Khám sức khỏe đơn vị",
     physicianId: "doc-02",
     physicianName: "BS. Lê Đức Anh",
     roomId: "room-102",
     roomName: "Phòng 102 - Khám Cơ xương khớp",
-    source: "ENTERPRISE",
-    type: "ENTERPRISE",
-    enterpriseId: "ent-2",
-    enterpriseName: "Công ty Cổ phần FPT",
+    source: "ORGANIZATION",
+    type: "ORGANIZATION",
+    organizationId: "ent-2",
+    organizationName: "Công ty Cổ phần FPT",
     batchId: "batch-1",
     batchName: "Khám sức khỏe định kỳ 2026",
     employeeCode: "FPT004",
@@ -137,15 +137,15 @@ const initialAppointments: Appointment[] = [
     birthYear: 1983,
     date: todayStr,
     time: "11:00",
-    examinationType: "Khám sức khỏe doanh nghiệp",
+    examinationType: "Khám sức khỏe đơn vị",
     physicianId: "doc-04",
     physicianName: "BS. Nguyễn Thị Lan",
     roomId: "room-104",
     roomName: "Phòng 104 - Khám Tổng quát",
-    source: "ENTERPRISE",
-    type: "ENTERPRISE",
-    enterpriseId: "ent-1",
-    enterpriseName: "Samsung Electronics Việt Nam",
+    source: "ORGANIZATION",
+    type: "ORGANIZATION",
+    organizationId: "ent-1",
+    organizationName: "Samsung Electronics Việt Nam",
     batchId: "batch-samsung-1",
     batchName: "Đợt khám sức khỏe cán bộ 2026",
     employeeCode: "SS0106",
@@ -197,7 +197,49 @@ const initialAppointments: Appointment[] = [
     notes: "Kiểm tra chỉ số đường huyết",
     createdAt: "2026-09-23T08:00:00Z",
   },
-]
+ ] as const
+
+function mapLegacyAppointment(
+  source: (typeof legacyInitialAppointments)[number]
+): Appointment {
+  const {
+    source: legacyBookingChannel,
+    type: legacyCareProgram,
+    batchId,
+    batchName,
+    employeeCode,
+    ...appointment
+  } = source as unknown as Record<string, unknown>
+
+  return {
+    ...appointment,
+    bookingChannel:
+      legacyBookingChannel === "ONLINE"
+        ? "ONLINE"
+        : legacyBookingChannel === "ORGANIZATION"
+        ? "IMPORT"
+        : "FRONT_DESK",
+    careProgram:
+      legacyCareProgram === "ORGANIZATION"
+        ? "ORGANIZATION_HEALTH_EXAMINATION"
+        : "INDIVIDUAL",
+    healthExaminationBatchId: batchId,
+    healthExaminationBatchName: batchName,
+    participantCode: employeeCode,
+  } as Appointment
+}
+
+type LegacyAppointmentRow = (typeof legacyInitialAppointments)[number] & {
+  source: "ONLINE" | "RECEPTION" | "ORGANIZATION"
+  type: "INDIVIDUAL" | "ORGANIZATION"
+  batchId?: string
+  batchName?: string
+  employeeCode?: string
+}
+
+const initialAppointments: Appointment[] = (
+  legacyInitialAppointments as readonly LegacyAppointmentRow[]
+).map(mapLegacyAppointment)
 
 let appointmentsStore: Appointment[] = [...initialAppointments]
 
@@ -231,12 +273,12 @@ export async function fetchAppointments(
     }
   }
 
-  if (params?.type && params.type !== "ALL") {
-    list = list.filter((a) => (a.type || "INDIVIDUAL") === params.type)
+  if (params?.careProgram && params.careProgram !== "ALL") {
+    list = list.filter((a) => a.careProgram === params.careProgram)
   }
 
-  if (params?.enterpriseId) {
-    list = list.filter((a) => a.enterpriseId === params.enterpriseId)
+  if (params?.organizationId) {
+    list = list.filter((a) => a.organizationId === params.organizationId)
   }
 
   if (params?.date) {
@@ -262,17 +304,19 @@ export async function fetchAppointments(
       const matchCode = a.patientCode.toLowerCase().includes(q)
       const matchPhone = a.phoneNumber.includes(q)
       const matchApptCode = a.appointmentCode.toLowerCase().includes(q)
-      const matchEnterprise = a.enterpriseName?.toLowerCase().includes(q) || false
-      const matchBatch = a.batchName?.toLowerCase().includes(q) || false
-      const matchEmpCode = a.employeeCode?.toLowerCase().includes(q) || false
+      const matchOrganization = a.organizationName?.toLowerCase().includes(q) || false
+      const matchBatch =
+        a.healthExaminationBatchName?.toLowerCase().includes(q) || false
+      const matchParticipantCode =
+        a.participantCode?.toLowerCase().includes(q) || false
       return (
         matchName ||
         matchCode ||
         matchPhone ||
         matchApptCode ||
-        matchEnterprise ||
+        matchOrganization ||
         matchBatch ||
-        matchEmpCode
+        matchParticipantCode
       )
     })
   }
@@ -317,14 +361,16 @@ export async function createAppointment(
     physicianName: room?.physicianName || "BS. Phụ trách",
     roomId: dto.roomId,
     roomName: room ? `${room.name} - ${room.department}` : "Phòng khám",
-    source: dto.source || "RECEPTION",
+    bookingChannel: dto.bookingChannel || "FRONT_DESK",
     status: "CONFIRMED",
-    type: dto.type || (dto.enterpriseId ? "ENTERPRISE" : "INDIVIDUAL"),
-    enterpriseId: dto.enterpriseId,
-    enterpriseName: dto.enterpriseName,
-    batchId: dto.batchId,
-    batchName: dto.batchName,
-    employeeCode: dto.employeeCode,
+    careProgram:
+      dto.careProgram ||
+      (dto.organizationId ? "ORGANIZATION_HEALTH_EXAMINATION" : "INDIVIDUAL"),
+    organizationId: dto.organizationId,
+    organizationName: dto.organizationName,
+    healthExaminationBatchId: dto.healthExaminationBatchId,
+    healthExaminationBatchName: dto.healthExaminationBatchName,
+    participantCode: dto.participantCode,
     notes: dto.notes,
     createdAt: new Date().toISOString(),
   }
@@ -435,8 +481,8 @@ export async function fetchAppointmentCounters(): Promise<AppointmentCounters> {
   const todayList = appointmentsStore.filter((a) => a.date === todayStr)
   const confirmedList = appointmentsStore.filter((a) => a.status === "CONFIRMED")
   const arrivedList = appointmentsStore.filter((a) => a.status === "ARRIVED")
-  const enterpriseList = appointmentsStore.filter(
-    (a) => a.type === "ENTERPRISE" || a.source === "ENTERPRISE"
+  const organizationList = appointmentsStore.filter(
+    (a) => a.careProgram === "ORGANIZATION_HEALTH_EXAMINATION"
   )
   const examinedList = appointmentsStore.filter(
     (a) => a.status === "EXAMINED" || a.status === "CHECKED_IN"
@@ -446,7 +492,7 @@ export async function fetchAppointmentCounters(): Promise<AppointmentCounters> {
     today: todayList.length,
     confirmed: confirmedList.length,
     arrived: arrivedList.length,
-    enterprise: enterpriseList.length,
+    organization: organizationList.length,
     examined: examinedList.length,
   }
 }
@@ -454,3 +500,4 @@ export async function fetchAppointmentCounters(): Promise<AppointmentCounters> {
 export function resetAppointmentsStore() {
   appointmentsStore = [...initialAppointments]
 }
+

@@ -8,7 +8,7 @@ describe("PageHeader", () => {
     render(
       <PageHeader
         breadcrumbs={[
-          { label: "Doanh nghiệp", href: "/enterprises" },
+          { label: "Đơn vị", href: "/organizations" },
           { label: "Đợt khám" },
         ]}
         title="Đợt khám tháng 9"
@@ -25,9 +25,9 @@ describe("PageHeader", () => {
     expect(
       screen.getByRole("navigation", { name: "Breadcrumb" })
     ).toBeInTheDocument()
-    expect(screen.getByRole("link", { name: "Doanh nghiệp" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Đơn vị" })).toHaveAttribute(
       "href",
-      "/enterprises"
+      "/organizations"
     )
     expect(screen.getByText("Đợt khám")).toHaveAttribute("aria-current", "page")
     expect(
@@ -38,3 +38,4 @@ describe("PageHeader", () => {
     ).toBeInTheDocument()
   })
 })
+

@@ -41,9 +41,9 @@ export function AppointmentCountersStrip({
       activeRing: "ring-1 ring-status-success border-status-success/60",
     },
     {
-      key: "ENTERPRISE",
-      label: "Đoàn doanh nghiệp",
-      count: counters?.enterprise ?? 0,
+      key: "ORGANIZATION",
+      label: "Đoàn đơn vị",
+      count: counters?.organization ?? 0,
       borderColor: "border-border",
       hoverBorder: "hover:border-primary/40",
       activeRing: "ring-1 ring-primary border-primary/60",
@@ -96,3 +96,4 @@ export function AppointmentCountersStrip({
     </div>
   )
 }
+

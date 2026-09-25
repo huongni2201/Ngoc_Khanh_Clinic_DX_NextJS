@@ -1,16 +1,48 @@
 import {
   Encounter,
   ReceptionCounters,
-  ExaminationRoom,
-  Invoice,
+  ClinicRoom,
+  LegacyReceptionEncounter,
+  LegacyReceptionInvoice,
   ReceptionFilterParams,
-  ReceivePatientDto,
+  PatientCheckInRequest,
   AssignRoomDto,
   ProcessPaymentDto,
 } from "../types"
 import { fetchPatientById } from "@/modules/patients"
+import type { EncounterStatus } from "@/modules/encounters/types"
+import { deriveReceptionWorklistStage } from "../lib/reception-worklist-stage"
 
-export const initialRooms: ExaminationRoom[] = [
+function mapLegacyEncounter(legacy: LegacyReceptionEncounter): Encounter {
+  const { status, ...encounterFields } = legacy
+  const checkInStatus = status === "WAITING_RECEPTION" ? "NOT_CHECKED_IN" : "CHECKED_IN"
+  const encounterStatus: EncounterStatus =
+    status === "EXAMINING"
+      ? "IN_PROGRESS"
+      : status === "CANCELLED"
+        ? "CANCELLED"
+        : status === "WAITING_RECEPTION" || status === "RECEIVED" || status === "WAITING_EXAM"
+          ? "PLANNED"
+          : "COMPLETED"
+  const paymentStatus = status === "WAITING_PAYMENT" ? "PENDING" : undefined
+  const diagnosticWorkflowStatus = status === "WAITING_RESULT" ? "IN_PROGRESS" : undefined
+
+  return {
+    ...encounterFields,
+    checkInStatus,
+    encounterStatus,
+    paymentStatus,
+    diagnosticWorkflowStatus,
+    worklistStage: deriveReceptionWorklistStage({
+      checkInStatus,
+      encounterStatus,
+      paymentStatus,
+      diagnosticWorkflowStatus,
+    }),
+  }
+}
+
+export const initialRooms: ClinicRoom[] = [
   {
     id: "room-101",
     name: "Phòng 101",
@@ -63,7 +95,7 @@ export const initialRooms: ExaminationRoom[] = [
   },
 ]
 
-export const initialEncounters: Encounter[] = [
+const initialLegacyEncounters: LegacyReceptionEncounter[] = [
   {
     id: "enc-001",
     encounterCode: "LK-260924-001",
@@ -222,10 +254,12 @@ export const initialEncounters: Encounter[] = [
   },
 ]
 
-let encountersStore: Encounter[] = [...initialEncounters]
-let roomsStore: ExaminationRoom[] = [...initialRooms]
+export const initialEncounters: Encounter[] = initialLegacyEncounters.map(mapLegacyEncounter)
 
-const initialInvoices: Invoice[] = [
+let encountersStore: Encounter[] = [...initialEncounters]
+let roomsStore: ClinicRoom[] = [...initialRooms]
+
+const initialInvoices: LegacyReceptionInvoice[] = [
   {
     id: "inv-001",
     encounterId: "enc-003",
@@ -259,26 +293,31 @@ const initialInvoices: Invoice[] = [
   },
 ]
 
-let invoicesStore: Invoice[] = [...initialInvoices]
+let invoicesStore: LegacyReceptionInvoice[] = [...initialInvoices]
+
+function withWorklistStage(encounter: Encounter): Encounter {
+  const invoice = invoicesStore.find((item) => item.encounterId === encounter.id)
+
+  return {
+    ...encounter,
+    worklistStage: deriveReceptionWorklistStage({
+      checkInStatus: encounter.checkInStatus,
+      encounterStatus: encounter.encounterStatus,
+      paymentStatus: invoice ? (invoice.isPaid ? "PAID" : encounter.paymentStatus ?? "PENDING") : encounter.paymentStatus,
+      diagnosticWorkflowStatus: encounter.diagnosticWorkflowStatus,
+    }),
+  }
+}
 
 export async function fetchReceptionCounters(): Promise<ReceptionCounters> {
   await new Promise((resolve) => setTimeout(resolve, 50))
 
-  const waitingReception = encountersStore.filter(
-    (e) => e.status === "WAITING_RECEPTION" || e.status === "RECEIVED"
-  ).length
-  const examining = encountersStore.filter(
-    (e) => e.status === "EXAMINING"
-  ).length
-  const waitingPayment = encountersStore.filter(
-    (e) => e.status === "WAITING_PAYMENT"
-  ).length
-  const waitingResult = encountersStore.filter(
-    (e) => e.status === "WAITING_RESULT"
-  ).length
-  const completedToday = encountersStore.filter(
-    (e) => e.status === "COMPLETED"
-  ).length + 27 // Seeded offset to display 28
+  const staged = encountersStore.map(withWorklistStage)
+  const waitingReception = staged.filter((e) => e.worklistStage === "WAITING_CHECK_IN").length
+  const examining = staged.filter((e) => e.worklistStage === "IN_EXAMINATION").length
+  const waitingPayment = staged.filter((e) => e.worklistStage === "WAITING_PAYMENT").length
+  const waitingResult = staged.filter((e) => e.worklistStage === "WAITING_DIAGNOSTIC_RESULTS").length
+  const completedToday = staged.filter((e) => e.worklistStage === "COMPLETED").length + 27 // Seeded offset to display 28
 
   return {
     waitingReception: waitingReception > 0 ? waitingReception + 5 : 8,
@@ -289,7 +328,7 @@ export async function fetchReceptionCounters(): Promise<ReceptionCounters> {
   }
 }
 
-export async function fetchExaminationRooms(): Promise<ExaminationRoom[]> {
+export async function fetchClinicRooms(): Promise<ClinicRoom[]> {
   await new Promise((resolve) => setTimeout(resolve, 50))
   return [...roomsStore]
 }
@@ -301,14 +340,10 @@ export async function fetchReceptionWorklist(
 
   let list = [...encountersStore]
 
+  list = list.map(withWorklistStage)
+
   if (params?.tab && params.tab !== "ALL") {
-    if (params.tab === "WAITING_RECEPTION") {
-      list = list.filter(
-        (e) => e.status === "WAITING_RECEPTION" || e.status === "RECEIVED"
-      )
-    } else {
-      list = list.filter((e) => e.status === params.tab)
-    }
+    list = list.filter((e) => e.worklistStage === params.tab)
   }
 
   if (params?.search && params.search.trim()) {
@@ -331,11 +366,7 @@ export async function fetchReceptionWorklist(
     list = list.filter((e) => e.physicianId === params.physicianId)
   }
 
-  if (params?.status) {
-    list = list.filter((e) => e.status === params.status)
-  }
-
-  return list
+  return list.map(withWorklistStage)
 }
 
 export async function fetchEncounterById(encounterId: string): Promise<Encounter> {
@@ -346,10 +377,10 @@ export async function fetchEncounterById(encounterId: string): Promise<Encounter
   if (!enc) {
     throw new Error(`Không tìm thấy lượt khám với mã: ${encounterId}`)
   }
-  return enc
+  return withWorklistStage(enc)
 }
 
-export async function receivePatient(dto: ReceivePatientDto): Promise<Encounter> {
+export async function checkInPatient(dto: PatientCheckInRequest): Promise<Encounter> {
   await new Promise((resolve) => setTimeout(resolve, 100))
 
   const patient = await fetchPatientById(dto.patientId)
@@ -364,8 +395,6 @@ export async function receivePatient(dto: ReceivePatientDto): Promise<Encounter>
 
   const nextCodeNum = encountersStore.length + 1
   const encounterCode = `LK-260924-${String(nextCodeNum).padStart(3, "0")}`
-
-  const newStatus = room ? "WAITING_EXAM" : "RECEIVED"
 
   const newEncounter: Encounter = {
     id: `enc-${Date.now()}`,
@@ -386,7 +415,9 @@ export async function receivePatient(dto: ReceivePatientDto): Promise<Encounter>
     physicianName: room?.physicianName,
     reasonForVisit: dto.reasonForVisit,
     notes: dto.notes,
-    status: newStatus,
+    checkInStatus: "CHECKED_IN",
+    encounterStatus: "PLANNED",
+    worklistStage: "WAITING_EXAMINATION",
     printFormOnCheckIn: dto.printAfterReception ?? true,
     createdAt: new Date().toISOString(),
   }
@@ -395,7 +426,7 @@ export async function receivePatient(dto: ReceivePatientDto): Promise<Encounter>
 
   // Create default initial fee item for check-in
   const defaultFee = 150000
-  const invoice: Invoice = {
+  const invoice: LegacyReceptionInvoice = {
     id: `inv-${Date.now()}`,
     encounterId: newEncounter.id,
     encounterCode: newEncounter.encounterCode,
@@ -420,7 +451,7 @@ export async function receivePatient(dto: ReceivePatientDto): Promise<Encounter>
   }
   invoicesStore = [invoice, ...invoicesStore]
 
-  return newEncounter
+  return withWorklistStage(newEncounter)
 }
 
 export async function assignRoomAndDoctor(
@@ -444,16 +475,17 @@ export async function assignRoomAndDoctor(
     roomName: `${room.name} - ${room.department}`,
     physicianId: dto.physicianId || room.physicianId,
     physicianName: room.physicianName,
-    status: "WAITING_EXAM",
+    encounterStatus: "PLANNED",
+    worklistStage: "WAITING_EXAMINATION",
   }
 
   encountersStore[index] = updated
-  return updated
+  return withWorklistStage(updated)
 }
 
 export async function fetchInvoiceByEncounter(
   encounterId: string
-): Promise<Invoice> {
+): Promise<LegacyReceptionInvoice> {
   await new Promise((resolve) => setTimeout(resolve, 50))
 
   const invoice = invoicesStore.find((i) => i.encounterId === encounterId)
@@ -468,7 +500,7 @@ export async function fetchInvoiceByEncounter(
 
   // Generate standard invoice for encounter
   const standardFee = 150000
-  const newInvoice: Invoice = {
+  const newInvoice: LegacyReceptionInvoice = {
     id: `inv-${Date.now()}`,
     encounterId: encounter.id,
     encounterCode: encounter.encounterCode,
@@ -496,7 +528,13 @@ export async function fetchInvoiceByEncounter(
   return newInvoice
 }
 
-export async function processPayment(dto: ProcessPaymentDto): Promise<Invoice> {
+/** Read-only adapter seam for billing; the store remains owned by reception until the API is wired. */
+export async function fetchReceptionInvoices(): Promise<LegacyReceptionInvoice[]> {
+  await new Promise((resolve) => setTimeout(resolve, 30))
+  return [...invoicesStore]
+}
+
+export async function processPayment(dto: ProcessPaymentDto): Promise<LegacyReceptionInvoice> {
   await new Promise((resolve) => setTimeout(resolve, 100))
 
   const invoiceIndex = invoicesStore.findIndex(
@@ -510,7 +548,7 @@ export async function processPayment(dto: ProcessPaymentDto): Promise<Invoice> {
   const discount = dto.discount || 0
   const total = Math.max(0, currentInvoice.subtotal - discount)
 
-  const updatedInvoice: Invoice = {
+  const updatedInvoice: LegacyReceptionInvoice = {
     ...currentInvoice,
     discount,
     total,
@@ -528,10 +566,12 @@ export async function processPayment(dto: ProcessPaymentDto): Promise<Invoice> {
   )
   if (encounterIndex !== -1) {
     const enc = encountersStore[encounterIndex]
-    if (enc.status === "WAITING_PAYMENT") {
+    if (enc.paymentStatus === "PENDING") {
       encountersStore[encounterIndex] = {
         ...enc,
-        status: "WAITING_RESULT",
+        paymentStatus: "PAID",
+        diagnosticWorkflowStatus: "IN_PROGRESS",
+        worklistStage: "WAITING_DIAGNOSTIC_RESULTS",
       }
     }
   }

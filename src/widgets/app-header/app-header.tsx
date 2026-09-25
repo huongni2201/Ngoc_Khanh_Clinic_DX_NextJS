@@ -12,12 +12,27 @@ import {
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 
-interface AppHeaderProps {
-  className?: string
-  onOpenMobileMenu?: () => void
+export interface AppHeaderUser {
+  name: string
+  role: string
+  initials?: string
 }
 
-export function AppHeader({ className, onOpenMobileMenu }: AppHeaderProps) {
+export interface AppHeaderProps {
+  className?: string
+  onOpenMobileMenu?: () => void
+  user?: AppHeaderUser
+}
+
+export function AppHeader({
+  className,
+  onOpenMobileMenu,
+  user = {
+    name: "BS. Trần Minh Khoa",
+    role: "Bác sĩ",
+    initials: "MK",
+  },
+}: AppHeaderProps) {
   return (
     <header
       className={cn(
@@ -34,18 +49,19 @@ export function AppHeader({ className, onOpenMobileMenu }: AppHeaderProps) {
             aria-label="Mở menu"
             className="flex size-9 shrink-0 items-center justify-center rounded-md text-secondary-foreground transition-colors hover:bg-hover hover:text-foreground lg:hidden"
           >
-            <HugeiconsIcon icon={Menu01Icon} className="size-5" />
+            <HugeiconsIcon icon={Menu01Icon} className="size-5" aria-hidden="true" />
           </button>
         )}
         <div className="relative w-full">
           <HugeiconsIcon
             icon={Search01Icon}
             className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+            aria-hidden="true"
           />
           <Input
             type="search"
             aria-label="Tìm kiếm toàn hệ thống"
-            placeholder="Tìm bệnh nhân theo tên, SĐT, số định danh, mã BN..."
+            placeholder="Tìm bệnh nhân theo tên, SĐT, số định danh, mã BN…"
             className="h-9 w-full bg-background pr-4 pl-9 text-sm"
           />
         </div>
@@ -59,7 +75,7 @@ export function AppHeader({ className, onOpenMobileMenu }: AppHeaderProps) {
           aria-label="Thông báo"
           className="relative flex size-9 items-center justify-center rounded-md text-secondary-foreground transition-colors hover:bg-hover hover:text-foreground"
         >
-          <HugeiconsIcon icon={Notification02Icon} className="size-[18px]" />
+          <HugeiconsIcon icon={Notification02Icon} className="size-[18px]" aria-hidden="true" />
           <span className="absolute -top-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground">
             3
           </span>
@@ -71,7 +87,7 @@ export function AppHeader({ className, onOpenMobileMenu }: AppHeaderProps) {
           aria-label="Trợ giúp"
           className="flex size-9 items-center justify-center rounded-md text-secondary-foreground transition-colors hover:bg-hover hover:text-foreground"
         >
-          <HugeiconsIcon icon={HelpCircleIcon} className="size-[18px]" />
+          <HugeiconsIcon icon={HelpCircleIcon} className="size-[18px]" aria-hidden="true" />
         </button>
 
         {/* Separator */}
@@ -80,19 +96,20 @@ export function AppHeader({ className, onOpenMobileMenu }: AppHeaderProps) {
         {/* User Info */}
         <div className="group flex cursor-pointer select-none items-center gap-2.5 pl-1">
           <div className="flex size-9 shrink-0 items-center justify-center rounded-full border border-border bg-muted text-xs font-semibold text-foreground">
-            NL
+            {user.initials ?? user.name.slice(0, 2).toUpperCase()}
           </div>
           <div className="flex flex-col text-left">
             <span className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors">
-              Nguyễn Thị Lan
+              {user.name}
             </span>
             <span className="text-[11px] text-muted-foreground leading-tight">
-              Lễ tân
+              {user.role}
             </span>
           </div>
           <HugeiconsIcon
             icon={ArrowDown01Icon}
             className="size-4 text-muted-foreground transition-colors group-hover:text-foreground"
+            aria-hidden="true"
           />
         </div>
       </div>
