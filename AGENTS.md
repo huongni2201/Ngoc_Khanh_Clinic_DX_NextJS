@@ -256,7 +256,7 @@ Page   → complex multi-step workflow
 
 ---
 
-## 8. Approved Frontend Skills
+## 8. Approved Project Skills
 
 Local skills live in:
 
@@ -264,7 +264,7 @@ Local skills live in:
 .agents/skills/
 ```
 
-Approved FE-only skill set:
+Approved frontend skills and general coding guidance:
 
 ```text
 architecture-decision-records
@@ -273,6 +273,7 @@ diagnosing-bugs
 error-handling-patterns
 frontend-design
 javascript-testing-patterns
+karpathy-guidelines
 react-state-management
 security-best-practices
 setup-pre-commit
@@ -284,6 +285,8 @@ web-design-guidelines
 ```
 
 Use only relevant skills.
+
+Use `karpathy-guidelines` for implementation, review, or refactoring work when its guidance applies. Repository rules and accepted ADRs take precedence.
 
 Do not add backend/Java/Spring/Gradle/database/Python backend skills to this frontend repository unless the repository scope changes.
 
@@ -420,3 +423,13 @@ testable behavior
 ```
 
 over unnecessary custom code or abstraction.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

@@ -64,6 +64,14 @@ export interface EnterpriseListResponse {
   totalPages: number
 }
 
+export interface EnterpriseCounters {
+  total: number
+  inProgress: number
+  completed: number
+  totalBatches: number
+  estimatedEmployees: number
+}
+
 export interface CreateEnterpriseDto {
   name: string
   taxCode?: string

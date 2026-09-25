@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ExaminationDetailToolbar } from "./examination-detail-toolbar"
 import { ExaminationMatrixTable } from "./examination-matrix-table"
-import { useExamBatchMatrix } from "../../hooks/use-exam-batches"
+import { useHealthExaminationBatchMatrix } from "../../hooks/use-health-examination-batches"
 
 interface ExaminationDetailTabProps {
   batchId: string
@@ -44,7 +44,7 @@ export function ExaminationDetailTab({ batchId }: ExaminationDetailTabProps) {
     setPage(1)
   }
 
-  const { data, isLoading, isError, refetch } = useExamBatchMatrix(batchId, {
+  const { data, isLoading, isError, refetch } = useHealthExaminationBatchMatrix(batchId, {
     search: debouncedSearch,
     department,
     examStatus,

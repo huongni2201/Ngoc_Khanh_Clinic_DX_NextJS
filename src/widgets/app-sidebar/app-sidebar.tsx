@@ -6,10 +6,12 @@ import Image from "next/image"
 import { usePathname } from "next/navigation"
 import {
   Home,
+  UserCheck,
+  Calendar,
   Users,
   Building2,
-  FileText,
-  Printer,
+  CreditCard,
+  BarChart3,
   Settings,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -18,7 +20,6 @@ interface NavItem {
   title: string
   href: string
   icon: React.ComponentType<{ className?: string }>
-  active?: boolean
 }
 
 export function AppSidebar({ className }: { className?: string }) {
@@ -31,6 +32,16 @@ export function AppSidebar({ className }: { className?: string }) {
       icon: Home,
     },
     {
+      title: "Lễ tân",
+      href: "/reception",
+      icon: UserCheck,
+    },
+    {
+      title: "Lịch hẹn",
+      href: "/appointments",
+      icon: Calendar,
+    },
+    {
       title: "Bệnh nhân",
       href: "/patients",
       icon: Users,
@@ -39,17 +50,16 @@ export function AppSidebar({ className }: { className?: string }) {
       title: "Doanh nghiệp",
       href: "/enterprises",
       icon: Building2,
-      active: true, // Always active for Screen 01 according to spec
     },
     {
-      title: "Kết quả",
-      href: "/results",
-      icon: FileText,
+      title: "Thanh toán",
+      href: "/billing",
+      icon: CreditCard,
     },
     {
-      title: "In ấn",
-      href: "/print",
-      icon: Printer,
+      title: "Báo cáo",
+      href: "/reports",
+      icon: BarChart3,
     },
     {
       title: "Cài đặt",
@@ -91,7 +101,10 @@ export function AppSidebar({ className }: { className?: string }) {
       <nav className="flex-1 space-y-1.5 px-4 py-4">
         {navItems.map((item) => {
           const Icon = item.icon
-          const isActive = item.active || pathname.startsWith(item.href)
+          const isActive =
+            item.href === "/dashboard"
+              ? pathname === "/dashboard" || pathname === "/"
+              : pathname.startsWith(item.href)
 
           return (
             <Link

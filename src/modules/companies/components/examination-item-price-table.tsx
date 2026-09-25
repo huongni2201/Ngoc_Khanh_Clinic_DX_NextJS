@@ -3,12 +3,12 @@
 import * as React from "react"
 import { UseFormReturn, useFieldArray } from "react-hook-form"
 import { Info } from "lucide-react"
-import { MasterExaminationItem } from "@/modules/health-check-batches"
-import { CreateExamBatchFormValues } from "../schemas"
+import { MasterExaminationItem } from "@/modules/health-examinations"
+import { CreateHealthExaminationBatchFormValues } from "../schemas"
 import { ExaminationItemRow } from "./examination-item-row"
 
 interface ExaminationItemPriceTableProps {
-  form: UseFormReturn<CreateExamBatchFormValues>
+  form: UseFormReturn<CreateHealthExaminationBatchFormValues>
   masterItems: MasterExaminationItem[]
   isLoading?: boolean
 }

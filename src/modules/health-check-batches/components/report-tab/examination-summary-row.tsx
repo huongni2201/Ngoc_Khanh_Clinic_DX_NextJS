@@ -1,9 +1,9 @@
 import * as React from "react"
 import { formatVND } from "@/shared/ui"
-import { ExamBatchReportItem } from "../../types"
+import { HealthExaminationBatchReportItem } from "../../types"
 
 export interface ExaminationSummaryRowProps {
-  item: ExamBatchReportItem
+  item: HealthExaminationBatchReportItem
 }
 
 export function ExaminationSummaryRow({ item }: ExaminationSummaryRowProps) {

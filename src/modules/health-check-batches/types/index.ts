@@ -1,4 +1,4 @@
-export type ExamBatchStatus = "IN_PROGRESS" | "COMPLETED"
+export type HealthExaminationBatchStatus = "IN_PROGRESS" | "COMPLETED"
 
 export interface MasterExaminationItem {
   id: string
@@ -8,13 +8,13 @@ export interface MasterExaminationItem {
   description?: string
 }
 
-export interface ExamBatchItem {
+export interface HealthExaminationBatchItem {
   examinationItemId: string
   name: string
   unitPrice: number
 }
 
-export interface ExamBatch {
+export interface HealthExaminationBatch {
   id: string
   code: string
   enterpriseId: string
@@ -22,36 +22,36 @@ export interface ExamBatch {
   examDate: string
   location: string
   employeeCount: number
-  status: ExamBatchStatus
+  status: HealthExaminationBatchStatus
   note?: string
-  items: ExamBatchItem[]
+  items: HealthExaminationBatchItem[]
   createdAt: string
   updatedAt: string
 }
 
-export interface CreateExamBatchRequestItem {
+export interface CreateHealthExaminationBatchRequestItem {
   examinationItemId: string
   unitPrice: number
 }
 
-export interface CreateExamBatchRequest {
+export interface CreateHealthExaminationBatchRequest {
   enterpriseId: string
   name: string
   examDate: string
   location: string
   note?: string
-  items: CreateExamBatchRequestItem[]
+  items: CreateHealthExaminationBatchRequestItem[]
 }
 
-export interface ExamBatchFilterParams {
+export interface HealthExaminationBatchFilterParams {
   search?: string
   status?: string
   page?: number
   pageSize?: number
 }
 
-export interface ExamBatchListResponse {
-  data: ExamBatch[]
+export interface HealthExaminationBatchListResponse {
+  data: HealthExaminationBatch[]
   total: number
   page: number
   pageSize: number
@@ -142,7 +142,7 @@ export interface EmployeeMatrixResponse {
   totalPages: number
 }
 
-export interface ExamBatchReportItem {
+export interface HealthExaminationBatchReportItem {
   examinationItemId: string
   name: string
   examinedCount: number
@@ -150,9 +150,9 @@ export interface ExamBatchReportItem {
   totalAmount: number
 }
 
-export interface ExamBatchReportSummary {
+export interface HealthExaminationBatchReportSummary {
   batchId: string
-  items: ExamBatchReportItem[]
+  items: HealthExaminationBatchReportItem[]
   totalAmount: number
 }
 

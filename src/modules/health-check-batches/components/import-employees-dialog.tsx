@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { usePopulateSampleEmployees } from "../hooks/use-exam-batches"
+import { usePopulateSampleEmployees } from "../hooks/use-health-examination-batches"
 
 interface ImportEmployeesDialogProps {
   open: boolean

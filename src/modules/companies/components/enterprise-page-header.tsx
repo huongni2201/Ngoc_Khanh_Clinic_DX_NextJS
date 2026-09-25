@@ -46,10 +46,10 @@ export function EnterprisePageHeader({
       <div>
         <Button
           onClick={onOpenCreateDialog}
-          className="h-10 rounded-lg px-4 font-medium shadow-xs"
+          className="gap-2 h-10 rounded-lg px-4 font-medium text-xs sm:text-sm shadow-xs cursor-pointer"
         >
-          <Plus className="size-4 mr-1.5 stroke-[2.5]" />
-          Thêm doanh nghiệp
+          <Plus className="size-4 stroke-[2]" />
+          <span>Thêm doanh nghiệp</span>
         </Button>
       </div>
     </div>

@@ -5,11 +5,11 @@ import { useSearchParams, useRouter, usePathname } from "next/navigation"
 import { AlertCircle, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { EnterprisePageHeader } from "../components/enterprise-page-header"
-import { EnterpriseFilters } from "../components/enterprise-filters"
+import { EnterpriseCountersStrip } from "../components/enterprise-counters-strip"
 import { EnterpriseTable } from "../components/enterprise-table"
 import { DataTablePagination } from "@/shared/ui"
 import { CreateEnterpriseDialog } from "../components/create-enterprise-dialog"
-import { useEnterprises } from "../hooks/use-enterprises"
+import { useEnterprises, useEnterpriseCounters } from "../hooks/use-enterprises"
 
 export function EnterpriseListPage() {
   const router = useRouter()
@@ -17,9 +17,9 @@ export function EnterpriseListPage() {
   const searchParams = useSearchParams()
 
   // State from URL or defaults
-  const search = searchParams.get("q") || ""
-  const status = searchParams.get("status") || "ALL"
-  const page = parseInt(searchParams.get("page") || "1", 10)
+  const search = searchParams?.get("q") || ""
+  const status = searchParams?.get("status") || "ALL"
+  const page = parseInt(searchParams?.get("page") || "1", 10)
 
   // Dialog state
   const [isCreateOpen, setIsCreateOpen] = React.useState(false)
@@ -27,7 +27,9 @@ export function EnterpriseListPage() {
   // Sync state to URL params
   const updateUrlParams = React.useCallback(
     (newParams: { q?: string; status?: string; page?: number }) => {
-      const current = new URLSearchParams(Array.from(searchParams.entries()))
+      const current = new URLSearchParams(
+        Array.from(searchParams?.entries() || [])
+      )
 
       if (newParams.q !== undefined) {
         if (newParams.q.trim()) {
@@ -66,57 +68,57 @@ export function EnterpriseListPage() {
     pageSize: 10,
   })
 
+  // Counters hook
+  const { data: counters, isLoading: isCountersLoading } = useEnterpriseCounters()
+
   return (
-    <div className="flex-1 flex flex-col justify-between space-y-3.5 w-full min-h-0">
-      <div className="space-y-3.5 flex-1 flex flex-col">
-        {/* 1. Page Header */}
-        <EnterprisePageHeader onOpenCreateDialog={() => setIsCreateOpen(true)} />
+    <div className="flex flex-col flex-1 gap-5 w-full">
+      {/* 1. Page Header */}
+      <EnterprisePageHeader onOpenCreateDialog={() => setIsCreateOpen(true)} />
 
-        {/* 2. Filters Bar */}
-        <EnterpriseFilters
-          search={search}
-          onSearchChange={(q) => updateUrlParams({ q })}
-          status={status}
-          onStatusChange={(newStatus) => updateUrlParams({ status: newStatus })}
-        />
+      {/* 2. Operational Counters Strip */}
+      <EnterpriseCountersStrip
+        counters={counters}
+        isLoading={isCountersLoading}
+        activeStatusKey={status}
+        onFilterStatus={(newStatus) => updateUrlParams({ status: newStatus })}
+      />
 
-        {/* Error State */}
-        {isError && (
-          <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-destructive/30 bg-destructive/5 p-8 text-center">
-            <AlertCircle className="size-8 text-destructive" />
-            <div>
-              <h3 className="text-sm font-semibold text-foreground">
-                Không thể tải danh sách doanh nghiệp
-              </h3>
-              <p className="text-xs text-muted-foreground mt-1">
-                Đã có lỗi xảy ra trong quá trình truy xuất dữ liệu từ máy chủ.
-              </p>
-            </div>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => refetch()}
-              className="mt-2 text-xs"
-            >
-              <RefreshCw className="size-3.5 mr-1.5" />
-              Thử lại
-            </Button>
+      {/* Error State */}
+      {isError && (
+        <div className="p-4 rounded-xl border border-destructive/30 bg-destructive/5 flex items-center justify-between gap-3 text-xs text-destructive">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="size-4 shrink-0" />
+            <span>Có lỗi xảy ra trong quá trình truy xuất dữ liệu từ máy chủ.</span>
           </div>
-        )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => refetch()}
+            className="h-7 text-xs border-destructive/30 hover:bg-destructive/10 cursor-pointer"
+          >
+            <RefreshCw className="size-3 mr-1" />
+            Thử lại
+          </Button>
+        </div>
+      )}
 
-        {/* 3. Enterprises Table */}
-        {!isError && (
-          <div className="flex-1 flex flex-col">
-            <EnterpriseTable
-              enterprises={data?.data || []}
-              isLoading={isLoading}
-              currentPage={data?.page || 1}
-              pageSize={data?.pageSize || 10}
-            />
-          </div>
-        )}
-      </div>
+      {/* 3. Enterprises Table with integrated header, tabs, and filter */}
+      {!isError && (
+        <div className="flex-1 flex flex-col">
+          <EnterpriseTable
+            enterprises={data?.data || []}
+            isLoading={isLoading}
+            currentPage={data?.page || 1}
+            pageSize={data?.pageSize || 10}
+            totalItems={data?.total || 0}
+            activeStatus={status}
+            onStatusChange={(newStatus) => updateUrlParams({ status: newStatus })}
+            searchTerm={search}
+            onSearchChange={(q) => updateUrlParams({ q })}
+          />
+        </div>
+      )}
 
       {/* 4. Pagination */}
       {!isError && !isLoading && (data?.total || 0) > 0 && (

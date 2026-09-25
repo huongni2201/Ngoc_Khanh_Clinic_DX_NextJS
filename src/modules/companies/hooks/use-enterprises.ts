@@ -4,6 +4,7 @@ import {
   createEnterprise,
   fetchEnterpriseById,
   updateEnterprise,
+  fetchEnterpriseCounters,
 } from "../api"
 import {
   EnterpriseFilterParams,
@@ -13,6 +14,13 @@ import {
 
 export const ENTERPRISES_QUERY_KEY = ["enterprises"]
 export const enterpriseDetailQueryKey = (id: string) => ["enterprise", id]
+
+export function useEnterpriseCounters() {
+  return useQuery({
+    queryKey: [...ENTERPRISES_QUERY_KEY, "counters"],
+    queryFn: fetchEnterpriseCounters,
+  })
+}
 
 export function useEnterprises(params?: EnterpriseFilterParams) {
   return useQuery({

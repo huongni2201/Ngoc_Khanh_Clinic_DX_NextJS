@@ -8,10 +8,10 @@ import { ReportHeader } from "./report-header"
 import { ExaminationSummaryTable } from "./examination-summary-table"
 import { CalculationExample } from "./calculation-example"
 import {
-  useExamBatchReport,
+  useHealthExaminationBatchReport,
   useExportExamDetail,
   useExportExamSummary,
-} from "../../hooks/use-exam-batches"
+} from "../../hooks/use-health-examination-batches"
 
 export interface ReportTabProps {
   batchId: string
@@ -19,7 +19,7 @@ export interface ReportTabProps {
 }
 
 export function ReportTab({ batchId, batchName }: ReportTabProps) {
-  const { data, isLoading, isError, refetch } = useExamBatchReport(batchId)
+  const { data, isLoading, isError, refetch } = useHealthExaminationBatchReport(batchId)
   const exportDetailMutation = useExportExamDetail()
   const exportSummaryMutation = useExportExamSummary()
 

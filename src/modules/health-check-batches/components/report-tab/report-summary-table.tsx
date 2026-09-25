@@ -3,10 +3,10 @@
 import * as React from "react"
 import { Calculator } from "lucide-react"
 import { formatVND } from "@/shared/ui"
-import { ExamBatchReportItem } from "../../types"
+import { HealthExaminationBatchReportItem } from "../../types"
 
 interface ReportSummaryTableProps {
-  items: ExamBatchReportItem[]
+  items: HealthExaminationBatchReportItem[]
   totalAmount: number
 }
 

@@ -5,10 +5,11 @@ import { EmployeesToolbar } from "./employees-toolbar"
 import { EmployeesTable } from "./employees-table"
 import { EmptyEmployeesState } from "./empty-employees-state"
 import { Skeleton } from "@/components/ui/skeleton"
-import { useExamBatchEmployees } from "../../hooks/use-exam-batches"
+import { useHealthExaminationBatchEmployees } from "../../hooks/use-health-examination-batches"
 
 interface EmployeesTabProps {
   batchId: string
+  enterpriseId?: string
   totalBatchEmployees: number
   onImportClick: () => void
   onDownloadTemplateClick: () => void
@@ -16,6 +17,7 @@ interface EmployeesTabProps {
 
 export function EmployeesTab({
   batchId,
+  enterpriseId,
   totalBatchEmployees,
   onImportClick,
   onDownloadTemplateClick,
@@ -42,7 +44,7 @@ export function EmployeesTab({
     setPage(1)
   }
 
-  const { data, isLoading } = useExamBatchEmployees(batchId, {
+  const { data, isLoading } = useHealthExaminationBatchEmployees(batchId, {
     search,
     department,
     profileStatus,
@@ -115,6 +117,8 @@ export function EmployeesTab({
           selectedIds={selectedIds}
           onToggleSelect={handleToggleSelect}
           onToggleSelectAll={handleToggleSelectAll}
+          batchId={batchId}
+          enterpriseId={enterpriseId}
         />
       )}
     </div>

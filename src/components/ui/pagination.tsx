@@ -3,7 +3,11 @@ import { cn } from "cn"
 
 import { Button } from "@/components/ui/button"
 import { HugeiconsIcon } from "@hugeicons/react"
-import { ArrowLeft01Icon, ArrowRight01Icon, MoreHorizontalCircle01Icon } from "@hugeicons/core-free-icons"
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  EllipsisIcon,
+} from "@hugeicons/core-free-icons"
 
 function Pagination({ className, ...props }: React.ComponentProps<"nav">) {
   return (
@@ -24,7 +28,7 @@ function PaginationContent({
   return (
     <ul
       data-slot="pagination-content"
-      className={cn("flex items-center gap-0.5", className)}
+      className={cn("flex items-center gap-1", className)}
       {...props}
     />
   )
@@ -45,16 +49,28 @@ function PaginationLink({
   size = "icon",
   variant,
   href,
+  disabled,
   ...props
 }: PaginationLinkProps) {
-  const resolvedVariant = variant ?? (isActive ? "default" : "outline")
+  const resolvedVariant = variant ?? (isActive ? "default" : "ghost")
+
+  const linkClasses = cn(
+    "cursor-pointer select-none text-xs transition-colors rounded-lg",
+    size === "icon" && "size-8 min-w-8 p-0 font-medium",
+    isActive
+      ? "bg-primary text-primary-foreground font-semibold border border-transparent shadow-xs hover:bg-primary/90 hover:text-primary-foreground dark:bg-primary dark:text-primary-foreground"
+      : "text-secondary-foreground hover:text-foreground hover:bg-surface-alt font-normal",
+    disabled && "cursor-not-allowed opacity-50 pointer-events-none text-muted-foreground",
+    className
+  )
 
   if (href) {
     return (
       <Button
         variant={resolvedVariant}
         size={size}
-        className={cn("cursor-pointer", className)}
+        disabled={disabled}
+        className={linkClasses}
         nativeButton={false}
         render={
           <a
@@ -74,10 +90,11 @@ function PaginationLink({
       type="button"
       variant={resolvedVariant}
       size={size}
+      disabled={disabled}
       aria-current={isActive ? "page" : undefined}
       data-slot="pagination-link"
       data-active={isActive}
-      className={cn("cursor-pointer", className)}
+      className={linkClasses}
       {...props}
     />
   )
@@ -85,22 +102,30 @@ function PaginationLink({
 
 function PaginationPrevious({
   className,
-  text,
+  text = "Trang trước",
   children,
-  size = "icon",
   ...props
 }: React.ComponentProps<typeof PaginationLink> & { text?: string }) {
   return (
     <PaginationLink
       aria-label="Trang trước"
-      size={size}
-      className={cn(className)}
+      size="default"
+      variant="ghost"
+      className={cn(
+        "h-8 gap-1.5 px-2 text-xs font-normal text-secondary-foreground hover:text-foreground hover:bg-surface-alt cursor-pointer disabled:text-muted-foreground disabled:opacity-50 disabled:pointer-events-none mr-1.5",
+        className
+      )}
       {...props}
     >
       {children ?? (
         <>
-          <HugeiconsIcon icon={ArrowLeft01Icon} strokeWidth={2} data-icon="inline-start" />
-          {text && <span className="hidden sm:block">{text}</span>}
+          <HugeiconsIcon
+            icon={ChevronLeftIcon}
+            strokeWidth={2}
+            className="size-3.5"
+            data-icon="inline-start"
+          />
+          <span className="hidden sm:inline">{text}</span>
         </>
       )}
     </PaginationLink>
@@ -109,22 +134,30 @@ function PaginationPrevious({
 
 function PaginationNext({
   className,
-  text,
+  text = "Trang sau",
   children,
-  size = "icon",
   ...props
 }: React.ComponentProps<typeof PaginationLink> & { text?: string }) {
   return (
     <PaginationLink
       aria-label="Trang sau"
-      size={size}
-      className={cn(className)}
+      size="default"
+      variant="ghost"
+      className={cn(
+        "h-8 gap-1.5 px-2 text-xs font-normal text-secondary-foreground hover:text-foreground hover:bg-surface-alt cursor-pointer disabled:text-muted-foreground disabled:opacity-50 disabled:pointer-events-none ml-1.5",
+        className
+      )}
       {...props}
     >
       {children ?? (
         <>
-          {text && <span className="hidden sm:block">{text}</span>}
-          <HugeiconsIcon icon={ArrowRight01Icon} strokeWidth={2} data-icon="inline-end" />
+          <span className="hidden sm:inline">{text}</span>
+          <HugeiconsIcon
+            icon={ChevronRightIcon}
+            strokeWidth={2}
+            className="size-3.5"
+            data-icon="inline-end"
+          />
         </>
       )}
     </PaginationLink>
@@ -140,12 +173,12 @@ function PaginationEllipsis({
       aria-hidden
       data-slot="pagination-ellipsis"
       className={cn(
-        "flex size-7 items-center justify-center [&_svg:not([class*='size-'])]:size-3.5",
+        "flex size-8 items-center justify-center text-muted-foreground select-none [&_svg:not([class*='size-'])]:size-4",
         className
       )}
       {...props}
     >
-      <HugeiconsIcon icon={MoreHorizontalCircle01Icon} strokeWidth={2} />
+      <HugeiconsIcon icon={EllipsisIcon} strokeWidth={2} />
       <span className="sr-only">More pages</span>
     </span>
   )

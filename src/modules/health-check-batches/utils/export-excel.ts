@@ -1,4 +1,4 @@
-import { ExamBatchReportItem } from "../types"
+import { HealthExaminationBatchReportItem } from "../types"
 
 export interface ExportDetailMatrixData {
   batchName: string
@@ -16,7 +16,7 @@ export interface ExportDetailMatrixData {
 export interface ExportSummaryData {
   batchName: string
   batchCode: string
-  items: ExamBatchReportItem[]
+  items: HealthExaminationBatchReportItem[]
   totalAmount: number
 }
 

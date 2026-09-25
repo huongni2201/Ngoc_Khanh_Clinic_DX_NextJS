@@ -10,9 +10,9 @@ import { EnterpriseDetailHeader } from "../components/enterprise-detail-header"
 import { EnterpriseSummaryStrip } from "../components/enterprise-summary-strip"
 import { EnterpriseTabs, type EnterpriseTabType } from "../components/enterprise-tabs"
 import { EnterpriseInfoCard } from "../components/enterprise-info-card"
-import { EnterpriseExamBatchesTab } from "../components/enterprise-exam-batches-tab"
+import { EnterpriseHealthExaminationBatchesTab } from "../components/enterprise-health-examination-batches-tab"
 import { EditEnterpriseDialog } from "../components/edit-enterprise-dialog"
-import { CreateExamBatchDialog } from "../components/create-exam-batch-dialog"
+import { CreateHealthExaminationBatchDialog } from "../components/create-health-examination-batch-dialog"
 
 interface EnterpriseDetailPageProps {
   enterpriseId: string
@@ -146,7 +146,7 @@ export function EnterpriseDetailPage({
         )}
 
         {activeTab === "batches" && (
-          <EnterpriseExamBatchesTab
+          <EnterpriseHealthExaminationBatchesTab
             enterpriseId={enterprise.id}
             onCreateBatchClick={() => setIsCreateBatchDialogOpen(true)}
           />
@@ -161,7 +161,7 @@ export function EnterpriseDetailPage({
       />
 
       {/* 6. Create Exam Batch Placeholder Modal */}
-      <CreateExamBatchDialog
+      <CreateHealthExaminationBatchDialog
         open={isCreateBatchDialogOpen}
         onOpenChange={setIsCreateBatchDialogOpen}
         enterprise={enterprise}

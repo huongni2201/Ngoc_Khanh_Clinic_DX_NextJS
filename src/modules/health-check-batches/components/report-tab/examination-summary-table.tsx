@@ -1,11 +1,11 @@
 import * as React from "react"
 import { Skeleton } from "@/components/ui/skeleton"
-import { ExamBatchReportItem } from "../../types"
+import { HealthExaminationBatchReportItem } from "../../types"
 import { ExaminationSummaryRow } from "./examination-summary-row"
 import { ReportTotalRow } from "./report-total-row"
 
 export interface ExaminationSummaryTableProps {
-  items: ExamBatchReportItem[]
+  items: HealthExaminationBatchReportItem[]
   totalAmount: number
   isLoading?: boolean
 }

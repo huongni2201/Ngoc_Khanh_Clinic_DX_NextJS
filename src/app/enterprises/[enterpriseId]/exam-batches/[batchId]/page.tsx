@@ -2,10 +2,10 @@ import * as React from "react"
 import { Metadata } from "next"
 import { Suspense } from "react"
 import { AppShell } from "@/widgets/app-shell/app-shell"
-import { ExamBatchDetailPage } from "@/modules/health-check-batches"
+import { HealthExaminationBatchDetailPage } from "@/modules/health-examinations"
 import { Skeleton } from "@/components/ui/skeleton"
 
-interface ExamBatchDetailPageProps {
+interface HealthExaminationBatchDetailPageProps {
   params: Promise<{
     enterpriseId: string
     batchId: string
@@ -14,7 +14,7 @@ interface ExamBatchDetailPageProps {
 
 export async function generateMetadata({
   params,
-}: ExamBatchDetailPageProps): Promise<Metadata> {
+}: HealthExaminationBatchDetailPageProps): Promise<Metadata> {
   const resolvedParams = await params
   return {
     title: `Chi tiết đợt khám — Ngọc Khánh Clinic`,
@@ -22,9 +22,9 @@ export async function generateMetadata({
   }
 }
 
-export default async function ExamBatchPage({
+export default async function HealthExaminationBatchPage({
   params,
-}: ExamBatchDetailPageProps) {
+}: HealthExaminationBatchDetailPageProps) {
   const resolvedParams = await params
 
   return (
@@ -51,7 +51,7 @@ export default async function ExamBatchPage({
           </div>
         }
       >
-        <ExamBatchDetailPage
+        <HealthExaminationBatchDetailPage
           enterpriseId={resolvedParams.enterpriseId}
           batchId={resolvedParams.batchId}
         />

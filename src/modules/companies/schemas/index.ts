@@ -47,4 +47,4 @@ export const updateEnterpriseSchema = z.object({
 
 export type UpdateEnterpriseFormValues = z.infer<typeof updateEnterpriseSchema>
 
-export * from "./exam-batch.schema"
+export * from "./health-examination-batch.schema"

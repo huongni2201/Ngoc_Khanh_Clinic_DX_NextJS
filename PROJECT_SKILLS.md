@@ -1,6 +1,6 @@
 # Ngọc Khánh Clinic Frontend — Local Skills Guide
 
-This repository intentionally keeps a **small frontend-only skill set**.
+This repository intentionally keeps a **small frontend skill set** plus a language-agnostic coding-guidance skill.
 
 Skills live in:
 
@@ -14,7 +14,7 @@ Repository rules and accepted ADRs override generic skill examples.
 
 ---
 
-## Approved Frontend Skills
+## Approved Project Skills
 
 ```text
 architecture-decision-records
@@ -23,6 +23,7 @@ diagnosing-bugs
 error-handling-patterns
 frontend-design
 javascript-testing-patterns
+karpathy-guidelines
 react-state-management
 security-best-practices
 setup-pre-commit
@@ -34,6 +35,11 @@ web-design-guidelines
 ```
 
 Do not load every skill for every task. Use only skills that materially help the current work.
+
+## Coding Discipline
+
+### `karpathy-guidelines`
+Use for implementation, review, and refactoring to keep changes scoped, surface assumptions, avoid unnecessary complexity, and define verifiable success criteria. Repository rules and accepted ADRs override generic skill examples.
 
 ---
 
@@ -217,6 +223,7 @@ Read AGENTS.md, PROJECT_RULES.md, PROJECT_SKILLS.md and relevant ADRs first.
 
 Inspect existing reusable components before creating new UI.
 Use only the relevant local frontend skills from .agents/skills/.
+Apply karpathy-guidelines to coding tasks when relevant.
 Do not invent backend APIs.
 Do not add demo data to production paths.
 Reuse shadcn and existing project components before writing new primitives.

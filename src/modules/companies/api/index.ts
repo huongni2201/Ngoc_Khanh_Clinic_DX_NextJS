@@ -3,6 +3,7 @@ import {
   EnterpriseDetail,
   EnterpriseFilterParams,
   EnterpriseListResponse,
+  EnterpriseCounters,
   CreateEnterpriseDto,
   UpdateEnterpriseDto,
 } from "../types"
@@ -714,4 +715,21 @@ export async function updateEnterprise(
   )
 
   return { ...updatedDetail }
+}
+
+export async function fetchEnterpriseCounters(): Promise<EnterpriseCounters> {
+  await new Promise((resolve) => setTimeout(resolve, 80))
+  const total = enterprisesStore.length
+  const inProgress = enterprisesStore.filter((e) => e.status === "IN_PROGRESS").length
+  const completed = enterprisesStore.filter((e) => e.status === "COMPLETED").length
+  const totalBatches = enterprisesStore.reduce((acc, e) => acc + (e.batchesCount || 0), 0)
+  const estimatedEmployees = totalBatches * 45
+
+  return {
+    total,
+    inProgress,
+    completed,
+    totalBatches,
+    estimatedEmployees,
+  }
 }

@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event"
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import "@testing-library/jest-dom/vitest"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { ExamBatchDetailPage } from "../pages/exam-batch-detail-page"
+import { HealthExaminationBatchDetailPage } from "../pages/health-examination-batch-detail-page"
 import { ExaminationDetailTab } from "../components/examination-detail-tab/examination-detail-tab"
 import { ExaminationMatrixTable } from "../components/examination-detail-tab/examination-matrix-table"
 import * as api from "../api"
@@ -20,7 +20,7 @@ vi.mock("next/navigation", () => ({
     replace: mockReplace,
     prefetch: vi.fn(),
   }),
-  usePathname: () => "/enterprises/ent-2/exam-batches/batch-1",
+  usePathname: () => "/enterprises/ent-2/health-examination-batches/batch-1",
   useSearchParams: () => new URLSearchParams(),
 }))
 
@@ -47,7 +47,7 @@ describe("Screen 05 – Tab 'Chi tiết khám' (Exam Batch Detail)", () => {
     const user = userEvent.setup()
 
     renderWithClient(
-      <ExamBatchDetailPage enterpriseId="ent-2" batchId="batch-1" />
+      <HealthExaminationBatchDetailPage enterpriseId="ent-2" batchId="batch-1" />
     )
 
     // Wait for page header
@@ -156,7 +156,7 @@ describe("Screen 05 – Tab 'Chi tiết khám' (Exam Batch Detail)", () => {
     const user = userEvent.setup()
 
     renderWithClient(
-      <ExamBatchDetailPage enterpriseId="ent-2" batchId="batch-1" />
+      <HealthExaminationBatchDetailPage enterpriseId="ent-2" batchId="batch-1" />
     )
 
     await waitFor(() => {
@@ -201,7 +201,7 @@ describe("Screen 05 – Tab 'Chi tiết khám' (Exam Batch Detail)", () => {
     const user = userEvent.setup()
 
     renderWithClient(
-      <ExamBatchDetailPage enterpriseId="ent-2" batchId="batch-1" />
+      <HealthExaminationBatchDetailPage enterpriseId="ent-2" batchId="batch-1" />
     )
 
     await waitFor(() => {
@@ -237,7 +237,7 @@ describe("Screen 05 – Tab 'Chi tiết khám' (Exam Batch Detail)", () => {
     const user = userEvent.setup()
 
     renderWithClient(
-      <ExamBatchDetailPage enterpriseId="ent-2" batchId="batch-1" />
+      <HealthExaminationBatchDetailPage enterpriseId="ent-2" batchId="batch-1" />
     )
 
     await waitFor(() => {
@@ -261,7 +261,7 @@ describe("Screen 05 – Tab 'Chi tiết khám' (Exam Batch Detail)", () => {
     const user = userEvent.setup()
 
     renderWithClient(
-      <ExamBatchDetailPage enterpriseId="ent-2" batchId="batch-1" />
+      <HealthExaminationBatchDetailPage enterpriseId="ent-2" batchId="batch-1" />
     )
 
     await waitFor(() => {
@@ -287,7 +287,7 @@ describe("Screen 05 – Tab 'Chi tiết khám' (Exam Batch Detail)", () => {
     const user = userEvent.setup()
 
     renderWithClient(
-      <ExamBatchDetailPage enterpriseId="ent-2" batchId="batch-1" />
+      <HealthExaminationBatchDetailPage enterpriseId="ent-2" batchId="batch-1" />
     )
 
     await waitFor(() => {
@@ -311,7 +311,7 @@ describe("Screen 05 – Tab 'Chi tiết khám' (Exam Batch Detail)", () => {
     const user = userEvent.setup()
 
     renderWithClient(
-      <ExamBatchDetailPage enterpriseId="ent-2" batchId="batch-1" />
+      <HealthExaminationBatchDetailPage enterpriseId="ent-2" batchId="batch-1" />
     )
 
     await waitFor(() => {
@@ -337,7 +337,7 @@ describe("Screen 05 – Tab 'Chi tiết khám' (Exam Batch Detail)", () => {
     const user = userEvent.setup()
 
     renderWithClient(
-      <ExamBatchDetailPage enterpriseId="ent-2" batchId="batch-1" />
+      <HealthExaminationBatchDetailPage enterpriseId="ent-2" batchId="batch-1" />
     )
 
     await waitFor(() => {
@@ -409,7 +409,7 @@ describe("Screen 05 – Tab 'Chi tiết khám' (Exam Batch Detail)", () => {
 
   it("15: displays inline error box with 'Thử lại' button on fetch failure without breaking the page", async () => {
     const spy = vi
-      .spyOn(api, "fetchExamBatchMatrix")
+      .spyOn(api, "fetchHealthExaminationBatchMatrix")
       .mockRejectedValueOnce(new Error("Lỗi mạng 500"))
 
     renderWithClient(<ExaminationDetailTab batchId="batch-1" />)
@@ -427,8 +427,8 @@ describe("Screen 05 – Tab 'Chi tiết khám' (Exam Batch Detail)", () => {
   })
 
   it("16: ReportTab derives counts from the exact same completed examination data", async () => {
-    const matrixRes = await api.fetchExamBatchMatrix("batch-1", { pageSize: 50 })
-    const reportRes = await api.fetchExamBatchReport("batch-1")
+    const matrixRes = await api.fetchHealthExaminationBatchMatrix("batch-1", { pageSize: 50 })
+    const reportRes = await api.fetchHealthExaminationBatchReport("batch-1")
 
     // Count actual completed "item-kntq" from matrix data
     const completedInternalExamCount = matrixRes.data.filter(

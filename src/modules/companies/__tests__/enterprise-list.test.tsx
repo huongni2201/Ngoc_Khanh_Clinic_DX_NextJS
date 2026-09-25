@@ -132,7 +132,7 @@ describe("EnterpriseListPage (Screen 01 - Updated Table & Pagination)", () => {
       screen.getByText(/Hiển thị/i)
     ).toBeInTheDocument()
     expect(
-      screen.getByText("32")
+      screen.getAllByText("32")[0]
     ).toBeInTheDocument()
 
     // Pagination navigation buttons
@@ -172,5 +172,24 @@ describe("EnterpriseListPage (Screen 01 - Updated Table & Pagination)", () => {
     await user.click(page2Btn)
 
     expect(handlePageChange).toHaveBeenCalledWith(2)
+  })
+
+  it("renders EnterpriseCountersStrip with 5 KPI cards and handles filter clicks", async () => {
+    const user = userEvent.setup()
+    renderWithClient(<EnterpriseListPage />)
+
+    await waitFor(() => {
+      expect(screen.getByText("Tổng doanh nghiệp")).toBeInTheDocument()
+      expect(screen.getByText("Đang tổ chức khám")).toBeInTheDocument()
+      expect(screen.getByText("Đã hoàn tất đợt khám")).toBeInTheDocument()
+      expect(screen.getByText("Tổng số đợt khám")).toBeInTheDocument()
+      expect(screen.getByText("Nhân sự dự kiến khám")).toBeInTheDocument()
+    })
+
+    // Click "Đang tổ chức khám" counter button
+    const inProgressBtn = screen.getByRole("button", { name: /Đang tổ chức khám/i })
+    await user.click(inProgressBtn)
+
+    expect(mockReplace).toHaveBeenCalledWith("/enterprises?status=IN_PROGRESS&page=1")
   })
 })

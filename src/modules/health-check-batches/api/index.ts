@@ -1,17 +1,17 @@
 import {
   MasterExaminationItem,
-  ExamBatch,
-  CreateExamBatchRequest,
-  ExamBatchFilterParams,
-  ExamBatchListResponse,
+  HealthExaminationBatch,
+  CreateHealthExaminationBatchRequest,
+  HealthExaminationBatchFilterParams,
+  HealthExaminationBatchListResponse,
   EmployeeInBatch,
   EmployeeListFilterParams,
   EmployeeListResponse,
   EmployeeMatrixItem,
   EmployeeMatrixFilterParams,
   EmployeeMatrixResponse,
-  ExamBatchReportSummary,
-  ExamBatchReportItem,
+  HealthExaminationBatchReportSummary,
+  HealthExaminationBatchReportItem,
   ExamItemCompletionStatus,
 } from "../types"
 
@@ -69,7 +69,7 @@ export const masterExaminationCatalog: MasterExaminationItem[] = [
 ]
 
 // In-memory store for batches
-let examBatchesStore: ExamBatch[] = [
+let healthExaminationBatchesStore: HealthExaminationBatch[] = [
   {
     id: "batch-1",
     code: "DK001",
@@ -439,13 +439,13 @@ export async function fetchMasterExaminationCatalog(): Promise<MasterExamination
   return [...masterExaminationCatalog]
 }
 
-export async function fetchExamBatchesByEnterprise(
+export async function fetchHealthExaminationBatchesByEnterprise(
   enterpriseId: string,
-  params?: ExamBatchFilterParams
-): Promise<ExamBatchListResponse> {
+  params?: HealthExaminationBatchFilterParams
+): Promise<HealthExaminationBatchListResponse> {
   await new Promise((resolve) => setTimeout(resolve, 50))
 
-  let filtered = examBatchesStore.filter(
+  let filtered = healthExaminationBatchesStore.filter(
     (b) =>
       b.enterpriseId.toLowerCase() === enterpriseId.toLowerCase() ||
       (enterpriseId.toLowerCase() === "dn002" && b.enterpriseId === "ent-2")
@@ -479,16 +479,16 @@ export async function fetchExamBatchesByEnterprise(
   }
 }
 
-export async function fetchExamBatchById(batchId: string): Promise<ExamBatch | null> {
+export async function fetchHealthExaminationBatchById(batchId: string): Promise<HealthExaminationBatch | null> {
   await new Promise((resolve) => setTimeout(resolve, 50))
-  const found = examBatchesStore.find((b) => b.id === batchId)
+  const found = healthExaminationBatchesStore.find((b) => b.id === batchId)
   return found ? { ...found } : null
 }
 
-export async function createExamBatch(request: CreateExamBatchRequest): Promise<ExamBatch> {
+export async function createHealthExaminationBatch(request: CreateHealthExaminationBatchRequest): Promise<HealthExaminationBatch> {
   await new Promise((resolve) => setTimeout(resolve, 150))
 
-  const newCodeIndex = examBatchesStore.length + 1
+  const newCodeIndex = healthExaminationBatchesStore.length + 1
   const code = `DK${String(newCodeIndex).padStart(3, "0")}`
   const now = new Date()
   const todayStr = `${String(now.getDate()).padStart(2, "0")}/${String(
@@ -506,7 +506,7 @@ export async function createExamBatch(request: CreateExamBatchRequest): Promise<
     }
   })
 
-  const newBatch: ExamBatch = {
+  const newBatch: HealthExaminationBatch = {
     id: `batch-${Date.now()}`,
     code,
     enterpriseId: request.enterpriseId,
@@ -521,14 +521,14 @@ export async function createExamBatch(request: CreateExamBatchRequest): Promise<
     updatedAt: todayStr,
   }
 
-  examBatchesStore = [newBatch, ...examBatchesStore]
+  healthExaminationBatchesStore = [newBatch, ...healthExaminationBatchesStore]
   return { ...newBatch }
 }
 
 // ----------------------------------------------------
 // Screen 04: Fetch Employee Roster (Tab 1)
 // ----------------------------------------------------
-export async function fetchExamBatchEmployees(
+export async function fetchHealthExaminationBatchEmployees(
   batchId: string,
   params?: EmployeeListFilterParams
 ): Promise<EmployeeListResponse> {
@@ -575,13 +575,13 @@ export async function fetchExamBatchEmployees(
 // ----------------------------------------------------
 // Screen 04/05: Fetch Examination Matrix (Tab 2)
 // ----------------------------------------------------
-export async function fetchExamBatchMatrix(
+export async function fetchHealthExaminationBatchMatrix(
   batchId: string,
   params?: EmployeeMatrixFilterParams
 ): Promise<EmployeeMatrixResponse> {
   await new Promise((resolve) => setTimeout(resolve, 50))
 
-  const batch = examBatchesStore.find((b) => b.id === batchId)
+  const batch = healthExaminationBatchesStore.find((b) => b.id === batchId)
   const batchItems = (batch?.items || []).map((item) => {
     let shortName = item.name
     if (item.examinationItemId === "item-kntq") shortName = "Khám nội"
@@ -694,10 +694,10 @@ export async function fetchExamBatchMatrix(
 // ----------------------------------------------------
 // Screen 04/05: Fetch Payment & Category Report (Tab 3)
 // ----------------------------------------------------
-export async function fetchExamBatchReport(batchId: string): Promise<ExamBatchReportSummary> {
+export async function fetchHealthExaminationBatchReport(batchId: string): Promise<HealthExaminationBatchReportSummary> {
   await new Promise((resolve) => setTimeout(resolve, 50))
 
-  const batch = examBatchesStore.find((b) => b.id === batchId)
+  const batch = healthExaminationBatchesStore.find((b) => b.id === batchId)
   if (!batch) {
     throw new Error(`Đợt khám với mã "${batchId}" không tồn tại`)
   }
@@ -724,7 +724,7 @@ export async function fetchExamBatchReport(batchId: string): Promise<ExamBatchRe
     })
   })
 
-  const reportItems: ExamBatchReportItem[] = items.map((item) => {
+  const reportItems: HealthExaminationBatchReportItem[] = items.map((item) => {
     const examinedCount = countMap[item.examinationItemId] ?? 0
     const totalAmount = examinedCount * item.unitPrice
 
@@ -752,7 +752,7 @@ export async function fetchExamBatchReport(batchId: string): Promise<ExamBatchRe
 export async function fetchExamDetailExportData(batchId: string) {
   await new Promise((resolve) => setTimeout(resolve, 50))
 
-  const batch = examBatchesStore.find((b) => b.id === batchId)
+  const batch = healthExaminationBatchesStore.find((b) => b.id === batchId)
   if (!batch) {
     throw new Error(`Đợt khám với mã "${batchId}" không tồn tại`)
   }
@@ -780,8 +780,8 @@ export async function fetchExamDetailExportData(batchId: string) {
 }
 
 export async function fetchExamSummaryExportData(batchId: string) {
-  const report = await fetchExamBatchReport(batchId)
-  const batch = examBatchesStore.find((b) => b.id === batchId)
+  const report = await fetchHealthExaminationBatchReport(batchId)
+  const batch = healthExaminationBatchesStore.find((b) => b.id === batchId)
 
   return {
     batchName: batch?.name || "Bao-cao-tong-hop",
@@ -805,7 +805,7 @@ export async function importEmployeesToBatch(
   employeesStore = [...otherEmployees, ...employees]
 
   // Update batch employee count
-  const batch = examBatchesStore.find((b) => b.id === batchId)
+  const batch = healthExaminationBatchesStore.find((b) => b.id === batchId)
   if (batch) {
     batch.employeeCount = employees.length
   }

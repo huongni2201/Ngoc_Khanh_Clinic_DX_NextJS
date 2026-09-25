@@ -20,12 +20,13 @@ export interface DataTablePaginationProps {
   onPageChange: (page: number) => void
   entityName?: string
   className?: string
+  showSinglePageNavigation?: boolean
 }
 
 /**
  * Standard reusable pagination component across all data tables in Ngoc Khanh Clinic.
- * Composes shadcn/ui Pagination primitives, complies with design tokens in globals.css,
- * accessibility standards, and responsive breakpoints.
+ * Composes shadcn/ui Pagination primitives directly without custom CSS overrides,
+ * adhering to UI/UX Pro Max guidelines and design tokens in globals.css.
  */
 export function DataTablePagination({
   currentPage,
@@ -35,6 +36,7 @@ export function DataTablePagination({
   onPageChange,
   entityName = "bản ghi",
   className,
+  showSinglePageNavigation = false,
 }: DataTablePaginationProps) {
   const startItem = totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1
   const endItem = Math.min(currentPage * pageSize, totalItems)
@@ -83,7 +85,7 @@ export function DataTablePagination({
       )}
     >
       {/* Summary info on the left */}
-      <div className="text-secondary-foreground select-none">
+      <div className="text-muted-foreground select-none">
         {totalItems === 0 ? (
           "Không có dữ liệu"
         ) : (
@@ -96,17 +98,14 @@ export function DataTablePagination({
       </div>
 
       {/* Page navigation on the right using shadcn/ui Pagination */}
-      {totalPages > 1 && (
+      {(totalPages > 1 || (showSinglePageNavigation && totalPages >= 1 && totalItems > 0)) && (
         <Pagination aria-label="Phân trang" className="mx-0 w-auto justify-end select-none">
-          <PaginationContent className="gap-1.5">
+          <PaginationContent className="gap-1">
             {/* Previous page button */}
             <PaginationItem>
               <PaginationPrevious
-                type="button"
-                aria-label="Trang trước"
                 disabled={currentPage <= 1}
                 onClick={() => onPageChange(currentPage - 1)}
-                className="size-8 p-0 rounded-lg border-border bg-card text-secondary-foreground hover:bg-hover hover:text-foreground cursor-pointer disabled:opacity-40 disabled:pointer-events-none shadow-2xs"
               />
             </PaginationItem>
 
@@ -115,7 +114,7 @@ export function DataTablePagination({
               if (page === "ellipsis") {
                 return (
                   <PaginationItem key={`ellipsis-${index}`}>
-                    <PaginationEllipsis className="size-8" />
+                    <PaginationEllipsis />
                   </PaginationItem>
                 )
               }
@@ -125,17 +124,9 @@ export function DataTablePagination({
               return (
                 <PaginationItem key={page}>
                   <PaginationLink
-                    type="button"
                     isActive={isActive}
                     aria-label={`Trang ${page}`}
-                    aria-current={isActive ? "page" : undefined}
                     onClick={() => onPageChange(page)}
-                    className={cn(
-                      "size-8 p-0 rounded-lg text-xs font-medium cursor-pointer transition-colors",
-                      isActive
-                        ? "bg-primary text-primary-foreground font-semibold shadow-xs hover:bg-primary/90 hover:text-primary-foreground"
-                        : "border-border bg-card text-secondary-foreground hover:bg-hover hover:text-foreground shadow-2xs"
-                    )}
                   >
                     {page}
                   </PaginationLink>
@@ -146,11 +137,8 @@ export function DataTablePagination({
             {/* Next page button */}
             <PaginationItem>
               <PaginationNext
-                type="button"
-                aria-label="Trang sau"
                 disabled={currentPage >= totalPages}
                 onClick={() => onPageChange(currentPage + 1)}
-                className="size-8 p-0 rounded-lg border-border bg-card text-secondary-foreground hover:bg-hover hover:text-foreground cursor-pointer disabled:opacity-40 disabled:pointer-events-none shadow-2xs"
               />
             </PaginationItem>
           </PaginationContent>

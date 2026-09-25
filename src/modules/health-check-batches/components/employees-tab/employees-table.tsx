@@ -1,7 +1,15 @@
 "use client"
 
 import * as React from "react"
+import { useRouter } from "next/navigation"
+import { MoreHorizontal, UserCheck, CalendarPlus } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { DataTablePagination } from "@/shared/ui"
 import { EmployeeInBatch, EmployeeProfileStatus } from "../../types"
 import { cn } from "@/lib/utils"
@@ -16,6 +24,8 @@ interface EmployeesTableProps {
   selectedIds: string[]
   onToggleSelect: (id: string) => void
   onToggleSelectAll: () => void
+  batchId?: string
+  enterpriseId?: string
 }
 
 function ProfileStatusBadge({ status }: { status: EmployeeProfileStatus }) {
@@ -52,7 +62,11 @@ export function EmployeesTable({
   selectedIds,
   onToggleSelect,
   onToggleSelectAll,
+  batchId,
+  enterpriseId,
 }: EmployeesTableProps) {
+  const router = useRouter()
+
   const isAllSelected =
     employees.length > 0 &&
     employees.every((emp) => selectedIds.includes(emp.id))
@@ -89,13 +103,16 @@ export function EmployeesTable({
                 <th className="py-3 px-3 text-left font-semibold">Loại HĐ</th>
                 <th className="py-3 px-3 text-left font-semibold">Trạng thái hồ sơ</th>
                 <th className="py-3 px-3 text-left font-semibold">Ghi chú</th>
+                <th className="py-3 px-3 text-center font-semibold whitespace-nowrap">
+                  Thao tác
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-table-divider">
               {employees.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={14}
+                    colSpan={15}
                     className="py-10 text-center text-muted-foreground text-xs"
                   >
                     Không tìm thấy nhân sự phù hợp với bộ lọc tìm kiếm.
@@ -158,6 +175,45 @@ export function EmployeesTable({
                       </td>
                       <td className="py-2.5 px-3 text-muted-foreground whitespace-nowrap">
                         {emp.note || "—"}
+                      </td>
+                      <td className="py-2.5 px-3 text-center whitespace-nowrap">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger
+                            className="size-7 inline-flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-surface-alt transition-colors cursor-pointer"
+                            aria-label={`Thao tác với nhân sự ${emp.fullName}`}
+                          >
+                            <MoreHorizontal className="size-3.5" />
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-44 text-xs">
+                            <DropdownMenuItem
+                              onClick={() => {
+                                const code = emp.cccd || emp.employeeCode
+                                router.push(
+                                  `/reception?checkinCode=${encodeURIComponent(code)}`
+                                )
+                              }}
+                              className="gap-2 cursor-pointer"
+                            >
+                              <UserCheck className="size-3.5 text-primary" />
+                              <span>Tiếp nhận Lễ tân</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => {
+                                const query = new URLSearchParams({
+                                  create: "true",
+                                  ...(enterpriseId ? { enterpriseId } : {}),
+                                  ...(batchId ? { batchId } : {}),
+                                  employeeCode: emp.employeeCode,
+                                })
+                                router.push(`/appointments?${query.toString()}`)
+                              }}
+                              className="gap-2 cursor-pointer"
+                            >
+                              <CalendarPlus className="size-3.5 text-primary" />
+                              <span>Đặt lịch hẹn</span>
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </td>
                     </tr>
                   )
