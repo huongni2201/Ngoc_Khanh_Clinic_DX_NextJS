@@ -23,8 +23,8 @@ function HeaderSkeleton({ variant }: { variant: ScreenLoadingVariant }) {
       </div>
       {actionSkeletonWidths[variant].length > 0 ? (
         <div className="flex flex-wrap gap-2">
-          {actionSkeletonWidths[variant].map((width) => (
-            <Skeleton key={width} className={`h-9 ${width} rounded-md`} />
+          {actionSkeletonWidths[variant].map((width, idx) => (
+            <Skeleton key={`${width}-${idx}`} className={`h-9 ${width} rounded-md`} />
           ))}
         </div>
       ) : null}

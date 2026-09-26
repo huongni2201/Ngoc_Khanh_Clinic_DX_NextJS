@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
+import { useSearchParams, useRouter, usePathname } from "next/navigation"
 import { AlertCircle, RefreshCw, ArrowLeft } from "@/shared/ui/product-icon"
 import { Button } from "@/components/ui/button"
 import { ScreenLayout, ScreenLoadingSkeleton } from "@/shared/ui"
@@ -11,6 +12,8 @@ import { OrganizationSummaryStrip } from "../components/organization-summary-str
 import { OrganizationTabs, type OrganizationTabType } from "../components/organization-tabs"
 import { OrganizationInfoCard } from "../components/organization-info-card"
 import { OrganizationHealthExaminationBatchesTab } from "../components/organization-health-examination-batches-tab"
+import { OrganizationExaminationDetailTab } from "../components/organization-examination-detail-tab"
+import { OrganizationReportsTab } from "../components/organization-reports-tab"
 import { EditOrganizationDialog } from "../components/edit-organization-dialog"
 import { CreateHealthExaminationBatchDialog } from "../components/create-health-examination-batch-dialog"
 
@@ -21,7 +24,46 @@ interface OrganizationDetailPageProps {
 export function OrganizationDetailPage({
   organizationId,
 }: OrganizationDetailPageProps) {
-  const [activeTab, setActiveTab] = React.useState<OrganizationTabType>("info")
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const pathname = usePathname()
+
+  const tabParam = searchParams?.get("tab")
+  const [activeTabState, setActiveTabState] = React.useState<OrganizationTabType>(() => {
+    return tabParam === "batches"
+      ? "batches"
+      : tabParam === "examinations" || tabParam === "examination"
+      ? "examinations"
+      : tabParam === "reports" || tabParam === "report"
+      ? "reports"
+      : "info"
+  })
+
+  const activeTab: OrganizationTabType =
+    tabParam === "batches"
+      ? "batches"
+      : tabParam === "examinations" || tabParam === "examination"
+      ? "examinations"
+      : tabParam === "reports" || tabParam === "report"
+      ? "reports"
+      : tabParam === "info"
+      ? "info"
+      : activeTabState
+
+  const handleTabChange = (tab: OrganizationTabType) => {
+    setActiveTabState(tab)
+    const params = new URLSearchParams(searchParams?.toString() || "")
+    if (tab === "info") {
+      params.delete("tab")
+    } else {
+      params.set("tab", tab)
+    }
+    const query = params.toString() ? `?${params.toString()}` : ""
+    if (router && typeof router.replace === "function") {
+      router.replace(`${pathname}${query}`, { scroll: false })
+    }
+  }
+
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false)
   const [isCreateBatchDialogOpen, setIsCreateBatchDialogOpen] =
     React.useState(false)
@@ -83,8 +125,8 @@ export function OrganizationDetailPage({
       {/* 2. 4-column Summary Strip */}
       <OrganizationSummaryStrip organization={organization} />
 
-      {/* 3. Tab Navigation */}
-      <OrganizationTabs activeTab={activeTab} onTabChange={setActiveTab} />
+      {/* 3. Tab Navigation (4 tabs) */}
+      <OrganizationTabs activeTab={activeTab} onTabChange={handleTabChange} />
 
       {/* 4. Tab Content */}
       <div className="pt-1">
@@ -95,6 +137,22 @@ export function OrganizationDetailPage({
         {activeTab === "batches" && (
           <OrganizationHealthExaminationBatchesTab
             organizationId={organization.id}
+            onCreateBatchClick={() => setIsCreateBatchDialogOpen(true)}
+          />
+        )}
+
+        {activeTab === "examinations" && (
+          <OrganizationExaminationDetailTab
+            organizationId={organization.id}
+            onCreateBatchClick={() => setIsCreateBatchDialogOpen(true)}
+          />
+        )}
+
+        {activeTab === "reports" && (
+          <OrganizationReportsTab
+            organizationId={organization.id}
+            organizationCode={organization.code}
+            organizationName={organization.name}
             onCreateBatchClick={() => setIsCreateBatchDialogOpen(true)}
           />
         )}

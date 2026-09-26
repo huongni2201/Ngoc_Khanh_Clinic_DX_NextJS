@@ -203,5 +203,105 @@ describe("OrganizationDetailPage (Screen 02)", () => {
       screen.getByRole("button", { name: /Về danh sách đơn vị/i })
     ).toBeInTheDocument()
   })
+
+  it("renders all 4 tabs and switches to 'Chi tiết khám' tab with operational summary and drawer", async () => {
+    const user = userEvent.setup()
+    renderWithClient(<OrganizationDetailPage organizationId="ent-2" />)
+
+    await waitFor(() => {
+      expect(screen.getByText("Thông tin đơn vị")).toBeInTheDocument()
+    })
+
+    // Verify all 4 tabs exist
+    expect(screen.getByRole("button", { name: "Thông tin" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Đợt khám" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Chi tiết khám" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Báo cáo" })).toBeInTheDocument()
+
+    // Click 'Chi tiết khám' tab
+    const examTab = screen.getByRole("button", { name: "Chi tiết khám" })
+    await user.click(examTab)
+
+    // Should call router.replace with ?tab=examinations
+    expect(mockReplace).toHaveBeenCalledWith("/organizations/ent-2?tab=examinations", { scroll: false })
+
+    // Verify operational summary cards in Chi tiết khám
+    await waitFor(() => {
+      expect(screen.getByText("Tổng số người")).toBeInTheDocument()
+      expect(screen.getByText("Đã tiếp nhận")).toBeInTheDocument()
+      expect(screen.getByText("Đang khám")).toBeInTheDocument()
+      expect(screen.getByText("Hoàn thành")).toBeInTheDocument()
+      expect(screen.getByText("Chưa đến")).toBeInTheDocument()
+    })
+
+    // Verify patient-centric table headers
+    expect(screen.getByText("Người khám")).toBeInTheDocument()
+    expect(screen.getByText("Tiếp nhận")).toBeInTheDocument()
+    expect(screen.getByText("Khám BS")).toBeInTheDocument()
+    expect(screen.getByText("Dịch vụ")).toBeInTheDocument()
+    expect(screen.getByText("Kết luận")).toBeInTheDocument()
+
+    // Find a participant row and click it to open drawer
+    await waitFor(() => {
+      expect(screen.getByText("Trần Minh Đức")).toBeInTheDocument()
+    })
+
+    const participantRow = screen.getByText("Trần Minh Đức")
+    await user.click(participantRow)
+
+    // Verify drawer appears with participant details
+    await waitFor(() => {
+      expect(screen.getByRole("dialog")).toBeInTheDocument()
+      expect(screen.getByText("Thông tin tiếp nhận & Khám lâm sàng")).toBeInTheDocument()
+      expect(screen.getByText(/Tiến độ dịch vụ/i)).toBeInTheDocument()
+      expect(screen.getByText("Kết luận khám sức khỏe")).toBeInTheDocument()
+    })
+  })
+
+  it("switches to 'Báo cáo' tab, shows cost calculation and supports switching between vertical and horizontal reports", async () => {
+    const user = userEvent.setup()
+    renderWithClient(<OrganizationDetailPage organizationId="ent-2" />)
+
+    await waitFor(() => {
+      expect(screen.getByText("Thông tin đơn vị")).toBeInTheDocument()
+    })
+
+    // Click 'Báo cáo' tab
+    const reportsTab = screen.getByRole("button", { name: "Báo cáo" })
+    await user.click(reportsTab)
+
+    expect(mockReplace).toHaveBeenCalledWith("/organizations/ent-2?tab=reports", { scroll: false })
+
+    // Verify report notice banner & export buttons
+    await waitFor(() => {
+      expect(screen.getByText(/Dữ liệu tạm tính/i)).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /Xuất Excel \(Ngang\)/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /Xuất Excel \(Dọc\)/i })).toBeInTheDocument()
+    })
+
+    // Verify default view is Vertical Cost Report (Report Type B)
+    expect(
+      screen.getByRole("button", { name: /Báo cáo theo dịch vụ & chi phí \(Dọc\)/i })
+    ).toBeInTheDocument()
+
+    await waitFor(() => {
+      expect(screen.getByText("Hạng mục dịch vụ")).toBeInTheDocument()
+      expect(screen.getByText("Số lượng thực tế")).toBeInTheDocument()
+      expect(screen.getByText("Đơn giá hợp đồng")).toBeInTheDocument()
+      expect(screen.getByText("Thành tiền")).toBeInTheDocument()
+      expect(screen.getByText("Tổng cộng chi phí thực tế:")).toBeInTheDocument()
+    })
+
+    // Switch to Horizontal Participant Matrix Report (Report Type A)
+    const horizontalReportBtn = screen.getByRole("button", {
+      name: /Báo cáo theo người khám \(Ngang\)/i,
+    })
+    await user.click(horizontalReportBtn)
+
+    await waitFor(() => {
+      expect(screen.getByText("Mã NK")).toBeInTheDocument()
+      expect(screen.getByText("Đơn vị công tác")).toBeInTheDocument()
+    })
+  })
 })
 

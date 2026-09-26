@@ -3,7 +3,7 @@
 import * as React from "react"
 import { cn } from "@/lib/utils"
 
-export type OrganizationTabType = "info" | "batches"
+export type OrganizationTabType = "info" | "batches" | "examinations" | "reports"
 
 interface OrganizationTabsProps {
   activeTab: OrganizationTabType
@@ -17,6 +17,8 @@ export function OrganizationTabs({
   const tabs = [
     { id: "info" as const, label: "Thông tin" },
     { id: "batches" as const, label: "Đợt khám" },
+    { id: "examinations" as const, label: "Chi tiết khám" },
+    { id: "reports" as const, label: "Báo cáo" },
   ]
 
   return (
