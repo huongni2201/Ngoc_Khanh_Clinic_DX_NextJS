@@ -114,9 +114,11 @@ export function CreateAppointmentDialog({
   )
   const { data: batchesData } = useOrganizationHealthExaminationBatches(selectedOrganizationId)
   const batches = React.useMemo(() => batchesData?.data || [], [batchesData?.data])
-  const { data: participantsData } = useHealthExaminationBatchParticipants(selectedHealthExaminationBatchId, {
-    pageSize: 100,
-  })
+  const { data: participantsData } = useHealthExaminationBatchParticipants(
+    selectedOrganizationId,
+    selectedHealthExaminationBatchId,
+    { pageSize: 100 }
+  )
   const participants = React.useMemo(
     () => participantsData?.data || [],
     [participantsData?.data]

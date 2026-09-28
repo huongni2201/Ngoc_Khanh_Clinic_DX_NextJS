@@ -1,20 +1,10 @@
 "use client"
 
 import * as React from "react"
-import Link from "next/link"
 import { useSearchParams, useRouter, usePathname } from "next/navigation"
-import { AlertCircle, ArrowLeft, RefreshCw } from "@/shared/ui/product-icon"
-import { Button } from "@/components/ui/button"
-import { ScreenLayout, ScreenLoadingSkeleton } from "@/shared/ui"
-import { useOrganization } from "@/modules/organizations/hooks/use-organizations"
-import { useHealthExaminationBatchDetail } from "../hooks/use-health-examination-batches"
-import { HealthExaminationBatchHeader } from "../components/health-examination-batch-header"
-import { HealthExaminationBatchSummaryStrip } from "../components/health-examination-batch-summary-strip"
+import { PageHeader, ScreenLayout } from "@/shared/ui"
 import { HealthExaminationBatchTabs, HealthExaminationBatchTabType } from "../components/health-examination-batch-tabs"
 import { ParticipantsTab } from "../components/participants-tab/participants-tab"
-import { ExaminationDetailTab } from "../components/examination-detail-tab/examination-detail-tab"
-import { ReportTab } from "../components/report-tab/report-tab"
-import { ImportParticipantsDialog } from "../components/import-participants-dialog"
 
 interface HealthExaminationBatchDetailPageProps {
   organizationId: string
@@ -40,8 +30,6 @@ export function HealthExaminationBatchDetailPage({
       ? "report"
       : "participants")
 
-  const [isImportDialogOpen, setIsImportDialogOpen] = React.useState(false)
-
   const handleTabChange = (tab: HealthExaminationBatchTabType) => {
     setLocalTab(tab)
     const params = new URLSearchParams(searchParams?.toString() || "")
@@ -58,132 +46,44 @@ export function HealthExaminationBatchDetailPage({
     }
   }
 
-  const {
-    data: organization,
-    isLoading: isLoadingOrganization,
-  } = useOrganization(organizationId)
-
-  const {
-    data: batch,
-    isLoading: isLoadingBatch,
-    isError: isErrorBatch,
-    refetch: refetchBatch,
-  } = useHealthExaminationBatchDetail(batchId)
-
-  const isLoading = isLoadingOrganization || isLoadingBatch
-
-  // Function to download the standard participant roster Excel template
-  const handleDownloadTemplate = () => {
-    const csvContent =
-      "data:text/csv;charset=utf-8," +
-      encodeURIComponent(
-        "STT,Mã người khám,Họ tên,Ngày sinh,Giới tính,CCCD,Số điện thoại,Đơn vị công tác,Chức vụ,Địa chỉ,Ghi chú\n" +
-          "1,FPT001,Trần Minh Đức,14/03/1990,Nam,090312345678,0901234567,Khối Công nghệ,Kỹ sư,Hà Nội,\n" +
-          "2,FPT002,Nguyễn Thu Hà,22/08/1992,Nữ,001189012345,0987654321,Khối Nhân sự,Chuyên viên,Hà Nội,\n"
-      )
-    const link = document.createElement("a")
-    link.setAttribute("href", csvContent)
-    link.setAttribute("download", `mau_danh_sach_nhan_su_${batch?.code || "DK"}.csv`)
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-  }
-
-  // Loading skeleton matching visual structure
-  if (isLoading) {
-    return <ScreenLoadingSkeleton variant="detail" />
-  }
-
-  // Error state
-  if (isErrorBatch || !batch) {
-    return (
-      <ScreenLayout data-slot="health-examination-batch-detail-error" className="items-center justify-center py-16 text-center">
-        <div className="size-14 rounded-full bg-destructive/10 text-destructive flex items-center justify-center mx-auto">
-          <AlertCircle className="size-7" />
-        </div>
-        <h2 className="text-lg font-bold text-foreground">
-          Không tìm thấy đợt khám
-        </h2>
-        <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-          Đợt khám với mã &quot;{batchId}&quot; không tồn tại hoặc đã bị xóa.
-        </p>
-        <div className="flex items-center justify-center gap-3 pt-2">
-          <Link href={`/organizations/${organizationId}`}>
-            <Button variant="outline" size="sm" className="text-xs h-9">
-              <ArrowLeft className="size-3.5 mr-1.5" />
-              Về chi tiết đơn vị
-            </Button>
-          </Link>
-          <Button
-            size="sm"
-            onClick={() => refetchBatch()}
-            className="text-xs h-9 "
-          >
-            <RefreshCw className="size-3.5 mr-1.5" />
-            Thử lại
-          </Button>
-        </div>
-      </ScreenLayout>
-    )
-  }
-
-  const organizationName = organization?.name || "Công ty Cổ phần FPT"
+  const subtitle =
+    activeTab === "participants"
+      ? "Danh sách nhân viên trong đợt khám"
+      : "API cho phần này chưa được cung cấp"
 
   return (
     <ScreenLayout data-slot="health-examination-batch-detail-page" className="gap-6">
-      {/* 1. Breadcrumbs, Title & Top-Right Actions */}
-      <HealthExaminationBatchHeader
-        batch={batch}
-        organizationName={organizationName}
-        activeTab={activeTab}
-        onImportClick={() => setIsImportDialogOpen(true)}
-        onDownloadTemplateClick={handleDownloadTemplate}
+      <PageHeader
+        breadcrumbs={[
+          { label: "Đơn vị", href: `/organizations/${organizationId}` },
+          { label: "Đợt khám" },
+          { label: batchId },
+        ]}
+        title={`Đợt khám ${batchId}`}
+        description={subtitle}
       />
 
-      {/* 2. 4-column Summary Strip */}
-      <HealthExaminationBatchSummaryStrip
-        batch={batch}
-        organizationName={organizationName}
-      />
-
-      {/* 3. 3-tab Navigation */}
       <HealthExaminationBatchTabs
         activeTab={activeTab}
         onTabChange={handleTabChange}
       />
 
-      {/* 4. Tab Content */}
       <div className="pt-1">
         {activeTab === "participants" && (
           <ParticipantsTab
-            batchId={batch.id}
-            organizationId={batch.organizationId}
-            totalBatchParticipants={batch.participantCount}
-            onImportClick={() => setIsImportDialogOpen(true)}
-            onDownloadTemplateClick={handleDownloadTemplate}
+            batchId={batchId}
+            organizationId={organizationId}
           />
         )}
 
-        {activeTab === "examination" && (
-          <ExaminationDetailTab batchId={batch.id} />
-        )}
-
-        {activeTab === "report" && (
-          <ReportTab
-            batchId={batch.id}
-            batchName={batch.name}
-          />
+        {(activeTab === "examination" || activeTab === "report") && (
+          <div className="rounded-lg border border-dashed border-border p-10 text-center">
+            <p className="text-sm font-medium text-foreground">
+              Chưa có API cho nội dung này.
+            </p>
+          </div>
         )}
       </div>
-
-      {/* 5. Import Participants Dialog */}
-      <ImportParticipantsDialog
-        open={isImportDialogOpen}
-        onOpenChange={setIsImportDialogOpen}
-        batchId={batch.id}
-        batchName={batch.name}
-        onDownloadTemplate={handleDownloadTemplate}
-      />
     </ScreenLayout>
   )
 }

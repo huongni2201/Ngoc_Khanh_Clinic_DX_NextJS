@@ -6,7 +6,6 @@ import {
   fetchHealthExaminationBatchesByOrganization,
   fetchHealthExaminationBatchById,
   createHealthExaminationBatch,
-  fetchHealthExaminationBatchParticipants,
   fetchHealthExaminationBatchMatrix,
   fetchHealthExaminationBatchReport,
   fetchExaminationDetailExportData,
@@ -14,6 +13,7 @@ import {
   importParticipantsToBatch,
   populateSampleParticipantsForBatch,
 } from "@/modules/health-examinations/api"
+import { fetchHealthExaminationBatchEmployees } from "../api/employees"
 import {
   downloadFile,
   generateDetailHorizontalCSV,
@@ -84,13 +84,14 @@ export function useCreateHealthExaminationBatch() {
 }
 
 export function useHealthExaminationBatchParticipants(
+  organizationId: string,
   batchId: string,
   params?: ParticipantListFilterParams
 ) {
   return useQuery<ParticipantListResponse>({
-    queryKey: ["health-examination-batch-participants", batchId, params],
-    queryFn: () => fetchHealthExaminationBatchParticipants(batchId, params),
-    enabled: Boolean(batchId),
+    queryKey: ["health-examination-batch-participants", organizationId, batchId, params],
+    queryFn: () => fetchHealthExaminationBatchEmployees(organizationId, batchId, params),
+    enabled: Boolean(organizationId && batchId),
   })
 }
 

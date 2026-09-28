@@ -6,8 +6,6 @@ import {
   HealthExaminationBatchListResponse,
   HealthExaminationParticipant,
   LegacyEmployeeImportRow,
-  ParticipantListFilterParams,
-  ParticipantListResponse,
   ParticipantExaminationProgress,
   ExaminationProgressFilterParams,
   ExaminationProgressResponse,
@@ -544,53 +542,6 @@ export async function createHealthExaminationBatch(request: CreateHealthExaminat
 
   healthExaminationBatchesStore = [newBatch, ...healthExaminationBatchesStore]
   return { ...newBatch }
-}
-
-// ----------------------------------------------------
-// Screen 04: Fetch Participant Roster (Tab 1)
-// ----------------------------------------------------
-export async function fetchHealthExaminationBatchParticipants(
-  batchId: string,
-  params?: ParticipantListFilterParams
-): Promise<ParticipantListResponse> {
-  await new Promise((resolve) => setTimeout(resolve, 50))
-
-  let filtered = participantsStore.filter((e) => e.batchId === batchId)
-
-  // Search by code, name, CCCD, phoneNumber
-  if (params?.search && params.search.trim() !== "") {
-    const keyword = params.search.trim().toLowerCase()
-    filtered = filtered.filter(
-      (e) =>
-        (e.participantCode?.toLowerCase().includes(keyword) ?? false) ||
-        e.fullName.toLowerCase().includes(keyword) ||
-        (e.identificationNumber?.toLowerCase().includes(keyword) ?? false) ||
-        (e.phoneNumber?.toLowerCase().includes(keyword) ?? false)
-    )
-  }
-
-  // Filter by organizationUnit
-  if (params?.organizationUnit && params.organizationUnit !== "ALL") {
-    filtered = filtered.filter((e) => e.organizationUnit === params.organizationUnit)
-  }
-
-  // Filter by profile status
-  if (params?.profileStatus && params.profileStatus !== "ALL") {
-    filtered = filtered.filter((e) => e.profileStatus === params.profileStatus)
-  }
-
-  const page = params?.page || 1
-  const pageSize = params?.pageSize || 10
-  const total = filtered.length
-  const totalPages = Math.max(1, Math.ceil(total / pageSize))
-
-  return {
-    data: filtered.slice((page - 1) * pageSize, page * pageSize),
-    total,
-    page,
-    pageSize,
-    totalPages,
-  }
 }
 
 // ----------------------------------------------------

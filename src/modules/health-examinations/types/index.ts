@@ -107,8 +107,6 @@ export interface LegacyEmployeeImportRow {
 
 export interface ParticipantListFilterParams {
   search?: string
-  organizationUnit?: string
-  profileStatus?: string
   page?: number
   pageSize?: number
 }
