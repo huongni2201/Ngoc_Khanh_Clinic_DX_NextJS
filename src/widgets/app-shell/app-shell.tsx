@@ -4,13 +4,29 @@ import * as React from "react"
 import { AppSidebar } from "@/widgets/app-sidebar/app-sidebar"
 import { AppHeader, type AppHeaderUser } from "@/widgets/app-header/app-header"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
+import { AuthBoundary } from "@/modules/auth"
+import { PaymentCompletionNotifier } from "@/modules/billing"
 
 export interface AppShellProps {
   children: React.ReactNode
-  user?: AppHeaderUser
 }
 
-export function AppShell({ children, user }: AppShellProps) {
+export function AppShell({ children }: AppShellProps) {
+  return (
+    <AuthBoundary>
+      {(session) => (
+        <AuthenticatedShell key={session.userId} user={{
+          name: session.username,
+          role: [...new Set(session.roleAssignments.map((assignment) => assignment.roleCode))].join(", "),
+        }}>
+          {children}
+        </AuthenticatedShell>
+      )}
+    </AuthBoundary>
+  )
+}
+
+function AuthenticatedShell({ children, user }: AppShellProps & { user: AppHeaderUser }) {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false)
 
   return (
@@ -45,6 +61,7 @@ export function AppShell({ children, user }: AppShellProps) {
           </div>
         </main>
       </div>
+      <PaymentCompletionNotifier />
     </div>
   )
 }

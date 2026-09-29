@@ -1,19 +1,18 @@
 "use client"
 
 import * as React from "react"
-import Link from "next/link"
-import { useForm, Controller } from "react-hook-form"
+import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { User, Lock, Eye, EyeOff, Loader2, AlertCircle } from "@/shared/ui/product-icon"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { loginSchema, type LoginFormValues } from "../schemas/login.schema"
 
 interface LoginFormProps {
   onSubmit: (values: LoginFormValues) => Promise<void>
+  retryAt?: number
   isLoading?: boolean
   serverError?: string | null
   onClearServerError?: () => void
@@ -22,6 +21,7 @@ interface LoginFormProps {
 export function LoginForm({
   onSubmit,
   isLoading = false,
+  retryAt = 0,
   serverError,
   onClearServerError,
 }: LoginFormProps) {
@@ -30,7 +30,6 @@ export function LoginForm({
   const {
     register,
     handleSubmit,
-    control,
     formState: { errors, isValid, isSubmitting },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -38,11 +37,19 @@ export function LoginForm({
     defaultValues: {
       username: "",
       password: "",
-      rememberMe: false,
     },
   })
 
+  const [remaining, setRemaining] = React.useState(0)
+  React.useEffect(() => {
+    const update = () => setRemaining(Math.max(0, Math.ceil((retryAt - Date.now()) / 1000)))
+    update()
+    if (!retryAt) return
+    const timer = setInterval(update, 1000)
+    return () => clearInterval(timer)
+  }, [retryAt])
   const isBusy = isLoading || isSubmitting
+  const throttled = remaining > 0
 
   const handleFormSubmit = async (values: LoginFormValues) => {
     await onSubmit(values)
@@ -163,41 +170,12 @@ export function LoginForm({
         )}
       </div>
 
-      {/* Option Row: Remember Me & Forgot Password */}
-      <div className="flex items-center justify-between pt-0.5">
-        <div className="flex items-center gap-2">
-          <Controller
-            control={control}
-            name="rememberMe"
-            render={({ field }) => (
-              <Checkbox
-                id="rememberMe"
-                checked={field.value}
-                onCheckedChange={field.onChange}
-                disabled={isBusy}
-              />
-            )}
-          />
-          <Label
-            htmlFor="rememberMe"
-            className="text-xs sm:text-sm text-secondary-foreground font-normal cursor-pointer select-none"
-          >
-            Ghi nhớ đăng nhập
-          </Label>
-        </div>
-
-        <Link
-          href="/forgot-password"
-          className="text-xs sm:text-sm text-primary hover:underline font-medium transition-colors"
-        >
-          Quên mật khẩu?
-        </Link>
-      </div>
+      {throttled && <p role="status" className="text-sm text-muted-foreground">Vui lòng thử lại sau {remaining} giây.</p>}
 
       {/* Submit Button */}
       <Button
         type="submit"
-        disabled={!isValid || isBusy}
+        disabled={!isValid || isBusy || throttled}
         className="mt-1 h-10 w-full"
       >
         {isBusy ? (

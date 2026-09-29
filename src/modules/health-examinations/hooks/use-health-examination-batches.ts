@@ -90,7 +90,9 @@ export function useHealthExaminationBatchParticipants(
 ) {
   return useQuery<ParticipantListResponse>({
     queryKey: ["health-examination-batch-participants", organizationId, batchId, params],
-    queryFn: () => fetchHealthExaminationBatchEmployees(organizationId, batchId, params),
+    queryFn: ({ signal }) => fetchHealthExaminationBatchEmployees(organizationId, batchId, params, signal),
+    meta: { requiresAuth: true },
+    retry: false,
     enabled: Boolean(organizationId && batchId),
   })
 }

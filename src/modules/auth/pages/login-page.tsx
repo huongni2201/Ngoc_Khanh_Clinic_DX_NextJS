@@ -1,6 +1,8 @@
 "use client"
 
 import * as React from "react"
+import { Button } from "@/components/ui/button"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useRouter } from "next/navigation"
 import { LoginBackgroundDecorations } from "../components/login-background-decorations"
 import { LoginCard } from "../components/login-card"
@@ -16,12 +18,15 @@ export function LoginPage() {
     isLoggingIn,
     loginError,
     resetLoginError,
+    retryAt,
+    sessionError,
+    retrySession,
   } = useAuth()
 
-  // Redirect to dashboard if user is already authenticated
+  // Redirect to organizations if user is already authenticated
   React.useEffect(() => {
     if (!isCheckingAuth && isAuthenticated) {
-      router.replace("/dashboard")
+      router.replace("/organizations")
     }
   }, [isAuthenticated, isCheckingAuth, router])
 
@@ -30,9 +35,7 @@ export function LoginPage() {
       await login({
         username: values.username,
         password: values.password,
-        rememberMe: values.rememberMe,
       })
-      router.push("/dashboard")
     } catch {
       // Error is caught and surfaced via loginError in useAuth hook
     }
@@ -47,6 +50,21 @@ export function LoginPage() {
     )
   }
 
+  if (sessionError) {
+    return (
+      <div className="m-auto max-w-md p-6">
+        <Alert variant="destructive">
+          <AlertDescription>
+            {sessionError}
+            <Button className="mt-3" variant="outline" onClick={() => void retrySession()}>
+              Thử lại
+            </Button>
+          </AlertDescription>
+        </Alert>
+      </div>
+    )
+  }
+
   return (
     <div className="relative min-h-screen w-full flex flex-col justify-between items-center bg-background px-4 py-8 sm:py-12 overflow-x-hidden">
       {/* Subtle Background Shapes & Dot Grids */}
@@ -57,6 +75,7 @@ export function LoginPage() {
         <LoginCard
           onSubmit={handleLoginSubmit}
           isLoading={isLoggingIn}
+          retryAt={retryAt}
           serverError={loginError}
           onClearServerError={resetLoginError}
         />

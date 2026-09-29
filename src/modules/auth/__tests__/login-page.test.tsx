@@ -1,185 +1,92 @@
 import * as React from "react"
-import { render, screen, waitFor } from "@testing-library/react"
+import { render, screen, waitFor, cleanup } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { describe, it, expect, vi, beforeEach } from "vitest"
-import "@testing-library/jest-dom/vitest"
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { LoginPage } from "../pages/login-page"
+import { csrf, ok, staffSession } from "./fixtures"
 
-// Mock next/navigation
-const mockPush = vi.fn()
-const mockReplace = vi.fn()
+const replace = vi.fn()
+vi.mock("next/navigation", () => ({ useRouter: () => ({ replace }) }))
+const request = vi.fn()
 
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({
-    push: mockPush,
-    replace: mockReplace,
-    prefetch: vi.fn(),
-  }),
-  usePathname: () => "/login",
-  useSearchParams: () => new URLSearchParams(),
-}))
-
-function renderWithClient(ui: React.ReactElement) {
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: { retry: false },
-      mutations: { retry: false },
-    },
-  })
-
-  return render(
-    <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>
-  )
+function renderLogin() {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  render(<QueryClientProvider client={client}><LoginPage /></QueryClientProvider>)
+  return client
 }
 
-describe("LoginPage & LoginForm (Ngọc Khánh Clinic Login Screen)", () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-    localStorage.clear()
+beforeEach(() => {
+  vi.clearAllMocks()
+  localStorage.clear()
+  vi.stubGlobal("fetch", request)
+  request.mockResolvedValue(new Response(null, { status: 401 }))
+})
+afterEach(() => { cleanup(); vi.unstubAllGlobals() })
+
+async function fill() {
+  const user = userEvent.setup()
+  await user.type(await screen.findByPlaceholderText("Nhập tên đăng nhập"), "staff.test")
+  await user.type(screen.getByPlaceholderText("Nhập mật khẩu"), "secret")
+  return user
+}
+
+describe("staff login screen", () => {
+  it("restores /me before displaying the form and omits unsupported options", async () => {
+    renderLogin()
+    expect(await screen.findByRole("button", { name: "Đăng nhập" })).toBeDisabled()
+    expect(screen.queryByText("Quên mật khẩu?")).not.toBeInTheDocument()
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument()
   })
 
-  it("renders all required UI elements according to the design specification", async () => {
-    renderWithClient(<LoginPage />)
-
-    // Header & Logo
-    expect(screen.getByAltText("Ngọc Khánh Clinic Logo")).toBeInTheDocument()
-    expect(screen.getByText("Ngọc Khánh")).toBeInTheDocument()
-    expect(screen.getByText("Clinic")).toBeInTheDocument()
-    expect(
-      screen.getByText("Quản lý khám sức khỏe đơn vị")
-    ).toBeInTheDocument()
-
-    // Title & Subtitle
-    expect(screen.getByText("Đăng nhập hệ thống")).toBeInTheDocument()
-    expect(
-      screen.getByText("Vui lòng đăng nhập để tiếp tục sử dụng hệ thống.")
-    ).toBeInTheDocument()
-
-    // Form Fields
-    expect(
-      screen.getByLabelText(/^Tên đăng nhập/i, { selector: "input" })
-    ).toBeInTheDocument()
-    expect(
-      screen.getByLabelText(/^Mật khẩu/i, { selector: "input" })
-    ).toBeInTheDocument()
-    expect(
-      screen.getByPlaceholderText("Nhập tên đăng nhập")
-    ).toBeInTheDocument()
-    expect(screen.getByPlaceholderText("Nhập mật khẩu")).toBeInTheDocument()
-
-    // Options Row
-    expect(
-      screen.getByRole("checkbox", { name: /Ghi nhớ đăng nhập/i })
-    ).toBeInTheDocument()
-    expect(screen.getByText("Quên mật khẩu?")).toBeInTheDocument()
-
-    // Submit Button
-    const submitBtn = screen.getByRole("button", { name: "Đăng nhập" })
-    expect(submitBtn).toBeInTheDocument()
-    expect(submitBtn).toBeDisabled() // Disabled initially because form is empty
-
-    // Footers
-    expect(
-      screen.getByText("Cần hỗ trợ? Liên hệ quản trị viên hệ thống.")
-    ).toBeInTheDocument()
-    expect(
-      screen.getByText("© 2026 Ngọc Khánh Clinic. Tất cả quyền được bảo lưu.")
-    ).toBeInTheDocument()
+  it("keeps password visibility accessible", async () => {
+    renderLogin()
+    const user = await fill()
+    await user.click(screen.getByRole("button", { name: "Hiện mật khẩu" }))
+    expect(screen.getByPlaceholderText("Nhập mật khẩu")).toHaveAttribute("type", "text")
   })
 
-  it("enables submit button only when both fields are filled", async () => {
-    const user = userEvent.setup()
-    renderWithClient(<LoginPage />)
-
-    const usernameInput = screen.getByPlaceholderText("Nhập tên đăng nhập")
-    const passwordInput = screen.getByPlaceholderText("Nhập mật khẩu")
-    const submitBtn = screen.getByRole("button", { name: "Đăng nhập" })
-
-    expect(submitBtn).toBeDisabled()
-
-    await user.type(usernameInput, "admin")
-    expect(submitBtn).toBeDisabled()
-
-    await user.type(passwordInput, "secret123")
-    expect(submitBtn).toBeEnabled()
-
-    await user.clear(usernameInput)
-    expect(submitBtn).toBeDisabled()
+  it("shows a generic credential error without redirecting", async () => {
+    renderLogin()
+    const user = await fill()
+    request.mockResolvedValueOnce(csrf()).mockResolvedValueOnce(new Response(null, { status: 401 }))
+    await user.click(screen.getByRole("button", { name: "Đăng nhập" }))
+    expect(await screen.findByText("Tên đăng nhập hoặc mật khẩu không chính xác.")).toBeInTheDocument()
+    expect(replace).not.toHaveBeenCalled()
   })
 
-  it("toggles password visibility when Eye/EyeOff icon is clicked", async () => {
-    const user = userEvent.setup()
-    renderWithClient(<LoginPage />)
-
-    const passwordInput = screen.getByPlaceholderText("Nhập mật khẩu")
-    expect(passwordInput).toHaveAttribute("type", "password")
-
-    const toggleBtn = screen.getByRole("button", { name: "Hiện mật khẩu" })
-    await user.click(toggleBtn)
-
-    expect(passwordInput).toHaveAttribute("type", "text")
-    expect(screen.getByRole("button", { name: "Ẩn mật khẩu" })).toBeInTheDocument()
-
-    await user.click(screen.getByRole("button", { name: "Ẩn mật khẩu" }))
-    expect(passwordInput).toHaveAttribute("type", "password")
+  it("logs in, clears old data and redirects without storing a token", async () => {
+    const client = renderLogin()
+    const user = await fill()
+    client.setQueryData(["patients"], ["previous-user-data"])
+    request.mockResolvedValueOnce(csrf()).mockResolvedValueOnce(ok(staffSession))
+    await user.click(screen.getByRole("button", { name: "Đăng nhập" }))
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/organizations"))
+    expect(client.getQueryData(["patients"])).toBeUndefined()
+    expect(localStorage.length).toBe(0)
+    await waitFor(() => expect(client.getMutationCache().getAll()).toHaveLength(0))
   })
 
-  it("displays 401 error message when credentials are wrong", async () => {
-    const user = userEvent.setup()
-    renderWithClient(<LoginPage />)
-
-    const usernameInput = screen.getByPlaceholderText("Nhập tên đăng nhập")
-    const passwordInput = screen.getByPlaceholderText("Nhập mật khẩu")
-    const submitBtn = screen.getByRole("button", { name: "Đăng nhập" })
-
-    await user.type(usernameInput, "invalid")
-    await user.type(passwordInput, "wrongpassword")
-    await user.click(submitBtn)
-
-    // Should display the 401 message
-    await waitFor(() => {
-      expect(
-        screen.getByText("Tên đăng nhập hoặc mật khẩu không chính xác.")
-      ).toBeInTheDocument()
-    })
+  it("redirects an existing session to organizations", async () => {
+    request.mockResolvedValueOnce(ok(staffSession))
+    renderLogin()
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/organizations"))
   })
 
-  it("submits form successfully and redirects to /dashboard when valid credentials are provided", async () => {
-    const user = userEvent.setup()
-    renderWithClient(<LoginPage />)
-
-    const usernameInput = screen.getByPlaceholderText("Nhập tên đăng nhập")
-    const passwordInput = screen.getByPlaceholderText("Nhập mật khẩu")
-    const submitBtn = screen.getByRole("button", { name: "Đăng nhập" })
-
-    await user.type(usernameInput, "admin@ngockhanh.vn")
-    await user.type(passwordInput, "Password123!")
-    await user.click(submitBtn)
-
-    await waitFor(() => {
-      expect(mockPush).toHaveBeenCalledWith("/dashboard")
-    })
+  it("shows retry for a /me outage instead of the login form", async () => {
+    request.mockResolvedValueOnce(new Response(null, { status: 503 }))
+    renderLogin()
+    expect(await screen.findByRole("button", { name: "Thử lại" })).toBeInTheDocument()
+    expect(screen.queryByPlaceholderText("Nhập mật khẩu")).not.toBeInTheDocument()
+    expect(replace).not.toHaveBeenCalled()
   })
 
-  it("redirects to /dashboard immediately if user is already authenticated", async () => {
-    // Set authenticated state in localStorage
-    localStorage.setItem("nk_auth_token", "test-token")
-    localStorage.setItem(
-      "nk_auth_user",
-      JSON.stringify({
-        id: "1",
-        username: "admin",
-        name: "Admin",
-        role: "Quản trị viên",
-      })
-    )
-
-    renderWithClient(<LoginPage />)
-
-    await waitFor(() => {
-      expect(mockReplace).toHaveBeenCalledWith("/dashboard")
-    })
+  it("honors Retry-After and blocks duplicate attempts", async () => {
+    renderLogin()
+    const user = await fill()
+    request.mockResolvedValueOnce(csrf()).mockResolvedValueOnce(new Response(null, { status: 429, headers: { "Retry-After": "30" } }))
+    await user.click(screen.getByRole("button", { name: "Đăng nhập" }))
+    expect(await screen.findByText(/Vui lòng thử lại sau/)).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Đăng nhập" })).toBeDisabled()
   })
 })
-

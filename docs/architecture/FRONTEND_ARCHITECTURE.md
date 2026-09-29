@@ -209,6 +209,24 @@ Later:
 
 ## Architecture Changes
 
+### Staff authentication implementation
+
+`modules/auth` owns staff login, logout, session schemas, hooks and AuthBoundary.
+The flow is component → auth hook → auth API → `shared/api/http-client` → identity.
+The browser sends HttpOnly cookies with `credentials: "include"`; frontend code
+does not receive or persist a JWT/session ID. TanStack Query owns the session view.
+
+AppShell mounts protected screens and the payment notifier only after `/me`
+verification. AppHeader receives real identity display values and uses the auth
+module's public logout hook. The root QueryProvider mounts cross-tab synchronization
+and handles 401 errors from queries explicitly marked `requiresAuth`. Shared
+transport remains independent of the auth module. Existing employee-roster HTTP
+requests also use this transport and forward cancellation signals.
+
+See [ADR-0005](../adr/0005-staff-cookie-session.md) and
+[setup/testing guide](../api/staff-auth-frontend.md). Backend authorization remains
+required; the client boundary does not protect server-side data access.
+
 Update this file when the **current architecture** changes.
 
 Create or supersede an ADR when the **decision/rationale** changes.

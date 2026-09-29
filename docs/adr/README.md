@@ -20,6 +20,7 @@ Accepted ADRs should not be rewritten to change history. When a decision changes
 | [0002](0002-reuse-first-ui-components.md) | Reuse-first UI component strategy | Accepted |
 | [0003](0003-frontend-state-management.md) | Frontend state ownership | Accepted |
 | [0004](0004-api-client-error-contract.md) | API client and frontend error contract | Accepted |
+| [0005](0005-staff-cookie-session.md) | Staff authentication with backend cookie sessions | Accepted |
 
 ## When to Create an ADR
 

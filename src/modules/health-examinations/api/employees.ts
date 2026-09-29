@@ -1,10 +1,27 @@
+import { z } from "zod"
+import { apiUrl, httpClient, HttpError } from "@/shared/api/http-client"
 import type {
   HealthExaminationParticipant,
   ParticipantListFilterParams,
   ParticipantListResponse,
 } from "../types"
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080"
+const employeePageSchema = z.object({
+  result: z.literal("OK"), code: z.literal(200), message: z.string().optional(),
+  data: z.object({
+    items: z.array(z.object({
+      batchEmployeeId: z.string(), employeeId: z.string(), employeeCode: z.string().nullish(),
+      departmentName: z.string().nullish(), jobTitle: z.string().nullish(), occupation: z.string().nullish(),
+      snapshot: z.object({
+        fullName: z.string(), dateOfBirth: z.string(), sex: z.string(),
+        identificationNumber: z.union([z.string(), z.object({ value: z.string() })]),
+        phone: z.string().nullish(), province: z.string().nullish(), ward: z.string().nullish(), addressDetail: z.string().nullish(),
+      }),
+      status: z.string(), createdAt: z.string(),
+    })),
+    page: z.number(), size: z.number(), totalElements: z.number(), totalPages: z.number(),
+  }),
+})
 
 export interface EmployeeSnapshotResponse {
   fullName: string
@@ -79,6 +96,14 @@ export function buildEmployeeListUrl(
   batchId: string,
   params: Pick<ParticipantListFilterParams, "search" | "page" | "pageSize"> = {}
 ) {
+  return apiUrl(buildEmployeeListPath(organizationId, batchId, params))
+}
+
+function buildEmployeeListPath(
+  organizationId: string,
+  batchId: string,
+  params: Pick<ParticipantListFilterParams, "search" | "page" | "pageSize"> = {}
+) {
   const query = new URLSearchParams({
     page: String(params.page ?? 1),
     size: String(params.pageSize ?? 10),
@@ -87,7 +112,7 @@ export function buildEmployeeListUrl(
     sortKey: "id",
   })
 
-  return `${API_BASE_URL.replace(/\/$/, "")}/api/v1/organizations/${organizationId}/health-examination-batches/${batchId}/employees?${query.toString()}`
+  return `/api/v1/organizations/${encodeURIComponent(organizationId)}/health-examination-batches/${encodeURIComponent(batchId)}/employees?${query.toString()}`
 }
 
 export function mapEmployeePageResponse(
@@ -120,17 +145,12 @@ export function mapEmployeePageResponse(
 export async function fetchHealthExaminationBatchEmployees(
   organizationId: string,
   batchId: string,
-  params?: ParticipantListFilterParams
+  params?: ParticipantListFilterParams,
+  signal?: AbortSignal,
 ): Promise<ParticipantListResponse> {
-  const result = await fetch(buildEmployeeListUrl(organizationId, batchId, params), {
-    headers: { Accept: "application/json" },
-    cache: "no-store",
-  })
-
-  const response = (await result.json()) as EmployeePageResponse
-  if (!result.ok || response.result !== "OK" || !response.data) {
-    throw new Error(response.message || "Không thể tải danh sách nhân viên")
-  }
-
-  return mapEmployeePageResponse(response, batchId)
+  const response = employeePageSchema.safeParse(await httpClient(
+    buildEmployeeListPath(organizationId, batchId, params), { signal },
+  ))
+  if (!response.success) throw new HttpError("INVALID_RESPONSE", "Không thể đọc danh sách nhân viên từ máy chủ.")
+  return mapEmployeePageResponse(response.data, batchId)
 }

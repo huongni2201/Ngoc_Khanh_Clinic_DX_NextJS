@@ -6,6 +6,7 @@ import { LoginFormValues } from "../schemas/login.schema"
 
 interface LoginCardProps {
   onSubmit: (values: LoginFormValues) => Promise<void>
+  retryAt?: number
   isLoading?: boolean
   serverError?: string | null
   onClearServerError?: () => void
@@ -14,6 +15,7 @@ interface LoginCardProps {
 export function LoginCard({
   onSubmit,
   isLoading = false,
+  retryAt,
   serverError,
   onClearServerError,
 }: LoginCardProps) {
@@ -55,6 +57,7 @@ export function LoginCard({
       <LoginForm
         onSubmit={onSubmit}
         isLoading={isLoading}
+        retryAt={retryAt}
         serverError={serverError}
         onClearServerError={onClearServerError}
       />

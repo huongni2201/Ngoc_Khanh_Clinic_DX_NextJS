@@ -49,7 +49,7 @@ describe("Doctor Worklist — Danh sách lượt khám", () => {
     mockPathname.mockReturnValue("/doctor")
   })
 
-  it("renders the application shell elements with BS. Trần Minh Khoa and highlights Lượt khám in sidebar", () => {
+  it("renders the application shell elements with the supplied staff identity and highlights Lượt khám in sidebar", () => {
     render(<AppSidebar />)
 
     // Check brand header
@@ -70,10 +70,10 @@ describe("Doctor Worklist — Danh sách lượt khám", () => {
     expect(activeLink).toHaveAttribute("aria-current", "page")
 
     // Check header user info
-    render(<AppHeader />)
-    expect(screen.getByText("BS. Trần Minh Khoa")).toBeInTheDocument()
-    expect(screen.getByText("Bác sĩ")).toBeInTheDocument()
-    expect(screen.getByText("MK")).toBeInTheDocument()
+    renderWithClient(<AppHeader user={{ name: "staff.doctor", role: "DOCTOR", initials: "SD" }} />)
+    expect(screen.getByText("staff.doctor")).toBeInTheDocument()
+    expect(screen.getByText("DOCTOR")).toBeInTheDocument()
+    expect(screen.getByText("SD")).toBeInTheDocument()
   })
 
   it("renders page header with breadcrumbs, title, subtitle, and primary/secondary action buttons", async () => {

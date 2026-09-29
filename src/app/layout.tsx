@@ -4,7 +4,6 @@ import "./globals.css";
 import { cn } from "@/lib/utils";
 
 import { QueryProvider } from "@/providers/query-provider";
-import { PaymentCompletionNotifier } from "@/modules/billing";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -25,7 +24,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       className={cn("h-full", "antialiased", geistMono.variable, "font-sans", inter.variable)}
     >
       <body className="h-full flex flex-col bg-background text-foreground overflow-hidden">
-        <QueryProvider>{children}<PaymentCompletionNotifier /></QueryProvider>
+        <QueryProvider>{children}</QueryProvider>
       </body>
     </html>
   );

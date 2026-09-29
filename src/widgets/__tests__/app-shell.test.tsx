@@ -1,8 +1,11 @@
 import { render, screen } from "@testing-library/react"
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { ok, staffSession } from "@/modules/auth/__tests__/fixtures"
 import { AppShell } from "../app-shell/app-shell"
 
 vi.mock("next/navigation", () => ({
+  useRouter: () => ({ replace: vi.fn() }),
   usePathname: vi.fn(() => "/organizations"),
 }))
 
@@ -14,18 +17,23 @@ vi.mock("next/image", () => ({
   },
 }))
 
+vi.mock("@/modules/billing", () => ({ PaymentCompletionNotifier: () => null }))
+afterEach(() => vi.unstubAllGlobals())
+
 describe("AppShell", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.stubGlobal("fetch", vi.fn().mockImplementation(() => Promise.resolve(ok(staffSession))))
   })
 
-  it("exposes the active primary navigation and global search", () => {
+  it("exposes the active primary navigation and global search", async () => {
     render(
-      <AppShell>
+      <QueryClientProvider client={new QueryClient()}><AppShell>
         <p>Nội dung</p>
-      </AppShell>
+      </AppShell></QueryClientProvider>
     )
 
+    await screen.findByText("staff.test")
     expect(
       screen.getByRole("navigation", { name: "Điều hướng chính" })
     ).toBeInTheDocument()
