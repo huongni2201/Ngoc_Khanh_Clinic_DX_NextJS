@@ -15,7 +15,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Organization } from "../types"
-import { cn } from "@/lib/utils"
 
 interface OrganizationTableProps {
   organizations: Organization[]
@@ -23,17 +22,9 @@ interface OrganizationTableProps {
   currentPage?: number
   pageSize?: number
   totalItems?: number
-  activeStatus?: string
-  onStatusChange?: (status: string) => void
   searchTerm?: string
   onSearchChange?: (search: string) => void
 }
-
-const statusTabs = [
-  { key: "ALL", label: "Tất cả" },
-  { key: "IN_PROGRESS", label: "Đang khám" },
-  { key: "COMPLETED", label: "Đã khám" },
-]
 
 export function OrganizationTable({
   organizations,
@@ -41,8 +32,6 @@ export function OrganizationTable({
   currentPage = 1,
   pageSize = 10,
   totalItems,
-  activeStatus = "ALL",
-  onStatusChange,
   searchTerm = "",
   onSearchChange,
 }: OrganizationTableProps) {
@@ -74,8 +63,7 @@ export function OrganizationTable({
 
   const renderCardHeader = (count?: number) => (
     <>
-      {/* Table Header: Title & Status Tabs */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between border-b border-border px-5 pt-4 pb-0 gap-3">
+      <div className="flex items-center justify-between border-b border-border px-5 pt-4 pb-0 gap-3">
         <div className="flex items-center gap-2">
           <h2 className="text-base font-bold text-foreground tracking-tight">
             Danh sách đơn vị
@@ -85,29 +73,6 @@ export function OrganizationTable({
           </span>
         </div>
 
-        {/* Status Tabs */}
-        {onStatusChange && (
-          <div className="flex items-center overflow-x-auto gap-1 -mb-px scrollbar-none">
-            {statusTabs.map((tab) => {
-              const isActive = (activeStatus || "ALL") === tab.key
-              return (
-                <button
-                  key={tab.key}
-                  type="button"
-                  onClick={() => onStatusChange(tab.key)}
-                  className={cn(
-                    "px-3 py-2.5 text-xs font-medium whitespace-nowrap border-b-2 transition-colors cursor-pointer",
-                    isActive
-                      ? "border-primary text-primary font-semibold"
-                      : "border-transparent text-secondary-foreground hover:text-foreground hover:border-border"
-                  )}
-                >
-                  {tab.label}
-                </button>
-              )
-            })}
-          </div>
-        )}
       </div>
 
       {/* Filter Strip */}
@@ -118,7 +83,7 @@ export function OrganizationTable({
             <Input
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
-              placeholder="Tìm theo tên đơn vị, mã, người liên hệ..."
+              placeholder="Tìm theo tên đơn vị, mã số thuế, người liên hệ..."
               className="h-8.5 pl-8.5 pr-3 text-xs bg-card border-border"
             />
           </div>
@@ -137,8 +102,11 @@ export function OrganizationTable({
               <TableHead className="h-9 px-3 text-[11px] font-semibold text-foreground text-center w-12">
                 STT
               </TableHead>
-              <TableHead className="h-9 px-4 text-[11px] font-semibold text-foreground w-[26%]">
+              <TableHead className="h-9 px-4 text-[11px] font-semibold text-foreground w-[24%]">
                 Tên đơn vị
+              </TableHead>
+              <TableHead className="h-9 px-4 text-[11px] font-semibold text-foreground w-[14%]">
+                Mã số thuế
               </TableHead>
               <TableHead className="h-9 px-4 text-[11px] font-semibold text-foreground w-[24%]">
                 Địa chỉ
@@ -146,14 +114,8 @@ export function OrganizationTable({
               <TableHead className="h-9 px-4 text-[11px] font-semibold text-foreground w-[16%]">
                 Người liên hệ
               </TableHead>
-              <TableHead className="h-9 px-4 text-[11px] font-semibold text-foreground text-center w-[9%]">
-                Số đợt khám
-              </TableHead>
-              <TableHead className="h-9 px-4 text-[11px] font-semibold text-foreground w-[11%]">
+              <TableHead className="h-9 px-4 text-[11px] font-semibold text-foreground w-[12%]">
                 Trạng thái
-              </TableHead>
-              <TableHead className="h-9 px-4 text-[11px] font-semibold text-foreground w-[10%]">
-                Cập nhật gần nhất
               </TableHead>
               <TableHead className="h-9 px-3 text-[11px] font-semibold text-foreground text-right pr-4 w-28">
                 Thao tác
@@ -170,6 +132,9 @@ export function OrganizationTable({
                   <Skeleton className="h-4 w-48" />
                 </TableCell>
                 <TableCell className="px-4 py-3">
+                  <Skeleton className="h-4 w-24" />
+                </TableCell>
+                <TableCell className="px-4 py-3">
                   <Skeleton className="h-4 w-52" />
                 </TableCell>
                 <TableCell className="px-4 py-3">
@@ -178,14 +143,8 @@ export function OrganizationTable({
                     <Skeleton className="h-3 w-20" />
                   </div>
                 </TableCell>
-                <TableCell className="px-4 py-3 text-center">
-                  <Skeleton className="h-4 w-6 mx-auto" />
-                </TableCell>
                 <TableCell className="px-4 py-3">
                   <Skeleton className="h-6 w-24 rounded-full" />
-                </TableCell>
-                <TableCell className="px-4 py-3">
-                  <Skeleton className="h-4 w-20" />
                 </TableCell>
                 <TableCell className="px-3 py-3 text-right pr-4">
                   <Skeleton className="size-7.5 rounded-lg ml-auto" />
@@ -205,7 +164,7 @@ export function OrganizationTable({
         <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
           <p className="text-sm font-medium text-foreground">Không tìm thấy đơn vị nào</p>
           <p className="text-xs text-muted-foreground mt-1">
-            Thử thay đổi từ khóa tìm kiếm hoặc điều chỉnh bộ lọc trạng thái.
+            Thử thay đổi từ khóa tìm kiếm.
           </p>
         </div>
       </div>
@@ -224,36 +183,31 @@ export function OrganizationTable({
             </TableHead>
 
             {/* 2. Tên đơn vị */}
-            <TableHead className="h-9 px-4 text-[11px] font-semibold text-foreground w-[26%]">
+            <TableHead className="h-9 px-4 text-[11px] font-semibold text-foreground w-[24%]">
               Tên đơn vị
             </TableHead>
 
-            {/* 3. Địa chỉ */}
+            {/* 3. Mã số thuế */}
+            <TableHead className="h-9 px-4 text-[11px] font-semibold text-foreground w-[14%]">
+              Mã số thuế
+            </TableHead>
+
+            {/* 4. Địa chỉ */}
             <TableHead className="h-9 px-4 text-[11px] font-semibold text-foreground w-[24%]">
               Địa chỉ
             </TableHead>
 
-            {/* 4. Người liên hệ */}
+            {/* 5. Người liên hệ */}
             <TableHead className="h-9 px-4 text-[11px] font-semibold text-foreground w-[16%]">
               Người liên hệ
             </TableHead>
 
-            {/* 5. Số đợt khám */}
-            <TableHead className="h-9 px-4 text-[11px] font-semibold text-foreground text-center w-[9%]">
-              Số đợt khám
-            </TableHead>
-
             {/* 6. Trạng thái */}
-            <TableHead className="h-9 px-4 text-[11px] font-semibold text-foreground w-[11%]">
+            <TableHead className="h-9 px-4 text-[11px] font-semibold text-foreground w-[12%]">
               Trạng thái
             </TableHead>
 
-            {/* 7. Cập nhật gần nhất */}
-            <TableHead className="h-9 px-4 text-[11px] font-semibold text-foreground w-[10%]">
-              Cập nhật gần nhất
-            </TableHead>
-
-            {/* 8. Thao tác */}
+            {/* 7. Thao tác */}
             <TableHead className="h-9 px-3 text-[11px] font-semibold text-foreground text-right pr-4 w-28">
               Thao tác
             </TableHead>
@@ -261,7 +215,6 @@ export function OrganizationTable({
         </TableHeader>
         <TableBody>
           {organizations.map((organization, index) => {
-            const isInProgress = organization.healthExaminationStatus === "IN_PROGRESS"
             const sttNumber = (currentPage - 1) * pageSize + index + 1
 
             return (
@@ -282,18 +235,23 @@ export function OrganizationTable({
                   </span>
                 </TableCell>
 
-                {/* 3. Địa chỉ */}
+                {/* 3. Mã số thuế */}
+                <TableCell className="px-4 py-2.5 text-xs text-muted-foreground">
+                  {organization.taxCode || "—"}
+                </TableCell>
+
+                {/* 4. Địa chỉ */}
                 <TableCell className="px-4 py-2.5 text-xs text-muted-foreground whitespace-normal">
                   <span className="line-clamp-2" title={organization.address}>
                     {organization.address || "—"}
                   </span>
                 </TableCell>
 
-                {/* 4. Người liên hệ */}
+                {/* 5. Người liên hệ */}
                 <TableCell className="px-4 py-2.5">
                   <div className="flex flex-col text-xs">
                     <span className="font-medium text-foreground">
-                      {organization.contactPerson}
+                      {organization.contactName}
                     </span>
                     <span className="text-[11px] text-muted-foreground">
                       {organization.contactPhone}
@@ -301,39 +259,16 @@ export function OrganizationTable({
                   </div>
                 </TableCell>
 
-                {/* 5. Số đợt khám */}
-                <TableCell className="px-4 py-2.5 text-center text-xs font-medium text-foreground">
-                  {organization.batchesCount}
-                </TableCell>
-
                 {/* 6. Trạng thái */}
                 <TableCell className="px-4 py-2.5">
-                  <span
-                    className={cn(
-                      "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium leading-none select-none",
-                      isInProgress
-                        ? "bg-status-in-progress-bg text-status-in-progress"
-                        : "bg-status-completed-bg text-status-completed"
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        "size-1.5 rounded-full shrink-0",
-                        isInProgress
-                          ? "bg-status-in-progress"
-                          : "bg-status-completed"
-                      )}
-                    />
-                    {isInProgress ? "Đang khám" : "Đã khám"}
-                  </span>
+                  {organization.status === "ACTIVE"
+                    ? "Hoạt động"
+                    : organization.status === "INACTIVE"
+                      ? "Ngừng hoạt động"
+                      : organization.status}
                 </TableCell>
 
-                {/* 7. Cập nhật gần nhất */}
-                <TableCell className="px-4 py-2.5 text-xs text-muted-foreground">
-                  {organization.updatedAt}
-                </TableCell>
-
-                {/* 8. Thao tác */}
+                {/* 7. Thao tác */}
                 <TableCell
                   className="px-3 py-2.5 text-right pr-4"
                   onClick={(e) => e.stopPropagation()}

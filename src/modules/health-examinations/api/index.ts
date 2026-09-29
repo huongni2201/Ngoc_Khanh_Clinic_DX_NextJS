@@ -14,6 +14,8 @@ import {
   ServiceCompletionStatus,
 } from "../types"
 
+export * from "./participants"
+
 // Master catalog of clinic's examination items (matching reference image)
 export const clinicalServiceCatalog: ClinicalService[] = [
   {

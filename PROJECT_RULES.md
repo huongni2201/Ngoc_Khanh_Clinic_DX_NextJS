@@ -272,6 +272,16 @@ Forms must handle field errors, form/server errors, submitting state, duplicate-
 
 Do not duplicate validation rules in multiple components.
 
+### Validation Authority
+
+Frontend validation improves user experience but is not authoritative. Backend
+validation remains authoritative for required business data, duplicate identity,
+organization scope, batch membership, participant uniqueness, service
+eligibility, age eligibility, import confirmation and persistence constraints.
+
+Frontend may validate early for immediate feedback, but it must still handle and
+display backend validation results.
+
 ---
 
 ## 8. API Layer
@@ -302,6 +312,122 @@ Rules:
 
 See ADR-0004.
 
+### Backend Contract Is Authoritative
+
+For features backed by an existing backend implementation, the backend HTTP
+contract is the authoritative source of truth.
+
+Priority:
+
+1. Backend endpoint and HTTP method
+2. Backend request/response DTO
+3. Backend pagination/error envelope
+4. Frontend transport DTO
+5. Frontend mapper
+6. Frontend view model
+7. UI
+
+Existing frontend mocks, temporary types, fixtures, UI assumptions and legacy
+routes must not override an existing backend contract. If the UI needs a
+different shape, add a mapper/view model instead of changing the transport
+contract.
+
+### Transport DTO vs View Model
+
+Types representing HTTP request/response payloads must match backend contracts
+exactly. Transport DTOs must not contain frontend-only fields.
+
+Use module-local mappers when the UI needs derived labels, formatted dates,
+computed presentation state, combined values or table-specific fields:
+
+```text
+Backend DTO
+→ Frontend Transport DTO
+→ Mapper
+→ View Model
+→ UI
+```
+
+Never add fabricated fields such as `profileStatus: "VALID"` to a transport
+DTO. A UI-only status is allowed only in a view model when the value can be
+derived from an authoritative source.
+
+### Existing Endpoint Rule
+
+When a backend endpoint exists, frontend API code must call that endpoint as
+implemented. Do not rename backend path segments locally for readability.
+
+For example, the participant endpoint remains:
+
+```http
+GET /api/v1/organizations/{organizationId}/health-examination-batches/{batchId}/participant
+```
+
+Do not replace it with `/employees`, `/participants` or `/roster`. A route
+rename is a backend contract change and must be implemented/versioned there
+first.
+
+### Backend Enum and Lifecycle Status Rule
+
+Frontend transport types must preserve backend enum values exactly. Do not
+simplify, rename, merge or invent backend statuses in transport DTOs.
+
+UI labels may map these values to localized copy without changing the
+underlying transport value:
+
+```text
+DRAFT             → Nháp
+READY             → Sẵn sàng
+IN_PROGRESS       → Đang khám
+RESULT_PROCESSING → Đang xử lý kết quả
+FINALIZED         → Đã hoàn tất chuyên môn
+CLOSED            → Đã đóng
+CANCELED          → Đã hủy
+```
+
+Centralize display mapping and use exhaustive handling where practical.
+
+### No Runtime Mock Fallback
+
+Production API code must never silently fall back to mock, demo or in-memory
+data when an endpoint is unavailable, a request fails or an integration is
+unfinished.
+
+Use an explicit loading, error, unavailable or disabled state instead. Test
+fixtures, test mocks and isolated development-only fixtures that cannot execute
+in production paths are allowed.
+
+### TanStack Query Key Factory
+
+Modules with related list, detail and mutation queries must centralize query
+keys. Do not duplicate key fragments across hooks.
+
+```ts
+export const participantKeys = {
+  all: ["health-examination-batch-participants"] as const,
+  batch: (organizationId: string, batchId: string) =>
+    [...participantKeys.all, organizationId, batchId] as const,
+  list: (organizationId: string, batchId: string, params: ParticipantListParams) =>
+    [...participantKeys.batch(organizationId, batchId), "list", params] as const,
+}
+```
+
+Mutations must invalidate with the same factory and the batch-level prefix.
+Prefer module-local factories; do not create a global query-key framework.
+
+### Date and Time Contract
+
+Preserve backend date/time values in API, cache and application layers:
+
+```text
+LocalDate:      2026-09-29
+OffsetDateTime: 2026-09-29T18:30:00+07:00
+```
+
+Do not store presentation-formatted values such as `29/09/2026` in transport
+DTOs, cache data or application state. Format dates only at the presentation
+boundary.
+
 ---
 
 ## 9. Server / Client Components
@@ -326,7 +452,7 @@ Organization
 
 `HealthExaminationParticipant` and `Patient` are separate concepts.
 
-Do not create Patient records for all imported employees.
+Do not create Patient records for all imported participants.
 
 Correct check-in flow:
 
@@ -370,13 +496,24 @@ Later:
 Excel import is P0.
 
 ```text
-Choose File
-→ Column Mapping
+Download Template
+→ Fill Template
+→ Choose File
+→ Upload
+→ Backend Parse
+→ Backend Validate
 → Validation Preview
 → Confirm Import
+→ Persist
 ```
 
-At minimum validate required fields, valid dates, age >= 18 on examination date, duplicate identity and leading-zero preservation.
+Column mapping is optional and is only introduced if the product explicitly
+supports arbitrary customer spreadsheet formats. For the controlled clinic
+template, backend parsing and validation are authoritative.
+
+Frontend may provide early feedback for required fields, valid dates, age >= 18
+on examination date, duplicate identity and leading-zero preservation, but it
+must display backend validation results.
 
 Never silently import invalid rows. Show row/cell errors. Keep parsing logic outside page components. Blocking invalid rows cannot enter bulk print.
 
@@ -415,7 +552,7 @@ no dashboard chrome in print
 preview before bulk print
 visible batch count
 reprint support
-clear per-employee errors
+clear per-participant errors
 ```
 
 ---
@@ -602,6 +739,10 @@ Do not hard-code fake organizations, participants, patients, encounters, payment
 
 Use test fixtures, test mocks or backend seed data.
 
+Production API code must not silently fall back to mock, demo or in-memory data
+after an API failure or while an integration is unfinished. Render an explicit
+loading, error, unavailable or disabled state instead.
+
 ---
 
 ## 27. AI / Code-Agent Discipline
@@ -647,7 +788,7 @@ For UI work also verify reuse search, loading/empty/error states, accessibility 
 6. Health Examination Batch
 7. Participant Roster
 8. Excel Import Wizard
-9. Employee Validation
+9. Participant Validation
 10. Bulk Selection
 11. Mẫu số 03 Renderer
 12. Print Preview

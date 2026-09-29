@@ -52,7 +52,7 @@ export function CreateHealthExaminationBatchDialog({
     defaultValues: {
       organizationId: organization.id,
       name: "",
-      location: organization.shortAddress || organization.address || "",
+      location: organization.address || "",
       examDate: "",
       note: "",
       services: [],
@@ -78,7 +78,7 @@ export function CreateHealthExaminationBatchDialog({
         reset({
           organizationId: organization.id,
           name: "",
-          location: organization.shortAddress || organization.address || "",
+          location: organization.address || "",
           examDate: "",
           note: "",
           services: initialItems,
@@ -87,7 +87,7 @@ export function CreateHealthExaminationBatchDialog({
     } else {
       hasResetRef.current = false
     }
-  }, [open, organization.id, organization.shortAddress, organization.address, servicesList, reset])
+  }, [open, organization.id, organization.address, servicesList, reset])
 
   const onSubmit = async (values: CreateHealthExaminationBatchFormValues) => {
     setSubmitError(null)

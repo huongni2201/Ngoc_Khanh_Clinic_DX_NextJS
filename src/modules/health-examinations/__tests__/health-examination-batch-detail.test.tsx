@@ -24,29 +24,36 @@ function renderWithClient(ui: React.ReactElement) {
   )
 }
 
-const employeeResponse = {
+const participantResponse = {
   result: "OK",
   code: 200,
-  message: "Health examination batch employees",
+  message: "Health examination batch participants",
   data: {
     items: [
       {
-        batchEmployeeId: "batch-employee-1",
-        employeeId: "employee-1",
-        employeeCode: "NV001",
+        batchParticipantId: "batch-participant-1",
+        participantId: "participant-1",
+        participantCode: "NV001",
         departmentName: "Khối Công nghệ",
         jobTitle: "Kỹ sư",
         occupation: "Phát triển phần mềm",
-        snapshot: {
-          fullName: "Nguyễn Văn A",
-          dateOfBirth: "1990-03-14",
-          sex: "MALE",
-          identificationNumber: { value: "012345678901" },
-          phone: "0901234567",
-          province: "Hà Nội",
-          ward: "Cầu Giấy",
-          addressDetail: "10 Phạm Văn Bạch",
-        },
+        fullName: "Nguyễn Văn A",
+        dateOfBirth: "1990-03-14",
+        sex: "MALE",
+        identificationNumber: "012345678901",
+        identificationNumberIssueDate: null,
+        identificationNumberIssuePlace: null,
+        ethnicity: null,
+        subjectType: "EMPLOYEE",
+        payerSource: "ORGANIZATION",
+        bloodGroup: null,
+        phone: "0901234567",
+        province: "Hà Nội",
+        ward: "Cầu Giấy",
+        addressDetail: "10 Phạm Văn Bạch",
+        administrativeOccupation: null,
+        workplaceOrSchool: null,
+        healthExaminationReason: "Khám định kỳ",
         status: "ACTIVE",
         createdAt: "2026-09-28T10:00:00Z",
       },
@@ -65,7 +72,8 @@ describe("HealthExaminationBatchDetailPage", () => {
       "fetch",
       vi.fn().mockResolvedValue({
         ok: true,
-        json: async () => employeeResponse,
+        text: async () => JSON.stringify(participantResponse),
+        json: async () => participantResponse,
       })
     )
   })
@@ -74,7 +82,7 @@ describe("HealthExaminationBatchDetailPage", () => {
     vi.unstubAllGlobals()
   })
 
-  it("renders employees from the real roster API without batch mock data", async () => {
+  it("renders participants from the real roster API without batch mock data", async () => {
     renderWithClient(
       <HealthExaminationBatchDetailPage
         organizationId="org-1"
@@ -92,7 +100,7 @@ describe("HealthExaminationBatchDetailPage", () => {
 
     expect(fetch).toHaveBeenCalledWith(
       expect.stringContaining(
-        "/api/v1/organizations/org-1/health-examination-batches/batch-1/employees"
+        "/api/v1/organizations/org-1/health-examination-batches/batch-1/participant"
       ),
       expect.objectContaining({ cache: "no-store" })
     )

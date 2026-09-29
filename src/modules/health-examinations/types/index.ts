@@ -1,3 +1,5 @@
+export type * from "./transport"
+
 export type HealthExaminationBatchStatus = "IN_PROGRESS" | "COMPLETED"
 
 export interface ClinicalService {
@@ -74,7 +76,7 @@ export interface HealthExaminationParticipant {
   id: string
   batchId: string
   participantCode?: string
-  participantType: HealthExaminationParticipantType
+  participantType?: string
   fullName: string
   dateOfBirth?: string
   gender?: "Nam" | "Nữ" | "OTHER"
@@ -83,7 +85,10 @@ export interface HealthExaminationParticipant {
   organizationUnit?: string
   jobTitle?: string
   address?: string
-  profileStatus: ParticipantProfileStatus
+  /** Server-owned status of the participant inside the examination batch. */
+  batchParticipantStatus?: string
+  /** Legacy import-preview status; not populated by committed BE participants. */
+  profileStatus?: ParticipantProfileStatus
   note?: string
 }
 
@@ -109,6 +114,8 @@ export interface ParticipantListFilterParams {
   search?: string
   page?: number
   pageSize?: number
+  sortKey?: string
+  sortBy?: "ASC" | "DESC"
 }
 
 export interface ParticipantListResponse {

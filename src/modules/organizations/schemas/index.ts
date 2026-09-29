@@ -15,6 +15,8 @@ export const createOrganizationSchema = z.object({
     .trim()
     .min(9, { message: "Số điện thoại phải từ 9 đến 11 số" })
     .regex(/^[0-9+() -]+$/, { message: "Số điện thoại không hợp lệ" }),
+  contactJobTitle: z.string().trim().optional(),
+  note: z.string().trim().optional(),
   address: z.string().trim().optional(),
 })
 
@@ -30,17 +32,12 @@ export const updateOrganizationSchema = z.object({
     .string()
     .trim()
     .min(2, { message: "Người liên hệ là bắt buộc" }),
-  phone: z
+  contactPhone: z
     .string()
     .trim()
     .min(9, { message: "Số điện thoại phải từ 9 đến 11 số" })
     .regex(/^[0-9+() -]+$/, { message: "Số điện thoại không hợp lệ" }),
-  email: z
-    .string()
-    .trim()
-    .email({ message: "Email không đúng định dạng" })
-    .optional()
-    .or(z.literal("")),
+  contactJobTitle: z.string().trim().optional(),
   address: z.string().trim().optional(),
   note: z.string().trim().optional(),
 })

@@ -4,7 +4,7 @@ import {
   createOrganization,
   fetchOrganizationById,
   updateOrganization,
-  fetchOrganizationCounters,
+  deactivateOrganization,
 } from "../api"
 import {
   OrganizationFilterParams,
@@ -15,17 +15,11 @@ import {
 export const ORGANIZATIONS_QUERY_KEY = ["organizations"]
 export const organizationDetailQueryKey = (id: string) => ["organization", id]
 
-export function useOrganizationCounters() {
-  return useQuery({
-    queryKey: [...ORGANIZATIONS_QUERY_KEY, "counters"],
-    queryFn: fetchOrganizationCounters,
-  })
-}
-
 export function useOrganizations(params?: OrganizationFilterParams) {
   return useQuery({
     queryKey: [...ORGANIZATIONS_QUERY_KEY, params],
     queryFn: () => fetchOrganizations(params),
+    retry: false,
   })
 }
 
@@ -53,10 +47,25 @@ export function useUpdateOrganization(id: string) {
 
   return useMutation({
     mutationFn: (dto: UpdateOrganizationDto) => updateOrganization(id, dto),
-    onSuccess: (updated) => {
-      queryClient.setQueryData(organizationDetailQueryKey(id), updated)
-      queryClient.setQueryData(organizationDetailQueryKey(updated.code), updated)
-      queryClient.invalidateQueries({ queryKey: ORGANIZATIONS_QUERY_KEY })
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: organizationDetailQueryKey(id) }),
+        queryClient.invalidateQueries({ queryKey: ORGANIZATIONS_QUERY_KEY }),
+      ])
+    },
+  })
+}
+
+export function useDeactivateOrganization(id: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: () => deactivateOrganization(id),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: organizationDetailQueryKey(id) }),
+        queryClient.invalidateQueries({ queryKey: ORGANIZATIONS_QUERY_KEY }),
+      ])
     },
   })
 }

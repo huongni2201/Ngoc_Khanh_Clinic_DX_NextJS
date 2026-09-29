@@ -6,7 +6,10 @@ import { useSearchParams, useRouter, usePathname } from "next/navigation"
 import { AlertCircle, RefreshCw, ArrowLeft } from "@/shared/ui/product-icon"
 import { Button } from "@/components/ui/button"
 import { ScreenLayout, ScreenLoadingSkeleton } from "@/shared/ui"
-import { useOrganization } from "../hooks/use-organizations"
+import {
+  useDeactivateOrganization,
+  useOrganization,
+} from "../hooks/use-organizations"
 import { OrganizationDetailHeader } from "../components/organization-detail-header"
 import { OrganizationSummaryStrip } from "../components/organization-summary-strip"
 import { OrganizationTabs, type OrganizationTabType } from "../components/organization-tabs"
@@ -74,6 +77,18 @@ export function OrganizationDetailPage({
     isError,
     refetch,
   } = useOrganization(organizationId)
+  const deactivateMutation = useDeactivateOrganization(organizationId)
+
+  const handleDeactivate = async () => {
+    if (!window.confirm(`Ngừng hoạt động đơn vị “${organization?.name ?? "này"}”?`)) {
+      return
+    }
+    try {
+      await deactivateMutation.mutateAsync()
+    } catch {
+      // The mutation error is rendered below.
+    }
+  }
 
   // Loading skeleton state matching screen layout exactly
   if (isLoading) {
@@ -91,7 +106,7 @@ export function OrganizationDetailPage({
           Không tìm thấy hoặc không thể tải dữ liệu đơn vị
         </h2>
         <p className="text-xs text-muted-foreground mt-1 max-w-md mb-6">
-          Mã đơn vị hoặc định danh &quot;{organizationId}&quot; không tồn tại hoặc đã xảy ra lỗi kết nối mạng.
+          Định danh &quot;{organizationId}&quot; không tồn tại hoặc đã xảy ra lỗi kết nối mạng.
         </p>
         <div className="flex items-center gap-3">
           <Link href="/organizations">
@@ -120,7 +135,14 @@ export function OrganizationDetailPage({
         organization={organization}
         onEditClick={() => setIsEditDialogOpen(true)}
         onCreateBatchClick={() => setIsCreateBatchDialogOpen(true)}
+        onDeactivateClick={handleDeactivate}
+        isDeactivating={deactivateMutation.isPending}
       />
+      {deactivateMutation.error && (
+        <p role="alert" className="text-sm text-destructive">
+          {deactivateMutation.error.message || "Không thể ngừng hoạt động đơn vị."}
+        </p>
+      )}
 
       {/* 2. 4-column Summary Strip */}
       <OrganizationSummaryStrip organization={organization} />
@@ -151,7 +173,6 @@ export function OrganizationDetailPage({
         {activeTab === "reports" && (
           <OrganizationReportsTab
             organizationId={organization.id}
-            organizationCode={organization.code}
             organizationName={organization.name}
             onCreateBatchClick={() => setIsCreateBatchDialogOpen(true)}
           />

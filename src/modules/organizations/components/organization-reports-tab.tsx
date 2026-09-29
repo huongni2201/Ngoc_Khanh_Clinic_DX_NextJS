@@ -40,8 +40,7 @@ import { formatVND } from "@/shared/ui/money-input"
 
 interface OrganizationReportsTabProps {
   organizationId: string
-  organizationCode?: string
-  organizationName?: string
+  organizationName: string
   onCreateBatchClick?: () => void
 }
 
@@ -49,8 +48,7 @@ type ReportType = "SERVICE_SUMMARY" | "PARTICIPANT_MATRIX"
 
 export function OrganizationReportsTab({
   organizationId,
-  organizationCode = "ORG",
-  organizationName = "Đơn vị",
+  organizationName,
   onCreateBatchClick,
 }: OrganizationReportsTabProps) {
   // 1. Fetch batches
@@ -104,7 +102,7 @@ export function OrganizationReportsTab({
 
   const handleExportDetailHorizontal = () => {
     if (!activeBatch) return
-    const customBatchName = `${organizationCode}_${activeBatch.name}_participant-report`
+    const customBatchName = `${activeBatch.name}_participant-report`
     exportDetailMutation.mutate({
       batchId: activeBatch.id,
       batchName: customBatchName,
@@ -113,7 +111,7 @@ export function OrganizationReportsTab({
 
   const handleExportSummaryVertical = () => {
     if (!activeBatch) return
-    const customBatchName = `${organizationCode}_${activeBatch.name}_service-summary`
+    const customBatchName = `${activeBatch.name}_service-summary`
     exportSummaryMutation.mutate({
       batchId: activeBatch.id,
       batchName: customBatchName,
@@ -277,7 +275,7 @@ export function OrganizationReportsTab({
           </span>
         </div>
         <span className="text-[11px] text-muted-foreground whitespace-nowrap">
-          Đơn vị: {organizationName} ({organizationCode})
+          Đơn vị: {organizationName}
         </span>
       </div>
 

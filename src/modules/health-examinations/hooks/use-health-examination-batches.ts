@@ -13,7 +13,8 @@ import {
   importParticipantsToBatch,
   populateSampleParticipantsForBatch,
 } from "@/modules/health-examinations/api"
-import { fetchHealthExaminationBatchEmployees } from "../api/employees"
+import { fetchHealthExaminationBatchParticipants } from "../api/participants"
+import { healthExaminationKeys } from "../query-keys"
 import {
   downloadFile,
   generateDetailHorizontalCSV,
@@ -89,8 +90,13 @@ export function useHealthExaminationBatchParticipants(
   params?: ParticipantListFilterParams
 ) {
   return useQuery<ParticipantListResponse>({
-    queryKey: ["health-examination-batch-participants", organizationId, batchId, params],
-    queryFn: () => fetchHealthExaminationBatchEmployees(organizationId, batchId, params),
+    queryKey: healthExaminationKeys.participants(
+      organizationId,
+      batchId,
+      params ?? {}
+    ),
+    queryFn: () =>
+      fetchHealthExaminationBatchParticipants(organizationId, batchId, params),
     enabled: Boolean(organizationId && batchId),
   })
 }
@@ -120,14 +126,18 @@ export function useImportBatchParticipants() {
   return useMutation<
     { count: number },
     Error,
-    { batchId: string; participants: HealthExaminationParticipant[] }
+    {
+      organizationId: string
+      batchId: string
+      participants: HealthExaminationParticipant[]
+    }
   >({
     mutationFn: ({ batchId, participants }) =>
       importParticipantsToBatch(batchId, participants),
-    onSuccess: (_, { batchId }) => {
+    onSuccess: (_, { organizationId, batchId }) => {
       queryClient.invalidateQueries({ queryKey: ["health-examination-batch", batchId] })
       queryClient.invalidateQueries({
-        queryKey: ["health-examination-batch-participants", batchId],
+        queryKey: healthExaminationKeys.participantsRoot(organizationId, batchId),
       })
       queryClient.invalidateQueries({
         queryKey: ["health-examination-batch-matrix", batchId],
@@ -142,12 +152,16 @@ export function useImportBatchParticipants() {
 export function usePopulateSampleParticipants() {
   const queryClient = useQueryClient()
 
-  return useMutation<{ count: number }, Error, string>({
-    mutationFn: (batchId: string) => populateSampleParticipantsForBatch(batchId),
-    onSuccess: (_, batchId) => {
+  return useMutation<
+    { count: number },
+    Error,
+    { organizationId: string; batchId: string }
+  >({
+    mutationFn: ({ batchId }) => populateSampleParticipantsForBatch(batchId),
+    onSuccess: (_, { organizationId, batchId }) => {
       queryClient.invalidateQueries({ queryKey: ["health-examination-batch", batchId] })
       queryClient.invalidateQueries({
-        queryKey: ["health-examination-batch-participants", batchId],
+        queryKey: healthExaminationKeys.participantsRoot(organizationId, batchId),
       })
       queryClient.invalidateQueries({
         queryKey: ["health-examination-batch-matrix", batchId],

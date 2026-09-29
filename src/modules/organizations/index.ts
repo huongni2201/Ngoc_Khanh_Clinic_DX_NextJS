@@ -5,11 +5,9 @@ export { OrganizationCreatePage } from "./pages/organization-create-page"
 
 // Screen 01 Components
 export { OrganizationPageHeader } from "./components/organization-page-header"
-export { OrganizationCountersStrip } from "./components/organization-counters-strip"
 export { OrganizationFilters } from "./components/organization-filters"
 export { OrganizationTable } from "./components/organization-table"
 export { CreateOrganizationDialog } from "./components/create-organization-dialog"
-export { OrganizationLogo } from "./components/organization-logo"
 
 // Screen 02 Components
 export { OrganizationDetailHeader } from "./components/organization-detail-header"
@@ -27,9 +25,9 @@ export { CreateHealthExaminationBatchDialog } from "./components/create-health-e
 export {
   useOrganizations,
   useOrganization,
-  useOrganizationCounters,
   useCreateOrganization,
   useUpdateOrganization,
+  useDeactivateOrganization,
   ORGANIZATIONS_QUERY_KEY,
   organizationDetailQueryKey,
 } from "./hooks/use-organizations"

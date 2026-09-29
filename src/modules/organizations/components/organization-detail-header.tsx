@@ -10,25 +10,23 @@ interface OrganizationDetailHeaderProps {
   organization: OrganizationDetail
   onEditClick: () => void
   onCreateBatchClick: () => void
+  onDeactivateClick: () => void
+  isDeactivating: boolean
 }
 
 export function OrganizationDetailHeader({
   organization,
   onEditClick,
   onCreateBatchClick,
+  onDeactivateClick,
+  isDeactivating,
 }: OrganizationDetailHeaderProps) {
-  const getStatusLabel = (status: string, partnershipStatus?: string) => {
-    switch (partnershipStatus ?? status) {
-      case "PARTNERING":
-        return "Đang hợp tác"
+  const getStatusLabel = (status: string) => {
+    switch (status) {
       case "ACTIVE":
         return "Hoạt động"
       case "INACTIVE":
-        return "Ngừng hợp tác"
-      case "IN_PROGRESS":
-        return "Đang khám"
-      case "COMPLETED":
-        return "Đã khám"
+        return "Ngừng hoạt động"
       default:
         return status
     }
@@ -42,9 +40,13 @@ export function OrganizationDetailHeader({
       ]}
       title={organization.name}
       titleAccessory={
-        <span className="inline-flex items-center gap-1.5 rounded-md bg-status-in-progress-bg px-2 py-1 text-xs font-medium text-primary">
-          <span className="size-1.5 shrink-0 rounded-full bg-primary" />
-          {getStatusLabel(organization.status, organization.partnershipStatus)}
+        <span className="inline-flex items-center gap-1.5 rounded-md bg-muted px-2 py-1 text-xs font-medium text-foreground">
+          <span
+            className={`size-1.5 shrink-0 rounded-full ${
+              organization.status === "ACTIVE" ? "bg-status-success" : "bg-muted-foreground"
+            }`}
+          />
+          {getStatusLabel(organization.status)}
         </span>
       }
       description="Khách hàng đơn vị"
@@ -58,6 +60,16 @@ export function OrganizationDetailHeader({
             <HugeiconsIcon icon={Edit02Icon} className="size-4" />
             Chỉnh sửa đơn vị
           </Button>
+          {organization.status !== "INACTIVE" && (
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={onDeactivateClick}
+              disabled={isDeactivating}
+            >
+              {isDeactivating ? "Đang ngừng..." : "Ngừng hoạt động"}
+            </Button>
+          )}
           <Button type="button" onClick={onCreateBatchClick}>
             <HugeiconsIcon icon={Add01Icon} className="size-4" />
             Tạo đợt khám mới

@@ -1,5 +1,6 @@
 export * from "./types"
 export * from "./api"
+export { healthExaminationKeys } from "./query-keys"
 export * from "./hooks/use-health-examination-batches"
 export { HealthExaminationBatchDetailPage } from "./pages/health-examination-batch-detail-page"
 export { HealthExaminationBatchHeader } from "./components/health-examination-batch-header"

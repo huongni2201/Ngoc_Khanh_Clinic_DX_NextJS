@@ -1,6 +1,5 @@
 "use client"
 
-import * as React from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
@@ -11,27 +10,11 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { PageHeader, ScreenLayout } from "@/shared/ui"
 import { useCreateOrganization } from "../hooks/use-organizations"
-import type { OrganizationType } from "../types"
 
 const newOrganizationSchema = z.object({
   name: z.string().trim().min(2, { message: "Tên đơn vị phải có ít nhất 2 ký tự" }),
-  type: z.enum([
-    "COMPANY",
-    "SCHOOL",
-    "GOVERNMENT_AGENCY",
-    "HEALTHCARE_ORGANIZATION",
-    "NON_PROFIT",
-    "OTHER",
-  ]),
   taxCode: z.string().trim().optional(),
   address: z.string().trim().optional(),
   contactPerson: z.string().trim().min(2, { message: "Người liên hệ là bắt buộc" }),
@@ -40,47 +23,29 @@ const newOrganizationSchema = z.object({
     .trim()
     .min(9, { message: "Số điện thoại phải từ 9 đến 11 số" })
     .regex(/^[0-9+() -]+$/, { message: "Số điện thoại không hợp lệ" }),
-  contactEmail: z
-    .string()
-    .trim()
-    .email({ message: "Email không đúng định dạng" })
-    .optional()
-    .or(z.literal("")),
+  contactJobTitle: z.string().trim().optional(),
   note: z.string().trim().optional(),
 })
 
 type NewOrganizationFormValues = z.infer<typeof newOrganizationSchema>
 
-const ORGANIZATION_TYPE_OPTIONS: { value: OrganizationType; label: string }[] = [
-  { value: "COMPANY", label: "Doanh nghiệp / Công ty" },
-  { value: "SCHOOL", label: "Trường học / Cơ sở đào tạo" },
-  { value: "GOVERNMENT_AGENCY", label: "Cơ quan nhà nước" },
-  { value: "HEALTHCARE_ORGANIZATION", label: "Cơ sở y tế / Tổ chức y tế" },
-  { value: "NON_PROFIT", label: "Tổ chức phi lợi nhuận" },
-  { value: "OTHER", label: "Khác" },
-]
-
 export function OrganizationCreatePage() {
   const router = useRouter()
-  const { mutateAsync: createOrg, isPending } = useCreateOrganization()
-
-  const [selectedType, setSelectedType] = React.useState<OrganizationType>("COMPANY")
+  const { mutateAsync: createOrg, isPending, error } = useCreateOrganization()
 
   const {
     register,
     handleSubmit,
-    setValue,
     formState: { errors },
   } = useForm<NewOrganizationFormValues>({
     resolver: zodResolver(newOrganizationSchema),
     defaultValues: {
       name: "",
-      type: "COMPANY",
       taxCode: "",
       address: "",
       contactPerson: "",
       contactPhone: "",
-      contactEmail: "",
+      contactJobTitle: "",
       note: "",
     },
   })
@@ -90,13 +55,15 @@ export function OrganizationCreatePage() {
       const created = await createOrg({
         name: values.name,
         taxCode: values.taxCode || undefined,
-        contactPerson: values.contactPerson,
+        contactName: values.contactPerson,
         contactPhone: values.contactPhone,
+        contactJobTitle: values.contactJobTitle || undefined,
         address: values.address || undefined,
+        note: values.note || undefined,
       })
       router.push(`/organizations/${created.id}`)
-    } catch (err) {
-      console.error("Failed to create organization:", err)
+    } catch {
+      // The mutation error is rendered in the form.
     }
   }
 
@@ -113,6 +80,11 @@ export function OrganizationCreatePage() {
 
       <div className="max-w-3xl">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          {error && (
+            <p role="alert" className="text-sm text-destructive">
+              {error.message || "Không thể tạo đơn vị."}
+            </p>
+          )}
           {/* Card 1: Thông tin cơ bản */}
           <div className="rounded-lg border border-border bg-card p-6 space-y-4">
             <div className="flex items-center gap-2 pb-2 border-b border-border">
@@ -136,37 +108,6 @@ export function OrganizationCreatePage() {
                 />
                 {errors.name && (
                   <p className="text-[11px] text-destructive">{errors.name.message}</p>
-                )}
-              </div>
-
-              {/* Loại tổ chức */}
-              <div className="space-y-1.5">
-                <Label htmlFor="type-select" className="text-xs font-medium text-foreground">
-                  Loại tổ chức <span className="text-destructive">*</span>
-                </Label>
-                <Select
-                  value={selectedType}
-                  onValueChange={(val) => {
-                    if (val) {
-                      const nextType = val as OrganizationType
-                      setSelectedType(nextType)
-                      setValue("type", nextType)
-                    }
-                  }}
-                >
-                  <SelectTrigger id="type-select" className="h-9 text-xs border-border bg-background w-full">
-                    <SelectValue placeholder="Chọn loại tổ chức" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {ORGANIZATION_TYPE_OPTIONS.map((opt) => (
-                      <SelectItem key={opt.value} value={opt.value} className="text-xs">
-                        {opt.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {errors.type && (
-                  <p className="text-[11px] text-destructive">{errors.type.message}</p>
                 )}
               </div>
 
@@ -237,21 +178,17 @@ export function OrganizationCreatePage() {
                 )}
               </div>
 
-              {/* Email */}
+              {/* Chức vụ người liên hệ */}
               <div className="sm:col-span-2 space-y-1.5">
-                <Label htmlFor="contactEmail" className="text-xs font-medium text-foreground">
-                  Email liên hệ
+                <Label htmlFor="contactJobTitle" className="text-xs font-medium text-foreground">
+                  Chức vụ người liên hệ
                 </Label>
                 <Input
-                  id="contactEmail"
-                  type="email"
-                  placeholder="VD: lienhe@abc.com.vn"
-                  {...register("contactEmail")}
+                  id="contactJobTitle"
+                  placeholder="VD: Trưởng phòng nhân sự"
+                  {...register("contactJobTitle")}
                   className="h-9 text-xs"
                 />
-                {errors.contactEmail && (
-                  <p className="text-[11px] text-destructive">{errors.contactEmail.message}</p>
-                )}
               </div>
             </div>
           </div>

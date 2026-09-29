@@ -19,16 +19,13 @@ export function OrganizationInfoCard({ organization }: OrganizationInfoCardProps
     },
     {
       label: "Người liên hệ",
-      value: organization.contactName || organization.contactPerson || "—",
+      value: organization.contactName || "—",
     },
     {
       label: "Số điện thoại",
-      value: organization.phone || organization.contactPhone || "—",
+      value: organization.contactPhone || "—",
     },
-    {
-      label: "Email",
-      value: organization.email || "—",
-    },
+    { label: "Chức vụ liên hệ", value: organization.contactJobTitle || "—" },
     {
       label: "Địa chỉ",
       value: organization.address || "—",

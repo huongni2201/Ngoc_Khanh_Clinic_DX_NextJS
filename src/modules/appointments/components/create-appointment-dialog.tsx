@@ -107,7 +107,12 @@ export function CreateAppointmentDialog({
 
   // Data queries
   const { data: rooms } = useClinicRooms()
-  const { data: organizationsData } = useOrganizations()
+  const {
+    data: organizationsData,
+    isLoading: isLoadingOrganizations,
+    isError: isOrganizationsError,
+    error: organizationsError,
+  } = useOrganizations()
   const organizations = React.useMemo(
     () => organizationsData?.data || [],
     [organizationsData?.data]
@@ -524,6 +529,17 @@ export function CreateAppointmentDialog({
                       1. Chọn đoàn & Nhân viên
                     </span>
 
+                    {isOrganizationsError && (
+                      <Alert>
+                        <AlertCircle className="size-4" />
+                        <AlertDescription>
+                          {organizationsError instanceof Error
+                            ? organizationsError.message
+                            : "Không thể tải danh sách đơn vị."}
+                        </AlertDescription>
+                      </Alert>
+                    )}
+
                     {/* Organization select */}
                     <div className="space-y-1">
                       <Label className="text-xs font-medium text-foreground">
@@ -537,10 +553,18 @@ export function CreateAppointmentDialog({
                           setSelectedParticipantCode("")
                           setPatientOverride(null)
                         }}
-                        disabled={isPending}
+                        disabled={isPending || isLoadingOrganizations || isOrganizationsError}
                       >
                         <SelectTrigger className="h-8.5 text-xs bg-card">
-                          <SelectValue placeholder="-- Chọn công ty / đơn vị --" />
+                          <SelectValue
+                            placeholder={
+                              isLoadingOrganizations
+                                ? "Đang tải đơn vị..."
+                                : isOrganizationsError
+                                  ? "Danh sách đơn vị chưa khả dụng"
+                                  : "-- Chọn công ty / đơn vị --"
+                            }
+                          />
                         </SelectTrigger>
                         <SelectContent>
                           {organizations.map((ent) => (

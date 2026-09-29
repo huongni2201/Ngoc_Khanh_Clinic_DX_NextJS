@@ -23,13 +23,19 @@ import { useCreateOrganization } from "../hooks/use-organizations"
 interface CreateOrganizationDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  onCreated?: (organizationId: string) => void
 }
 
 export function CreateOrganizationDialog({
   open,
   onOpenChange,
+  onCreated,
 }: CreateOrganizationDialogProps) {
-  const { mutateAsync: createOrganization, isPending } = useCreateOrganization()
+  const {
+    mutateAsync: createOrganization,
+    isPending,
+    error: createError,
+  } = useCreateOrganization()
 
   const {
     register,
@@ -49,11 +55,20 @@ export function CreateOrganizationDialog({
 
   const onSubmit = async (values: CreateOrganizationFormValues) => {
     try {
-      await createOrganization(values)
+      const created = await createOrganization({
+        name: values.name,
+        taxCode: values.taxCode || undefined,
+        address: values.address || undefined,
+        contactName: values.contactPerson,
+        contactPhone: values.contactPhone,
+        contactJobTitle: values.contactJobTitle || undefined,
+        note: values.note || undefined,
+      })
       reset()
       onOpenChange(false)
-    } catch (err) {
-      console.error("Failed to create organization:", err)
+      onCreated?.(created.id)
+    } catch {
+      // The mutation error is rendered in the dialog.
     }
   }
 
@@ -79,6 +94,11 @@ export function CreateOrganizationDialog({
           className="flex min-h-0 flex-1 flex-col"
         >
           <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-5">
+          {createError && (
+            <p role="alert" className="text-xs text-destructive">
+              {createError.message || "Không thể tạo đơn vị."}
+            </p>
+          )}
           {/* Tên đơn vị * */}
           <div className="space-y-1.5">
             <Label htmlFor="name" className="text-xs font-medium text-foreground">

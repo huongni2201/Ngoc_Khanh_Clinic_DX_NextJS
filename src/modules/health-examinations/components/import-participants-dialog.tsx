@@ -24,6 +24,7 @@ interface ImportParticipantsDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   batchId: string
+  organizationId: string
   batchName: string
   onDownloadTemplate: () => void
 }
@@ -32,6 +33,7 @@ export function ImportParticipantsDialog({
   open,
   onOpenChange,
   batchId,
+  organizationId,
   batchName,
   onDownloadTemplate,
 }: ImportParticipantsDialogProps) {
@@ -68,7 +70,7 @@ export function ImportParticipantsDialog({
 
     try {
       // Simulate reading and importing
-      await populateSample(batchId)
+      await populateSample({ organizationId, batchId })
       setSuccessMessage(`Đã import thành công danh sách người khám từ ${selectedFile.name}`)
       setTimeout(() => {
         setSuccessMessage(null)
@@ -85,7 +87,7 @@ export function ImportParticipantsDialog({
   const handleUseSampleData = async () => {
     setError(null)
     try {
-      await populateSample(batchId)
+      await populateSample({ organizationId, batchId })
       setSuccessMessage("Đã nạp thành công dữ liệu mẫu 50 người khám FPT!")
       setTimeout(() => {
         setSuccessMessage(null)
