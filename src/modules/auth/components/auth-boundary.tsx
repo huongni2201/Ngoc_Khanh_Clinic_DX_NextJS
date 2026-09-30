@@ -5,11 +5,13 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { errorMessage } from "@/shared/api/http-client"
-import { useStaffSession } from "../hooks/use-staff-session"
-import type { StaffSession } from "../types"
+import { useUserSession } from "../hooks/use-user-session"
+import type { UserSession } from "../types"
+import { canAccessStaffWorkspace } from "../utils/staff-workspace-access"
+import { SessionAccessNotice } from "./session-access-notice"
 
-export function AuthBoundary({ children }: { children: (session: StaffSession) => ReactNode }) {
-  const session = useStaffSession()
+export function AuthBoundary({ children }: { children: (session: UserSession) => ReactNode }) {
+  const session = useUserSession()
   const router = useRouter()
   useEffect(() => {
     if (session.isSuccess && !session.isFetching && !session.data) router.replace("/auth/login")
@@ -33,5 +35,6 @@ export function AuthBoundary({ children }: { children: (session: StaffSession) =
   if (session.isPending || (!session.isFetchedAfterMount && session.isFetching) || !session.data || session.isError) {
     return <div role="status" className="m-auto p-6 text-muted-foreground">Đang kiểm tra phiên đăng nhập…</div>
   }
+  if (!canAccessStaffWorkspace(session.data)) return <SessionAccessNotice session={session.data} />
   return children(session.data)
 }

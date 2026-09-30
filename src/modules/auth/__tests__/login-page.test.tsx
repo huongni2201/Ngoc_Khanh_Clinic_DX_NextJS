@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event"
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { LoginPage } from "../pages/login-page"
-import { csrf, ok, staffSession } from "./fixtures"
+import { csrf, ok, patientSession, staffSession } from "./fixtures"
 
 const replace = vi.fn()
 vi.mock("next/navigation", () => ({ useRouter: () => ({ replace }) }))
@@ -71,6 +71,28 @@ describe("staff login screen", () => {
     request.mockResolvedValueOnce(ok(staffSession))
     renderLogin()
     await waitFor(() => expect(replace).toHaveBeenCalledWith("/organizations"))
+  })
+
+  it.each([
+    ["patient", patientSession, "patient.test"],
+    ["roleless staff", { ...staffSession, roleAssignments: [] }, "staff.test"],
+  ])("keeps a %s session on login with a logout action", async (_, session, username) => {
+    request.mockResolvedValueOnce(ok(session))
+    renderLogin()
+    expect(await screen.findByRole("button", { name: "Đăng xuất" })).toBeInTheDocument()
+    expect(screen.getByText(username)).toBeInTheDocument()
+    expect(screen.queryByPlaceholderText("Nhập mật khẩu")).not.toBeInTheDocument()
+    expect(replace).not.toHaveBeenCalled()
+  })
+
+  it("shows a patient without staff access after successful login", async () => {
+    renderLogin()
+    const user = await fill()
+    request.mockResolvedValueOnce(csrf()).mockResolvedValueOnce(ok(patientSession))
+    await user.click(screen.getByRole("button", { name: "Đăng nhập" }))
+    expect(await screen.findByText("patient.test")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Đăng xuất" })).toBeInTheDocument()
+    expect(replace).not.toHaveBeenCalledWith("/organizations")
   })
 
   it("shows retry for a /me outage instead of the login form", async () => {

@@ -3,6 +3,8 @@
 ## Status
 
 Accepted — implements the approved staff login/logout plan.
+The staff-only response, route and redirect are superseded by
+[ADR-0006](0006-shared-user-login.md).
 
 ## Context
 

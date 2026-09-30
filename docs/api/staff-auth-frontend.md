@@ -1,11 +1,12 @@
-# Staff login/logout frontend
+# Shared user login/logout frontend
 
 ## Setup
 
 Use the project's pnpm scripts. Copy `.env.example` to `.env.local` and set
 `NEXT_PUBLIC_API_BASE_URL=http://localhost:8080`. Start the existing identity
 backend and Redis, using the backend local profile and a provisioned active staff
-account with credentials and at least one effective role. Start frontend with
+account with credentials. Staff need an effective role to enter staff screens;
+patients and staff without roles can log in and see an access notice. Start frontend with
 `pnpm dev` and open `http://localhost:3000/auth/login`.
 
 Use localhost consistently; do not mix it with 127.0.0.1. The backend must allow
@@ -17,13 +18,16 @@ configuration. NEXT_PUBLIC variables are public.
 
 1. `/me` checks for an existing session. A 401 presents login; network/503 failures
    show verification error and Retry, without pretending the session was revoked.
-2. Submit obtains `/csrf`, then POSTs username/password to `/staff/login` with the
+2. Submit obtains `/csrf`, then POSTs username/password to `/login` with the
    masked JSON token in `X-XSRF-TOKEN`. Cookies are handled by the browser.
-3. Success stores the response view in query memory and replaces the route with
-   `/organizations`. AppShell verifies the session before mounting business screens.
+3. Success stores the response view in query memory. Staff with effective assignments
+   move to `/organizations`; patients and roleless staff stay signed in on `/auth/login`
+   with a logout action. AppShell checks staff access before mounting business screens.
 4. The account menu shows the backend username and role codes. “Đăng xuất” fetches
    fresh CSRF and POSTs `/logout`. Only 204 clears cached data and returns to login.
-5. Other tabs receive a change signal and recheck `/me`. Focus and reconnect also
+5. Other tabs receive a change signal and recheck `/me`. Loss of staff workspace
+   access clears cached business data even when the same account remains signed in.
+   Focus and reconnect also
    revalidate. There is no periodic heartbeat extending the 30-minute idle timeout.
 
 Auth responses and cookies must never be logged. Legacy localStorage auth keys are

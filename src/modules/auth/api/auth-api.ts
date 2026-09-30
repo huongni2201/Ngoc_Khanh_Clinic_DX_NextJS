@@ -1,7 +1,7 @@
 import { z } from "zod"
 import { httpClient, HttpError } from "@/shared/api/http-client"
 import { csrfEnvelopeSchema, sessionEnvelopeSchema } from "../schemas/session.schema"
-import type { LoginCredentials, StaffSession } from "../types"
+import type { LoginCredentials, UserSession } from "../types"
 
 function parse<T>(schema: z.ZodType<T>, response: unknown): T {
   const result = schema.safeParse(response)
@@ -13,15 +13,15 @@ export const authApi = {
   async csrf() {
     return parse(csrfEnvelopeSchema, await httpClient("/api/v1/auth/csrf")).data
   },
-  async login(credentials: LoginCredentials): Promise<StaffSession> {
+  async login(credentials: LoginCredentials): Promise<UserSession> {
     const csrf = await authApi.csrf()
-    return parse(sessionEnvelopeSchema, await httpClient("/api/v1/auth/staff/login", {
+    return parse(sessionEnvelopeSchema, await httpClient("/api/v1/auth/login", {
       method: "POST",
       headers: { [csrf.headerName]: csrf.token },
       body: JSON.stringify({ username: credentials.username, password: credentials.password }),
     })).data
   },
-  async me(signal?: AbortSignal): Promise<StaffSession | null> {
+  async me(signal?: AbortSignal): Promise<UserSession | null> {
     try {
       return parse(sessionEnvelopeSchema, await httpClient("/api/v1/auth/me", { signal })).data
     } catch (error) {

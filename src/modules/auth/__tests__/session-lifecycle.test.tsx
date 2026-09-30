@@ -3,11 +3,11 @@ import { act, cleanup, render, renderHook, screen, waitFor } from "@testing-libr
 import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { useLogout } from "../hooks/use-auth"
-import { useStaffSession } from "../hooks/use-staff-session"
+import { useUserSession } from "../hooks/use-user-session"
 import { AuthBoundary } from "../components/auth-boundary"
 import { AuthSessionSync } from "../components/auth-session-sync"
 import { replaceSession, SESSION_QUERY_KEY } from "../utils/session-cache"
-import { csrf, ok, staffSession } from "./fixtures"
+import { csrf, ok, patientSession, staffSession } from "./fixtures"
 import { QueryProvider } from "@/providers/query-provider"
 import { httpClient } from "@/shared/api/http-client"
 
@@ -85,7 +85,7 @@ describe("session lifecycle", () => {
     const { client, wrapper } = setup()
     let complete!: (response: Response) => void
     vi.stubGlobal("fetch", vi.fn().mockImplementation(() => new Promise<Response>((resolve) => { complete = resolve })))
-    renderHook(() => useStaffSession(), { wrapper })
+    renderHook(() => useUserSession(), { wrapper })
     await waitFor(() => expect(complete).toBeDefined())
     await act(async () => { await replaceSession(client, null) })
     await act(async () => { complete(ok(staffSession)); await Promise.resolve() })
@@ -97,10 +97,31 @@ describe("session lifecycle", () => {
     client.setQueryData(SESSION_QUERY_KEY, { ...staffSession, userId: "44444444-4444-4444-8444-444444444444" })
     client.setQueryData(["patients"], ["previous-user"])
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(ok(staffSession)))
-    const { result } = renderHook(() => useStaffSession(), { wrapper })
+    const { result } = renderHook(() => useUserSession(), { wrapper })
     await waitFor(() => expect(result.current.isFetching).toBe(false))
     expect(result.current.data?.userId).toBe(staffSession.userId)
     expect(client.getQueryData(["patients"])).toBeUndefined()
+  })
+
+  it("removes business data and hides protected children when staff loses every role", async () => {
+    const { client, wrapper } = setup()
+    client.setQueryData(SESSION_QUERY_KEY, staffSession)
+    client.setQueryData(["patients"], ["private"])
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(ok({ ...staffSession, roleAssignments: [] })))
+    render(<AuthBoundary>{() => <p>Clinical data</p>}</AuthBoundary>, { wrapper })
+    expect(await screen.findByRole("button", { name: "Đăng xuất" })).toBeInTheDocument()
+    expect(screen.queryByText("Clinical data")).not.toBeInTheDocument()
+    expect(client.getQueryData(["patients"])).toBeUndefined()
+    expect(client.getQueryData(SESSION_QUERY_KEY)).toMatchObject({ userId: staffSession.userId, roleAssignments: [] })
+  })
+
+  it("does not mount staff children for a patient session", async () => {
+    const { wrapper } = setup()
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(ok(patientSession)))
+    render(<AuthBoundary>{() => <p>Clinical data</p>}</AuthBoundary>, { wrapper })
+    expect(await screen.findByText("patient.test")).toBeInTheDocument()
+    expect(screen.queryByText("Clinical data")).not.toBeInTheDocument()
+    expect(replace).not.toHaveBeenCalled()
   })
 
   it("cleans legacy storage and rechecks /me on a cross-tab signal", async () => {
@@ -115,7 +136,7 @@ describe("session lifecycle", () => {
     localStorage.setItem("nk_auth_user", "legacy")
     vi.stubGlobal("fetch", vi.fn().mockImplementation(() => Promise.resolve(ok(staffSession))))
     render(<AuthSessionSync />, { wrapper })
-    const { result } = renderHook(() => useStaffSession(), { wrapper })
+    const { result } = renderHook(() => useUserSession(), { wrapper })
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
     client.setQueryData(["patients"], ["private"])
     expect(localStorage.getItem("nk_auth_token")).toBeNull()

@@ -3,14 +3,14 @@
 import { useRef, useState } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { authApi } from "../api/auth-api"
-import { useStaffSession } from "./use-staff-session"
+import { useUserSession } from "./use-user-session"
 import { errorMessage, HttpError } from "@/shared/api/http-client"
 import { notifySessionChanged, replaceSession, SESSION_QUERY_KEY } from "../utils/session-cache"
 import type { LoginCredentials } from "../types"
 
 export function useAuth() {
   const client = useQueryClient()
-  const session = useStaffSession()
+  const session = useUserSession()
   const busy = useRef(false)
   const [loginError, setLoginError] = useState<string | null>(null)
   const [retryAt, setRetryAt] = useState(0)

@@ -3,7 +3,8 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { authApi } from "../api/auth-api"
 import { clearBusinessData, SESSION_QUERY_KEY } from "../utils/session-cache"
-import { canAccessStaffWorkspace, type UserSession } from "../types"
+import type { UserSession } from "../types"
+import { canAccessStaffWorkspace } from "../utils/staff-workspace-access"
 
 export function useUserSession() {
   const client = useQueryClient()

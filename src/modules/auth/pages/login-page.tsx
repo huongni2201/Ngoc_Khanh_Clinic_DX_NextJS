@@ -8,11 +8,14 @@ import { LoginBackgroundDecorations } from "../components/login-background-decor
 import { LoginCard } from "../components/login-card"
 import { useAuth } from "../hooks/use-auth"
 import { LoginFormValues } from "../schemas/login.schema"
+import { canAccessStaffWorkspace } from "../utils/staff-workspace-access"
+import { SessionAccessNotice } from "../components/session-access-notice"
 
 export function LoginPage() {
   const router = useRouter()
   const {
     isAuthenticated,
+    currentUser,
     isCheckingAuth,
     login,
     isLoggingIn,
@@ -23,12 +26,12 @@ export function LoginPage() {
     retrySession,
   } = useAuth()
 
-  // Redirect to organizations if user is already authenticated
+  // Only staff with effective assignments enter the internal workspace.
   React.useEffect(() => {
-    if (!isCheckingAuth && isAuthenticated) {
+    if (!isCheckingAuth && isAuthenticated && canAccessStaffWorkspace(currentUser)) {
       router.replace("/organizations")
     }
-  }, [isAuthenticated, isCheckingAuth, router])
+  }, [isAuthenticated, isCheckingAuth, currentUser, router])
 
   const handleLoginSubmit = async (values: LoginFormValues) => {
     try {
@@ -63,6 +66,11 @@ export function LoginPage() {
         </Alert>
       </div>
     )
+  }
+
+  if (isAuthenticated && currentUser) {
+    if (!canAccessStaffWorkspace(currentUser)) return <SessionAccessNotice session={currentUser} />
+    return <div role="status" className="m-auto p-6 text-muted-foreground">Đang chuyển đến khu vực nhân viên…</div>
   }
 
   return (
