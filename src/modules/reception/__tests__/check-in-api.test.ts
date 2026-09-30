@@ -2,8 +2,8 @@ import { afterEach, describe, expect, it } from "vitest"
 import {
   checkInPatient,
   fetchClinicRooms,
-  resetReceptionStore,
 } from "@/modules/reception/api"
+import { resetReceptionStore } from "@/modules/reception/__tests__/fixtures/api-fixtures"
 
 describe("patient check-in API", () => {
   afterEach(() => {

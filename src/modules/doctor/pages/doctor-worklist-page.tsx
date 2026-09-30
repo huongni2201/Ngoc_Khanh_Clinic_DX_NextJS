@@ -26,8 +26,8 @@ export function DoctorWorklistPage() {
   const [searchTerm, setSearchTerm] = React.useState<string>("")
   const [selectedRoom, setSelectedRoom] = React.useState<string>("ALL")
   const [selectedStatus, setSelectedStatus] = React.useState<DoctorEncounterStatus | "ALL">("ALL")
-  const [selectedDoctor, setSelectedDoctor] = React.useState<string>("Của tôi")
-  const [selectedDate, setSelectedDate] = React.useState<string>("25/09/2026")
+  const [selectedDoctor, setSelectedDoctor] = React.useState<string>("ALL")
+  const [selectedDate, setSelectedDate] = React.useState<string>("")
   const [sortDirection, setSortDirection] = React.useState<"asc" | "desc">("asc")
   const [currentPage, setCurrentPage] = React.useState<number>(1)
   const pageSize = 8
@@ -46,6 +46,8 @@ export function DoctorWorklistPage() {
   const {
     data: worklistData,
     isLoading: isLoadingWorklist,
+    isError: isWorklistError,
+    error: worklistError,
     refetch: refetchWorklist,
   } = useDoctorWorklist({
     search: searchTerm,
@@ -63,19 +65,23 @@ export function DoctorWorklistPage() {
   const {
     data: countersData,
     isLoading: isLoadingCounters,
+    isError: isCountersError,
+    error: countersError,
     refetch: refetchCounters,
   } = useDoctorCounters()
 
   const {
     data: nextAction,
+    isError: isNextActionError,
+    error: nextActionError,
     refetch: refetchNextAction,
   } = useDoctorNextAction(selectedDoctor)
 
   const startEncounterMutation = useStartDoctorEncounter()
 
   const encounters = worklistData?.items ?? []
-  const totalItems = worklistData?.total ?? 43
-  const totalPages = worklistData?.totalPages ?? 6
+  const totalItems = worklistData?.total ?? 0
+  const totalPages = worklistData?.totalPages ?? 1
 
   // Refresh handler
   const handleRefresh = async () => {
@@ -91,8 +97,8 @@ export function DoctorWorklistPage() {
     setSearchTerm("")
     setSelectedRoom("ALL")
     setSelectedStatus("ALL")
-    setSelectedDoctor("Của tôi")
-    setSelectedDate("25/09/2026")
+    setSelectedDoctor("ALL")
+    setSelectedDate("")
     setPriorityFilter("ALL")
     setExamTypeFilter("ALL")
     setCurrentPage(1)
@@ -196,6 +202,19 @@ export function DoctorWorklistPage() {
           </div>
         }
       />
+
+      {(isWorklistError || isCountersError || isNextActionError) && (
+        <div role="status" className="flex items-center justify-between gap-3 rounded-lg border border-border bg-muted p-4 text-sm text-muted-foreground">
+          <span>
+            {[worklistError, countersError, nextActionError].find(
+              (error) => error instanceof Error
+            )?.message ?? "Backend chưa cung cấp API worklist bác sĩ."}
+          </span>
+          <Button type="button" variant="outline" size="sm" onClick={handleRefresh}>
+            Thử lại
+          </Button>
+        </div>
+      )}
 
       {/* DAILY WORKLOAD SUMMARY (5 compact status cards) */}
       <DoctorCountersStrip

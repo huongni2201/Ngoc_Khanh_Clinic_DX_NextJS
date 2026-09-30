@@ -1,33 +1,18 @@
 "use client"
 
-import * as React from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { authApi, AuthError, subscribeToAuth } from "../api/auth-api"
-import { LoginCredentials } from "../types"
+import { ApiClientError } from "@/shared/api/api-client"
+import { authApi } from "../api/auth-api"
+import type { LoginCredentials } from "../types"
 
 export function useAuth() {
   const queryClient = useQueryClient()
 
-  // Use useSyncExternalStore to synchronize client-side auth state cleanly without cascading render warnings
-  const isAuthenticated = React.useSyncExternalStore(
-    subscribeToAuth,
-    () => authApi.isAuthenticated(),
-    () => false
-  )
-
-  const currentUser = React.useSyncExternalStore(
-    subscribeToAuth,
-    () => authApi.getCurrentUser(),
-    () => null
-  )
+  const currentUser = authApi.getCurrentUser()
+  const isAuthenticated = authApi.isAuthenticated()
 
   const loginMutation = useMutation({
-    mutationFn: async (credentials: LoginCredentials) => {
-      return await authApi.login(credentials)
-    },
-    onSuccess: (data) => {
-      queryClient.setQueryData(["auth", "user"], data.user)
-    },
+    mutationFn: (credentials: LoginCredentials) => authApi.login(credentials),
   })
 
   const logoutMutation = useMutation({
@@ -35,19 +20,16 @@ export function useAuth() {
       await authApi.logout()
     },
     onSuccess: () => {
-      queryClient.removeQueries({ queryKey: ["auth"] })
+      queryClient.clear()
     },
   })
 
   const getErrorMessage = (error: unknown): string => {
     if (!error) return ""
-    if (error instanceof AuthError) {
-      return error.message
+    if (error instanceof ApiClientError && error.status === 401) {
+      return "Tên đăng nhập hoặc mật khẩu không chính xác."
     }
     if (error instanceof Error) {
-      if ("status" in error && (error as { status: number }).status === 401) {
-        return "Tên đăng nhập hoặc mật khẩu không chính xác."
-      }
       return error.message
     }
     return "Đã xảy ra lỗi khi đăng nhập. Vui lòng thử lại."
@@ -65,4 +47,3 @@ export function useAuth() {
     isLoggingOut: logoutMutation.isPending,
   }
 }
-

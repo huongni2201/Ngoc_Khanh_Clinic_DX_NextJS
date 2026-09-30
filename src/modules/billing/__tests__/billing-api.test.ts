@@ -5,10 +5,11 @@ import {
   fetchPayments,
   processCashPayment,
   recordTransferConfirmation,
-  resetBillingStore,
   startTransferPayment,
 } from "../api"
-import { initialEncounters, processPayment, resetReceptionStore } from "@/modules/reception/api"
+import { resetBillingStore } from "./fixtures/api-fixtures"
+import { initialEncounters, resetReceptionStore } from "@/modules/reception/__tests__/fixtures/api-fixtures"
+import { processPayment } from "@/modules/reception/api"
 
 const waitingEncounter = initialEncounters.find(
   (encounter) => encounter.paymentStatus === "PENDING"

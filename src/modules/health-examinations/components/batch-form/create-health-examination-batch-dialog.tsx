@@ -4,7 +4,7 @@ import * as React from "react"
 import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { AlertCircle, Loader2 } from "@/shared/ui/product-icon"
+import { AlertCircle, Loader2, RefreshCw } from "@/shared/ui/product-icon"
 import {
   Dialog,
   DialogContent,
@@ -17,44 +17,62 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import {
   useClinicalServices,
   useCreateHealthExaminationBatch,
-} from "@/modules/health-examinations"
-import { OrganizationDetail } from "../types"
+} from "../../hooks/use-health-examination-batches"
 import {
   createHealthExaminationBatchSchema,
   type CreateHealthExaminationBatchFormValues,
-} from "../schemas"
+  type ValidatedHealthExaminationBatchFormValues,
+} from "../../schemas/health-examination-batch.schema"
 import { HealthExaminationBatchBasicInfoSection } from "./health-examination-batch-basic-info-section"
 import { ExaminationItemPriceTable } from "./examination-item-price-table"
 
 interface CreateHealthExaminationBatchDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  organization: OrganizationDetail
+  organizationId: string
+  organizationName: string
+  organizationAddress?: string
   onCreated?: (batchId: string) => void
 }
 
 export function CreateHealthExaminationBatchDialog({
   open,
   onOpenChange,
-  organization,
+  organizationId,
+  organizationName,
+  organizationAddress,
   onCreated,
 }: CreateHealthExaminationBatchDialogProps) {
   const router = useRouter()
   const [submitError, setSubmitError] = React.useState<string | null>(null)
 
-  const { data: masterItems, isLoading: isLoadingCatalog } =
-    useClinicalServices()
-  const servicesList = React.useMemo(() => masterItems || [], [masterItems])
+  const {
+    data: masterItems,
+    isLoading: isLoadingCatalog,
+    isError: isCatalogError,
+    error: catalogError,
+    refetch: refetchCatalog,
+  } = useClinicalServices()
+  const servicesList = React.useMemo(() => masterItems ?? [], [masterItems])
   const { mutateAsync: createBatch, isPending } = useCreateHealthExaminationBatch()
 
-  const form = useForm<CreateHealthExaminationBatchFormValues>({
+  const form = useForm<
+    CreateHealthExaminationBatchFormValues,
+    unknown,
+    ValidatedHealthExaminationBatchFormValues
+  >({
     resolver: zodResolver(createHealthExaminationBatchSchema),
     defaultValues: {
-      organizationId: organization.id,
-      name: "",
-      location: organization.address || "",
-      examDate: "",
-      note: "",
+      organizationId,
+      batchCode: "",
+      batchName: "",
+      startDate: "",
+      endDate: "",
+      reason: "",
+      payerType: "",
+      examinationSiteType: "",
+      examinationSiteName: "",
+      examinationSiteAddress: organizationAddress || "",
       services: [],
     },
   })
@@ -66,7 +84,7 @@ export function CreateHealthExaminationBatchDialog({
   // Populate or reset form services once when dialog opens or catalog loads
   React.useEffect(() => {
     if (open) {
-      if (!hasResetRef.current && servicesList.length > 0) {
+      if (!hasResetRef.current && !isLoadingCatalog && !isCatalogError) {
         hasResetRef.current = true
         const initialItems = servicesList.map((item) => ({
           serviceId: item.id,
@@ -76,37 +94,46 @@ export function CreateHealthExaminationBatchDialog({
         }))
 
         reset({
-          organizationId: organization.id,
-          name: "",
-          location: organization.address || "",
-          examDate: "",
-          note: "",
+          organizationId,
+          batchCode: "",
+          batchName: "",
+          startDate: "",
+          endDate: "",
+          reason: "",
+          payerType: "",
+          examinationSiteType: "",
+          examinationSiteName: "",
+          examinationSiteAddress: organizationAddress || "",
           services: initialItems,
         })
       }
     } else {
       hasResetRef.current = false
     }
-  }, [open, organization.id, organization.address, servicesList, reset])
+  }, [open, organizationId, organizationAddress, servicesList, isLoadingCatalog, isCatalogError, reset])
 
-  const onSubmit = async (values: CreateHealthExaminationBatchFormValues) => {
+  const onSubmit = async (values: ValidatedHealthExaminationBatchFormValues) => {
     setSubmitError(null)
 
-    // Filter only selected services with valid unitPrice > 0
     const selectedItems = values.services
       .filter((item) => item.selected)
       .map((item) => ({
         serviceId: item.serviceId,
-        unitPrice: item.unitPrice,
+        negotiatedUnitPrice: item.unitPrice,
       }))
 
     try {
       const created = await createBatch({
-        organizationId: organization.id,
-        name: values.name.trim(),
-        examDate: values.examDate.trim(),
-        location: values.location.trim(),
-        note: values.note?.trim() || undefined,
+        organizationId,
+        batchCode: values.batchCode.trim(),
+        batchName: values.batchName.trim(),
+        startDate: values.startDate,
+        endDate: values.endDate,
+        reason: values.reason,
+        payerType: values.payerType,
+        examinationSiteType: values.examinationSiteType,
+        examinationSiteName: values.examinationSiteName.trim(),
+        examinationSiteAddress: values.examinationSiteAddress,
         services: selectedItems,
       })
 
@@ -117,9 +144,8 @@ export function CreateHealthExaminationBatchDialog({
       onCreated?.(created.id)
 
       // 3. Navigate to new batch detail screen
-      router.push(`/organizations/${organization.id}/health-examination-batches/${created.id}`)
+      router.push(`/organizations/${organizationId}/health-examination-batches/${created.id}`)
     } catch (err) {
-      console.error("Failed to create exam batch:", err)
       setSubmitError(
         err instanceof Error
           ? err.message
@@ -151,11 +177,28 @@ export function CreateHealthExaminationBatchDialog({
             Tạo đợt khám mới
           </DialogTitle>
           <DialogDescription className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-            Tạo đợt khám cho {organization.name}
+            Tạo đợt khám cho {organizationName}
           </DialogDescription>
         </DialogHeader>
 
         {/* Scrollable Form Content */}
+        {isCatalogError && (
+          <Alert variant="destructive">
+            <AlertCircle className="size-4" />
+            <AlertDescription className="flex flex-wrap items-center justify-between gap-3">
+              <span>
+                {catalogError instanceof Error
+                  ? catalogError.message
+                  : "Chưa thể tải danh mục dịch vụ khám."}
+              </span>
+              <Button type="button" variant="outline" size="sm" onClick={() => void refetchCatalog()}>
+                <RefreshCw className="size-3.5" />
+                Thử lại
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
+
         <form
           id="create-health-examination-batch-form"
           onSubmit={handleSubmit(onSubmit)}
@@ -176,7 +219,6 @@ export function CreateHealthExaminationBatchDialog({
           {/* Section 2: Examination Items & Unit Prices Table */}
           <ExaminationItemPriceTable
             form={form}
-            masterItems={servicesList}
             isLoading={isLoadingCatalog}
           />
         </form>
@@ -195,7 +237,7 @@ export function CreateHealthExaminationBatchDialog({
           <Button
             type="submit"
             form="create-health-examination-batch-form"
-            disabled={isPending}
+            disabled={isPending || isLoadingCatalog || isCatalogError || servicesList.length === 0}
             className="h-9 sm:h-10 px-4 sm:px-5 text-xs sm:text-sm font-medium rounded-lg "
           >
             {isPending && <Loader2 className="size-3.5 mr-2 animate-spin" />}

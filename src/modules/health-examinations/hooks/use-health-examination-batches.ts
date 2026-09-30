@@ -10,8 +10,6 @@ import {
   fetchHealthExaminationBatchReport,
   fetchExaminationDetailExportData,
   fetchExaminationSummaryExportData,
-  importParticipantsToBatch,
-  populateSampleParticipantsForBatch,
 } from "@/modules/health-examinations/api"
 import { fetchHealthExaminationBatchParticipants } from "../api/participants"
 import { healthExaminationKeys } from "../query-keys"
@@ -32,12 +30,11 @@ import {
   ExaminationProgressFilterParams,
   ExaminationProgressResponse,
   HealthExaminationBatchReportSummary,
-  HealthExaminationParticipant,
 } from "../types"
 
 export function useClinicalServices() {
   return useQuery<ClinicalService[]>({
-    queryKey: ["clinical-services"],
+    queryKey: healthExaminationKeys.clinicalServices(),
     queryFn: () => fetchClinicalServiceCatalog(),
     staleTime: 5 * 60 * 1000,
   })
@@ -48,18 +45,21 @@ export function useOrganizationHealthExaminationBatches(
   params?: HealthExaminationBatchFilterParams
 ) {
   return useQuery<HealthExaminationBatchListResponse>({
-    queryKey: ["health-examination-batches", organizationId, params],
+    queryKey: healthExaminationKeys.batchList(organizationId, params),
     queryFn: () => fetchHealthExaminationBatchesByOrganization(organizationId, params),
     enabled: Boolean(organizationId),
     staleTime: 30 * 1000,
   })
 }
 
-export function useHealthExaminationBatchDetail(batchId: string) {
-  return useQuery<HealthExaminationBatch | null>({
-    queryKey: ["health-examination-batch", batchId],
-    queryFn: () => fetchHealthExaminationBatchById(batchId),
-    enabled: Boolean(batchId),
+export function useHealthExaminationBatchDetail(
+  organizationId: string,
+  batchId: string
+) {
+  return useQuery<HealthExaminationBatch>({
+    queryKey: healthExaminationKeys.batchById(batchId),
+    queryFn: () => fetchHealthExaminationBatchById(organizationId, batchId),
+    enabled: Boolean(organizationId && batchId),
   })
 }
 
@@ -68,17 +68,9 @@ export function useCreateHealthExaminationBatch() {
 
   return useMutation<HealthExaminationBatch, Error, CreateHealthExaminationBatchRequest>({
     mutationFn: (request: CreateHealthExaminationBatchRequest) => createHealthExaminationBatch(request),
-    onSuccess: (newBatch) => {
-      // Invalidate organization exam batches queries
+    onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["health-examination-batches", newBatch.organizationId],
-      })
-      queryClient.invalidateQueries({
-        queryKey: ["health-examination-batches"],
-      })
-      // Invalidate organization details
-      queryClient.invalidateQueries({
-        queryKey: ["organization", newBatch.organizationId],
+        queryKey: healthExaminationKeys.batchLists(),
       })
     },
   })
@@ -98,6 +90,8 @@ export function useHealthExaminationBatchParticipants(
     queryFn: () =>
       fetchHealthExaminationBatchParticipants(organizationId, batchId, params),
     enabled: Boolean(organizationId && batchId),
+    staleTime: 15_000,
+    refetchOnWindowFocus: true,
   })
 }
 
@@ -106,7 +100,7 @@ export function useHealthExaminationBatchMatrix(
   params?: ExaminationProgressFilterParams
 ) {
   return useQuery<ExaminationProgressResponse>({
-    queryKey: ["health-examination-batch-matrix", batchId, params],
+    queryKey: healthExaminationKeys.batchMatrix(batchId, params),
     queryFn: () => fetchHealthExaminationBatchMatrix(batchId, params),
     enabled: Boolean(batchId),
   })
@@ -114,62 +108,9 @@ export function useHealthExaminationBatchMatrix(
 
 export function useHealthExaminationBatchReport(batchId: string) {
   return useQuery<HealthExaminationBatchReportSummary>({
-    queryKey: ["health-examination-batch-report", batchId],
+    queryKey: healthExaminationKeys.batchReport(batchId),
     queryFn: () => fetchHealthExaminationBatchReport(batchId),
     enabled: Boolean(batchId),
-  })
-}
-
-export function useImportBatchParticipants() {
-  const queryClient = useQueryClient()
-
-  return useMutation<
-    { count: number },
-    Error,
-    {
-      organizationId: string
-      batchId: string
-      participants: HealthExaminationParticipant[]
-    }
-  >({
-    mutationFn: ({ batchId, participants }) =>
-      importParticipantsToBatch(batchId, participants),
-    onSuccess: (_, { organizationId, batchId }) => {
-      queryClient.invalidateQueries({ queryKey: ["health-examination-batch", batchId] })
-      queryClient.invalidateQueries({
-        queryKey: healthExaminationKeys.participantsRoot(organizationId, batchId),
-      })
-      queryClient.invalidateQueries({
-        queryKey: ["health-examination-batch-matrix", batchId],
-      })
-      queryClient.invalidateQueries({
-        queryKey: ["health-examination-batch-report", batchId],
-      })
-    },
-  })
-}
-
-export function usePopulateSampleParticipants() {
-  const queryClient = useQueryClient()
-
-  return useMutation<
-    { count: number },
-    Error,
-    { organizationId: string; batchId: string }
-  >({
-    mutationFn: ({ batchId }) => populateSampleParticipantsForBatch(batchId),
-    onSuccess: (_, { organizationId, batchId }) => {
-      queryClient.invalidateQueries({ queryKey: ["health-examination-batch", batchId] })
-      queryClient.invalidateQueries({
-        queryKey: healthExaminationKeys.participantsRoot(organizationId, batchId),
-      })
-      queryClient.invalidateQueries({
-        queryKey: ["health-examination-batch-matrix", batchId],
-      })
-      queryClient.invalidateQueries({
-        queryKey: ["health-examination-batch-report", batchId],
-      })
-    },
   })
 }
 

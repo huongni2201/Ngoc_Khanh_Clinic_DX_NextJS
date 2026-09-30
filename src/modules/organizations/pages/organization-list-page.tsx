@@ -15,8 +15,9 @@ export function OrganizationListPage() {
   const searchParams = useSearchParams()
 
   // State from URL or defaults
-  const search = searchParams?.get("q") || ""
-  const page = parseInt(searchParams?.get("page") || "1", 10)
+  const search = searchParams?.get("q")?.trim() || ""
+  const pageParam = Number(searchParams?.get("page"))
+  const page = Number.isSafeInteger(pageParam) && pageParam > 0 ? pageParam : 1
 
   // Dialog state
   const [isCreateOpen, setIsCreateOpen] = React.useState(false)

@@ -11,15 +11,3 @@ export interface AuthUser {
   role: string
   email?: string
 }
-
-export interface AuthResponse {
-  user: AuthUser
-  accessToken: string
-  expiresIn?: number
-}
-
-export interface AuthState {
-  user: AuthUser | null
-  isAuthenticated: boolean
-  isLoading: boolean
-}

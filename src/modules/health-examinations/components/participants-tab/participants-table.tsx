@@ -168,17 +168,12 @@ export function ParticipantsTable({
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-44 text-xs">
                             <DropdownMenuItem
-                              onClick={() => {
-                                const code =
-                                  emp.identificationNumber || emp.participantCode || ""
-                                router.push(
-                                  `/reception?checkinCode=${encodeURIComponent(code)}`
-                                )
-                              }}
-                              className="gap-2 cursor-pointer"
+                              disabled
+                              title="API tra cứu check-in chưa được backend cung cấp."
+                              className="gap-2"
                             >
-                              <UserCheck className="size-3.5 text-primary" />
-                              <span>Tiếp nhận Lễ tân</span>
+                              <UserCheck className="size-3.5" />
+                              <span>Tiếp nhận Lễ tân (chưa khả dụng)</span>
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() => {

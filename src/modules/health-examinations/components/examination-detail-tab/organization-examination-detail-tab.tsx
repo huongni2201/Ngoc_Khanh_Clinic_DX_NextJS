@@ -37,6 +37,8 @@ import {
   type ParticipantExaminationProgress,
   type HealthExaminationBatch,
 } from "@/modules/health-examinations"
+import { getHealthExaminationBatchStatusLabel } from "../../utils/batch-status"
+import { formatHealthExaminationDate } from "../../utils/format-health-examination-date"
 import { ParticipantExaminationDetailDrawer } from "./participant-examination-detail-drawer"
 
 interface OrganizationExaminationDetailTabProps {
@@ -254,13 +256,13 @@ export function OrganizationExaminationDetailTab({
             >
               <SelectTrigger id="batch-select" className="h-9 text-xs border-border bg-background w-full">
                 <SelectValue placeholder="Chọn đợt khám...">
-                  {activeBatch ? `${activeBatch.name} (${activeBatch.status === "IN_PROGRESS" ? "Đang khám" : "Đã xong"})` : undefined}
+                  {activeBatch ? `${activeBatch.name} (${getHealthExaminationBatchStatusLabel(activeBatch.status)})` : undefined}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {batches.map((b) => (
                   <SelectItem key={b.id} value={b.id} className="text-xs">
-                    {b.name} ({b.status === "IN_PROGRESS" ? "Đang khám" : "Đã xong"})
+                    {b.name} ({getHealthExaminationBatchStatusLabel(b.status)})
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -270,9 +272,9 @@ export function OrganizationExaminationDetailTab({
 
         {activeBatch && (
           <div className="text-xs text-muted-foreground flex items-center gap-2">
-            <span>Ngày khám: <strong className="text-foreground">{activeBatch.examDate}</strong></span>
+            <span>Thời gian: <strong className="text-foreground">{[activeBatch.startDate, activeBatch.endDate].filter((date): date is string => Boolean(date)).map(formatHealthExaminationDate).join(" – ") || "Chưa thiết lập"}</strong></span>
             <span>•</span>
-            <span>Địa điểm: <strong className="text-foreground">{activeBatch.location}</strong></span>
+            <span>Địa điểm: <strong className="text-foreground">{activeBatch.examinationSiteName || "Chưa có thông tin"}</strong></span>
           </div>
         )}
       </div>
@@ -573,7 +575,7 @@ export function OrganizationExaminationDetailTab({
         onOpenChange={setIsDrawerOpen}
         participant={selectedParticipant}
         batchName={activeBatch?.name}
-        batchExamDate={activeBatch?.examDate}
+        batchExamDate={undefined}
         services={services}
       />
     </div>

@@ -1,7 +1,6 @@
 "use client"
 
 import * as React from "react"
-import Link from "next/link"
 import {
   Sheet,
   SheetContent,
@@ -9,7 +8,6 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet"
-import { Button } from "@/components/ui/button"
 import {
   Table,
   TableHeader,
@@ -22,13 +20,13 @@ import {
   CheckCircle2,
   Clock,
   AlertCircle,
-  ExternalLink,
   User,
 } from "@/shared/ui/product-icon"
 import type {
   ParticipantExaminationProgress,
   ClinicalServiceColumn,
 } from "@/modules/health-examinations"
+import { formatHealthExaminationDate } from "../../utils/format-health-examination-date"
 
 interface ParticipantExaminationDetailDrawerProps {
   open: boolean
@@ -53,14 +51,9 @@ export function ParticipantExaminationDetailDrawer({
   const isInProgress = participant.examStatus === "IN_PROGRESS"
   const isNotStarted = participant.examStatus === "NOT_STARTED"
 
-  const encounterCode = `ENC-${participant.participantCode || participant.id.slice(-6).toUpperCase()}`
-  const mockPatientId = `PAT-${participant.id.slice(-6).toUpperCase()}`
-  const checkInDate = isNotStarted ? "Chưa tiếp nhận" : batchExamDate || "18/09/2026 08:15"
-  const currentDoctor = isNotStarted
-    ? "Chưa phân bổ"
-    : isCompleted
-    ? "BS.CKI Nguyễn Văn Hùng · Phòng Khám Nội"
-    : "BS. Trần Mai Anh · Phòng Khám Chuyên khoa"
+  const checkInDate = isNotStarted
+    ? "Chưa tiếp nhận"
+    : formatHealthExaminationDate(batchExamDate)
 
   const completedServicesCount = participant.completedServiceIds.length
   const totalServicesCount = services.length
@@ -116,34 +109,14 @@ export function ParticipantExaminationDetailDrawer({
           <div className="mt-3 flex items-center gap-3 pt-3 border-t border-border/60 text-xs">
             <div className="flex items-center gap-1 text-muted-foreground">
               <span>Hồ sơ bệnh nhân:</span>
-              {!isNotStarted ? (
-                <Link
-                  href={`/patients/${mockPatientId}`}
-                  className="font-medium text-primary hover:underline inline-flex items-center gap-0.5"
-                >
-                  {mockPatientId}
-                  <ExternalLink className="size-3 ml-0.5" />
-                </Link>
-              ) : (
-                <span className="italic text-muted-foreground">Chưa liên kết</span>
-              )}
+              <span className="italic text-muted-foreground">Chưa liên kết</span>
             </div>
 
             <span className="text-border">|</span>
 
             <div className="flex items-center gap-1 text-muted-foreground">
               <span>Mã lượt khám:</span>
-              {!isNotStarted ? (
-                <Link
-                  href={`/encounters/${encounterCode}`}
-                  className="font-medium text-primary hover:underline inline-flex items-center gap-0.5"
-                >
-                  {encounterCode}
-                  <ExternalLink className="size-3 ml-0.5" />
-                </Link>
-              ) : (
-                <span className="italic text-muted-foreground">Chưa khởi tạo</span>
-              )}
+              <span className="italic text-muted-foreground">Chưa có dữ liệu lượt khám</span>
             </div>
           </div>
         </SheetHeader>
@@ -168,7 +141,7 @@ export function ParticipantExaminationDetailDrawer({
                 <span className="text-muted-foreground block">Bác sĩ / Phòng phụ trách:</span>
                 <span className="font-medium text-foreground flex items-center gap-1.5 mt-0.5">
                   <User className="size-3.5 text-muted-foreground" />
-                  {currentDoctor}
+                  Chưa có dữ liệu phân công bác sĩ
                 </span>
               </div>
             </div>
@@ -290,16 +263,6 @@ export function ParticipantExaminationDetailDrawer({
               </div>
             )}
 
-            {!isNotStarted && (
-              <div className="pt-2 border-t border-border/60">
-                <Link href={`/encounters/${encounterCode}`}>
-                  <Button variant="outline" size="sm" className="w-full text-xs h-8">
-                    <ExternalLink className="size-3.5 mr-1.5" />
-                    Mở hồ sơ lượt khám chi tiết
-                  </Button>
-                </Link>
-              </div>
-            )}
           </div>
         </div>
       </SheetContent>

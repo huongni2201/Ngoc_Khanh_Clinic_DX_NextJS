@@ -9,7 +9,6 @@ interface ExaminationItemRowProps {
   name: string
   selected: boolean
   unitPrice: number
-  defaultPrice: number
   onToggle: (checked: boolean) => void
   onPriceChange: (price: number) => void
   error?: string
@@ -20,7 +19,6 @@ export function ExaminationItemRow({
   name,
   selected,
   unitPrice,
-  defaultPrice,
   onToggle,
   onPriceChange,
   error,
@@ -29,15 +27,7 @@ export function ExaminationItemRow({
 
   const handleCheckedChange = (checked: boolean) => {
     onToggle(checked)
-    if (checked) {
-      // If turning ON, fill default price if current price is 0
-      if (unitPrice === 0) {
-        onPriceChange(defaultPrice > 0 ? defaultPrice : 0)
-      }
-    } else {
-      // If turning OFF, strictly reset price to 0
-      onPriceChange(0)
-    }
+    if (!checked) onPriceChange(0)
   }
 
   return (

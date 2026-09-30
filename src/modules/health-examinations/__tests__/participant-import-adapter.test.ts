@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { mapLegacyEmployeeImportRow } from "@/modules/health-examinations/api"
+import { mapLegacyEmployeeImportRow } from "./fixtures/api-fixtures"
 
 describe("health examination participant import adapter", () => {
   it("maps legacy employee columns into the canonical participant model", () => {

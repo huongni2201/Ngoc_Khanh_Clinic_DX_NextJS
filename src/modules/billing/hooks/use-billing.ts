@@ -28,7 +28,8 @@ export function usePayments(params: PaymentListParams = {}) {
   const query = useQuery({
     queryKey: [...BILLING_PAYMENTS_KEY, params],
     queryFn: () => fetchPayments(params),
-    refetchInterval: 15_000,
+    staleTime: 15_000,
+    refetchOnWindowFocus: true,
   })
 
   useEffect(() => {
@@ -51,7 +52,8 @@ export function usePaymentCounters() {
   return useQuery({
     queryKey: BILLING_COUNTERS_KEY,
     queryFn: fetchPaymentCounters,
-    refetchInterval: 15_000,
+    staleTime: 15_000,
+    refetchOnWindowFocus: true,
   })
 }
 
@@ -64,7 +66,7 @@ export function useInvoice(encounter?: BillableEncounter | null, open = true) {
     enabled: Boolean(encounter) && open,
     staleTime: 0,
     refetchOnMount: "always",
-    refetchInterval: (query) => query.state.data?.paymentStatus === "PENDING" ? 5_000 : false,
+    refetchOnWindowFocus: true,
   })
 
   useEffect(() => {

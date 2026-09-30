@@ -160,11 +160,6 @@ export function AppointmentTable({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="ALL">Tất cả bác sĩ</SelectItem>
-              <SelectItem value="doc-01">BS.CKI Trần Văn Minh</SelectItem>
-              <SelectItem value="doc-02">BS. Lê Đức Anh</SelectItem>
-              <SelectItem value="doc-03">BS. Phạm Quang Huy</SelectItem>
-              <SelectItem value="doc-04">BS. Nguyễn Thị Lan</SelectItem>
-              <SelectItem value="doc-05">ThS.BS Đỗ Mỹ Linh</SelectItem>
             </SelectContent>
           </Select>
 

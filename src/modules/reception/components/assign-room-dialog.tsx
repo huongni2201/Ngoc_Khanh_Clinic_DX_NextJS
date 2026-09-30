@@ -71,7 +71,7 @@ export function AssignRoomDialog({
         onSuccess(updated)
       }
     } catch (err) {
-      setServerError((err as Error)?.message || "Không thể phân phòng khám")
+      setServerError(err instanceof Error ? err.message : "Không thể phân phòng khám")
     }
   }
 

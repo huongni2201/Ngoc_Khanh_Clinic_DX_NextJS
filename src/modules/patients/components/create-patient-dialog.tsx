@@ -91,7 +91,7 @@ export function CreatePatientDialog({
         onSuccess(patient)
       }
     } catch (err) {
-      setServerError((err as Error)?.message || "Không thể tạo hồ sơ bệnh nhân")
+      setServerError(err instanceof Error ? err.message : "Không thể tạo hồ sơ bệnh nhân")
     }
   }
 
@@ -205,7 +205,7 @@ export function CreatePatientDialog({
                 </Label>
                 <Input
                   id="identificationNumber"
-                  placeholder="001085002456"
+                  placeholder="Nhập 12 số CCCD"
                   maxLength={12}
                   {...register("identificationNumber")}
                   className="h-9 text-xs font-mono"

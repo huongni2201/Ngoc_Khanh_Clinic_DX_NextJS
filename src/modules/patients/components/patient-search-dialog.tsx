@@ -83,21 +83,8 @@ export function PatientSearchDialog({
             />
           </div>
 
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-[11px] font-medium text-secondary-foreground">Tìm nhanh:</span>
-              {["BN001256", "0987654321", "001085002456"].map((chip) => (
-                <button
-                  key={chip}
-                  type="button"
-                  onClick={() => setSearchTerm(chip)}
-                  className="text-[10px] px-2 py-0.5 rounded-md bg-card border border-border/80 hover:bg-hover text-secondary-foreground transition-colors cursor-pointer"
-                >
-                  {chip}
-                </button>
-              ))}
-            </div>
-            {searchTerm && (
+          {searchTerm && (
+            <div className="flex justify-end">
               <button
                 type="button"
                 onClick={() => setSearchTerm("")}
@@ -105,8 +92,8 @@ export function PatientSearchDialog({
               >
                 Xóa tìm kiếm
               </button>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
         {/* Content Body */}
@@ -125,7 +112,7 @@ export function PatientSearchDialog({
                 Lỗi tải dữ liệu tìm kiếm
               </p>
               <p className="text-xs text-muted-foreground mt-1 max-w-sm">
-                {(error as Error)?.message || "Không thể kết nối đến máy chủ"}
+                {error instanceof Error ? error.message : "Không thể kết nối đến máy chủ"}
               </p>
               <Button
                 variant="outline"

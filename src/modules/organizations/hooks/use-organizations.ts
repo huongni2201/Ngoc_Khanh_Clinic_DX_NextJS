@@ -6,18 +6,16 @@ import {
   updateOrganization,
   deactivateOrganization,
 } from "../api"
+import { organizationKeys } from "../query-keys"
 import {
   OrganizationFilterParams,
   CreateOrganizationDto,
   UpdateOrganizationDto,
 } from "../types"
 
-export const ORGANIZATIONS_QUERY_KEY = ["organizations"]
-export const organizationDetailQueryKey = (id: string) => ["organization", id]
-
 export function useOrganizations(params?: OrganizationFilterParams) {
   return useQuery({
-    queryKey: [...ORGANIZATIONS_QUERY_KEY, params],
+    queryKey: organizationKeys.list(params),
     queryFn: () => fetchOrganizations(params),
     retry: false,
   })
@@ -25,7 +23,7 @@ export function useOrganizations(params?: OrganizationFilterParams) {
 
 export function useOrganization(id: string) {
   return useQuery({
-    queryKey: organizationDetailQueryKey(id),
+    queryKey: organizationKeys.detail(id),
     queryFn: () => fetchOrganizationById(id),
     enabled: !!id,
   })
@@ -37,7 +35,7 @@ export function useCreateOrganization() {
   return useMutation({
     mutationFn: (dto: CreateOrganizationDto) => createOrganization(dto),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ORGANIZATIONS_QUERY_KEY })
+      queryClient.invalidateQueries({ queryKey: organizationKeys.lists() })
     },
   })
 }
@@ -47,11 +45,9 @@ export function useUpdateOrganization(id: string) {
 
   return useMutation({
     mutationFn: (dto: UpdateOrganizationDto) => updateOrganization(id, dto),
-    onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: organizationDetailQueryKey(id) }),
-        queryClient.invalidateQueries({ queryKey: ORGANIZATIONS_QUERY_KEY }),
-      ])
+    onSuccess: async (organization) => {
+      queryClient.setQueryData(organizationKeys.detail(id), organization)
+      await queryClient.invalidateQueries({ queryKey: organizationKeys.lists() })
     },
   })
 }
@@ -63,8 +59,8 @@ export function useDeactivateOrganization(id: string) {
     mutationFn: () => deactivateOrganization(id),
     onSuccess: async () => {
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: organizationDetailQueryKey(id) }),
-        queryClient.invalidateQueries({ queryKey: ORGANIZATIONS_QUERY_KEY }),
+        queryClient.invalidateQueries({ queryKey: organizationKeys.detail(id) }),
+        queryClient.invalidateQueries({ queryKey: organizationKeys.lists() }),
       ])
     },
   })

@@ -1,5 +1,12 @@
 import { z } from "zod"
 
+const contactPhoneSchema = z
+  .string()
+  .trim()
+  .min(1, { message: "Số điện thoại là bắt buộc" })
+  .max(30, { message: "Số điện thoại không được vượt quá 30 ký tự" })
+  .regex(/^(?=.*\d)[0-9+() -]+$/, { message: "Số điện thoại không hợp lệ" })
+
 export const createOrganizationSchema = z.object({
   name: z
     .string()
@@ -10,11 +17,7 @@ export const createOrganizationSchema = z.object({
     .string()
     .trim()
     .min(2, { message: "Người liên hệ là bắt buộc" }),
-  contactPhone: z
-    .string()
-    .trim()
-    .min(9, { message: "Số điện thoại phải từ 9 đến 11 số" })
-    .regex(/^[0-9+() -]+$/, { message: "Số điện thoại không hợp lệ" }),
+  contactPhone: contactPhoneSchema,
   contactJobTitle: z.string().trim().optional(),
   note: z.string().trim().optional(),
   address: z.string().trim().optional(),
@@ -32,17 +35,10 @@ export const updateOrganizationSchema = z.object({
     .string()
     .trim()
     .min(2, { message: "Người liên hệ là bắt buộc" }),
-  contactPhone: z
-    .string()
-    .trim()
-    .min(9, { message: "Số điện thoại phải từ 9 đến 11 số" })
-    .regex(/^[0-9+() -]+$/, { message: "Số điện thoại không hợp lệ" }),
+  contactPhone: contactPhoneSchema,
   contactJobTitle: z.string().trim().optional(),
   address: z.string().trim().optional(),
   note: z.string().trim().optional(),
 })
 
 export type UpdateOrganizationFormValues = z.infer<typeof updateOrganizationSchema>
-
-export * from "./health-examination-batch.schema"
-

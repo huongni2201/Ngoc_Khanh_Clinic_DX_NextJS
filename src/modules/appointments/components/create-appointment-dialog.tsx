@@ -44,7 +44,7 @@ import {
   useOrganizationHealthExaminationBatches,
   useHealthExaminationBatchParticipants,
 } from "@/modules/health-examinations/hooks/use-health-examination-batches"
-import { searchPatients, createPatient } from "@/modules/patients/api"
+import { searchPatients } from "@/modules/patients/api"
 import { Patient } from "@/modules/patients"
 import { Appointment, CareProgram } from "../types"
 import { cn } from "@/lib/utils"
@@ -131,7 +131,6 @@ export function CreateAppointmentDialog({
 
   const createMutation = useCreateAppointment()
 
-  const defaultDate = "2026-09-24"
   const defaultTime = "09:00"
 
   const {
@@ -146,9 +145,9 @@ export function CreateAppointmentDialog({
     defaultValues: {
       patientId: initialPatient?.id || "",
       examinationType: "Khám tổng quát",
-      physicianId: "doc-04",
-      roomId: "room-104",
-      date: defaultDate,
+      physicianId: "",
+      roomId: "",
+      date: "",
       time: defaultTime,
       notes: "",
       careProgram: initialCareProgram,
@@ -178,30 +177,22 @@ export function CreateAppointmentDialog({
         setIsLinkingParticipant(true)
         setServerError(null)
 
-        // Search existing patient by CCCD or phone
-        const queryKey = participant.identificationNumber || participant.phoneNumber || ""
-        const existing = await searchPatients(queryKey)
-        const matched = existing.find(
-          (p) =>
-            (participant.identificationNumber &&
-              p.identificationNumber === participant.identificationNumber) ||
-            (participant.phoneNumber && p.phoneNumber === participant.phoneNumber)
+        if (!participant.identificationNumber) {
+          setServerError("Không thể liên kết: người khám chưa có CCCD.")
+          return
+        }
+
+        const existing = await searchPatients(participant.identificationNumber)
+        const linkedPatient = existing.find(
+          (patient) =>
+            patient.identificationNumber === participant.identificationNumber
         )
 
-        let linkedPatient: Patient
-        if (matched) {
-          linkedPatient = matched
-        } else {
-          // Auto-create a patient only when this participant has no linked patient.
-          linkedPatient = await createPatient({
-            fullName: participant.fullName,
-            dateOfBirth: participant.dateOfBirth || "1990-01-01",
-            gender: participant.gender === "Nữ" ? "FEMALE" : "MALE",
-            identificationNumber:
-              participant.identificationNumber || `CCCD-${participant.participantCode}`,
-            phoneNumber: participant.phoneNumber || "0900000000",
-            address: participant.address || "Hà Nội",
-          })
+        if (!linkedPatient) {
+          setServerError(
+            "Không tìm thấy hồ sơ theo CCCD. Backend chưa cung cấp API tạo bệnh nhân."
+          )
+          return
         }
 
         setPatientOverride(linkedPatient)
@@ -221,7 +212,9 @@ export function CreateAppointmentDialog({
         setValue("participantCode", participant.participantCode || "")
       } catch (err) {
         setServerError(
-          (err as Error)?.message || "Không thể liên kết người khám với hồ sơ bệnh nhân"
+          err instanceof Error
+            ? err.message
+            : "Không thể liên kết người khám với hồ sơ bệnh nhân"
         )
       } finally {
         setIsLinkingParticipant(false)
@@ -362,7 +355,7 @@ export function CreateAppointmentDialog({
         onSuccess(created)
       }
     } catch (err) {
-      setServerError((err as Error)?.message || "Không thể tạo lịch hẹn")
+      setServerError(err instanceof Error ? err.message : "Không thể tạo lịch hẹn")
     }
   }
 

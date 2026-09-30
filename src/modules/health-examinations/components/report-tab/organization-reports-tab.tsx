@@ -37,6 +37,7 @@ import {
   type HealthExaminationBatch,
 } from "@/modules/health-examinations"
 import { formatVND } from "@/shared/ui/money-input"
+import { getHealthExaminationBatchStatusLabel } from "../../utils/batch-status"
 
 interface OrganizationReportsTabProps {
   organizationId: string
@@ -217,13 +218,13 @@ export function OrganizationReportsTab({
             >
               <SelectTrigger id="report-batch-select" className="h-9 text-xs border-border bg-background w-full">
                 <SelectValue placeholder="Chọn đợt khám...">
-                  {activeBatch ? `${activeBatch.name} (${activeBatch.status === "IN_PROGRESS" ? "Đang khám" : "Đã xong"})` : undefined}
+                  {activeBatch ? `${activeBatch.name} (${getHealthExaminationBatchStatusLabel(activeBatch.status)})` : undefined}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {batches.map((b) => (
                   <SelectItem key={b.id} value={b.id} className="text-xs">
-                    {b.name} ({b.status === "IN_PROGRESS" ? "Đang khám" : "Đã xong"})
+                    {b.name} ({getHealthExaminationBatchStatusLabel(b.status)})
                   </SelectItem>
                 ))}
               </SelectContent>

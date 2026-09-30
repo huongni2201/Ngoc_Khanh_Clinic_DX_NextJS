@@ -4,7 +4,6 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { z } from "zod"
 import { ArrowLeft, Building2 } from "@/shared/ui/product-icon"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -12,22 +11,10 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { PageHeader, ScreenLayout } from "@/shared/ui"
 import { useCreateOrganization } from "../hooks/use-organizations"
-
-const newOrganizationSchema = z.object({
-  name: z.string().trim().min(2, { message: "Tên đơn vị phải có ít nhất 2 ký tự" }),
-  taxCode: z.string().trim().optional(),
-  address: z.string().trim().optional(),
-  contactPerson: z.string().trim().min(2, { message: "Người liên hệ là bắt buộc" }),
-  contactPhone: z
-    .string()
-    .trim()
-    .min(9, { message: "Số điện thoại phải từ 9 đến 11 số" })
-    .regex(/^[0-9+() -]+$/, { message: "Số điện thoại không hợp lệ" }),
-  contactJobTitle: z.string().trim().optional(),
-  note: z.string().trim().optional(),
-})
-
-type NewOrganizationFormValues = z.infer<typeof newOrganizationSchema>
+import {
+  createOrganizationSchema,
+  type CreateOrganizationFormValues,
+} from "../schemas"
 
 export function OrganizationCreatePage() {
   const router = useRouter()
@@ -37,8 +24,8 @@ export function OrganizationCreatePage() {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<NewOrganizationFormValues>({
-    resolver: zodResolver(newOrganizationSchema),
+  } = useForm<CreateOrganizationFormValues>({
+    resolver: zodResolver(createOrganizationSchema),
     defaultValues: {
       name: "",
       taxCode: "",
@@ -50,7 +37,7 @@ export function OrganizationCreatePage() {
     },
   })
 
-  const onSubmit = async (values: NewOrganizationFormValues) => {
+  const onSubmit = async (values: CreateOrganizationFormValues) => {
     try {
       const created = await createOrg({
         name: values.name,

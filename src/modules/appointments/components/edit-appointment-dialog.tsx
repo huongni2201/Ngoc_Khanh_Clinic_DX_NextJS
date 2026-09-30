@@ -78,10 +78,10 @@ export function EditAppointmentDialog({
   } = useForm<EditAppointmentFormValues>({
     resolver: zodResolver(editAppointmentSchema),
     defaultValues: {
-      date: appointment?.date || "2026-09-24",
+      date: appointment?.date || "",
       time: appointment?.time || "09:00",
-      physicianId: appointment?.physicianId || "doc-01",
-      roomId: appointment?.roomId || "room-101",
+      physicianId: appointment?.physicianId || "",
+      roomId: appointment?.roomId || "",
       examinationType: appointment?.examinationType || "Khám tổng quát",
       notes: appointment?.notes || "",
     },
@@ -128,7 +128,7 @@ export function EditAppointmentDialog({
       onOpenChange(false)
       if (onSuccess) onSuccess()
     } catch (err) {
-      setServerError((err as Error)?.message || "Không thể cập nhật lịch hẹn")
+      setServerError(err instanceof Error ? err.message : "Không thể cập nhật lịch hẹn")
     }
   }
 
@@ -144,7 +144,7 @@ export function EditAppointmentDialog({
       onOpenChange(false)
       if (onSuccess) onSuccess()
     } catch (err) {
-      setServerError((err as Error)?.message || "Không thể hủy lịch hẹn")
+      setServerError(err instanceof Error ? err.message : "Không thể hủy lịch hẹn")
     }
   }
 
