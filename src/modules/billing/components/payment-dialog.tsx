@@ -116,7 +116,7 @@ export function PaymentDialog({ open, onOpenChange, encounter, onPaid }: Payment
                 <AlertCircle className="size-4" />
                 <AlertTitle>Không thể tải khoản thu</AlertTitle>
                 <AlertDescription className="flex items-center justify-between gap-3">
-                  <span>{(error as Error)?.message ?? "Vui lòng thử lại."}</span>
+                  <span>{error instanceof Error ? error.message : "Vui lòng thử lại."}</span>
                   <Button size="sm" variant="outline" onClick={() => refetch()}>Thử lại</Button>
                 </AlertDescription>
               </Alert>

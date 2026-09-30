@@ -3,19 +3,24 @@
 import * as React from "react"
 import { UseFormReturn, useFieldArray } from "react-hook-form"
 import { Info } from "@/shared/ui/product-icon"
-import { ClinicalService } from "@/modules/health-examinations"
-import { CreateHealthExaminationBatchFormValues } from "../schemas"
+import type { ClinicalService } from "../../types"
+import type {
+  CreateHealthExaminationBatchFormValues,
+  ValidatedHealthExaminationBatchFormValues,
+} from "../../schemas/health-examination-batch.schema"
 import { ExaminationItemRow } from "./examination-item-row"
 
 interface ExaminationItemPriceTableProps {
-  form: UseFormReturn<CreateHealthExaminationBatchFormValues>
-  masterItems: ClinicalService[]
+  form: UseFormReturn<
+    CreateHealthExaminationBatchFormValues,
+    unknown,
+    ValidatedHealthExaminationBatchFormValues
+  >
   isLoading?: boolean
 }
 
 export function ExaminationItemPriceTable({
   form,
-  masterItems,
   isLoading = false,
 }: ExaminationItemPriceTableProps) {
   const {
@@ -34,9 +39,18 @@ export function ExaminationItemPriceTable({
   const watchedItems = watch("services") || []
 
   // Global services error (e.g. at least 1 item selected)
-  const servicesError =
-    errors.services?.message ||
-    (errors.services as unknown as { root?: { message?: string } })?.root?.message
+  const rootError =
+    errors.services && "root" in errors.services
+      ? errors.services.root
+      : undefined
+  const rootErrorMessage =
+    typeof rootError === "object" &&
+    rootError !== null &&
+    "message" in rootError &&
+    typeof rootError.message === "string"
+      ? rootError.message
+      : undefined
+  const servicesError = errors.services?.message || rootErrorMessage
 
   return (
     <div className="space-y-3">
@@ -99,10 +113,6 @@ export function ExaminationItemPriceTable({
               ) : (
                 fields.map((field, index) => {
                   const currentItem = watchedItems[index] || field
-                  const defaultPrice =
-                    masterItems.find(
-                      (m) => m.id === currentItem.serviceId
-                    )?.defaultPrice || 0
 
                   // Check for field-specific error for this row's unitPrice
                   const rowError =
@@ -115,7 +125,6 @@ export function ExaminationItemPriceTable({
                       name={currentItem.name}
                       selected={Boolean(currentItem.selected)}
                       unitPrice={currentItem.unitPrice || 0}
-                      defaultPrice={defaultPrice}
                       onToggle={(checked) => {
                         setValue(`services.${index}.selected`, checked, {
                           shouldValidate: true,

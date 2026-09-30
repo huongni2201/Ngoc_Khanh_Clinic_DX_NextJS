@@ -1,4 +1,4 @@
-import { EncounterDetailData, EncounterSummary } from "../types/encounter"
+import { EncounterDetailData, EncounterSummary } from "../../types/encounter"
 
 const legacyMockEncounterDetail = {
   encounter: {

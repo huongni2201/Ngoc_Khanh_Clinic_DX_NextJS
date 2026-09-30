@@ -1,21 +1,14 @@
 import * as React from "react"
 import Image from "next/image"
 import { Headphones } from "@/shared/ui/product-icon"
-import { LoginForm } from "./login-form"
-import { LoginFormValues } from "../schemas/login.schema"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 interface LoginCardProps {
-  onSubmit: (values: LoginFormValues) => Promise<void>
-  isLoading?: boolean
-  serverError?: string | null
-  onClearServerError?: () => void
+  unavailableMessage: string
 }
 
 export function LoginCard({
-  onSubmit,
-  isLoading = false,
-  serverError,
-  onClearServerError,
+  unavailableMessage,
 }: LoginCardProps) {
   return (
     <div className="relative z-10 w-full max-w-[440px] rounded-lg border border-border bg-card p-6 sm:p-8">
@@ -51,13 +44,9 @@ export function LoginCard({
         </p>
       </div>
 
-      {/* 3. Form */}
-      <LoginForm
-        onSubmit={onSubmit}
-        isLoading={isLoading}
-        serverError={serverError}
-        onClearServerError={onClearServerError}
-      />
+      <Alert role="status" className="text-sm">
+        <AlertDescription>{unavailableMessage}</AlertDescription>
+      </Alert>
 
       {/* 4. Card Footer: Support Notice */}
       <div className="mt-7 flex items-center gap-2 border-t border-border pt-4 text-xs text-muted-foreground">

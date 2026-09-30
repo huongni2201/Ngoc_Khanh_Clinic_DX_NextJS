@@ -18,3 +18,25 @@ vi.mock("@hugeicons/react", () => ({
   HugeiconsIcon: (props: Record<string, unknown>) =>
     React.createElement("svg", { "data-testid": "hugeicon", ...props }),
 }))
+
+vi.mock("@/modules/patients/api", async () =>
+  import("@/modules/patients/__tests__/fixtures/api-fixtures")
+)
+vi.mock("@/modules/reception/api", async () =>
+  import("@/modules/reception/__tests__/fixtures/api-fixtures")
+)
+vi.mock("@/modules/appointments/api", async () =>
+  import("@/modules/appointments/__tests__/fixtures/api-fixtures")
+)
+vi.mock("@/modules/doctor/api", async () =>
+  import("@/modules/doctor/__tests__/fixtures/api-fixtures")
+)
+vi.mock("@/modules/billing/api", async () =>
+  import("@/modules/billing/__tests__/fixtures/api-fixtures")
+)
+vi.mock("@/modules/encounters/api", async () =>
+  import("@/modules/encounters/__tests__/fixtures/api-fixtures")
+)
+vi.mock("@/modules/health-examinations/api", async () =>
+  import("@/modules/health-examinations/__tests__/fixtures/api-fixtures")
+)

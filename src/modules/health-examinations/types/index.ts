@@ -1,12 +1,15 @@
-export type * from "./transport"
+import type {
+  ExaminationSiteType,
+  HealthExaminationBatchStatus,
+} from "./transport"
 
-export type HealthExaminationBatchStatus = "IN_PROGRESS" | "COMPLETED"
+export type * from "./transport"
+export { HEALTH_EXAMINATION_BATCH_STATUSES } from "./transport"
 
 export interface ClinicalService {
   id: string
   code: string
   name: string
-  defaultPrice: number
   description?: string
 }
 
@@ -16,44 +19,60 @@ export interface HealthExaminationBatchService {
   unitPrice: number
 }
 
-export interface HealthExaminationBatch {
+export interface HealthExaminationBatchSummary {
   id: string
-  code: string
   organizationId: string
+  code: string
   name: string
-  examDate: string
-  location: string
-  participantCount: number
   status: HealthExaminationBatchStatus
-  note?: string
-  services: HealthExaminationBatchService[]
+  startDate: string | null
+  endDate: string | null
   createdAt: string
   updatedAt: string
 }
 
+export interface HealthExaminationBatch extends HealthExaminationBatchSummary {
+  reason?: string | null
+  payerType?: string | null
+  examinationSiteType?: ExaminationSiteType
+  examinationSiteName?: string
+  examinationSiteAddress?: string | null
+  masterTemplateVersionId?: string
+  finalizedAt?: string | null
+  closedAt?: string | null
+  createdBy?: string
+  services?: HealthExaminationBatchService[]
+}
+
 export interface CreateHealthExaminationBatchServiceInput {
   serviceId: string
-  unitPrice: number
+  negotiatedUnitPrice: number
 }
 
 export interface CreateHealthExaminationBatchRequest {
   organizationId: string
-  name: string
-  examDate: string
-  location: string
-  note?: string
+  batchCode: string
+  batchName: string
+  startDate: string
+  endDate: string
+  reason?: string
+  payerType?: string
+  examinationSiteType: ExaminationSiteType
+  examinationSiteName: string
+  examinationSiteAddress?: string
   services: CreateHealthExaminationBatchServiceInput[]
 }
 
 export interface HealthExaminationBatchFilterParams {
   search?: string
-  status?: string
   page?: number
   pageSize?: number
+  sortKey?: "id" | "batchCode" | "batchName" | "startDate" | "status" | "createdAt"
+  sortBy?: "ASC" | "DESC"
 }
 
 export interface HealthExaminationBatchListResponse {
-  data: HealthExaminationBatch[]
+  data: HealthExaminationBatchSummary[]
   total: number
   page: number
   pageSize: number

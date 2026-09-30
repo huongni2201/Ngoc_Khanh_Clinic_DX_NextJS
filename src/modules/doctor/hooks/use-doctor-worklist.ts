@@ -17,13 +17,16 @@ export function useDoctorWorklist(params?: DoctorFilterParams) {
   return useQuery({
     queryKey: [...DOCTOR_WORKLIST_KEY, params],
     queryFn: () => fetchDoctorWorklist(params),
+    staleTime: 15_000,
+    refetchOnWindowFocus: true,
   })
 }
 export function useDoctorCounters() {
   return useQuery({
     queryKey: DOCTOR_COUNTERS_KEY,
     queryFn: () => fetchDoctorCounters(),
-    refetchInterval: 30000,
+    staleTime: 15_000,
+    refetchOnWindowFocus: true,
   })
 }
 
@@ -39,6 +42,8 @@ export function useDoctorNextAction(doctor?: string) {
   return useQuery({
     queryKey: DOCTOR_NEXT_ACTION_KEY(doctor),
     queryFn: () => fetchDoctorNextAction(doctor),
+    staleTime: 15_000,
+    refetchOnWindowFocus: true,
   })
 }
 

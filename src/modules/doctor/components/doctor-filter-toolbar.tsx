@@ -43,7 +43,7 @@ export function DoctorFilterToolbar({
     room !== "ALL" ||
     status !== "ALL" ||
     doctor !== "Của tôi" ||
-    date !== "25/09/2026"
+    Boolean(date)
 
   return (
     <div
@@ -137,18 +137,12 @@ export function DoctorFilterToolbar({
           <label className="text-xs font-semibold text-foreground tracking-tight">
             Bác sĩ
           </label>
-          <Select value={doctor} onValueChange={(val) => onDoctorChange(val ?? "Của tôi")}>
+          <Select value={doctor} onValueChange={(val) => onDoctorChange(val ?? "ALL")}>
             <SelectTrigger aria-label="Lọc theo bác sĩ" className="h-9.5 text-xs sm:text-sm bg-background">
-              <SelectValue>
-                {doctor === "ALL" ? "Tất cả bác sĩ" : doctor}
-              </SelectValue>
+              <SelectValue placeholder="Tất cả bác sĩ" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="Của tôi">Của tôi</SelectItem>
               <SelectItem value="ALL">Tất cả bác sĩ</SelectItem>
-              <SelectItem value="BS. Trần Minh Khoa">BS. Trần Minh Khoa</SelectItem>
-              <SelectItem value="BS. Nguyễn Văn An">BS. Nguyễn Văn An</SelectItem>
-              <SelectItem value="BS. Lê Thu Trang">BS. Lê Thu Trang</SelectItem>
             </SelectContent>
           </Select>
         </div>

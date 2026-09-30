@@ -4,8 +4,7 @@ import userEvent from "@testing-library/user-event"
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import "@testing-library/jest-dom/vitest"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { OrganizationReportsTab } from "../components/organization-reports-tab"
-import { resetOrganizationsStore } from "../api"
+import { OrganizationReportsTab } from "@/modules/health-examinations/components/report-tab/organization-reports-tab"
 
 function renderWithClient(ui: React.ReactElement) {
   const queryClient = new QueryClient({
@@ -21,14 +20,12 @@ function renderWithClient(ui: React.ReactElement) {
 describe("OrganizationReportsTab (Tab 4: Báo cáo)", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    resetOrganizationsStore()
   })
 
   it("renders batch selector, report notice, and vertical cost summary by default", async () => {
     renderWithClient(
       <OrganizationReportsTab
         organizationId="ent-2"
-        organizationCode="DN002"
         organizationName="Công ty Cổ phần FPT"
       />
     )
@@ -41,7 +38,6 @@ describe("OrganizationReportsTab (Tab 4: Báo cáo)", () => {
 
     // Notice banner
     expect(screen.getByText(/Dữ liệu tạm tính/i)).toBeInTheDocument()
-    expect(screen.getByText(/DN002/i)).toBeInTheDocument()
 
     // Export buttons
     expect(screen.getByRole("button", { name: /Xuất Excel \(Ngang\)/i })).toBeInTheDocument()
@@ -67,7 +63,6 @@ describe("OrganizationReportsTab (Tab 4: Báo cáo)", () => {
     renderWithClient(
       <OrganizationReportsTab
         organizationId="ent-2"
-        organizationCode="DN002"
         organizationName="Công ty Cổ phần FPT"
       />
     )
@@ -97,7 +92,6 @@ describe("OrganizationReportsTab (Tab 4: Báo cáo)", () => {
     renderWithClient(
       <OrganizationReportsTab
         organizationId="nonexistent-org"
-        organizationCode="DN999"
         organizationName="Đơn vị mới"
       />
     )

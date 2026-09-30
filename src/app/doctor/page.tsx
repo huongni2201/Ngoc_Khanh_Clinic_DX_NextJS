@@ -11,13 +11,7 @@ export const metadata: Metadata = {
 
 export default function DoctorRoute() {
   return (
-    <AppShell
-      user={{
-        name: "BS. Trần Minh Khoa",
-        role: "Bác sĩ",
-        initials: "MK",
-      }}
-    >
+    <AppShell>
       <Suspense
         fallback={<ScreenLoadingSkeleton variant="worklist" />}
       >

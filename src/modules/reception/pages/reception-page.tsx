@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useSearchParams, useRouter, usePathname } from "next/navigation"
+import { useSearchParams } from "next/navigation"
 import { AlertCircle, RefreshCw } from "@/shared/ui/product-icon"
 import { Button } from "@/components/ui/button"
 import { PageHeader, ScreenLayout } from "@/shared/ui"
@@ -10,7 +10,6 @@ import { ReceptionCountersStrip } from "../components/reception-counters-strip"
 import { ReceptionPatientTable } from "../components/reception-patient-table"
 import {
   PatientCheckInDialog,
-  type PatientCheckInAppointmentContext,
 } from "../components/patient-check-in-dialog"
 import { AssignRoomDialog } from "../components/assign-room-dialog"
 import { PrintExaminationDialog } from "../components/print-examination-dialog"
@@ -28,15 +27,12 @@ import {
 } from "../hooks/use-reception"
 import {
   useAppointments,
-  useCheckInAppointment,
   type Appointment,
 } from "@/modules/appointments"
 import { Encounter, ReceptionTab } from "../types"
 import { PaymentDialog } from "@/modules/billing"
 
 export function ReceptionPage() {
-  const router = useRouter()
-  const pathname = usePathname()
   const searchParams = useSearchParams()
 
   // Query parameters & local filter state
@@ -66,11 +62,12 @@ export function ReceptionPage() {
   const { data: rooms = [] } = useClinicRooms()
 
   // Appointments synchronization
-  const { data: todayAppointments = [], refetch: refetchAppointments } =
-    useAppointments({ tab: "TODAY" })
-  const checkInAppointmentMutation = useCheckInAppointment()
+  const {
+    data: todayAppointments = [],
+    isError: isTodayAppointmentsError,
+  } = useAppointments({ tab: "TODAY" })
 
-  const todayPendingAppointmentsCount = React.useMemo(() => {
+  const pendingAppointmentsCount = React.useMemo(() => {
     return todayAppointments.filter(
       (a) =>
         a.status === "BOOKED" ||
@@ -78,6 +75,9 @@ export function ReceptionPage() {
         a.status === "ARRIVED"
     ).length
   }, [todayAppointments])
+  const todayPendingAppointmentsCount = isTodayAppointmentsError
+    ? undefined
+    : pendingAppointmentsCount
 
   // Dialog State Management
   const [isSearchPatientOpen, setIsSearchPatientOpen] = React.useState(false)
@@ -92,14 +92,13 @@ export function ReceptionPage() {
   // Target context for dialogs
   const [selectedPatient, setSelectedPatient] = React.useState<Patient | null>(null)
   const [selectedEncounter, setSelectedEncounter] = React.useState<Encounter | null>(null)
-  const [appointmentContext, setAppointmentContext] =
-    React.useState<PatientCheckInAppointmentContext | null>(null)
+  const [checkInUnavailableError, setCheckInUnavailableError] = React.useState<string | null>(null)
 
   // Handlers for Header Actions
   const handleOpenReceiveWithCleanState = () => {
     setSelectedPatient(null)
     setSelectedEncounter(null)
-    setAppointmentContext(null)
+    setCheckInUnavailableError(null)
     setIsReceivePatientOpen(true)
   }
 
@@ -141,111 +140,28 @@ export function ReceptionPage() {
   // Synchronize incoming query params (e.g. from /appointments?appointmentId=...)
   const incomingAppointmentId = searchParams?.get("appointmentId")
   const incomingCheckinCode = searchParams?.get("checkinCode")
-
-  React.useEffect(() => {
-    const timer = setTimeout(() => {
-      if (incomingAppointmentId && todayAppointments.length > 0) {
-        const apt = todayAppointments.find(
-          (a) =>
-            a.id === incomingAppointmentId ||
-            a.appointmentCode === incomingAppointmentId
-        )
-        if (apt) {
-          setSelectedPatient({
-            id: apt.patientId,
-            patientCode: apt.patientCode,
-            fullName: apt.patientName,
-            birthYear: apt.birthYear,
-            dateOfBirth: `${apt.birthYear}-01-01`,
-            gender: apt.gender,
-            phoneNumber: apt.phoneNumber,
-            identificationNumber: "001" + apt.birthYear + "000000",
-          })
-          setSelectedEncounter(null)
-          setAppointmentContext({
-            appointmentId: apt.id,
-            appointmentCode: apt.appointmentCode,
-            examinationType: apt.examinationType,
-            roomId: apt.roomId,
-            physicianId: apt.physicianId,
-            notes: apt.notes,
-            organizationName: apt.organizationName,
-          })
-          setIsReceivePatientOpen(true)
-        }
-      } else if (incomingCheckinCode && todayAppointments.length > 0) {
-        const apt = todayAppointments.find(
-          (a) =>
-            a.patientCode === incomingCheckinCode ||
-            a.phoneNumber === incomingCheckinCode ||
-            a.participantCode === incomingCheckinCode
-        )
-        if (apt) {
-          setSelectedPatient({
-            id: apt.patientId,
-            patientCode: apt.patientCode,
-            fullName: apt.patientName,
-            birthYear: apt.birthYear,
-            dateOfBirth: `${apt.birthYear}-01-01`,
-            gender: apt.gender,
-            phoneNumber: apt.phoneNumber,
-            identificationNumber: "001" + apt.birthYear + "000000",
-          })
-          setSelectedEncounter(null)
-          setAppointmentContext({
-            appointmentId: apt.id,
-            appointmentCode: apt.appointmentCode,
-            examinationType: apt.examinationType,
-            roomId: apt.roomId,
-            physicianId: apt.physicianId,
-            notes: apt.notes,
-            organizationName: apt.organizationName,
-          })
-          setIsReceivePatientOpen(true)
-        }
-      }
-    }, 0)
-
-    return () => clearTimeout(timer)
-  }, [incomingAppointmentId, incomingCheckinCode, todayAppointments])
+  const appointmentCheckInError =
+    incomingAppointmentId || incomingCheckinCode
+      ? "Backend chưa cung cấp API tra cứu hồ sơ bệnh nhân từ lịch hẹn."
+      : checkInUnavailableError
 
   const handleCheckInFromAppointmentList = (apt: Appointment) => {
-    setSelectedPatient({
-      id: apt.patientId,
-      patientCode: apt.patientCode,
-      fullName: apt.patientName,
-      birthYear: apt.birthYear,
-      dateOfBirth: `${apt.birthYear}-01-01`,
-      gender: apt.gender,
-      phoneNumber: apt.phoneNumber,
-      identificationNumber: "001" + apt.birthYear + "000000",
-    })
-    setSelectedEncounter(null)
-    setAppointmentContext({
-      appointmentId: apt.id,
-      appointmentCode: apt.appointmentCode,
-      examinationType: apt.examinationType,
-      roomId: apt.roomId,
-      physicianId: apt.physicianId,
-      notes: apt.notes,
-      organizationName: apt.organizationName,
-    })
-    setIsTodayAppointmentsOpen(false)
-    setIsReceivePatientOpen(true)
+    void apt
+    setCheckInUnavailableError(
+      "Backend chưa cung cấp API tra cứu hồ sơ bệnh nhân từ lịch hẹn."
+    )
   }
 
   // Cross-dialog Transitions
   const handleSelectPatientFromSearch = (patient: Patient) => {
     setSelectedPatient(patient)
     setSelectedEncounter(null)
-    setAppointmentContext(null)
     setIsReceivePatientOpen(true)
   }
 
   const handlePatientCreated = (newPatient: Patient) => {
     setSelectedPatient(newPatient)
     setSelectedEncounter(null)
-    setAppointmentContext(null)
     setIsReceivePatientOpen(true)
   }
 
@@ -253,21 +169,6 @@ export function ReceptionPage() {
     newEncounter: Encounter,
     shouldPrint: boolean
   ) => {
-    if (appointmentContext?.appointmentId) {
-      try {
-        await checkInAppointmentMutation.mutateAsync({
-          id: appointmentContext.appointmentId,
-          encounterCode: newEncounter.encounterCode,
-        })
-        refetchAppointments()
-      } catch {
-        // Silently continue
-      }
-      setAppointmentContext(null)
-      if (router && typeof router.replace === "function") {
-        router.replace(pathname, { scroll: false })
-      }
-    }
     refetchWorklist()
     refetchCounters()
     if (shouldPrint) {
@@ -304,7 +205,10 @@ export function ReceptionPage() {
             onOpenReceivePatient={handleOpenReceiveWithCleanState}
             onOpenFindPatient={handleOpenFindPatient}
             onOpenCreatePatient={handleOpenCreatePatient}
-            onOpenTodayAppointments={() => setIsTodayAppointmentsOpen(true)}
+            onOpenTodayAppointments={() => {
+              setCheckInUnavailableError(null)
+              setIsTodayAppointmentsOpen(true)
+            }}
             todayAppointmentsCount={todayPendingAppointmentsCount}
           />
         }
@@ -324,8 +228,9 @@ export function ReceptionPage() {
           <div className="flex items-center gap-2">
             <AlertCircle className="size-4 shrink-0" />
             <span>
-              {(worklistError as Error)?.message ||
-                "Có lỗi xảy ra khi tải danh sách bệnh nhân hôm nay"}
+              {worklistError instanceof Error
+                ? worklistError.message
+                : "Có lỗi xảy ra khi tải danh sách bệnh nhân hôm nay"}
             </span>
           </div>
           <Button
@@ -338,6 +243,12 @@ export function ReceptionPage() {
             Tải lại
           </Button>
         </div>
+      )}
+
+      {appointmentCheckInError && !isTodayAppointmentsOpen && (
+        <p role="alert" className="rounded-lg border border-border bg-muted p-4 text-sm text-muted-foreground">
+          {appointmentCheckInError}
+        </p>
       )}
 
       {/* Main Work Area: Bệnh nhân hôm nay */}
@@ -376,15 +287,9 @@ export function ReceptionPage() {
       {/* Screen 04: Tiếp nhận bệnh nhân / Tạo Encounter */}
       <PatientCheckInDialog
         open={isReceivePatientOpen}
-        onOpenChange={(isOpen) => {
-          setIsReceivePatientOpen(isOpen)
-          if (!isOpen) {
-            setAppointmentContext(null)
-          }
-        }}
+        onOpenChange={setIsReceivePatientOpen}
         initialPatient={selectedPatient}
         initialEncounter={selectedEncounter}
-        appointmentInfo={appointmentContext}
         onOpenPatientSearch={() => setIsSearchPatientOpen(true)}
         onSuccess={handleReceptionSuccess}
       />
@@ -394,6 +299,7 @@ export function ReceptionPage() {
         open={isTodayAppointmentsOpen}
         onOpenChange={setIsTodayAppointmentsOpen}
         onCheckInAppointment={handleCheckInFromAppointmentList}
+        checkInError={appointmentCheckInError}
       />
 
       {/* Screen 05: Phân phòng / Bác sĩ */}

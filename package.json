@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
     "check:terminology": "node scripts/check-terminology.mjs",
@@ -49,5 +49,5 @@
     "typescript": "^5",
     "vitest": "^5.0.1"
   },
-  "packageManager": "pnpm@11.24.0"
+  "packageManager": "pnpm@11.26.0"
 }

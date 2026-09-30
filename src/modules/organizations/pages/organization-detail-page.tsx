@@ -14,11 +14,8 @@ import { OrganizationDetailHeader } from "../components/organization-detail-head
 import { OrganizationSummaryStrip } from "../components/organization-summary-strip"
 import { OrganizationTabs, type OrganizationTabType } from "../components/organization-tabs"
 import { OrganizationInfoCard } from "../components/organization-info-card"
-import { OrganizationHealthExaminationBatchesTab } from "../components/organization-health-examination-batches-tab"
-import { OrganizationExaminationDetailTab } from "../components/organization-examination-detail-tab"
-import { OrganizationReportsTab } from "../components/organization-reports-tab"
+import { OrganizationHealthExaminationBatchesTab } from "@/modules/health-examinations"
 import { EditOrganizationDialog } from "../components/edit-organization-dialog"
-import { CreateHealthExaminationBatchDialog } from "../components/create-health-examination-batch-dialog"
 
 interface OrganizationDetailPageProps {
   organizationId: string
@@ -32,29 +29,10 @@ export function OrganizationDetailPage({
   const pathname = usePathname()
 
   const tabParam = searchParams?.get("tab")
-  const [activeTabState, setActiveTabState] = React.useState<OrganizationTabType>(() => {
-    return tabParam === "batches"
-      ? "batches"
-      : tabParam === "examinations" || tabParam === "examination"
-      ? "examinations"
-      : tabParam === "reports" || tabParam === "report"
-      ? "reports"
-      : "info"
-  })
-
   const activeTab: OrganizationTabType =
-    tabParam === "batches"
-      ? "batches"
-      : tabParam === "examinations" || tabParam === "examination"
-      ? "examinations"
-      : tabParam === "reports" || tabParam === "report"
-      ? "reports"
-      : tabParam === "info"
-      ? "info"
-      : activeTabState
+    tabParam === "batches" ? "batches" : "info"
 
   const handleTabChange = (tab: OrganizationTabType) => {
-    setActiveTabState(tab)
     const params = new URLSearchParams(searchParams?.toString() || "")
     if (tab === "info") {
       params.delete("tab")
@@ -62,14 +40,10 @@ export function OrganizationDetailPage({
       params.set("tab", tab)
     }
     const query = params.toString() ? `?${params.toString()}` : ""
-    if (router && typeof router.replace === "function") {
-      router.replace(`${pathname}${query}`, { scroll: false })
-    }
+    router.push(`${pathname}${query}`, { scroll: false })
   }
 
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false)
-  const [isCreateBatchDialogOpen, setIsCreateBatchDialogOpen] =
-    React.useState(false)
 
   const {
     data: organization,
@@ -134,7 +108,6 @@ export function OrganizationDetailPage({
       <OrganizationDetailHeader
         organization={organization}
         onEditClick={() => setIsEditDialogOpen(true)}
-        onCreateBatchClick={() => setIsCreateBatchDialogOpen(true)}
         onDeactivateClick={handleDeactivate}
         isDeactivating={deactivateMutation.isPending}
       />
@@ -159,22 +132,6 @@ export function OrganizationDetailPage({
         {activeTab === "batches" && (
           <OrganizationHealthExaminationBatchesTab
             organizationId={organization.id}
-            onCreateBatchClick={() => setIsCreateBatchDialogOpen(true)}
-          />
-        )}
-
-        {activeTab === "examinations" && (
-          <OrganizationExaminationDetailTab
-            organizationId={organization.id}
-            onCreateBatchClick={() => setIsCreateBatchDialogOpen(true)}
-          />
-        )}
-
-        {activeTab === "reports" && (
-          <OrganizationReportsTab
-            organizationId={organization.id}
-            organizationName={organization.name}
-            onCreateBatchClick={() => setIsCreateBatchDialogOpen(true)}
           />
         )}
       </div>
@@ -186,12 +143,6 @@ export function OrganizationDetailPage({
         organization={organization}
       />
 
-      {/* 6. Create Exam Batch Placeholder Modal */}
-      <CreateHealthExaminationBatchDialog
-        open={isCreateBatchDialogOpen}
-        onOpenChange={setIsCreateBatchDialogOpen}
-        organization={organization}
-      />
     </ScreenLayout>
   )
 }

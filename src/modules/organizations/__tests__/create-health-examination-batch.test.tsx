@@ -4,8 +4,7 @@ import userEvent from "@testing-library/user-event"
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import "@testing-library/jest-dom/vitest"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { CreateHealthExaminationBatchDialog } from "../components/create-health-examination-batch-dialog"
-import { OrganizationDetail } from "../types"
+import { CreateHealthExaminationBatchDialog } from "@/modules/health-examinations/components/batch-form/create-health-examination-batch-dialog"
 import type { HealthExaminationBatch } from "@/modules/health-examinations"
 import * as healthBatchesApi from "@/modules/health-examinations/api"
 
@@ -21,17 +20,13 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(),
 }))
 
-const mockOrganization: OrganizationDetail = {
-  id: "ent-2",
-  code: "DN002",
+const mockOrganization = {
+  id: "org-2",
   name: "Công ty Cổ phần FPT",
-  type: "COMPANY",
   contactName: "Nguyễn Văn Hùng",
-  phone: "0912 345 678",
+  contactPhone: "0912 345 678",
   address: "Tòa nhà FPT, số 10 Phạm Văn Bạch, Cầu Giấy, Hà Nội",
-  shortAddress: "Tòa nhà FPT, Cầu Giấy, Hà Nội",
   status: "ACTIVE",
-  partnershipStatus: "PARTNERING",
 }
 
 function renderWithClient(ui: React.ReactElement) {
@@ -58,7 +53,9 @@ describe("CreateHealthExaminationBatchDialog (Screen 03 – Tạo đợt khám m
       <CreateHealthExaminationBatchDialog
         open={true}
         onOpenChange={vi.fn()}
-        organization={mockOrganization}
+        organizationId={mockOrganization.id}
+        organizationName={mockOrganization.name}
+        organizationAddress={mockOrganization.address}
       />
     )
 
@@ -81,7 +78,9 @@ describe("CreateHealthExaminationBatchDialog (Screen 03 – Tạo đợt khám m
       <CreateHealthExaminationBatchDialog
         open={true}
         onOpenChange={vi.fn()}
-        organization={mockOrganization}
+        organizationId={mockOrganization.id}
+        organizationName={mockOrganization.name}
+        organizationAddress={mockOrganization.address}
       />
     )
 
@@ -120,7 +119,9 @@ describe("CreateHealthExaminationBatchDialog (Screen 03 – Tạo đợt khám m
       <CreateHealthExaminationBatchDialog
         open={true}
         onOpenChange={vi.fn()}
-        organization={mockOrganization}
+        organizationId={mockOrganization.id}
+        organizationName={mockOrganization.name}
+        organizationAddress={mockOrganization.address}
       />
     )
 
@@ -156,7 +157,9 @@ describe("CreateHealthExaminationBatchDialog (Screen 03 – Tạo đợt khám m
       <CreateHealthExaminationBatchDialog
         open={true}
         onOpenChange={vi.fn()}
-        organization={mockOrganization}
+        organizationId={mockOrganization.id}
+        organizationName={mockOrganization.name}
+        organizationAddress={mockOrganization.address}
       />
     )
 
@@ -190,7 +193,9 @@ describe("CreateHealthExaminationBatchDialog (Screen 03 – Tạo đợt khám m
       <CreateHealthExaminationBatchDialog
         open={true}
         onOpenChange={vi.fn()}
-        organization={mockOrganization}
+        organizationId={mockOrganization.id}
+        organizationName={mockOrganization.name}
+        organizationAddress={mockOrganization.address}
       />
     )
 
@@ -250,7 +255,7 @@ describe("CreateHealthExaminationBatchDialog (Screen 03 – Tạo đợt khám m
         code: "DK001",
         organizationId: "ent-2",
         name: "Khám sức khỏe CBNV 2026",
-        examDate: "15/09/2026",
+        examDate: "2026-09-15",
         location: "140 Xã Đàn, Hà Nội",
         participantCount: 0,
         status: "IN_PROGRESS",
@@ -274,7 +279,9 @@ describe("CreateHealthExaminationBatchDialog (Screen 03 – Tạo đợt khám m
       <CreateHealthExaminationBatchDialog
         open={true}
         onOpenChange={handleOpenChange}
-        organization={mockOrganization}
+        organizationId={mockOrganization.id}
+        organizationName={mockOrganization.name}
+        organizationAddress={mockOrganization.address}
       />
     )
 
@@ -295,6 +302,7 @@ describe("CreateHealthExaminationBatchDialog (Screen 03 – Tạo đợt khám m
     // Pick a day button
     const dayBtn = await screen.findByText("15")
     await user.click(dayBtn)
+    expect(dateBtn).toHaveTextContent("15/09/2026")
 
     // 2. Select exactly 2 services out of catalog
     const kntqCheckbox = screen.getByRole("checkbox", {
@@ -317,8 +325,9 @@ describe("CreateHealthExaminationBatchDialog (Screen 03 – Tạo đợt khám m
     })
 
     const payload = createSpy.mock.calls[0][0]
-    expect(payload.organizationId).toBe("ent-2")
+    expect(payload.organizationId).toBe("org-2")
     expect(payload.name).toBe("Khám sức khỏe CBNV 2026")
+    expect(payload.examDate).toBe("2026-09-15")
     expect(payload.services).toHaveLength(2)
     expect(payload.services.map((i: { serviceId: string }) => i.serviceId)).toEqual([
       "item-kntq",
@@ -333,7 +342,7 @@ describe("CreateHealthExaminationBatchDialog (Screen 03 – Tạo đợt khám m
     await waitFor(() => {
       expect(handleOpenChange).toHaveBeenCalledWith(false)
       expect(mockPush).toHaveBeenCalledWith(
-        expect.stringMatching(/^\/organizations\/ent-2\/health-examination-batches\/batch-/)
+        expect.stringMatching(/^\/organizations\/org-2\/health-examination-batches\/batch-/)
       )
     })
   })
@@ -349,7 +358,9 @@ describe("CreateHealthExaminationBatchDialog (Screen 03 – Tạo đợt khám m
       <CreateHealthExaminationBatchDialog
         open={true}
         onOpenChange={handleOpenChange}
-        organization={mockOrganization}
+        organizationId={mockOrganization.id}
+        organizationName={mockOrganization.name}
+        organizationAddress={mockOrganization.address}
       />
     )
 
@@ -402,7 +413,9 @@ describe("CreateHealthExaminationBatchDialog (Screen 03 – Tạo đợt khám m
       <CreateHealthExaminationBatchDialog
         open={true}
         onOpenChange={vi.fn()}
-        organization={mockOrganization}
+        organizationId={mockOrganization.id}
+        organizationName={mockOrganization.name}
+        organizationAddress={mockOrganization.address}
       />
     )
 
@@ -439,7 +452,7 @@ describe("CreateHealthExaminationBatchDialog (Screen 03 – Tạo đợt khám m
       code: "DK999",
       organizationId: "ent-2",
       name: "Khám kiểm tra double click",
-      examDate: "20/09/2026",
+      examDate: "2026-09-20",
       location: "Hà Nội",
       participantCount: 0,
       status: "IN_PROGRESS",

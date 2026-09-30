@@ -5,18 +5,10 @@ import { useRouter } from "next/navigation"
 import { LoginBackgroundDecorations } from "../components/login-background-decorations"
 import { LoginCard } from "../components/login-card"
 import { useAuth } from "../hooks/use-auth"
-import { LoginFormValues } from "../schemas/login.schema"
 
 export function LoginPage() {
   const router = useRouter()
-  const {
-    isAuthenticated,
-    isCheckingAuth,
-    login,
-    isLoggingIn,
-    loginError,
-    resetLoginError,
-  } = useAuth()
+  const { isAuthenticated, isCheckingAuth } = useAuth()
 
   // Redirect to dashboard if user is already authenticated
   React.useEffect(() => {
@@ -24,19 +16,6 @@ export function LoginPage() {
       router.replace("/dashboard")
     }
   }, [isAuthenticated, isCheckingAuth, router])
-
-  const handleLoginSubmit = async (values: LoginFormValues) => {
-    try {
-      await login({
-        username: values.username,
-        password: values.password,
-        rememberMe: values.rememberMe,
-      })
-      router.push("/dashboard")
-    } catch {
-      // Error is caught and surfaced via loginError in useAuth hook
-    }
-  }
 
   // Prevent flash while checking existing authentication state
   if (isCheckingAuth) {
@@ -55,10 +34,7 @@ export function LoginPage() {
       {/* Spacer for vertical centering */}
       <div className="w-full flex-1 flex items-center justify-center py-4 sm:py-8">
         <LoginCard
-          onSubmit={handleLoginSubmit}
-          isLoading={isLoggingIn}
-          serverError={loginError}
-          onClearServerError={resetLoginError}
+          unavailableMessage="Backend chưa cung cấp API đăng nhập. Vui lòng liên hệ quản trị viên hệ thống."
         />
       </div>
 

@@ -22,6 +22,8 @@ export function useReceptionWorklist(params?: ReceptionFilterParams) {
   return useQuery({
     queryKey: [...RECEPTION_WORKLIST_KEY, params],
     queryFn: () => fetchReceptionWorklist(params),
+    staleTime: 15_000,
+    refetchOnWindowFocus: true,
   })
 }
 
@@ -29,7 +31,8 @@ export function useReceptionCounters() {
   return useQuery({
     queryKey: RECEPTION_COUNTERS_KEY,
     queryFn: () => fetchReceptionCounters(),
-    refetchInterval: 30000, // Poll every 30s for live clinic queue
+    staleTime: 15_000,
+    refetchOnWindowFocus: true,
   })
 }
 

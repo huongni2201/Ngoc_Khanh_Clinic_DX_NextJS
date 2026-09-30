@@ -4,8 +4,7 @@ import userEvent from "@testing-library/user-event"
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import "@testing-library/jest-dom/vitest"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { OrganizationExaminationDetailTab } from "../components/organization-examination-detail-tab"
-import { resetOrganizationsStore } from "../api"
+import { OrganizationExaminationDetailTab } from "@/modules/health-examinations/components/examination-detail-tab/organization-examination-detail-tab"
 
 function renderWithClient(ui: React.ReactElement) {
   const queryClient = new QueryClient({
@@ -21,7 +20,6 @@ function renderWithClient(ui: React.ReactElement) {
 describe("OrganizationExaminationDetailTab (Tab 3: Chi tiết khám)", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    resetOrganizationsStore()
   })
 
   it("renders batch selector, operational counters, and patient-centric table", async () => {
@@ -106,7 +104,8 @@ describe("OrganizationExaminationDetailTab (Tab 3: Chi tiết khám)", () => {
       expect(screen.getByText("Thông tin tiếp nhận & Khám lâm sàng")).toBeInTheDocument()
       expect(screen.getByText(/Tiến độ dịch vụ/i)).toBeInTheDocument()
       expect(screen.getByText("Kết luận khám sức khỏe")).toBeInTheDocument()
-      expect(screen.getByText(/Mở hồ sơ lượt khám chi tiết/i)).toBeInTheDocument()
+      expect(screen.getByText("Chưa liên kết")).toBeInTheDocument()
+      expect(screen.getByText("Chưa có dữ liệu lượt khám")).toBeInTheDocument()
     })
   })
 

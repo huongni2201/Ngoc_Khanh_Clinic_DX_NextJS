@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 import type { PaymentMethod, PaymentReceipt, PaymentStatus } from "../types"
-import { fetchInvoiceByEncounter, resetBillingStore } from "../api"
+import { fetchInvoiceByEncounter } from "../api"
+import { resetBillingStore } from "./fixtures/api-fixtures"
 
 describe("billing payment terminology", () => {
   it("supports the canonical payment methods and statuses", () => {

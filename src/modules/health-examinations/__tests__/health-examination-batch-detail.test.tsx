@@ -6,12 +6,15 @@ import "@testing-library/jest-dom/vitest"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { HealthExaminationBatchDetailPage } from "../pages/health-examination-batch-detail-page"
 
-const mockReplace = vi.fn()
+const mockNavigation = vi.hoisted(() => ({
+  push: vi.fn(),
+  search: "",
+}))
 
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ replace: mockReplace }),
+  useRouter: () => ({ push: mockNavigation.push }),
   usePathname: () => "/organizations/org-1/batches/batch-1",
-  useSearchParams: () => new URLSearchParams(),
+  useSearchParams: () => new URLSearchParams(mockNavigation.search),
 }))
 
 function renderWithClient(ui: React.ReactElement) {
@@ -68,6 +71,7 @@ const participantResponse = {
 describe("HealthExaminationBatchDetailPage", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockNavigation.search = ""
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue({
@@ -125,15 +129,22 @@ describe("HealthExaminationBatchDetailPage", () => {
 
   it("leaves tabs without an API empty", async () => {
     const user = userEvent.setup()
-    renderWithClient(
+    const page = (
       <HealthExaminationBatchDetailPage organizationId="org-1" batchId="batch-1" />
     )
+    const rendered = renderWithClient(page)
 
     await user.click(screen.getByRole("button", { name: "Chi tiết khám" }))
+    await waitFor(() => expect(mockNavigation.push).toHaveBeenCalled())
+    mockNavigation.search = new URL(
+      mockNavigation.push.mock.calls.at(-1)?.[0] as string,
+      "http://localhost"
+    ).search
+    rendered.rerender(page)
 
     expect(screen.getByText("Chưa có API cho nội dung này.")).toBeInTheDocument()
     expect(screen.queryByText("Khám nội tổng quát")).not.toBeInTheDocument()
-    expect(mockReplace).toHaveBeenCalledWith(
+    expect(mockNavigation.push).toHaveBeenCalledWith(
       expect.stringContaining("tab=details"),
       { scroll: false }
     )

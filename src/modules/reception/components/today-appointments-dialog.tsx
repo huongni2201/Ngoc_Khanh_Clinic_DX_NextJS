@@ -46,18 +46,20 @@ interface TodayAppointmentsDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onCheckInAppointment: (appointment: Appointment) => void
+  checkInError?: string | null
 }
 
 export function TodayAppointmentsDialog({
   open,
   onOpenChange,
   onCheckInAppointment,
+  checkInError,
 }: TodayAppointmentsDialogProps) {
   const [search, setSearch] = React.useState("")
   const [typeFilter, setTypeFilter] = React.useState<string>("ALL")
   const [statusFilter, setStatusFilter] = React.useState<string>("PENDING")
 
-  const { data: appointments = [], isLoading } = useAppointments({
+  const { data: appointments = [], isLoading, isError, error } = useAppointments({
     tab: "TODAY",
   })
 
@@ -137,6 +139,12 @@ export function TodayAppointmentsDialog({
             </div>
           </div>
         </DialogHeader>
+
+        {checkInError && (
+          <div role="alert" className="mt-3 rounded-lg border border-border bg-muted p-3 text-xs text-muted-foreground">
+            {checkInError}
+          </div>
+        )}
 
         {/* Toolbar & Filters */}
         <div className="py-3 flex flex-col sm:flex-row items-center justify-between gap-3 border-b border-border/80">
@@ -219,6 +227,14 @@ export function TodayAppointmentsDialog({
                       <div className="size-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                       <span>Đang tải danh sách lịch hẹn hôm nay...</span>
                     </div>
+                  </TableCell>
+                </TableRow>
+              ) : isError ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="h-40 text-center text-xs text-muted-foreground">
+                    {error instanceof Error
+                      ? error.message
+                      : "Backend chưa cung cấp API lịch hẹn."}
                   </TableCell>
                 </TableRow>
               ) : filteredAppointments.length === 0 ? (

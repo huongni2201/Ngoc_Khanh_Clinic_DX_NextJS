@@ -25,8 +25,8 @@ export function EncounterDetailPage() {
   const params = useParams()
   const searchParams = useSearchParams()
 
-  const patientId = (params?.id as string) || "pat-mock-01"
-  const encounterId = (params?.encounterId as string) || "LK000456"
+  const patientId = typeof params?.id === "string" ? params.id : ""
+  const encounterId = typeof params?.encounterId === "string" ? params.encounterId : ""
 
   const activeTab = (searchParams.get("tab") as EncounterTabKey) || "summary"
   const subView = searchParams.get("view") || null

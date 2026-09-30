@@ -28,11 +28,20 @@ export class ApiClientError extends Error {
   }
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080"
+function getApiBaseUrl() {
+  const configuredBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.trim()
+  if (configuredBaseUrl) return configuredBaseUrl
+  if (process.env.NODE_ENV !== "production") return "http://localhost:8080"
+
+  throw new ApiClientError(
+    "NEXT_PUBLIC_API_BASE_URL is required outside development",
+    0
+  )
+}
 
 function buildUrl(path: string) {
   if (/^https?:\/\//i.test(path)) return path
-  return `${API_BASE_URL.replace(/\/$/, "")}/${path.replace(/^\//, "")}`
+  return `${getApiBaseUrl().replace(/\/$/, "")}/${path.replace(/^\//, "")}`
 }
 
 function isApiResponse(value: unknown): value is ApiResponse<unknown> {
@@ -93,6 +102,10 @@ async function request<T>(path: string, options: ApiClientRequestOptions = {}) {
     )
   }
 
+  if (response.status === 204) {
+    return { result: "OK", code: 204 } as ApiResponse<T>
+  }
+
   const payload = await readJson(response)
   if (!response.ok) {
     const errorPayload = isApiResponse(payload) ? payload : undefined
@@ -140,15 +153,29 @@ export const apiClient = {
     void body
     const headers = new Headers(options?.headers)
     headers.set("Accept", "application/octet-stream")
-    const response = await fetch(buildUrl(path), {
-      ...requestOptions,
-      method: "GET",
-      cache: options?.cache ?? "no-store",
-      headers,
-    })
+    let response: Response
+    try {
+      response = await fetch(buildUrl(path), {
+        ...requestOptions,
+        method: "GET",
+        cache: options?.cache ?? "no-store",
+        headers,
+      })
+    } catch (error) {
+      throw new ApiClientError(
+        error instanceof Error ? error.message : "Không thể kết nối tới máy chủ.",
+        0
+      )
+    }
 
     if (!response.ok) {
-      throw new ApiClientError("Không thể tải tệp từ máy chủ.", response.status)
+      const payload = await readJson(response)
+      const errorPayload = isApiResponse(payload) ? payload : undefined
+      throw new ApiClientError(
+        errorPayload?.message ?? "Không thể tải tệp từ máy chủ.",
+        response.status,
+        errorPayload?.code
+      )
     }
 
     return { blob: await response.blob(), filename: getFilename(response) }

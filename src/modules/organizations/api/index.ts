@@ -97,14 +97,15 @@ export async function createOrganization(dto: CreateOrganizationDto): Promise<Or
 export async function updateOrganization(
   id: string,
   dto: UpdateOrganizationDto
-): Promise<void> {
-  const response = await apiClient.put<OrganizationRequestDto, Record<string, never>>(
+): Promise<OrganizationDetail> {
+  const response = await apiClient.put<OrganizationRequestDto, OrganizationResponseDto>(
     `${ORGANIZATIONS_ENDPOINT}/${encodeURIComponent(id)}`,
     toRequest(dto)
   )
   if (!response.data) {
     throw new Error(response.message || "Phản hồi cập nhật đơn vị không hợp lệ.")
   }
+  return requireOrganization(response.data)
 }
 
 export async function deactivateOrganization(id: string): Promise<void> {

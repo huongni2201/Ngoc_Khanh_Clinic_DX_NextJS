@@ -5,6 +5,10 @@ import { ParticipantsToolbar } from "./participants-toolbar"
 import { ParticipantsTable } from "./participants-table"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useHealthExaminationBatchParticipants } from "../../hooks/use-health-examination-batches"
+import { useAuth } from "@/modules/auth/hooks/use-auth"
+import { EmptyParticipantsState } from "./empty-participants-state"
+import { ParticipantImportDialog } from "./participant-import-dialog"
+import { useDownloadParticipantImportTemplate } from "../../hooks/use-participant-imports"
 
 interface ParticipantsTabProps {
   batchId: string
@@ -18,6 +22,10 @@ export function ParticipantsTab({
   const [search, setSearch] = React.useState("")
   const [page, setPage] = React.useState(1)
   const [selectedIds, setSelectedIds] = React.useState<string[]>([])
+  const [importOpen, setImportOpen] = React.useState(false)
+  const { currentUser } = useAuth()
+  const canManageImport = currentUser?.role === "CLINIC_MANAGER"
+  const downloadTemplate = useDownloadParticipantImportTemplate()
 
   // Reset page when filters change
   const handleSearchChange = (val: string) => {
@@ -38,6 +46,11 @@ export function ParticipantsTab({
   const participants = data?.data || []
   const total = data?.total || 0
   const totalPages = data?.totalPages || 1
+  const isEmpty = !isLoading && !isError && total === 0 && !search.trim()
+
+  const handleDownloadTemplate = () => {
+    downloadTemplate.mutate({ organizationId, batchId })
+  }
 
   // Handle row selection
   const handleToggleSelect = (id: string) => {
@@ -60,11 +73,23 @@ export function ParticipantsTab({
 
   return (
     <div className="space-y-4">
-      {/* 1. Toolbar */}
-      <ParticipantsToolbar
-        search={search}
-        onSearchChange={handleSearchChange}
-      />
+      {!isEmpty && (
+        <ParticipantsToolbar
+          search={search}
+          onSearchChange={handleSearchChange}
+          canManageImport={canManageImport}
+          isDownloadingTemplate={downloadTemplate.isPending}
+          onImportClick={() => setImportOpen(true)}
+          onDownloadTemplateClick={handleDownloadTemplate}
+        />
+      )}
+      {downloadTemplate.isError && (
+        <p role="alert" className="text-sm text-destructive">
+          {downloadTemplate.error instanceof Error
+            ? downloadTemplate.error.message
+            : "Không thể tải file mẫu."}
+        </p>
+      )}
 
       {/* 2. Table / Loading Skeleton */}
       {isLoading ? (
@@ -81,7 +106,7 @@ export function ParticipantsTab({
             Không thể tải danh sách nhân viên.
           </p>
           <p className="text-xs text-muted-foreground">
-            {(error as Error)?.message || "Đã xảy ra lỗi kết nối API."}
+            {error instanceof Error ? error.message : "Đã xảy ra lỗi kết nối API."}
           </p>
           <button
             type="button"
@@ -91,6 +116,12 @@ export function ParticipantsTab({
             Thử lại
           </button>
         </div>
+      ) : isEmpty ? (
+        <EmptyParticipantsState
+          canManageImport={canManageImport}
+          onImportClick={() => setImportOpen(true)}
+          onDownloadTemplateClick={handleDownloadTemplate}
+        />
       ) : (
         <ParticipantsTable
           participants={participants}
@@ -106,6 +137,12 @@ export function ParticipantsTab({
           organizationId={organizationId}
         />
       )}
+      <ParticipantImportDialog
+        open={importOpen}
+        organizationId={organizationId}
+        batchId={batchId}
+        onOpenChange={setImportOpen}
+      />
     </div>
   )
 }

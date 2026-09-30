@@ -27,11 +27,7 @@ export interface AppHeaderProps {
 export function AppHeader({
   className,
   onOpenMobileMenu,
-  user = {
-    name: "BS. Trần Minh Khoa",
-    role: "Bác sĩ",
-    initials: "MK",
-  },
+  user,
 }: AppHeaderProps) {
   return (
     <header
@@ -94,24 +90,30 @@ export function AppHeader({
         <div className="h-6 w-px bg-border/60" />
 
         {/* User Info */}
-        <div className="group flex cursor-pointer select-none items-center gap-2.5 pl-1">
-          <div className="flex size-9 shrink-0 items-center justify-center rounded-full border border-border bg-muted text-xs font-semibold text-foreground">
-            {user.initials ?? user.name.slice(0, 2).toUpperCase()}
+        {user ? (
+          <div className="group flex cursor-pointer select-none items-center gap-2.5 pl-1">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-full border border-border bg-muted text-xs font-semibold text-foreground">
+              {user.initials ?? user.name.slice(0, 2).toUpperCase()}
+            </div>
+            <div className="flex flex-col text-left">
+              <span className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors">
+                {user.name}
+              </span>
+              <span className="text-[11px] text-muted-foreground leading-tight">
+                {user.role}
+              </span>
+            </div>
+            <HugeiconsIcon
+              icon={ArrowDown01Icon}
+              className="size-4 text-muted-foreground transition-colors group-hover:text-foreground"
+              aria-hidden="true"
+            />
           </div>
-          <div className="flex flex-col text-left">
-            <span className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors">
-              {user.name}
-            </span>
-            <span className="text-[11px] text-muted-foreground leading-tight">
-              {user.role}
-            </span>
-          </div>
-          <HugeiconsIcon
-            icon={ArrowDown01Icon}
-            className="size-4 text-muted-foreground transition-colors group-hover:text-foreground"
-            aria-hidden="true"
-          />
-        </div>
+        ) : (
+          <span role="status" className="text-xs text-muted-foreground">
+            Chưa xác thực
+          </span>
+        )}
       </div>
     </header>
   )

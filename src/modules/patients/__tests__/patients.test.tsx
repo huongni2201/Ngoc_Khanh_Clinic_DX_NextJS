@@ -13,9 +13,9 @@ import {
   searchPatients,
   createPatient,
   updatePatient,
-  resetPatientsStore,
   Patient,
 } from "../index"
+import { resetPatientsStore } from "./fixtures/api-fixtures"
 
 // Mock next/navigation
 vi.mock("next/navigation", () => ({

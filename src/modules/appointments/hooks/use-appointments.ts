@@ -23,6 +23,8 @@ export function useAppointments(params?: AppointmentFilterParams) {
   return useQuery({
     queryKey: [...APPOINTMENTS_QUERY_KEY, params],
     queryFn: () => fetchAppointments(params),
+    staleTime: 15_000,
+    refetchOnWindowFocus: true,
   })
 }
 
@@ -30,6 +32,8 @@ export function useAppointmentCounters() {
   return useQuery({
     queryKey: APPOINTMENT_COUNTERS_QUERY_KEY,
     queryFn: () => fetchAppointmentCounters(),
+    staleTime: 15_000,
+    refetchOnWindowFocus: true,
   })
 }
 

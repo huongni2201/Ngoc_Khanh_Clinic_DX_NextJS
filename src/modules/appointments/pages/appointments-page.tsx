@@ -23,7 +23,22 @@ import {
   useConfirmArrived,
   useCancelAppointment,
 } from "../hooks/use-appointments"
-import { Appointment, AppointmentTab, CareProgram } from "../types"
+import type { Appointment, AppointmentTab, CareProgram } from "../types"
+
+const appointmentTabs: Record<string, AppointmentTab> = {
+  ALL: "ALL",
+  TODAY: "TODAY",
+  UPCOMING: "UPCOMING",
+  ARRIVED: "ARRIVED",
+  EXAMINED: "EXAMINED",
+  CANCELLED: "CANCELLED",
+}
+
+const carePrograms: Record<string, CareProgram | "ALL"> = {
+  ALL: "ALL",
+  INDIVIDUAL: "INDIVIDUAL",
+  ORGANIZATION_HEALTH_EXAMINATION: "ORGANIZATION_HEALTH_EXAMINATION",
+}
 
 export function AppointmentsPage() {
   const router = useRouter()
@@ -36,15 +51,22 @@ export function AppointmentsPage() {
   const createParam = searchParams?.get("create") === "true"
 
   // URL state synchronization
-  const activeTab = (searchParams?.get("tab") as AppointmentTab) || "ALL"
-  const searchTerm = searchParams?.get("q") || ""
+  const activeTab = appointmentTabs[searchParams?.get("tab") ?? ""] ?? "ALL"
+  const searchTerm = searchParams?.get("q")?.trim() || ""
   const selectedDoctorId = searchParams?.get("physicianId") || "ALL"
   const selectedExamType = searchParams?.get("examType") || "ALL"
   const selectedCareProgram =
-    (searchParams?.get("careProgram") as CareProgram | "ALL") ||
+    carePrograms[searchParams?.get("careProgram") ?? ""] ??
     (organizationIdParam ? "ORGANIZATION_HEALTH_EXAMINATION" : "ALL")
-  const page = parseInt(searchParams?.get("page") || "1", 10)
+  const rawPage = Number(searchParams?.get("page") ?? "1")
+  const page = Number.isSafeInteger(rawPage) && rawPage > 0 ? rawPage : 1
   const pageSize = 10
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = React.useState(searchTerm)
+
+  React.useEffect(() => {
+    const timeoutId = setTimeout(() => setDebouncedSearchTerm(searchTerm), 250)
+    return () => clearTimeout(timeoutId)
+  }, [searchTerm])
 
   const updateUrlParams = React.useCallback(
     (newParams: {
@@ -137,7 +159,7 @@ export function AppointmentsPage() {
     refetch,
   } = useAppointments({
     tab: activeTab,
-    search: searchTerm,
+    search: debouncedSearchTerm,
     physicianId: selectedDoctorId !== "ALL" ? selectedDoctorId : undefined,
     examinationType: selectedExamType !== "ALL" ? selectedExamType : undefined,
     careProgram:
@@ -257,8 +279,9 @@ export function AppointmentsPage() {
           <div className="flex items-center gap-2">
             <AlertCircle className="size-4 shrink-0" />
             <span>
-              {(error as Error)?.message ||
-                "Có lỗi xảy ra khi tải danh sách lịch hẹn"}
+              {error instanceof Error
+                ? error.message
+                : "Có lỗi xảy ra khi tải danh sách lịch hẹn"}
             </span>
           </div>
           <Button

@@ -14,7 +14,8 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Organization } from "../types"
+import type { Organization, OrganizationDetail } from "../types"
+import { EditOrganizationDialog } from "./edit-organization-dialog"
 
 interface OrganizationTableProps {
   organizations: Organization[]
@@ -36,6 +37,7 @@ export function OrganizationTable({
   onSearchChange,
 }: OrganizationTableProps) {
   const router = useRouter()
+  const [organizationToEdit, setOrganizationToEdit] = React.useState<OrganizationDetail | null>(null)
 
   // Local state for debounced search
   const [searchValue, setSearchValue] = React.useState(searchTerm)
@@ -288,6 +290,7 @@ export function OrganizationTable({
                     <Button
                       variant="outline"
                       size="sm"
+                      onClick={() => setOrganizationToEdit(organization)}
                       className="size-7.5 p-0 text-secondary-foreground hover:text-foreground hover:bg-surface-alt border-border rounded-lg cursor-pointer "
                       title={`Chỉnh sửa - ${organization.name}`}
                       aria-label={`Chỉnh sửa cho ${organization.name}`}
@@ -302,6 +305,15 @@ export function OrganizationTable({
           })}
         </TableBody>
       </Table>
+      {organizationToEdit && (
+        <EditOrganizationDialog
+          open
+          organization={organizationToEdit}
+          onOpenChange={(open) => {
+            if (!open) setOrganizationToEdit(null)
+          }}
+        />
+      )}
     </div>
   )
 }

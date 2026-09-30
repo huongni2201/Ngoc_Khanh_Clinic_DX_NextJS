@@ -3,8 +3,9 @@ import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { initialEncounters, resetReceptionStore } from "@/modules/reception/api"
-import { resetBillingStore, startTransferPayment } from "../api"
+import { initialEncounters, resetReceptionStore } from "@/modules/reception/__tests__/fixtures/api-fixtures"
+import { startTransferPayment } from "../api"
+import { resetBillingStore } from "./fixtures/api-fixtures"
 import { PaymentWorklistPage } from "../pages/payment-worklist-page"
 
 const navigation = vi.hoisted(() => ({ searchParams: new URLSearchParams(), replace: vi.fn() }))
