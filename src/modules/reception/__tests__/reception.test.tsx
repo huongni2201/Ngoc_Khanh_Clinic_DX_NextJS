@@ -8,7 +8,7 @@ import { ReceptionPage } from "../pages/reception-page"
 import { PaymentDialog } from "@/modules/billing"
 import { PrintExaminationDialog } from "../components/print-examination-dialog"
 import { AssignRoomDialog } from "../components/assign-room-dialog"
-import { resetReceptionStore, initialEncounters } from "../api"
+import { resetReceptionStore, initialEncounters } from "./fixtures/api-fixtures"
 
 // Mock next/navigation
 vi.mock("next/navigation", () => ({

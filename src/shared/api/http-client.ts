@@ -32,21 +32,49 @@ export function errorMessage(error: unknown): string {
   }
 }
 
-export async function httpClient(path: string, options: RequestInit = {}): Promise<unknown> {
-  const url = apiUrl(path)
+export async function withHttpResponse<T>(
+  url: string,
+  options: RequestInit,
+  readResponse: (response: Response) => Promise<T>,
+): Promise<T> {
   const controller = new AbortController()
   let timedOut = false
   const abort = () => controller.abort(options.signal?.reason)
   if (options.signal?.aborted) abort()
   options.signal?.addEventListener("abort", abort, { once: true })
   const timeout = setTimeout(() => { timedOut = true; controller.abort() }, 15_000)
+  const transportFailure = (error: unknown): never => {
+    if (options.signal?.aborted) throw error
+    throw new HttpError(timedOut ? "TIMEOUT" : "NETWORK_ERROR",
+      timedOut ? "Máy chủ phản hồi quá lâu. Vui lòng thử lại." : "Không thể kết nối máy chủ. Vui lòng thử lại.")
+  }
   try {
-    const headers = new Headers(options.headers)
-    headers.set("Accept", "application/json")
-    if (options.body) headers.set("Content-Type", "application/json")
-    const response = await fetch(url, {
-      ...options, headers, credentials: "include", cache: "no-store", signal: controller.signal,
-    })
+    let response: Response
+    try {
+      controller.signal.throwIfAborted()
+      response = await fetch(url, {
+        ...options, credentials: "include", cache: "no-store", signal: controller.signal,
+      })
+    } catch (error) {
+      return transportFailure(error)
+    }
+    try {
+      return await readResponse(response)
+    } catch (error) {
+      if (controller.signal.aborted) return transportFailure(error)
+      throw error
+    }
+  } finally {
+    clearTimeout(timeout)
+    options.signal?.removeEventListener("abort", abort)
+  }
+}
+
+export async function httpClient(path: string, options: RequestInit = {}): Promise<unknown> {
+  const headers = new Headers(options.headers)
+  headers.set("Accept", "application/json")
+  if (options.body) headers.set("Content-Type", "application/json")
+  return withHttpResponse(apiUrl(path), { ...options, headers }, async (response) => {
     if (!response.ok) {
       const retry = response.headers.get("Retry-After")
       const seconds = retry && /^\d+$/.test(retry) ? Number(retry) : undefined
@@ -58,16 +86,8 @@ export async function httpClient(path: string, options: RequestInit = {}): Promi
     try {
       return await response.json() as unknown
     } catch (error) {
-      if (controller.signal.aborted) throw error
+      if (error instanceof Error && error.name === "AbortError") throw error
       throw new HttpError("INVALID_RESPONSE", "Phản hồi máy chủ không hợp lệ. Vui lòng thử lại.")
     }
-  } catch (error) {
-    if (error instanceof HttpError) throw error
-    if (options.signal?.aborted) throw error
-    throw new HttpError(timedOut ? "TIMEOUT" : "NETWORK_ERROR",
-      timedOut ? "Máy chủ phản hồi quá lâu. Vui lòng thử lại." : "Không thể kết nối máy chủ. Vui lòng thử lại.")
-  } finally {
-    clearTimeout(timeout)
-    options.signal?.removeEventListener("abort", abort)
-  }
+  })
 }

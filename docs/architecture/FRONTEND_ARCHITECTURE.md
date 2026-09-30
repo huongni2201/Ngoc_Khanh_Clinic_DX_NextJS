@@ -2,9 +2,9 @@
 
 ## Purpose
 
-This document describes the **current frontend architecture**.
-
-Use ADRs to explain **why** long-lived decisions were made. Use this document to explain **how** the frontend is currently structured.
+This document describes how the current frontend is structured. Use ADRs to
+explain why long-lived decisions were made; use this document to explain how
+the frontend is organized.
 
 ## High-Level Flow
 
@@ -32,9 +32,7 @@ Module Page / Feature
   │
   ▼
 Domain Components
-  │
   ├──────────────► Shared App Components
-  │
   └──────────────► shadcn Primitives
 ```
 
@@ -91,7 +89,8 @@ These may compose shadcn primitives but remain domain-neutral.
 
 Location: `src/modules/<domain>/components`
 
-Examples: EmployeeValidationBadge, CompanySummary, HealthCheckBatchStatus, PatientMatchPanel.
+Examples: ParticipantValidationBadge, OrganizationSummary,
+HealthExaminationBatchStatus, PatientMatchPanel.
 
 These contain business terminology or behavior.
 
@@ -111,9 +110,9 @@ See ADR-0002.
 ## Styling & Color Tokens
 
 - **Single source of truth**: `src/app/globals.css`.
-- **No arbitrary colors**: Hardcoded hex/rgb/hsl values, arbitrary Tailwind classes (`bg-[#...]`, `text-[#...]`), inline style colors, or unmapped palette classes (`bg-blue-500`, `text-slate-600`) are strictly forbidden in components.
-- **Semantic tokens only**: Use defined semantic tokens (`bg-background`, `text-foreground`, `bg-card`, `text-card-foreground`, `bg-primary`, `text-primary-foreground`, `bg-destructive`, `border-border`, etc.).
-- **Token additions**: If a new clinic status color is required, it must be declared in `src/app/globals.css` (for both `:root` and `.dark`) rather than created ad-hoc.
+- **No arbitrary colors**: Hardcoded hex/rgb/hsl values, arbitrary Tailwind classes, inline style colors and unmapped palette classes are forbidden in components.
+- **Semantic tokens only**: Use the semantic tokens defined in `src/app/globals.css`.
+- **Token additions**: New clinic status colors must be declared in `src/app/globals.css` for both `:root` and `.dark`.
 
 ## State Ownership
 
@@ -128,73 +127,100 @@ Shared UI state   → Zustand only when truly cross-component
 
 See ADR-0003.
 
-## API Flow
+## API and Contract Flow
 
 ```text
 UI
  ↓
-query/mutation hook
+Query / Mutation Hook
  ↓
-module API
+Module API
  ↓
-shared HTTP client
+Shared HTTP Client
  ↓
-backend
+Backend HTTP Contract
 ```
 
-Pages/components do not contain HTTP implementation details.
+Pages and components do not contain HTTP implementation details. When a
+backend implementation exists, its endpoint, method, request/response DTO and
+pagination/error envelope are authoritative.
+
+## Transport DTO and View Model
+
+Transport DTOs match backend request/response payloads exactly. They do not
+contain UI-only fields or presentation-formatted values.
+
+```text
+Backend HTTP Contract
+        ↓
+Module Transport DTO
+        ↓
+Module Mapper
+        ↓
+View Model
+        ↓
+Component
+```
+
+`Transport DTO != View Model`. Derived labels, formatted dates, combined values
+and table-specific fields belong in a mapper/view model. Existing frontend mocks
+must not override an existing backend contract.
 
 See ADR-0004.
 
 ## Domain Direction
 
 ```text
-Company
-  └── HealthCheckBatch
-        └── CompanyEmployee
+Organization
+  └── HealthExaminationBatch
+        └── HealthExaminationParticipant
               ↓ check-in
             Patient link/create
               ↓
             Encounter
 ```
 
-The corporate employee roster is intentionally separate from the patient registry.
+`HealthExaminationParticipant` is a batch membership record and is not
+automatically a `Patient`.
 
-## Corporate Health Check Flow
+## Corporate Health Examination Flow
 
 ```text
-Company List
+Organization List
   ↓
-Company Detail
+Organization Detail
   ↓
-Health Check Batch
+Health Examination Batch
   ↓
-Employee Roster
+Participant Roster
   ↓
-Excel Import
+Excel Template / Import
   ↓
-Validation
+Backend Parse and Validate
   ↓
-Bulk Selection
+Validation Preview
   ↓
-Mẫu số 03 Print Preview
+Confirm Import
   ↓
-Bulk Print
+Mẫu số 03 Preview / Print
   ↓
-Employee Arrival
+Participant Arrival
   ↓
 Patient Match/Create
   ↓
 Encounter
 ```
 
+The backend remains authoritative for validation, persistence, lifecycle
+statuses and calculated report values.
+
 ## Route Direction
 
 ```text
 /login
 /health-check
-/health-check/companies/[companyId]
-/health-check/companies/[companyId]/batches/[batchId]
+/organizations/[organizationId]
+/organizations/[organizationId]/health-examination-batches/[batchId]
 /health-check/print/preview
 ```
 
@@ -209,7 +235,7 @@ Later:
 
 ## Architecture Changes
 
-### Staff authentication implementation
+### User authentication implementation
 
 `modules/auth` owns STAFF/PATIENT login, logout, session schemas, hooks and AuthBoundary.
 The flow is component → auth hook → auth API → `shared/api/http-client` → identity.
@@ -220,8 +246,11 @@ AppShell mounts protected screens and the payment notifier only after `/me`
 verification. AppHeader receives real identity display values and uses the auth
 module's public logout hook. The root QueryProvider mounts cross-tab synchronization
 and handles 401 errors from queries explicitly marked `requiresAuth`. Shared
-transport remains independent of the auth module. Existing employee-roster HTTP
-requests also use this transport and forward cancellation signals.
+transport remains independent of the auth module. The participant-roster API uses
+the shared API client, includes session cookies and forwards cancellation signals.
+Both shared client entry points use the same cookie-aware transport with a
+15-second timeout. QueryProvider recognizes their HTTP error contracts without
+turning permission failures into logout.
 
 Staff with effective assignments enter the staff workspace. Patients and roleless
 staff remain signed in with a notice and logout action; business data is cleared

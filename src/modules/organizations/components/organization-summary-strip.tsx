@@ -10,20 +10,20 @@ export function OrganizationSummaryStrip({
   organization,
 }: OrganizationSummaryStripProps) {
   const displayAddress =
-    organization.shortAddress || organization.address || "Chưa cập nhật"
+    organization.address || "Chưa cập nhật"
 
   const summaryItems = [
     {
-      label: "Mã đơn vị",
-      value: organization.code,
-    },
-    {
       label: "Người liên hệ",
-      value: organization.contactName || organization.contactPerson || "Chưa cập nhật",
+      value: organization.contactName || "Chưa cập nhật",
     },
     {
       label: "Số điện thoại",
-      value: organization.phone || organization.contactPhone || "Chưa cập nhật",
+      value: organization.contactPhone || "Chưa cập nhật",
+    },
+    {
+      label: "Mã số thuế",
+      value: organization.taxCode || "Chưa cập nhật",
     },
     {
       label: "Địa chỉ",

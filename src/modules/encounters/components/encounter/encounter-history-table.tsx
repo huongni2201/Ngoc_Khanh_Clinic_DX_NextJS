@@ -8,10 +8,9 @@ import {
   FileText,
   ChevronRight,
   Calendar,
-  ChevronLeft,
 } from "@/shared/ui/product-icon"
 import { Button } from "@/components/ui/button"
-import { mockPatientEncounters } from "../../api/encounter-mock-data"
+import { usePatientEncounters } from "../../hooks/use-encounter"
 
 interface EncounterHistoryTableProps {
   patientId: string
@@ -19,7 +18,27 @@ interface EncounterHistoryTableProps {
 
 export function EncounterHistoryTable({ patientId }: EncounterHistoryTableProps) {
   const router = useRouter()
-  const encounters = mockPatientEncounters
+  const { data: encounters = [], isLoading, isError, error, refetch } =
+    usePatientEncounters(patientId)
+
+  if (isLoading) {
+    return <div role="status" className="rounded-lg border border-border bg-card p-6 text-sm text-muted-foreground">Đang tải lịch sử lượt khám…</div>
+  }
+
+  if (isError) {
+    return (
+      <div role="status" className="rounded-lg border border-border bg-muted p-6 text-sm text-muted-foreground">
+        <p>{error instanceof Error ? error.message : "Backend chưa cung cấp API lịch sử lượt khám."}</p>
+        <Button variant="outline" size="sm" className="mt-3" onClick={() => refetch()}>
+          Thử lại
+        </Button>
+      </div>
+    )
+  }
+
+  if (encounters.length === 0) {
+    return <div role="status" className="rounded-lg border border-border bg-card p-6 text-sm text-muted-foreground">Chưa có lượt khám.</div>
+  }
 
   return (
     <div className="rounded-lg border border-border bg-card p-6  space-y-4">
@@ -145,18 +164,7 @@ export function EncounterHistoryTable({ patientId }: EncounterHistoryTableProps)
 
       {/* Pagination Footer matching reference */}
       <div className="flex items-center justify-between pt-2 text-xs text-muted-foreground">
-        <span>Hiển thị 1 - 10 của 10 lượt khám</span>
-        <div className="flex items-center gap-1">
-          <Button variant="outline" size="sm" className="size-7 p-0" disabled>
-            <ChevronLeft className="size-3.5" />
-          </Button>
-          <Button size="sm" className="size-7 p-0 bg-primary text-primary-foreground font-semibold">
-            1
-          </Button>
-          <Button variant="outline" size="sm" className="size-7 p-0" disabled>
-            <ChevronRight className="size-3.5" />
-          </Button>
-        </div>
+        <span>Hiển thị {encounters.length} lượt khám</span>
       </div>
     </div>
   )

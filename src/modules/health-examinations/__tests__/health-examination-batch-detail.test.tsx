@@ -6,12 +6,17 @@ import "@testing-library/jest-dom/vitest"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { HealthExaminationBatchDetailPage } from "../pages/health-examination-batch-detail-page"
 
-const mockReplace = vi.fn()
+vi.unmock("@/modules/health-examinations/api")
+
+const mockNavigation = vi.hoisted(() => ({
+  push: vi.fn(),
+  search: "",
+}))
 
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ replace: mockReplace }),
+  useRouter: () => ({ push: mockNavigation.push }),
   usePathname: () => "/organizations/org-1/batches/batch-1",
-  useSearchParams: () => new URLSearchParams(),
+  useSearchParams: () => new URLSearchParams(mockNavigation.search),
 }))
 
 function renderWithClient(ui: React.ReactElement) {
@@ -19,34 +24,41 @@ function renderWithClient(ui: React.ReactElement) {
     defaultOptions: { queries: { retry: false } },
   })
 
-  return render(
-    <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>
-  )
+  return render(ui, {
+    wrapper: ({ children }) => <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>,
+  })
 }
 
-const employeeResponse = {
+const participantResponse = {
   result: "OK",
   code: 200,
-  message: "Health examination batch employees",
+  message: "Health examination batch participants",
   data: {
     items: [
       {
-        batchEmployeeId: "batch-employee-1",
-        employeeId: "employee-1",
-        employeeCode: "NV001",
+        batchParticipantId: "batch-participant-1",
+        participantId: "participant-1",
+        participantCode: "NV001",
         departmentName: "Khối Công nghệ",
         jobTitle: "Kỹ sư",
         occupation: "Phát triển phần mềm",
-        snapshot: {
-          fullName: "Nguyễn Văn A",
-          dateOfBirth: "1990-03-14",
-          sex: "MALE",
-          identificationNumber: { value: "012345678901" },
-          phone: "0901234567",
-          province: "Hà Nội",
-          ward: "Cầu Giấy",
-          addressDetail: "10 Phạm Văn Bạch",
-        },
+        fullName: "Nguyễn Văn A",
+        dateOfBirth: "1990-03-14",
+        sex: "MALE",
+        identificationNumber: "012345678901",
+        identificationNumberIssueDate: null,
+        identificationNumberIssuePlace: null,
+        ethnicity: null,
+        subjectType: "EMPLOYEE",
+        payerSource: "ORGANIZATION",
+        bloodGroup: null,
+        phone: "0901234567",
+        province: "Hà Nội",
+        ward: "Cầu Giấy",
+        addressDetail: "10 Phạm Văn Bạch",
+        administrativeOccupation: null,
+        workplaceOrSchool: null,
+        healthExaminationReason: "Khám định kỳ",
         status: "ACTIVE",
         createdAt: "2026-09-28T10:00:00Z",
       },
@@ -61,11 +73,23 @@ const employeeResponse = {
 describe("HealthExaminationBatchDetailPage", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockNavigation.search = ""
     vi.stubGlobal(
       "fetch",
-      vi.fn().mockResolvedValue({
-        ok: true,
-        json: async () => employeeResponse,
+      vi.fn(async (input: RequestInfo | URL) => {
+        const isRoster = new URL(String(input)).pathname.endsWith("/participant")
+        return Response.json(isRoster ? participantResponse : {
+          result: "OK", code: 200, data: {
+            id: "batch-1", organizationId: "org-1", batchCode: "DK001",
+            batchName: "Khám định kỳ từ backend", startDate: "2026-09-28", endDate: null,
+            reason: null, payerType: null, examinationSiteType: "COMPANY",
+            examinationSiteName: "Trụ sở công ty", examinationSiteAddress: null,
+            masterTemplateVersionId: "template-1", status: "IN_PROGRESS",
+            finalizedAt: null, closedAt: null, createdBy: "user-1",
+            createdAt: "2026-09-28T10:00:00Z", updatedAt: "2026-09-28T10:00:00Z",
+            services: [],
+          },
+        })
       })
     )
   })
@@ -74,7 +98,7 @@ describe("HealthExaminationBatchDetailPage", () => {
     vi.unstubAllGlobals()
   })
 
-  it("renders employees from the real roster API without batch mock data", async () => {
+  it("renders participants from the real roster API without batch mock data", async () => {
     renderWithClient(
       <HealthExaminationBatchDetailPage
         organizationId="org-1"
@@ -86,13 +110,13 @@ describe("HealthExaminationBatchDetailPage", () => {
       expect(screen.getByText("NV001")).toBeInTheDocument()
     })
 
-    expect(screen.getByRole("heading", { name: "Đợt khám batch-1" })).toBeInTheDocument()
+    expect(await screen.findByRole("heading", { name: "Khám định kỳ từ backend" })).toBeInTheDocument()
     expect(screen.getByText("Nguyễn Văn A")).toBeInTheDocument()
     expect(screen.queryByText("Khám sức khỏe định kỳ 2026")).not.toBeInTheDocument()
 
     expect(fetch).toHaveBeenCalledWith(
       expect.stringContaining(
-        "/api/v1/organizations/org-1/health-examination-batches/batch-1/employees"
+        "/api/v1/organizations/org-1/health-examination-batches/batch-1/participant"
       ),
       expect.objectContaining({ cache: "no-store" })
     )
@@ -117,15 +141,22 @@ describe("HealthExaminationBatchDetailPage", () => {
 
   it("leaves tabs without an API empty", async () => {
     const user = userEvent.setup()
-    renderWithClient(
+    const page = (
       <HealthExaminationBatchDetailPage organizationId="org-1" batchId="batch-1" />
     )
+    const rendered = renderWithClient(page)
 
     await user.click(screen.getByRole("button", { name: "Chi tiết khám" }))
+    await waitFor(() => expect(mockNavigation.push).toHaveBeenCalled())
+    mockNavigation.search = new URL(
+      mockNavigation.push.mock.calls.at(-1)?.[0] as string,
+      "http://localhost"
+    ).search
+    rendered.rerender(React.cloneElement(page))
 
     expect(screen.getByText("Chưa có API cho nội dung này.")).toBeInTheDocument()
     expect(screen.queryByText("Khám nội tổng quát")).not.toBeInTheDocument()
-    expect(mockReplace).toHaveBeenCalledWith(
+    expect(mockNavigation.push).toHaveBeenCalledWith(
       expect.stringContaining("tab=details"),
       { scroll: false }
     )

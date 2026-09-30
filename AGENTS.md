@@ -182,6 +182,28 @@ If a backend contract is missing, state the assumption instead of fabricating it
 
 See ADR-0004.
 
+When an existing backend implementation conflicts with frontend mocks, fixtures,
+temporary types, route assumptions or legacy UI models, the backend HTTP
+contract wins.
+
+Required direction:
+
+```text
+Backend DTO
+→ FE Transport DTO
+→ Mapper
+→ View Model
+→ UI
+```
+
+Agents must not:
+
+- rename an existing backend endpoint locally;
+- fabricate response fields;
+- collapse backend lifecycle statuses into a smaller transport union;
+- treat mock data as a production fallback;
+- store formatted UI date strings inside transport models.
+
 ---
 
 ## 6. Domain Rules
@@ -208,7 +230,7 @@ Search Patient by identity
 Create Encounter
 ```
 
-Do not create Patient records for every imported employee.
+Do not create Patient records for every imported participant.
 
 ---
 

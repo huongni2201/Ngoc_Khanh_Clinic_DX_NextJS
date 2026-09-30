@@ -1,7 +1,7 @@
 import type { ReactNode } from "react"
 import { act, cleanup, render, renderHook, screen, waitFor } from "@testing-library/react"
 import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query"
-import { afterEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { useLogout } from "../hooks/use-auth"
 import { useUserSession } from "../hooks/use-user-session"
 import { AuthBoundary } from "../components/auth-boundary"
@@ -10,9 +10,17 @@ import { replaceSession, SESSION_QUERY_KEY } from "../utils/session-cache"
 import { csrf, ok, patientSession, staffSession } from "./fixtures"
 import { QueryProvider } from "@/providers/query-provider"
 import { httpClient } from "@/shared/api/http-client"
+import { apiClient } from "@/shared/api/api-client"
 
 const replace = vi.fn()
 vi.mock("next/navigation", () => ({ useRouter: () => ({ replace }) }))
+beforeEach(() => {
+  // Each test owns its browser context; native Node channels must not cross workers.
+  vi.stubGlobal("BroadcastChannel", class {
+    postMessage() {}
+    close() {}
+  })
+})
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.clearAllMocks() })
 
 function setup() {
@@ -36,13 +44,21 @@ describe("session lifecycle", () => {
     expect(screen.getByRole("textbox", { name: "Draft" })).toBe(field)
   })
 
-  it.each([401, 403])("handles a protected API %s without confusing authentication and permission", async (status) => {
+  it.each([
+    [401, "httpClient"],
+    [403, "httpClient"],
+    [401, "apiClient"],
+    [403, "apiClient"],
+  ] as const)("handles a protected API %s through %s without confusing authentication and permission", async (status, transport) => {
     vi.stubGlobal("fetch", vi.fn().mockImplementation((url: string) => Promise.resolve(
       url.endsWith("/me") ? ok(staffSession) : new Response(null, { status }),
     )))
     function ProtectedData() {
       const query = useQuery({
-        queryKey: ["protected"], queryFn: () => httpClient("/api/protected"),
+        queryKey: ["protected"],
+        queryFn: () => transport === "httpClient"
+          ? httpClient("/api/protected")
+          : apiClient.get("/api/protected"),
         meta: { requiresAuth: true }, retry: false,
       })
       return <p>{query.error ? "Access failed" : "Protected page"}</p>

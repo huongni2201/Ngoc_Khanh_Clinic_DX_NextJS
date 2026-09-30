@@ -6,7 +6,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { AppointmentsPage } from "../pages/appointments-page"
 import { CreateAppointmentDialog } from "../components/create-appointment-dialog"
 import { EditAppointmentDialog } from "../components/edit-appointment-dialog"
-import { resetAppointmentsStore, createAppointment, fetchAppointments } from "../api"
+import { createAppointment, fetchAppointments } from "../api"
+import { resetAppointmentsStore } from "./fixtures/api-fixtures"
 import { Patient } from "@/modules/patients"
 
 // Mock next/navigation

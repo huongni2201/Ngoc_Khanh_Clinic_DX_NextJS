@@ -9,9 +9,9 @@ Accepted
 Ngọc Khánh Clinic frontend will integrate with multiple backend domains:
 
 ```text
-companies
-health-check batches
-employees
+organizations
+health-examination batches
+health-examination participants
 patients
 encounters
 clinical workflow
@@ -104,6 +104,9 @@ frontend domain/view model
 ```
 
 Mapping logic belongs close to the owning module.
+
+When a backend implementation already exists, its request/response DTO is
+authoritative for the frontend transport type.
 
 ## TanStack Query Ownership
 

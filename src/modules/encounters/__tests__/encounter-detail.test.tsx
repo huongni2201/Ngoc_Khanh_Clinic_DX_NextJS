@@ -11,7 +11,7 @@ import { EncounterDiagnosticOrdersView } from "../components/encounter/encounter
 import { EncounterLaboratoryDetailView } from "../components/encounter/encounter-lab-detail-cbc-view"
 import { EncounterImagingDetailXRayView } from "../components/encounter/encounter-imaging-detail-xray-view"
 import { EncounterDocumentsView } from "../components/encounter/encounter-documents-view"
-import { mockEncounterDetail } from "../api/encounter-mock-data"
+import { mockEncounterDetail } from "./fixtures/api-fixtures"
 
 function renderWithClient(ui: React.ReactElement) {
   const queryClient = new QueryClient({
@@ -143,10 +143,8 @@ describe("Encounter Detail Screens", () => {
       />
     )
     expect(screen.getByText("Chụp X-quang ngực thẳng (PA)")).toBeInTheDocument()
-    expect(screen.getAllByText("BS. CKI. Hoàng Văn Hùng")[0]).toBeInTheDocument()
-    expect(screen.getByText(/Shimadzu Radspeed Pro/)).toBeInTheDocument()
-    expect(screen.getByText("Mô tả hình ảnh X-quang")).toBeInTheDocument()
-    expect(screen.getByText(/Hiện tại chưa phát hiện bất thường trên phim X-quang ngực thẳng/)).toBeInTheDocument()
+    expect(screen.getByText("Backend chưa cung cấp API để tải ảnh chẩn đoán hình ảnh.")).toBeInTheDocument()
+    expect(screen.queryByText(/Shimadzu Radspeed Pro/)).not.toBeInTheDocument()
   })
 
   it("Screen 07 — EncounterDocumentsView renders 5 medical documents", () => {

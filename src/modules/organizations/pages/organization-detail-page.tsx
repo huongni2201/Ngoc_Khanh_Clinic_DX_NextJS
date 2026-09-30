@@ -6,16 +6,16 @@ import { useSearchParams, useRouter, usePathname } from "next/navigation"
 import { AlertCircle, RefreshCw, ArrowLeft } from "@/shared/ui/product-icon"
 import { Button } from "@/components/ui/button"
 import { ScreenLayout, ScreenLoadingSkeleton } from "@/shared/ui"
-import { useOrganization } from "../hooks/use-organizations"
+import {
+  useDeactivateOrganization,
+  useOrganization,
+} from "../hooks/use-organizations"
 import { OrganizationDetailHeader } from "../components/organization-detail-header"
 import { OrganizationSummaryStrip } from "../components/organization-summary-strip"
 import { OrganizationTabs, type OrganizationTabType } from "../components/organization-tabs"
 import { OrganizationInfoCard } from "../components/organization-info-card"
-import { OrganizationHealthExaminationBatchesTab } from "../components/organization-health-examination-batches-tab"
-import { OrganizationExaminationDetailTab } from "../components/organization-examination-detail-tab"
-import { OrganizationReportsTab } from "../components/organization-reports-tab"
+import { OrganizationHealthExaminationBatchesTab } from "@/modules/health-examinations"
 import { EditOrganizationDialog } from "../components/edit-organization-dialog"
-import { CreateHealthExaminationBatchDialog } from "../components/create-health-examination-batch-dialog"
 
 interface OrganizationDetailPageProps {
   organizationId: string
@@ -29,29 +29,10 @@ export function OrganizationDetailPage({
   const pathname = usePathname()
 
   const tabParam = searchParams?.get("tab")
-  const [activeTabState, setActiveTabState] = React.useState<OrganizationTabType>(() => {
-    return tabParam === "batches"
-      ? "batches"
-      : tabParam === "examinations" || tabParam === "examination"
-      ? "examinations"
-      : tabParam === "reports" || tabParam === "report"
-      ? "reports"
-      : "info"
-  })
-
   const activeTab: OrganizationTabType =
-    tabParam === "batches"
-      ? "batches"
-      : tabParam === "examinations" || tabParam === "examination"
-      ? "examinations"
-      : tabParam === "reports" || tabParam === "report"
-      ? "reports"
-      : tabParam === "info"
-      ? "info"
-      : activeTabState
+    tabParam === "batches" ? "batches" : "info"
 
   const handleTabChange = (tab: OrganizationTabType) => {
-    setActiveTabState(tab)
     const params = new URLSearchParams(searchParams?.toString() || "")
     if (tab === "info") {
       params.delete("tab")
@@ -59,14 +40,10 @@ export function OrganizationDetailPage({
       params.set("tab", tab)
     }
     const query = params.toString() ? `?${params.toString()}` : ""
-    if (router && typeof router.replace === "function") {
-      router.replace(`${pathname}${query}`, { scroll: false })
-    }
+    router.push(`${pathname}${query}`, { scroll: false })
   }
 
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false)
-  const [isCreateBatchDialogOpen, setIsCreateBatchDialogOpen] =
-    React.useState(false)
 
   const {
     data: organization,
@@ -74,6 +51,18 @@ export function OrganizationDetailPage({
     isError,
     refetch,
   } = useOrganization(organizationId)
+  const deactivateMutation = useDeactivateOrganization(organizationId)
+
+  const handleDeactivate = async () => {
+    if (!window.confirm(`Ngừng hoạt động đơn vị “${organization?.name ?? "này"}”?`)) {
+      return
+    }
+    try {
+      await deactivateMutation.mutateAsync()
+    } catch {
+      // The mutation error is rendered below.
+    }
+  }
 
   // Loading skeleton state matching screen layout exactly
   if (isLoading) {
@@ -91,7 +80,7 @@ export function OrganizationDetailPage({
           Không tìm thấy hoặc không thể tải dữ liệu đơn vị
         </h2>
         <p className="text-xs text-muted-foreground mt-1 max-w-md mb-6">
-          Mã đơn vị hoặc định danh &quot;{organizationId}&quot; không tồn tại hoặc đã xảy ra lỗi kết nối mạng.
+          Định danh &quot;{organizationId}&quot; không tồn tại hoặc đã xảy ra lỗi kết nối mạng.
         </p>
         <div className="flex items-center gap-3">
           <Link href="/organizations">
@@ -119,8 +108,14 @@ export function OrganizationDetailPage({
       <OrganizationDetailHeader
         organization={organization}
         onEditClick={() => setIsEditDialogOpen(true)}
-        onCreateBatchClick={() => setIsCreateBatchDialogOpen(true)}
+        onDeactivateClick={handleDeactivate}
+        isDeactivating={deactivateMutation.isPending}
       />
+      {deactivateMutation.error && (
+        <p role="alert" className="text-sm text-destructive">
+          {deactivateMutation.error.message || "Không thể ngừng hoạt động đơn vị."}
+        </p>
+      )}
 
       {/* 2. 4-column Summary Strip */}
       <OrganizationSummaryStrip organization={organization} />
@@ -137,23 +132,6 @@ export function OrganizationDetailPage({
         {activeTab === "batches" && (
           <OrganizationHealthExaminationBatchesTab
             organizationId={organization.id}
-            onCreateBatchClick={() => setIsCreateBatchDialogOpen(true)}
-          />
-        )}
-
-        {activeTab === "examinations" && (
-          <OrganizationExaminationDetailTab
-            organizationId={organization.id}
-            onCreateBatchClick={() => setIsCreateBatchDialogOpen(true)}
-          />
-        )}
-
-        {activeTab === "reports" && (
-          <OrganizationReportsTab
-            organizationId={organization.id}
-            organizationCode={organization.code}
-            organizationName={organization.name}
-            onCreateBatchClick={() => setIsCreateBatchDialogOpen(true)}
           />
         )}
       </div>
@@ -165,12 +143,6 @@ export function OrganizationDetailPage({
         organization={organization}
       />
 
-      {/* 6. Create Exam Batch Placeholder Modal */}
-      <CreateHealthExaminationBatchDialog
-        open={isCreateBatchDialogOpen}
-        onOpenChange={setIsCreateBatchDialogOpen}
-        organization={organization}
-      />
     </ScreenLayout>
   )
 }

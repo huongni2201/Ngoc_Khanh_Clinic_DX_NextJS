@@ -16,6 +16,8 @@ describe("staff API contract", () => {
     expect(JSON.parse(options.body)).toEqual({ username: "staff.test", password: "unchanged " })
     expect(options.credentials).toBe("include")
     expect(new Headers(options.headers).has("Authorization")).toBe(false)
+    expect(localStorage.getItem("nk_auth_token")).toBeNull()
+    expect(localStorage.getItem("nk_auth_user")).toBeNull()
   })
 
   it("takes a new CSRF token for logout and accepts 204", async () => {

@@ -33,9 +33,11 @@ export function EditOrganizationDialog({
   onOpenChange,
   organization,
 }: EditOrganizationDialogProps) {
-  const { mutateAsync: updateOrganization, isPending } = useUpdateOrganization(
-    organization.id
-  )
+  const {
+    mutateAsync: updateOrganization,
+    isPending,
+    error: updateError,
+  } = useUpdateOrganization(organization.id)
 
   const {
     register,
@@ -47,9 +49,9 @@ export function EditOrganizationDialog({
     defaultValues: {
       name: organization.name,
       taxCode: organization.taxCode || "",
-      contactName: organization.contactName || organization.contactPerson || "",
-      phone: organization.phone || organization.contactPhone || "",
-      email: organization.email || "",
+      contactName: organization.contactName,
+      contactPhone: organization.contactPhone,
+      contactJobTitle: organization.contactJobTitle || "",
       address: organization.address || "",
       note: organization.note || "",
     },
@@ -61,9 +63,9 @@ export function EditOrganizationDialog({
       reset({
         name: organization.name,
         taxCode: organization.taxCode || "",
-        contactName: organization.contactName || organization.contactPerson || "",
-        phone: organization.phone || organization.contactPhone || "",
-        email: organization.email || "",
+        contactName: organization.contactName,
+        contactPhone: organization.contactPhone,
+        contactJobTitle: organization.contactJobTitle || "",
         address: organization.address || "",
         note: organization.note || "",
       })
@@ -76,14 +78,14 @@ export function EditOrganizationDialog({
         name: values.name,
         taxCode: values.taxCode || undefined,
         contactName: values.contactName,
-        phone: values.phone,
-        email: values.email || undefined,
+        contactPhone: values.contactPhone,
+        contactJobTitle: values.contactJobTitle || undefined,
         address: values.address || undefined,
         note: values.note || undefined,
       })
       onOpenChange(false)
-    } catch (err) {
-      console.error("Failed to update organization:", err)
+    } catch {
+      // The mutation error is rendered in the dialog.
     }
   }
 
@@ -109,6 +111,11 @@ export function EditOrganizationDialog({
           className="flex min-h-0 flex-1 flex-col"
         >
           <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-5">
+          {updateError && (
+            <p role="alert" className="text-xs text-destructive">
+              {updateError.message || "Không thể cập nhật đơn vị."}
+            </p>
+          )}
           {/* Tên đơn vị * */}
           <div className="space-y-1.5">
             <Label htmlFor="edit-name" className="text-xs font-medium text-foreground">
@@ -165,40 +172,36 @@ export function EditOrganizationDialog({
 
             <div className="space-y-1.5">
               <Label
-                htmlFor="edit-phone"
+                htmlFor="edit-contactPhone"
                 className="text-xs font-medium text-foreground"
               >
                 Số điện thoại <span className="text-destructive">*</span>
               </Label>
               <Input
-                id="edit-phone"
+                id="edit-contactPhone"
                 placeholder="VD: 0912 345 678"
-                {...register("phone")}
+                {...register("contactPhone")}
                 className="h-9 text-xs"
               />
-              {errors.phone && (
+              {errors.contactPhone && (
                 <p className="text-[11px] text-destructive">
-                  {errors.phone.message}
+                  {errors.contactPhone.message}
                 </p>
               )}
             </div>
           </div>
 
-          {/* Email */}
+          {/* Chức vụ người liên hệ */}
           <div className="space-y-1.5">
-            <Label htmlFor="edit-email" className="text-xs font-medium text-foreground">
-              Email
+            <Label htmlFor="edit-contactJobTitle" className="text-xs font-medium text-foreground">
+              Chức vụ người liên hệ
             </Label>
             <Input
-              id="edit-email"
-              type="email"
-              placeholder="VD: hungnv@fpt.com.vn"
-              {...register("email")}
+              id="edit-contactJobTitle"
+              placeholder="VD: Trưởng phòng nhân sự"
+              {...register("contactJobTitle")}
               className="h-9 text-xs"
             />
-            {errors.email && (
-              <p className="text-[11px] text-destructive">{errors.email.message}</p>
-            )}
           </div>
 
           {/* Địa chỉ */}

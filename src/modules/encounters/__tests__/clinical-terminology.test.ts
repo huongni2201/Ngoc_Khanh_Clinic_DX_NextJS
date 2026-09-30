@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { mockEncounterDetail } from "@/modules/encounters/api"
+import { mockEncounterDetail } from "@/modules/encounters/__tests__/fixtures/api-fixtures"
 
 describe("encounter clinical terminology", () => {
   it("uses canonical clinical record and diagnostic result fields", () => {

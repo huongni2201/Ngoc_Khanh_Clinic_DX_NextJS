@@ -5,7 +5,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest"
 import "@testing-library/jest-dom/vitest"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { DoctorWorklistPage } from "../pages/doctor-worklist-page"
-import { resetMockDoctorEncounters } from "../api"
+import { resetMockDoctorEncounters } from "./fixtures/api-fixtures"
 import { AppSidebar } from "@/widgets/app-sidebar/app-sidebar"
 import { AppHeader } from "@/widgets/app-header/app-header"
 
@@ -130,7 +130,7 @@ describe("Doctor Worklist — Danh sách lượt khám", () => {
     expect(screen.getAllByText("Bác sĩ").length).toBeGreaterThan(0)
 
     // Date input
-    expect(screen.getByDisplayValue("25/09/2026")).toBeInTheDocument()
+    expect(screen.getByLabelText("Ngày khám")).toHaveValue("")
 
     // Reset button
     expect(screen.getByRole("button", { name: /Xóa lọc/i })).toBeInTheDocument()
@@ -183,7 +183,6 @@ describe("Doctor Worklist — Danh sách lượt khám", () => {
     expect(screen.getByText(/Hiển thị/i)).toBeInTheDocument()
     expect(screen.getAllByText("1").length).toBeGreaterThan(0)
     expect(screen.getAllByText("8").length).toBeGreaterThan(0)
-    expect(screen.getByText("43")).toBeInTheDocument()
   })
 
   it("navigates to encounter detail when clicking header action", async () => {

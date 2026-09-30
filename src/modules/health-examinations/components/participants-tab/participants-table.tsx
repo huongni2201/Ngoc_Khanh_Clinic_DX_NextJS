@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { DataTablePagination } from "@/shared/ui"
-import { HealthExaminationParticipant, ParticipantProfileStatus } from "../../types"
+import type { HealthExaminationParticipant } from "../../types"
 import { cn } from "@/lib/utils"
 
 interface ParticipantsTableProps {
@@ -28,28 +28,18 @@ interface ParticipantsTableProps {
   organizationId?: string
 }
 
-function ProfileStatusBadge({ status }: { status: ParticipantProfileStatus }) {
-  if (status === "VALID") {
-    return (
-      <span className="inline-flex items-center rounded-full bg-status-success-bg px-2.5 py-0.5 text-[11px] font-medium text-status-success select-none whitespace-nowrap">
-        Đủ hồ sơ
-      </span>
-    )
-  }
-
-  if (status === "MISSING_IDENTIFICATION_NUMBER") {
-    return (
-      <span className="inline-flex items-center rounded-full bg-status-warning-bg px-2.5 py-0.5 text-[11px] font-medium text-status-warning select-none whitespace-nowrap">
-        Thiếu số định danh
-      </span>
-    )
-  }
-
+function ParticipantStatus({ status }: { status?: string }) {
   return (
-    <span className="inline-flex items-center rounded-full bg-status-warning-bg px-2.5 py-0.5 text-[11px] font-medium text-status-warning select-none whitespace-nowrap">
-      Thiếu chữ ký
+    <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground select-none whitespace-nowrap">
+      {status || "—"}
     </span>
   )
+}
+
+function formatDate(value?: string) {
+  if (!value) return "—"
+  const [year, month, day] = value.slice(0, 10).split("-")
+  return year && month && day ? `${day}/${month}/${year}` : value
 }
 
 export function ParticipantsTable({
@@ -99,7 +89,7 @@ export function ParticipantsTable({
                 <th className="py-3 px-3 text-left font-semibold">Đơn vị công tác</th>
                 <th className="py-3 px-3 text-left font-semibold">Chức vụ</th>
                 <th className="py-3 px-3 text-left font-semibold">Địa chỉ</th>
-                <th className="py-3 px-3 text-left font-semibold">Trạng thái hồ sơ</th>
+                <th className="py-3 px-3 text-left font-semibold">Trạng thái</th>
                 <th className="py-3 px-3 text-left font-semibold">Ghi chú</th>
                 <th className="py-3 px-3 text-center font-semibold whitespace-nowrap">
                   Thao tác
@@ -142,7 +132,7 @@ export function ParticipantsTable({
                         {emp.fullName}
                       </td>
                       <td className="py-2.5 px-3 text-secondary-foreground whitespace-nowrap">
-                        {emp.dateOfBirth}
+                        {formatDate(emp.dateOfBirth)}
                       </td>
                       <td className="py-2.5 px-3 text-secondary-foreground whitespace-nowrap">
                         {emp.gender}
@@ -163,7 +153,7 @@ export function ParticipantsTable({
                         {emp.address}
                       </td>
                       <td className="py-2.5 px-3 whitespace-nowrap">
-                        <ProfileStatusBadge status={emp.profileStatus} />
+                        <ParticipantStatus status={emp.batchParticipantStatus} />
                       </td>
                       <td className="py-2.5 px-3 text-muted-foreground whitespace-nowrap">
                         {emp.note || "—"}
@@ -178,17 +168,12 @@ export function ParticipantsTable({
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-44 text-xs">
                             <DropdownMenuItem
-                              onClick={() => {
-                                const code =
-                                  emp.identificationNumber || emp.participantCode || ""
-                                router.push(
-                                  `/reception?checkinCode=${encodeURIComponent(code)}`
-                                )
-                              }}
-                              className="gap-2 cursor-pointer"
+                              disabled
+                              title="API tra cứu check-in chưa được backend cung cấp."
+                              className="gap-2"
                             >
-                              <UserCheck className="size-3.5 text-primary" />
-                              <span>Tiếp nhận Lễ tân</span>
+                              <UserCheck className="size-3.5" />
+                              <span>Tiếp nhận Lễ tân (chưa khả dụng)</span>
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() => {

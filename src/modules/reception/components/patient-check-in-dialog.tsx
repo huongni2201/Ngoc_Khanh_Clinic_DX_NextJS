@@ -33,24 +33,12 @@ import {
 import { usePatientCheckIn, useClinicRooms } from "../hooks/use-reception"
 import { Patient } from "@/modules/patients"
 import { Encounter } from "../types"
-import { Calendar, Building2 } from "@/shared/ui/product-icon"
-
-export interface PatientCheckInAppointmentContext {
-  appointmentId: string
-  appointmentCode: string
-  examinationType?: string
-  roomId?: string
-  physicianId?: string
-  notes?: string
-  organizationName?: string
-}
 
 interface PatientCheckInDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   initialPatient?: Patient | null
   initialEncounter?: Encounter | null
-  appointmentInfo?: PatientCheckInAppointmentContext | null
   onOpenPatientSearch?: () => void
   onSuccess?: (createdEncounter: Encounter, shouldPrint: boolean) => void
 }
@@ -72,7 +60,6 @@ export function PatientCheckInDialog({
   onOpenChange,
   initialPatient,
   initialEncounter,
-  appointmentInfo,
   onOpenPatientSearch,
   onSuccess,
 }: PatientCheckInDialogProps) {
@@ -145,22 +132,8 @@ export function PatientCheckInDialog({
       if (initialEncounter?.reasonForVisit) {
         setValue("reasonForVisit", initialEncounter.reasonForVisit)
       }
-      if (appointmentInfo) {
-        if (appointmentInfo.examinationType) {
-          setValue("examinationType", appointmentInfo.examinationType)
-        }
-        if (appointmentInfo.roomId) {
-          setValue("roomId", appointmentInfo.roomId)
-        }
-        if (appointmentInfo.physicianId) {
-          setValue("physicianId", appointmentInfo.physicianId)
-        }
-        if (appointmentInfo.notes) {
-          setValue("reasonForVisit", appointmentInfo.notes)
-        }
-      }
     }
-  }, [open, selectedPatient?.id, initialEncounter, appointmentInfo, setValue])
+  }, [open, selectedPatient?.id, initialEncounter, setValue])
 
   const handleOpenChange = (isOpen: boolean) => {
     if (!isOpen) {
@@ -195,7 +168,7 @@ export function PatientCheckInDialog({
         onSuccess(encounter, !!data.printAfterReception)
       }
     } catch (err) {
-      setServerError((err as Error)?.message || "Lỗi khi tiếp nhận bệnh nhân")
+      setServerError(err instanceof Error ? err.message : "Lỗi khi tiếp nhận bệnh nhân")
     }
   }
 
@@ -222,23 +195,6 @@ export function PatientCheckInDialog({
               </Alert>
             )}
 
-            {appointmentInfo && (
-              <div className="p-3 rounded-lg border border-primary/30 bg-selected flex items-center justify-between text-xs text-primary">
-                <div className="flex items-center gap-2">
-                  <Calendar className="size-4 shrink-0 text-primary" />
-                  <span>
-                    Tiếp nhận theo lịch hẹn:{" "}
-                    <strong className="font-mono">{appointmentInfo.appointmentCode}</strong>
-                  </span>
-                </div>
-                {appointmentInfo.organizationName && (
-                  <span className="flex items-center gap-1 font-medium text-[11px] bg-card px-2 py-0.5 rounded-md border border-primary/20">
-                    <Building2 className="size-3" />
-                    {appointmentInfo.organizationName}
-                  </span>
-                )}
-              </div>
-            )}
 
             <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
               {/* Left Column (5 cols): Patient Profile & Verification */}

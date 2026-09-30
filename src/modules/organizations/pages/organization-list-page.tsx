@@ -2,15 +2,12 @@
 
 import * as React from "react"
 import { useSearchParams, useRouter, usePathname } from "next/navigation"
-import { AlertCircle, RefreshCw } from "@/shared/ui/product-icon"
-import { Button } from "@/components/ui/button"
+import { AlertCircle } from "@/shared/ui/product-icon"
 import { OrganizationPageHeader } from "../components/organization-page-header"
-import { OrganizationCountersStrip } from "../components/organization-counters-strip"
 import { OrganizationTable } from "../components/organization-table"
 import { DataTablePagination, ScreenLayout } from "@/shared/ui"
 import { CreateOrganizationDialog } from "../components/create-organization-dialog"
-import { useOrganizations, useOrganizationCounters } from "../hooks/use-organizations"
-import type { OrganizationHealthExaminationStatus } from "../types"
+import { useOrganizations } from "../hooks/use-organizations"
 
 export function OrganizationListPage() {
   const router = useRouter()
@@ -18,18 +15,16 @@ export function OrganizationListPage() {
   const searchParams = useSearchParams()
 
   // State from URL or defaults
-  const search = searchParams?.get("q") || ""
-  const status = (searchParams?.get("status") || "ALL") as
-    | OrganizationHealthExaminationStatus
-    | "ALL"
-  const page = parseInt(searchParams?.get("page") || "1", 10)
+  const search = searchParams?.get("q")?.trim() || ""
+  const pageParam = Number(searchParams?.get("page"))
+  const page = Number.isSafeInteger(pageParam) && pageParam > 0 ? pageParam : 1
 
   // Dialog state
   const [isCreateOpen, setIsCreateOpen] = React.useState(false)
 
   // Sync state to URL params
   const updateUrlParams = React.useCallback(
-    (newParams: { q?: string; status?: string; page?: number }) => {
+    (newParams: { q?: string; page?: number }) => {
       const current = new URLSearchParams(
         Array.from(searchParams?.entries() || [])
       )
@@ -39,15 +34,6 @@ export function OrganizationListPage() {
           current.set("q", newParams.q.trim())
         } else {
           current.delete("q")
-        }
-        current.set("page", "1")
-      }
-
-      if (newParams.status !== undefined) {
-        if (newParams.status && newParams.status !== "ALL") {
-          current.set("status", newParams.status)
-        } else {
-          current.delete("status")
         }
         current.set("page", "1")
       }
@@ -64,45 +50,24 @@ export function OrganizationListPage() {
   )
 
   // Data fetching hook
-  const { data, isLoading, isError, refetch } = useOrganizations({
+  const { data, isLoading, isError, error } = useOrganizations({
     search,
-    status,
     page,
     pageSize: 10,
   })
-
-  // Counters hook
-  const { data: counters, isLoading: isCountersLoading } = useOrganizationCounters()
 
   return (
     <ScreenLayout data-slot="organization-list-page">
       {/* 1. Page Header */}
       <OrganizationPageHeader onOpenCreateDialog={() => setIsCreateOpen(true)} />
 
-      {/* 2. Operational Counters Strip */}
-      <OrganizationCountersStrip
-        counters={counters}
-        isLoading={isCountersLoading}
-        activeStatusKey={status}
-        onFilterStatus={(newStatus) => updateUrlParams({ status: newStatus })}
-      />
-
       {/* Error State */}
       {isError && (
-        <div className="p-4 rounded-lg border border-destructive/30 bg-destructive/5 flex items-center justify-between gap-3 text-xs text-destructive">
+        <div role="status" className="p-4 rounded-lg border border-border bg-muted flex items-center gap-3 text-xs text-foreground">
           <div className="flex items-center gap-2">
-            <AlertCircle className="size-4 shrink-0" />
-            <span>Có lỗi xảy ra trong quá trình truy xuất dữ liệu từ máy chủ.</span>
+            <AlertCircle className="size-4 shrink-0 text-muted-foreground" />
+            <span>{error instanceof Error ? error.message : "Không thể tải danh sách đơn vị."}</span>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => refetch()}
-            className="h-7 text-xs border-destructive/30 hover:bg-destructive/10 cursor-pointer"
-          >
-            <RefreshCw className="size-3 mr-1" />
-            Thử lại
-          </Button>
         </div>
       )}
 
@@ -115,8 +80,6 @@ export function OrganizationListPage() {
             currentPage={data?.page || 1}
             pageSize={data?.pageSize || 10}
             totalItems={data?.total || 0}
-            activeStatus={status}
-            onStatusChange={(newStatus) => updateUrlParams({ status: newStatus })}
             searchTerm={search}
             onSearchChange={(q) => updateUrlParams({ q })}
           />
@@ -141,6 +104,7 @@ export function OrganizationListPage() {
       <CreateOrganizationDialog
         open={isCreateOpen}
         onOpenChange={setIsCreateOpen}
+        onCreated={(organizationId) => router.push(`/organizations/${organizationId}`)}
       />
     </ScreenLayout>
   )

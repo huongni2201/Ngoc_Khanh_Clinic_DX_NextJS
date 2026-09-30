@@ -225,6 +225,10 @@ Inspect existing reusable components before creating new UI.
 Use only the relevant local frontend skills from .agents/skills/.
 Apply karpathy-guidelines to coding tasks when relevant.
 Do not invent backend APIs.
+Backend HTTP contracts are authoritative.
+Make frontend transport DTOs match backend request/response DTOs exactly.
+Use mappers/view models for UI-specific shape instead of changing transport DTOs.
+Do not preserve mock contracts when real backend contracts exist.
 Do not add demo data to production paths.
 Reuse shadcn and existing project components before writing new primitives.
 

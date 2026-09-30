@@ -1,5 +1,6 @@
 import { describe, expect, it, beforeEach } from "vitest"
-import { fetchAppointments, resetAppointmentsStore } from "@/modules/appointments/api"
+import { fetchAppointments } from "@/modules/appointments/api"
+import { resetAppointmentsStore } from "@/modules/appointments/__tests__/fixtures/api-fixtures"
 
 describe("appointment terminology", () => {
   beforeEach(() => {

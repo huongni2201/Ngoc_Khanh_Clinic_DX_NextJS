@@ -1,84 +1,75 @@
 import * as React from "react"
 import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { describe, it, expect, vi, beforeEach } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import "@testing-library/jest-dom/vitest"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { OrganizationCreatePage } from "../pages/organization-create-page"
-import { resetOrganizationsStore } from "../api"
+import { mockOrganizationFetch } from "./organization-api-fixtures"
 
-const mockPush = vi.fn()
+const mockRouter = vi.hoisted(() => ({ push: vi.fn() }))
 
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({
-    push: mockPush,
-  }),
-  usePathname: () => "/organizations/new",
+  useRouter: () => mockRouter,
 }))
 
 function renderWithClient(ui: React.ReactElement) {
   const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: { retry: false },
-    },
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   })
+
   return render(
     <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>
   )
 }
 
-describe("OrganizationCreatePage (/organizations/new)", () => {
+describe("OrganizationCreatePage", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    resetOrganizationsStore()
+    mockOrganizationFetch()
   })
 
-  it("renders all form fields per Section 4.1", () => {
+  afterEach(() => vi.unstubAllGlobals())
+
+  it("renders fields that match the organization request contract", () => {
     renderWithClient(<OrganizationCreatePage />)
 
-    expect(screen.getByRole("heading", { name: "Thêm đơn vị mới" })).toBeInTheDocument()
     expect(screen.getByLabelText(/Tên đơn vị/i)).toBeInTheDocument()
-    expect(screen.getByLabelText(/Loại tổ chức/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/Mã số thuế/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/Địa chỉ trụ sở/i)).toBeInTheDocument()
-    expect(screen.getByLabelText(/Người liên hệ/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/^Người liên hệ \*/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/Số điện thoại/i)).toBeInTheDocument()
-    expect(screen.getByLabelText(/Email liên hệ/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/Chức vụ người liên hệ/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/Ghi chú nội bộ/i)).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: "Lưu đơn vị" })).toBeInTheDocument()
   })
 
-  it("validates required fields on submit", async () => {
+  it("validates required organization fields", async () => {
     const user = userEvent.setup()
     renderWithClient(<OrganizationCreatePage />)
 
-    const submitBtn = screen.getByRole("button", { name: "Lưu đơn vị" })
-    await user.click(submitBtn)
+    await user.click(screen.getByRole("button", { name: "Lưu đơn vị" }))
 
-    await waitFor(() => {
-      expect(screen.getByText("Tên đơn vị phải có ít nhất 2 ký tự")).toBeInTheDocument()
-      expect(screen.getByText("Người liên hệ là bắt buộc")).toBeInTheDocument()
-      expect(screen.getByText("Số điện thoại phải từ 9 đến 11 số")).toBeInTheDocument()
-    })
+    expect(screen.getByText("Tên đơn vị phải có ít nhất 2 ký tự")).toBeInTheDocument()
+    expect(screen.getByText("Người liên hệ là bắt buộc")).toBeInTheDocument()
+    expect(screen.getByText("Số điện thoại là bắt buộc")).toBeInTheDocument()
   })
 
-  it("successfully creates organization and navigates to detail page", async () => {
+  it("creates an organization through the backend API and opens its detail page", async () => {
     const user = userEvent.setup()
+    const fetchMock = mockOrganizationFetch()
     renderWithClient(<OrganizationCreatePage />)
 
     await user.type(screen.getByLabelText(/Tên đơn vị/i), "Đại học Bách Khoa Hà Nội")
     await user.type(screen.getByLabelText(/Mã số thuế/i), "0100998877")
-    await user.type(screen.getByLabelText(/Địa chỉ trụ sở/i), "Số 1 Đại Cồ Việt, Hai Bà Trưng, Hà Nội")
-    await user.type(screen.getByLabelText(/Người liên hệ/i), "TS. Lê Hoàng Quân")
+    await user.type(screen.getByLabelText(/Địa chỉ trụ sở/i), "Số 1 Đại Cồ Việt")
+    await user.type(screen.getByLabelText(/^Người liên hệ \*/i), "Lê Hoàng Quân")
     await user.type(screen.getByLabelText(/Số điện thoại/i), "0912345678")
-    await user.type(screen.getByLabelText(/Email liên hệ/i), "contact@hust.edu.vn")
-    await user.type(screen.getByLabelText(/Ghi chú nội bộ/i), "Đơn vị đào tạo công nghệ trọng điểm")
+    await user.click(screen.getByRole("button", { name: "Lưu đơn vị" }))
 
-    const submitBtn = screen.getByRole("button", { name: "Lưu đơn vị" })
-    await user.click(submitBtn)
-
-    await waitFor(() => {
-      expect(mockPush).toHaveBeenCalledWith(expect.stringMatching(/^\/organizations\/ent-/))
-    })
+    await waitFor(() => expect(mockRouter.push).toHaveBeenCalledWith("/organizations/org-created"))
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining("/api/v1/organizations"),
+      expect.objectContaining({ method: "POST" })
+    )
   })
 })
