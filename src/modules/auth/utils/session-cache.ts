@@ -1,5 +1,5 @@
 import type { QueryClient } from "@tanstack/react-query"
-import type { StaffSession } from "../types"
+import type { UserSession } from "../types"
 
 export const SESSION_QUERY_KEY = ["auth", "session"] as const
 export const SESSION_CHANNEL = "nkc-session-changed"
@@ -13,7 +13,7 @@ export async function clearBusinessData(client: QueryClient) {
   }
 }
 
-export async function replaceSession(client: QueryClient, session: StaffSession | null) {
+export async function replaceSession(client: QueryClient, session: UserSession | null) {
   await client.cancelQueries()
   await clearBusinessData(client)
   client.setQueryData(SESSION_QUERY_KEY, session)
