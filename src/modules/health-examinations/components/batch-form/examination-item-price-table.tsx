@@ -3,7 +3,6 @@
 import * as React from "react"
 import { UseFormReturn, useFieldArray } from "react-hook-form"
 import { Info } from "@/shared/ui/product-icon"
-import type { ClinicalService } from "../../types"
 import type {
   CreateHealthExaminationBatchFormValues,
   ValidatedHealthExaminationBatchFormValues,

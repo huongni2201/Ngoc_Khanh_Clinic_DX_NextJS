@@ -6,6 +6,8 @@ import "@testing-library/jest-dom/vitest"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { HealthExaminationBatchDetailPage } from "../pages/health-examination-batch-detail-page"
 
+vi.unmock("@/modules/health-examinations/api")
+
 const mockNavigation = vi.hoisted(() => ({
   push: vi.fn(),
   search: "",
@@ -22,9 +24,9 @@ function renderWithClient(ui: React.ReactElement) {
     defaultOptions: { queries: { retry: false } },
   })
 
-  return render(
-    <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>
-  )
+  return render(ui, {
+    wrapper: ({ children }) => <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>,
+  })
 }
 
 const participantResponse = {
@@ -74,10 +76,20 @@ describe("HealthExaminationBatchDetailPage", () => {
     mockNavigation.search = ""
     vi.stubGlobal(
       "fetch",
-      vi.fn().mockResolvedValue({
-        ok: true,
-        text: async () => JSON.stringify(participantResponse),
-        json: async () => participantResponse,
+      vi.fn(async (input: RequestInfo | URL) => {
+        const isRoster = new URL(String(input)).pathname.endsWith("/participant")
+        return Response.json(isRoster ? participantResponse : {
+          result: "OK", code: 200, data: {
+            id: "batch-1", organizationId: "org-1", batchCode: "DK001",
+            batchName: "Khám định kỳ từ backend", startDate: "2026-09-28", endDate: null,
+            reason: null, payerType: null, examinationSiteType: "COMPANY",
+            examinationSiteName: "Trụ sở công ty", examinationSiteAddress: null,
+            masterTemplateVersionId: "template-1", status: "IN_PROGRESS",
+            finalizedAt: null, closedAt: null, createdBy: "user-1",
+            createdAt: "2026-09-28T10:00:00Z", updatedAt: "2026-09-28T10:00:00Z",
+            services: [],
+          },
+        })
       })
     )
   })
@@ -98,7 +110,7 @@ describe("HealthExaminationBatchDetailPage", () => {
       expect(screen.getByText("NV001")).toBeInTheDocument()
     })
 
-    expect(screen.getByRole("heading", { name: "Đợt khám batch-1" })).toBeInTheDocument()
+    expect(await screen.findByRole("heading", { name: "Khám định kỳ từ backend" })).toBeInTheDocument()
     expect(screen.getByText("Nguyễn Văn A")).toBeInTheDocument()
     expect(screen.queryByText("Khám sức khỏe định kỳ 2026")).not.toBeInTheDocument()
 
@@ -140,7 +152,7 @@ describe("HealthExaminationBatchDetailPage", () => {
       mockNavigation.push.mock.calls.at(-1)?.[0] as string,
       "http://localhost"
     ).search
-    rendered.rerender(page)
+    rendered.rerender(React.cloneElement(page))
 
     expect(screen.getByText("Chưa có API cho nội dung này.")).toBeInTheDocument()
     expect(screen.queryByText("Khám nội tổng quát")).not.toBeInTheDocument()

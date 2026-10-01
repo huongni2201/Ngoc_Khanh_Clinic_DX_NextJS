@@ -1,3 +1,5 @@
+import { HttpError, withHttpResponse } from "./http-client"
+
 export interface ApiResponse<T> {
   result: "OK" | "NG"
   code: number
@@ -78,6 +80,22 @@ async function readJson(response: Response): Promise<unknown> {
   }
 }
 
+async function fetchApiResponse<T>(
+  path: string,
+  options: RequestInit,
+  readResponse: (response: Response) => Promise<T>
+): Promise<T> {
+  const url = buildUrl(path)
+  try {
+    return await withHttpResponse(url, options, readResponse)
+  } catch (error) {
+    if (error instanceof HttpError) {
+      throw new ApiClientError(error.message, error.status ?? 0)
+    }
+    throw error
+  }
+}
+
 async function request<T>(path: string, options: ApiClientRequestOptions = {}) {
   const headers = new Headers(options.headers)
   headers.set("Accept", "application/json")
@@ -87,48 +105,35 @@ async function request<T>(path: string, options: ApiClientRequestOptions = {}) {
     headers.set("Content-Type", "application/json")
   }
 
-  let response: Response
-  try {
-    response = await fetch(buildUrl(path), {
-      ...options,
-      body,
-      cache: options.cache ?? "no-store",
-      headers,
-    })
-  } catch (error) {
-    throw new ApiClientError(
-      error instanceof Error ? error.message : "Không thể kết nối tới máy chủ.",
-      0
-    )
-  }
+  return fetchApiResponse(path, { ...options, body, headers }, async (response) => {
+    if (response.status === 204) {
+      return { result: "OK", code: 204 } as ApiResponse<T>
+    }
 
-  if (response.status === 204) {
-    return { result: "OK", code: 204 } as ApiResponse<T>
-  }
+    const payload = await readJson(response)
+    if (!response.ok) {
+      const errorPayload = isApiResponse(payload) ? payload : undefined
+      throw new ApiClientError(
+        errorPayload?.message ?? "Yêu cầu tới máy chủ thất bại.",
+        response.status,
+        errorPayload?.code
+      )
+    }
 
-  const payload = await readJson(response)
-  if (!response.ok) {
-    const errorPayload = isApiResponse(payload) ? payload : undefined
-    throw new ApiClientError(
-      errorPayload?.message ?? "Yêu cầu tới máy chủ thất bại.",
-      response.status,
-      errorPayload?.code
-    )
-  }
+    if (!isApiResponse(payload)) {
+      throw new ApiClientError("Phản hồi từ máy chủ không đúng định dạng.", response.status)
+    }
 
-  if (!isApiResponse(payload)) {
-    throw new ApiClientError("Phản hồi từ máy chủ không đúng định dạng.", response.status)
-  }
+    if (payload.result !== "OK") {
+      throw new ApiClientError(
+        payload.message ?? "Yêu cầu không được chấp nhận.",
+        response.status,
+        payload.code
+      )
+    }
 
-  if (payload.result !== "OK") {
-    throw new ApiClientError(
-      payload.message ?? "Yêu cầu không được chấp nhận.",
-      response.status,
-      payload.code
-    )
-  }
-
-  return payload as ApiResponse<T>
+    return payload as ApiResponse<T>
+  })
 }
 
 export const apiClient = {
@@ -153,31 +158,26 @@ export const apiClient = {
     void body
     const headers = new Headers(options?.headers)
     headers.set("Accept", "application/octet-stream")
-    let response: Response
-    try {
-      response = await fetch(buildUrl(path), {
+    return fetchApiResponse(
+      path,
+      {
         ...requestOptions,
         method: "GET",
-        cache: options?.cache ?? "no-store",
         headers,
-      })
-    } catch (error) {
-      throw new ApiClientError(
-        error instanceof Error ? error.message : "Không thể kết nối tới máy chủ.",
-        0
-      )
-    }
+      },
+      async (response) => {
+        if (!response.ok) {
+          const payload = await readJson(response)
+          const errorPayload = isApiResponse(payload) ? payload : undefined
+          throw new ApiClientError(
+            errorPayload?.message ?? "Không thể tải tệp từ máy chủ.",
+            response.status,
+            errorPayload?.code
+          )
+        }
 
-    if (!response.ok) {
-      const payload = await readJson(response)
-      const errorPayload = isApiResponse(payload) ? payload : undefined
-      throw new ApiClientError(
-        errorPayload?.message ?? "Không thể tải tệp từ máy chủ.",
-        response.status,
-        errorPayload?.code
-      )
-    }
-
-    return { blob: await response.blob(), filename: getFilename(response) }
+        return { blob: await response.blob(), filename: getFilename(response) }
+      }
+    )
   },
 }

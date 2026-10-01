@@ -5,7 +5,7 @@ import { ParticipantsToolbar } from "./participants-toolbar"
 import { ParticipantsTable } from "./participants-table"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useHealthExaminationBatchParticipants } from "../../hooks/use-health-examination-batches"
-import { useAuth } from "@/modules/auth/hooks/use-auth"
+import { hasEffectiveStaffRole, useAuth } from "@/modules/auth"
 import { EmptyParticipantsState } from "./empty-participants-state"
 import { ParticipantImportDialog } from "./participant-import-dialog"
 import { useDownloadParticipantImportTemplate } from "../../hooks/use-participant-imports"
@@ -24,7 +24,7 @@ export function ParticipantsTab({
   const [selectedIds, setSelectedIds] = React.useState<string[]>([])
   const [importOpen, setImportOpen] = React.useState(false)
   const { currentUser } = useAuth()
-  const canManageImport = currentUser?.role === "CLINIC_MANAGER"
+  const canManageImport = hasEffectiveStaffRole(currentUser, "CLINIC_MANAGER")
   const downloadTemplate = useDownloadParticipantImportTemplate()
 
   // Reset page when filters change

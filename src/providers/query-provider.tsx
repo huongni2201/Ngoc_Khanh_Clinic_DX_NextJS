@@ -1,12 +1,15 @@
 "use client"
 
 import * as React from "react"
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { QueryCache, QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { AuthSessionSync, replaceSession, notifySessionChanged } from "@/modules/auth"
+import { HttpError } from "@/shared/api/http-client"
 import { ApiClientError } from "@/shared/api/api-client"
 
 export function shouldRetryQuery(failureCount: number, error: unknown) {
   if (
-    error instanceof ApiClientError &&
+    (error instanceof ApiClientError || error instanceof HttpError) &&
+    error.status !== undefined &&
     ((error.status >= 400 && error.status < 500) || error.status === 501)
   ) {
     return false
@@ -17,8 +20,17 @@ export function shouldRetryQuery(failureCount: number, error: unknown) {
 
 export function QueryProvider({ children }: { children: React.ReactNode }) {
   const [queryClient] = React.useState(
-    () =>
-      new QueryClient({
+    () => {
+      const client = new QueryClient({
+        queryCache: new QueryCache({
+          onError: (error, query) => {
+            if (query.meta?.requiresAuth &&
+              (error instanceof HttpError || error instanceof ApiClientError) &&
+              error.status === 401) {
+              void replaceSession(client, null).then(notifySessionChanged)
+            }
+          },
+        }),
         defaultOptions: {
           queries: {
             staleTime: 1000 * 60 * 5,
@@ -27,10 +39,13 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
           },
         },
       })
+      return client
+    }
   )
 
   return (
     <QueryClientProvider client={queryClient}>
+      <AuthSessionSync />
       {children}
     </QueryClientProvider>
   )

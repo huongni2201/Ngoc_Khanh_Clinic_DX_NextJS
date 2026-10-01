@@ -87,8 +87,10 @@ export function useHealthExaminationBatchParticipants(
       batchId,
       params ?? {}
     ),
-    queryFn: () =>
-      fetchHealthExaminationBatchParticipants(organizationId, batchId, params),
+    queryFn: ({ signal }) =>
+      fetchHealthExaminationBatchParticipants(organizationId, batchId, params, signal),
+    meta: { requiresAuth: true },
+    retry: false,
     enabled: Boolean(organizationId && batchId),
     staleTime: 15_000,
     refetchOnWindowFocus: true,

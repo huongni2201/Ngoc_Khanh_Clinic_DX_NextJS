@@ -4,9 +4,65 @@ import { ApiClientError, apiClient } from "./api-client"
 afterEach(() => {
   vi.unstubAllEnvs()
   vi.unstubAllGlobals()
+  vi.useRealTimers()
 })
 
 describe("apiClient", () => {
+  it("sends the session cookie for protected JSON and file requests", async () => {
+    const request = vi.fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ result: "OK", code: 200, data: [] })))
+      .mockResolvedValueOnce(new Response("report"))
+    vi.stubGlobal("fetch", request)
+
+    await apiClient.get("/organizations")
+    await apiClient.getBlob("/report")
+
+    for (const [, options] of request.mock.calls) {
+      expect(options).toMatchObject({ credentials: "include", cache: "no-store" })
+    }
+  })
+
+  it("forwards cancellation to fetch without turning it into a service error", async () => {
+    const controller = new AbortController()
+    vi.stubGlobal("fetch", vi.fn().mockImplementation((_url, options) => new Promise((_resolve, reject) => {
+      options.signal.addEventListener("abort", () => reject(new DOMException("Aborted", "AbortError")))
+    })))
+
+    const assertion = expect(apiClient.get("/organizations", { signal: controller.signal }))
+      .rejects.toMatchObject({ name: "AbortError" })
+    controller.abort()
+    await assertion
+  })
+
+  it("times out after 15 seconds without retrying", async () => {
+    vi.useFakeTimers()
+    const request = vi.fn().mockImplementation((_url, options) => new Promise((_resolve, reject) => {
+      options.signal.addEventListener("abort", () => reject(new DOMException("Aborted", "AbortError")))
+    }))
+    vi.stubGlobal("fetch", request)
+
+    const assertion = expect(apiClient.get("/organizations"))
+      .rejects.toMatchObject({ name: "ApiClientError", status: 0 })
+    await vi.advanceTimersByTimeAsync(14_999)
+    expect(request.mock.calls[0][1].signal.aborted).toBe(false)
+    await vi.advanceTimersByTimeAsync(1)
+    expect(request.mock.calls[0][1].signal.aborted).toBe(true)
+    await assertion
+    expect(request).toHaveBeenCalledTimes(1)
+  })
+
+  it("does not force a JSON content type onto a multipart upload", async () => {
+    const request = vi.fn().mockResolvedValue(new Response(JSON.stringify({ result: "OK", code: 200 })))
+    vi.stubGlobal("fetch", request)
+    const upload = new FormData()
+    upload.append("file", new File(["roster"], "roster.xlsx"))
+
+    await apiClient.post("/imports", upload)
+
+    expect(request.mock.calls[0][1].body).toBe(upload)
+    expect(new Headers(request.mock.calls[0][1].headers).has("Content-Type")).toBe(false)
+  })
+
   it("accepts a 204 response without an API envelope", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 204 })))
 

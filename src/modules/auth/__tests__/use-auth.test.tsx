@@ -1,20 +1,28 @@
 import * as React from "react"
-import { act, renderHook } from "@testing-library/react"
+import { act, cleanup, renderHook } from "@testing-library/react"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { describe, expect, it } from "vitest"
-import { useAuth } from "../hooks/use-auth"
+import { afterEach, describe, expect, it, vi } from "vitest"
+import { useLogout } from "../hooks/use-auth"
+import { csrf } from "./fixtures"
 
-describe("useAuth", () => {
-  it("clears cached patient data on logout", async () => {
+afterEach(() => {
+  cleanup()
+  vi.unstubAllGlobals()
+})
+
+describe("useLogout", () => {
+  it("clears cached patient data only after backend logout succeeds", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValueOnce(csrf())
+      .mockResolvedValueOnce(new Response(null, { status: 204 })))
     const queryClient = new QueryClient()
     queryClient.setQueryData(["patients"], [{ id: "patient-1" }])
     const wrapper = ({ children }: { children: React.ReactNode }) => (
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     )
-    const { result } = renderHook(() => useAuth(), { wrapper })
+    const { result } = renderHook(() => useLogout(), { wrapper })
 
     await act(async () => {
-      await result.current.logout()
+      expect(await result.current.logout()).toBe(true)
     })
 
     expect(queryClient.getQueryData(["patients"])).toBeUndefined()

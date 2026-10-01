@@ -491,4 +491,3 @@ export async function fetchAppointmentCounters(): Promise<AppointmentCounters> {
 export function resetAppointmentsStore() {
   appointmentsStore = [...initialAppointments]
 }
-

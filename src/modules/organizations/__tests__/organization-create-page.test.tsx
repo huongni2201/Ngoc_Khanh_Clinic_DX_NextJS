@@ -51,7 +51,7 @@ describe("OrganizationCreatePage", () => {
 
     expect(screen.getByText("Tên đơn vị phải có ít nhất 2 ký tự")).toBeInTheDocument()
     expect(screen.getByText("Người liên hệ là bắt buộc")).toBeInTheDocument()
-    expect(screen.getByText("Số điện thoại phải từ 9 đến 11 số")).toBeInTheDocument()
+    expect(screen.getByText("Số điện thoại là bắt buộc")).toBeInTheDocument()
   })
 
   it("creates an organization through the backend API and opens its detail page", async () => {

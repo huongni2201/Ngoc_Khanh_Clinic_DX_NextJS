@@ -19,9 +19,9 @@ function renderWithClient(ui: React.ReactElement) {
     defaultOptions: { queries: { retry: false } },
   })
 
-  return render(
-    <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>
-  )
+  return render(ui, {
+    wrapper: ({ children }) => <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>,
+  })
 }
 
 describe("Health examination batch report tab", () => {
@@ -43,7 +43,7 @@ describe("Health examination batch report tab", () => {
       mockNavigation.push.mock.calls.at(-1)?.[0] as string,
       "http://localhost"
     ).search
-    rendered.rerender(page)
+    rendered.rerender(React.cloneElement(page))
 
     expect(screen.getByText("Chưa có API cho nội dung này.")).toBeInTheDocument()
     vi.unstubAllGlobals()

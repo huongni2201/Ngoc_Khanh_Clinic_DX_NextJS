@@ -235,5 +235,29 @@ Later:
 
 ## Architecture Changes
 
-Update this file when the current architecture changes. Create or supersede an
-ADR when the decision or rationale changes.
+### User authentication implementation
+
+`modules/auth` owns STAFF/PATIENT login, logout, session schemas, hooks and AuthBoundary.
+The flow is component → auth hook → auth API → `shared/api/http-client` → identity.
+The browser sends HttpOnly cookies with `credentials: "include"`; frontend code
+does not receive or persist a JWT/session ID. TanStack Query owns the session view.
+
+AppShell mounts protected screens and the payment notifier only after `/me`
+verification. AppHeader receives real identity display values and uses the auth
+module's public logout hook. The root QueryProvider mounts cross-tab synchronization
+and handles 401 errors from queries explicitly marked `requiresAuth`. Shared
+transport remains independent of the auth module. The participant-roster API uses
+the shared API client, includes session cookies and forwards cancellation signals.
+Both shared client entry points use the same cookie-aware transport with a
+15-second timeout. QueryProvider recognizes their HTTP error contracts without
+turning permission failures into logout.
+
+Staff with effective assignments enter the staff workspace. Patients and roleless
+staff remain signed in with a notice and logout action; business data is cleared
+when `/me` removes workspace access. See [ADR-0006](../adr/0006-shared-user-login.md) and
+[setup/testing guide](../api/staff-auth-frontend.md). Backend authorization remains
+required; the client boundary does not protect server-side data access.
+
+Update this file when the **current architecture** changes.
+
+Create or supersede an ADR when the **decision/rationale** changes.

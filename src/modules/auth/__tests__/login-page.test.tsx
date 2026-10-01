@@ -1,61 +1,114 @@
 import * as React from "react"
-import { render, screen, waitFor } from "@testing-library/react"
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import "@testing-library/jest-dom/vitest"
+import { render, screen, waitFor, cleanup } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { LoginPage } from "../pages/login-page"
+import { csrf, ok, patientSession, staffSession } from "./fixtures"
 
-const mockRouter = vi.hoisted(() => ({
-  push: vi.fn(),
-  replace: vi.fn(),
-}))
+const replace = vi.fn()
+vi.mock("next/navigation", () => ({ useRouter: () => ({ replace }) }))
+const request = vi.fn()
 
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({ ...mockRouter, prefetch: vi.fn() }),
-  usePathname: () => "/login",
-  useSearchParams: () => new URLSearchParams(),
-}))
-
-function renderWithClient(ui: React.ReactElement) {
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: { retry: false },
-      mutations: { retry: false },
-    },
-  })
-
-  return render(
-    <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>
-  )
+function renderLogin() {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  render(<QueryClientProvider client={client}><LoginPage /></QueryClientProvider>)
+  return client
 }
 
-describe("LoginPage", () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-    localStorage.clear()
+beforeEach(() => {
+  vi.clearAllMocks()
+  localStorage.clear()
+  vi.stubGlobal("fetch", request)
+  request.mockResolvedValue(new Response(null, { status: 401 }))
+})
+afterEach(() => { cleanup(); vi.unstubAllGlobals() })
+
+async function fill() {
+  const user = userEvent.setup()
+  await user.type(await screen.findByPlaceholderText("Nhập tên đăng nhập"), "staff.test")
+  await user.type(screen.getByPlaceholderText("Nhập mật khẩu"), "secret")
+  return user
+}
+
+describe("staff login screen", () => {
+  it("restores /me before displaying the form and omits unsupported options", async () => {
+    renderLogin()
+    expect(await screen.findByRole("button", { name: "Đăng nhập" })).toBeDisabled()
+    expect(screen.queryByText("Quên mật khẩu?")).not.toBeInTheDocument()
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument()
   })
 
-  afterEach(() => localStorage.clear())
+  it("keeps password visibility accessible", async () => {
+    renderLogin()
+    const user = await fill()
+    await user.click(screen.getByRole("button", { name: "Hiện mật khẩu" }))
+    expect(screen.getByPlaceholderText("Nhập mật khẩu")).toHaveAttribute("type", "text")
+  })
 
-  it("shows that login is unavailable until the backend auth API exists", () => {
-    renderWithClient(<LoginPage />)
+  it("shows a generic credential error without redirecting", async () => {
+    renderLogin()
+    const user = await fill()
+    request.mockResolvedValueOnce(csrf()).mockResolvedValueOnce(new Response(null, { status: 401 }))
+    await user.click(screen.getByRole("button", { name: "Đăng nhập" }))
+    expect(await screen.findByText("Tên đăng nhập hoặc mật khẩu không chính xác.")).toBeInTheDocument()
+    expect(replace).not.toHaveBeenCalled()
+  })
 
-    expect(screen.getByAltText("Ngọc Khánh Clinic Logo")).toBeInTheDocument()
-    expect(screen.getByText("Đăng nhập hệ thống")).toBeInTheDocument()
-    expect(screen.getByRole("status")).toHaveTextContent(
-      "Backend chưa cung cấp API đăng nhập."
-    )
-    expect(screen.queryByPlaceholderText("Nhập tên đăng nhập")).not.toBeInTheDocument()
+  it("logs in, clears old data and redirects without storing a token", async () => {
+    const client = renderLogin()
+    const user = await fill()
+    client.setQueryData(["patients"], ["previous-user-data"])
+    request.mockResolvedValueOnce(csrf()).mockResolvedValueOnce(ok(staffSession))
+    await user.click(screen.getByRole("button", { name: "Đăng nhập" }))
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/organizations"))
+    expect(client.getQueryData(["patients"])).toBeUndefined()
+    expect(localStorage.length).toBe(0)
+    await waitFor(() => expect(client.getMutationCache().getAll()).toHaveLength(0))
+  })
+
+  it("redirects an existing session to organizations", async () => {
+    request.mockResolvedValueOnce(ok(staffSession))
+    renderLogin()
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/organizations"))
+  })
+
+  it.each([
+    ["patient", patientSession, "patient.test"],
+    ["roleless staff", { ...staffSession, roleAssignments: [] }, "staff.test"],
+  ])("keeps a %s session on login with a logout action", async (_, session, username) => {
+    request.mockResolvedValueOnce(ok(session))
+    renderLogin()
+    expect(await screen.findByRole("button", { name: "Đăng xuất" })).toBeInTheDocument()
+    expect(screen.getByText(username)).toBeInTheDocument()
     expect(screen.queryByPlaceholderText("Nhập mật khẩu")).not.toBeInTheDocument()
+    expect(replace).not.toHaveBeenCalled()
   })
 
-  it("does not trust an old fake token in localStorage", async () => {
-    localStorage.setItem("nk_auth_token", "test-token")
-    localStorage.setItem("nk_auth_user", JSON.stringify({ id: "fake-user" }))
+  it("shows a patient without staff access after successful login", async () => {
+    renderLogin()
+    const user = await fill()
+    request.mockResolvedValueOnce(csrf()).mockResolvedValueOnce(ok(patientSession))
+    await user.click(screen.getByRole("button", { name: "Đăng nhập" }))
+    expect(await screen.findByText("patient.test")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Đăng xuất" })).toBeInTheDocument()
+    expect(replace).not.toHaveBeenCalledWith("/organizations")
+  })
 
-    renderWithClient(<LoginPage />)
+  it("shows retry for a /me outage instead of the login form", async () => {
+    request.mockResolvedValueOnce(new Response(null, { status: 503 }))
+    renderLogin()
+    expect(await screen.findByRole("button", { name: "Thử lại" })).toBeInTheDocument()
+    expect(screen.queryByPlaceholderText("Nhập mật khẩu")).not.toBeInTheDocument()
+    expect(replace).not.toHaveBeenCalled()
+  })
 
-    await waitFor(() => expect(mockRouter.replace).not.toHaveBeenCalled())
-    expect(screen.getByRole("status")).toBeInTheDocument()
+  it("honors Retry-After and blocks duplicate attempts", async () => {
+    renderLogin()
+    const user = await fill()
+    request.mockResolvedValueOnce(csrf()).mockResolvedValueOnce(new Response(null, { status: 429, headers: { "Retry-After": "30" } }))
+    await user.click(screen.getByRole("button", { name: "Đăng nhập" }))
+    expect(await screen.findByText(/Vui lòng thử lại sau/)).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Đăng nhập" })).toBeDisabled()
   })
 })

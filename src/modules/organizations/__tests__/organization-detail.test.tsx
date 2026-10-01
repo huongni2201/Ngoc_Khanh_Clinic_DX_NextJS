@@ -53,12 +53,26 @@ describe("OrganizationDetailPage", () => {
     expect(screen.queryByRole("button", { name: "Tạo đợt khám mới" })).not.toBeInTheDocument()
   })
 
-  it("uses the URL as the batch tab source of truth and shows unavailable state", async () => {
+  it("uses the URL as the batch tab source of truth and reads the available batch API", async () => {
     vi.stubEnv("NODE_ENV", "production")
     vi.stubEnv("NEXT_PUBLIC_API_BASE_URL", "http://localhost:8080")
     mockNavigation.search = "tab=batches"
+    const fetchMock = mockOrganizationFetch()
+    fetchMock.mockImplementation(async (input) => {
+      const isBatchList = new URL(String(input)).pathname.endsWith("/health-examination-batches")
+      return Response.json({
+        result: "OK", code: 200,
+        data: isBatchList
+          ? { items: [], page: 1, size: 10, totalElements: 0, totalPages: 0 }
+          : organizationFixture,
+      })
+    })
     renderWithClient(<OrganizationDetailPage organizationId="org-1" />)
-    expect(await screen.findByText("Backend chưa cung cấp API cho danh sách đợt khám.")).toBeInTheDocument()
+    expect(await screen.findByText("Chưa có đợt khám nào cho đơn vị này")).toBeInTheDocument()
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining("/organizations/org-1/health-examination-batches?"),
+      expect.objectContaining({ credentials: "include" })
+    )
 
     await userEvent.setup().click(screen.getByRole("button", { name: "Thông tin" }))
     expect(mockNavigation.push).toHaveBeenCalledWith("/organizations/org-1", { scroll: false })

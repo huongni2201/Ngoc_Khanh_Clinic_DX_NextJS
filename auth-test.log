@@ -1,0 +1,10 @@
+$ vitest run "src/modules/auth/__tests__/login-page.test.tsx"
+
+ RUN  v5.0.1 D:/Ngoc_Khanh_Clinic_DX/Ngoc_Khanh_Clinic_DX_NextJS
+
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  10:50:07
+   Duration  3.76s (tests 57%, environment 24%, import 10%, setup 6%, transform 4%)
+

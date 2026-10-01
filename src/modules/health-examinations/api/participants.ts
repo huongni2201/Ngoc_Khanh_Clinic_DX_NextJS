@@ -88,10 +88,12 @@ export function mapParticipantPageResponse(
 export async function fetchHealthExaminationBatchParticipants(
   organizationId: string,
   batchId: string,
-  params?: ParticipantListFilterParams
+  params?: ParticipantListFilterParams,
+  signal?: AbortSignal
 ): Promise<ParticipantListResponse> {
   const response = await apiClient.get<PageResponse<BatchParticipantResponseDto>>(
-    buildParticipantListUrl(organizationId, batchId, params)
+    buildParticipantListUrl(organizationId, batchId, params),
+    { signal }
   )
 
   return mapParticipantPageResponse(response, batchId)
