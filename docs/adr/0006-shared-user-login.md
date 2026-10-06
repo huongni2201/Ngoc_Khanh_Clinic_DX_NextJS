@@ -4,7 +4,9 @@
 
 Accepted — 2026-09-30. Supersedes the staff-only session shape, login route and
 redirect in [ADR-0005](0005-staff-cookie-session.md). Its cookie, CSRF, query-state
-and logout decisions remain in force.
+and logout decisions remain in force. The session shape, CSRF exchange and
+effective-role access rule are superseded by
+[ADR-0007](0007-session-login-backend-adr-0014.md).
 
 ## Context
 

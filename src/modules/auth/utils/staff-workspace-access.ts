@@ -1,16 +1,19 @@
 import type { UserSession } from "../types"
 
+/**
+ * Mirrors the backend rule (ADR-0014): every signed-in STAFF account may use staff routes until
+ * per-endpoint RBAC exists. PATIENT accounts stay signed in but cannot enter the staff workspace.
+ */
 export function canAccessStaffWorkspace(session: UserSession | null | undefined): boolean {
-  return hasEffectiveStaffRole(session)
+  return session?.principalType === "STAFF"
 }
 
-export function hasEffectiveStaffRole(
+/** Whether a STAFF session carries a role, optionally a specific role code. Display only. */
+export function hasStaffRole(
   session: UserSession | null | undefined,
   roleCode?: string,
 ): boolean {
-  const now = Date.now()
   return session?.principalType === "STAFF" && session.roleAssignments.some((assignment) =>
-    (roleCode === undefined || assignment.roleCode === roleCode) &&
-    Date.parse(assignment.validFrom) <= now && (assignment.validTo === null || now < Date.parse(assignment.validTo)),
+    roleCode === undefined || assignment.roleCode === roleCode,
   )
 }

@@ -20,9 +20,7 @@ export function SessionAccessNotice({ session }: { session: UserSession }) {
       <p className="text-foreground">{session.username}</p>
       <Alert>
         <AlertDescription>
-          {session.principalType === "PATIENT"
-            ? "Hiện chưa có chức năng dành cho tài khoản bệnh nhân trên giao diện này."
-            : "Tài khoản chưa có vai trò đang hiệu lực để truy cập khu vực nhân viên. Vui lòng liên hệ phòng khám."}
+          Hiện chưa có chức năng dành cho tài khoản bệnh nhân trên giao diện này.
         </AlertDescription>
       </Alert>
       {logoutError && <Alert variant="destructive"><AlertDescription>{logoutError}</AlertDescription></Alert>}

@@ -4,7 +4,8 @@
 
 Accepted — implements the approved staff login/logout plan.
 The staff-only response, route and redirect are superseded by
-[ADR-0006](0006-shared-user-login.md).
+[ADR-0006](0006-shared-user-login.md). The CSRF token exchange is superseded by
+[ADR-0007](0007-session-login-backend-adr-0014.md).
 
 ## Context
 

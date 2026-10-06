@@ -11,7 +11,7 @@ export const ORGANIZATION_ID = "0199aaaa-0000-7000-8000-000000000001"
 const CORS = {
   "Access-Control-Allow-Origin": "http://localhost:3000",
   "Access-Control-Allow-Credentials": "true",
-  "Access-Control-Allow-Headers": "Content-Type, X-XSRF-TOKEN",
+  "Access-Control-Allow-Headers": "Content-Type, Accept",
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
 }
 
@@ -63,13 +63,9 @@ function session() {
     patientId: null,
     username: "staff.test",
     roleAssignments: [{
-      assignmentId: "33333333-3333-4333-8333-333333333333",
-      roleCode: "STAFF",
-      permissions: ["encounter.read"],
-      departmentId: null,
-      roomId: null,
-      validFrom: "2026-01-01T00:00:00Z",
-      validTo: null,
+      roleId: "33333333-3333-4333-8333-333333333333",
+      roleCode: "DOCTOR",
+      permissions: ["ORGANIZATION_READ"],
     }],
     idleExpiresAt: new Date(now + 30 * 60_000).toISOString(),
     absoluteExpiresAt: new Date(now + 8 * 3600_000).toISOString(),
@@ -190,7 +186,6 @@ export async function mockBackend(page: Page): Promise<MockBackend> {
     if (method === "OPTIONS") return route.fulfill({ status: 204, headers: CORS })
     state.requests.push({ method, path, search: url.search })
 
-    if (path === "/api/v1/auth/csrf") return envelope(route, 200, { token: "masked-test-token", headerName: "X-XSRF-TOKEN" })
     if (path === "/api/v1/auth/me") return envelope(route, 200, session())
     if (path === "/api/v1/catalog/services") {
       return envelope(route, 200, { items: CATALOG, page: 1, size: 100, totalElements: CATALOG.length, totalPages: 1 })

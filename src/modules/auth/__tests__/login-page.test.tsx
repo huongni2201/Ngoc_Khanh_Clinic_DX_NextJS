@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event"
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { LoginPage } from "../pages/login-page"
-import { csrf, ok, patientSession, staffSession } from "./fixtures"
+import { me, ok, patientSession, staffSession } from "./fixtures"
 
 const replace = vi.fn()
 vi.mock("next/navigation", () => ({ useRouter: () => ({ replace }) }))
@@ -49,7 +49,7 @@ describe("staff login screen", () => {
   it("shows a generic credential error without redirecting", async () => {
     renderLogin()
     const user = await fill()
-    request.mockResolvedValueOnce(csrf()).mockResolvedValueOnce(new Response(null, { status: 401 }))
+    request.mockResolvedValueOnce(new Response(null, { status: 401 }))
     await user.click(screen.getByRole("button", { name: "Đăng nhập" }))
     expect(await screen.findByText("Tên đăng nhập hoặc mật khẩu không chính xác.")).toBeInTheDocument()
     expect(replace).not.toHaveBeenCalled()
@@ -59,7 +59,7 @@ describe("staff login screen", () => {
     const client = renderLogin()
     const user = await fill()
     client.setQueryData(["patients"], ["previous-user-data"])
-    request.mockResolvedValueOnce(csrf()).mockResolvedValueOnce(ok(staffSession))
+    request.mockResolvedValueOnce(ok(staffSession))
     await user.click(screen.getByRole("button", { name: "Đăng nhập" }))
     await waitFor(() => expect(replace).toHaveBeenCalledWith("/organizations"))
     expect(client.getQueryData(["patients"])).toBeUndefined()
@@ -67,28 +67,49 @@ describe("staff login screen", () => {
     await waitFor(() => expect(client.getMutationCache().getAll()).toHaveLength(0))
   })
 
-  it("redirects an existing session to organizations", async () => {
-    request.mockResolvedValueOnce(ok(staffSession))
+  it.each([
+    ["staff with roles", staffSession],
+    ["staff without roles", { ...staffSession, roleAssignments: [] }],
+  ])("redirects an existing %s session to organizations", async (_, session) => {
+    request.mockResolvedValueOnce(me(session))
     renderLogin()
     await waitFor(() => expect(replace).toHaveBeenCalledWith("/organizations"))
   })
 
-  it.each([
-    ["patient", patientSession, "patient.test"],
-    ["roleless staff", { ...staffSession, roleAssignments: [] }, "staff.test"],
-  ])("keeps a %s session on login with a logout action", async (_, session, username) => {
-    request.mockResolvedValueOnce(ok(session))
+  it("keeps a patient session on login with a logout action", async () => {
+    request.mockResolvedValueOnce(me(patientSession))
     renderLogin()
     expect(await screen.findByRole("button", { name: "Đăng xuất" })).toBeInTheDocument()
-    expect(screen.getByText(username)).toBeInTheDocument()
+    expect(screen.getByText("patient.test")).toBeInTheDocument()
     expect(screen.queryByPlaceholderText("Nhập mật khẩu")).not.toBeInTheDocument()
     expect(replace).not.toHaveBeenCalled()
+  })
+
+  it("sends the username exactly as typed", async () => {
+    renderLogin()
+    const user = userEvent.setup()
+    await user.type(await screen.findByPlaceholderText("Nhập tên đăng nhập"), " Staff.Test ")
+    await user.type(screen.getByPlaceholderText("Nhập mật khẩu"), "secret")
+    request.mockResolvedValueOnce(ok(staffSession))
+    await user.click(screen.getByRole("button", { name: "Đăng nhập" }))
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/organizations"))
+    const [, options] = request.mock.calls.at(-1)!
+    expect(JSON.parse(options.body).username).toBe(" Staff.Test ")
+  })
+
+  it("blocks a Vietnamese password longer than 72 bytes before sending it", async () => {
+    renderLogin()
+    const user = userEvent.setup()
+    await user.type(await screen.findByPlaceholderText("Nhập tên đăng nhập"), "staff.test")
+    await user.type(screen.getByPlaceholderText("Nhập mật khẩu"), "ậA".repeat(19))
+    expect(await screen.findByText("Mật khẩu không được vượt quá 72 byte UTF-8")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Đăng nhập" })).toBeDisabled()
   })
 
   it("shows a patient without staff access after successful login", async () => {
     renderLogin()
     const user = await fill()
-    request.mockResolvedValueOnce(csrf()).mockResolvedValueOnce(ok(patientSession))
+    request.mockResolvedValueOnce(ok(patientSession))
     await user.click(screen.getByRole("button", { name: "Đăng nhập" }))
     expect(await screen.findByText("patient.test")).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Đăng xuất" })).toBeInTheDocument()
@@ -106,7 +127,7 @@ describe("staff login screen", () => {
   it("honors Retry-After and blocks duplicate attempts", async () => {
     renderLogin()
     const user = await fill()
-    request.mockResolvedValueOnce(csrf()).mockResolvedValueOnce(new Response(null, { status: 429, headers: { "Retry-After": "30" } }))
+    request.mockResolvedValueOnce(new Response(null, { status: 429, headers: { "Retry-After": "30" } }))
     await user.click(screen.getByRole("button", { name: "Đăng nhập" }))
     expect(await screen.findByText(/Vui lòng thử lại sau/)).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Đăng nhập" })).toBeDisabled()

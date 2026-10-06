@@ -8,13 +8,10 @@ afterEach(() => {
 })
 
 describe("apiClient", () => {
-  it("fetches a fresh masked CSRF token for every unsafe request", async () => {
+  it("sends unsafe requests directly with the session cookie and no CSRF token", async () => {
     const requests: Array<{ path: string; options: RequestInit }> = []
     vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL, options: RequestInit) => {
       requests.push({ path: new URL(String(input)).pathname, options })
-      if (String(input).endsWith("/auth/csrf")) {
-        return Response.json({ result: "OK", code: 200, data: { headerName: "X-XSRF-TOKEN", token: "masked-token" } })
-      }
       return Response.json({ result: "OK", code: 200 })
     }))
 
@@ -22,13 +19,12 @@ describe("apiClient", () => {
     await apiClient.put("/api/v1/organizations/one", {})
     await apiClient.delete("/api/v1/organizations/one")
 
+    // The backend rejects cross-site writes by Origin (ADR-0014), so no token is fetched.
     expect(requests.map(({ path }) => path)).toEqual([
-      "/api/v1/auth/csrf", "/api/v1/organizations",
-      "/api/v1/auth/csrf", "/api/v1/organizations/one",
-      "/api/v1/auth/csrf", "/api/v1/organizations/one",
+      "/api/v1/organizations", "/api/v1/organizations/one", "/api/v1/organizations/one",
     ])
-    for (const { options } of requests.filter(({ path }) => path !== "/api/v1/auth/csrf")) {
-      expect(new Headers(options.headers).get("X-XSRF-TOKEN")).toBe("masked-token")
+    for (const { options } of requests) {
+      expect(new Headers(options.headers).has("X-XSRF-TOKEN")).toBe(false)
       expect(options.credentials).toBe("include")
     }
   })
@@ -77,7 +73,6 @@ describe("apiClient", () => {
 
   it("does not force a JSON content type onto a multipart upload", async () => {
     const request = vi.fn()
-      .mockResolvedValueOnce(Response.json({ result: "OK", code: 200, data: { headerName: "X-XSRF-TOKEN", token: "masked" } }))
       .mockResolvedValueOnce(Response.json({ result: "OK", code: 200 }))
     vi.stubGlobal("fetch", request)
     const upload = new FormData()
@@ -85,13 +80,12 @@ describe("apiClient", () => {
 
     await apiClient.post("/imports", upload)
 
-    expect(request.mock.calls[1][1].body).toBe(upload)
-    expect(new Headers(request.mock.calls[1][1].headers).has("Content-Type")).toBe(false)
+    expect(request.mock.calls[0][1].body).toBe(upload)
+    expect(new Headers(request.mock.calls[0][1].headers).has("Content-Type")).toBe(false)
   })
 
   it("accepts a 204 response without an API envelope", async () => {
     vi.stubGlobal("fetch", vi.fn()
-      .mockResolvedValueOnce(Response.json({ result: "OK", code: 200, data: { headerName: "X-XSRF-TOKEN", token: "masked" } }))
       .mockResolvedValueOnce(new Response(null, { status: 204 })))
 
     await expect(apiClient.delete<void>("/resource")).resolves.toEqual({
@@ -189,7 +183,7 @@ describe("apiClient", () => {
     const paths: string[] = []
     vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL) => {
       paths.push(new URL(String(input)).pathname)
-      return Response.json({ result: "OK", code: 200, data: { headerName: "X-XSRF-TOKEN", token: "masked" } })
+      return Response.json({ result: "OK", code: 200 })
     }))
 
     await expect(send(controller.signal)).rejects.toMatchObject({ name: "AbortError" })
