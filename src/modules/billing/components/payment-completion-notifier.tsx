@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { CheckCircle2, X } from "lucide-react"
+import { CheckCircle2, X } from "@/shared/ui/product-icon"
 import { Button } from "@/components/ui/button"
 import { formatVND } from "@/shared/ui"
 import { usePayments } from "../hooks/use-billing"

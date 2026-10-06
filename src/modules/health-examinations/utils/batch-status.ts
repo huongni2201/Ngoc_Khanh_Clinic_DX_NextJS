@@ -7,12 +7,8 @@ export const HEALTH_EXAMINATION_BATCH_STATUS_LABELS: Record<
 > = {
   DRAFT: "Nháp",
   READY: "Sẵn sàng",
-  IN_PROGRESS: "Đang khám",
-  RESULT_PROCESSING: "Đang xử lý kết quả",
   FINALIZED: "Đã chốt",
   CLOSED: "Đã đóng",
-  CANCELED: "Đã hủy",
-  DELETED: "Đã xóa",
 }
 
 export function getHealthExaminationBatchStatusLabel(

@@ -6,6 +6,8 @@ import {
   fetchHealthExaminationBatchesByOrganization,
   fetchHealthExaminationBatchById,
   createHealthExaminationBatch,
+  updateHealthExaminationBatch,
+  deleteHealthExaminationBatch,
   fetchHealthExaminationBatchMatrix,
   fetchHealthExaminationBatchReport,
   fetchExaminationDetailExportData,
@@ -21,6 +23,8 @@ import {
 } from "../utils/export-excel"
 import {
   CreateHealthExaminationBatchRequest,
+  DeleteHealthExaminationBatchRequest,
+  UpdateHealthExaminationBatchRequest,
   HealthExaminationBatchFilterParams,
   HealthExaminationBatch,
   ClinicalService,
@@ -32,10 +36,12 @@ import {
   HealthExaminationBatchReportSummary,
 } from "../types"
 
-export function useClinicalServices() {
+/** The catalog is only requested while a form that needs it is open. */
+export function useClinicalServices(enabled = true) {
   return useQuery<ClinicalService[]>({
     queryKey: healthExaminationKeys.clinicalServices(),
-    queryFn: () => fetchClinicalServiceCatalog(),
+    queryFn: ({ signal }) => fetchClinicalServiceCatalog(signal),
+    enabled,
     staleTime: 5 * 60 * 1000,
   })
 }
@@ -46,9 +52,12 @@ export function useOrganizationHealthExaminationBatches(
 ) {
   return useQuery<HealthExaminationBatchListResponse>({
     queryKey: healthExaminationKeys.batchList(organizationId, params),
-    queryFn: () => fetchHealthExaminationBatchesByOrganization(organizationId, params),
+    queryFn: ({ signal }) =>
+      fetchHealthExaminationBatchesByOrganization(organizationId, params, signal),
+    meta: { requiresAuth: true },
+    retry: false,
     enabled: Boolean(organizationId),
-    staleTime: 30 * 1000,
+    staleTime: 15_000,
   })
 }
 
@@ -57,9 +66,23 @@ export function useHealthExaminationBatchDetail(
   batchId: string
 ) {
   return useQuery<HealthExaminationBatch>({
-    queryKey: healthExaminationKeys.batchById(batchId),
-    queryFn: () => fetchHealthExaminationBatchById(organizationId, batchId),
+    queryKey: healthExaminationKeys.batch(organizationId, batchId),
+    queryFn: ({ signal }) => fetchHealthExaminationBatchById(organizationId, batchId, signal),
+    meta: { requiresAuth: true },
+    retry: false,
     enabled: Boolean(organizationId && batchId),
+  })
+}
+
+/** Re-reads one batch after a 409 and replaces the cached detail. It never resends a mutation. */
+export function useReloadHealthExaminationBatch(organizationId: string, batchId: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation<HealthExaminationBatch, Error, void>({
+    mutationFn: () => fetchHealthExaminationBatchById(organizationId, batchId),
+    onSuccess: (batch) => {
+      queryClient.setQueryData(healthExaminationKeys.batch(organizationId, batchId), batch)
+    },
   })
 }
 
@@ -67,10 +90,48 @@ export function useCreateHealthExaminationBatch() {
   const queryClient = useQueryClient()
 
   return useMutation<HealthExaminationBatch, Error, CreateHealthExaminationBatchRequest>({
-    mutationFn: (request: CreateHealthExaminationBatchRequest) => createHealthExaminationBatch(request),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: healthExaminationKeys.batchLists(),
+    mutationFn: (request) => createHealthExaminationBatch(request),
+    retry: false,
+    onSuccess: (batch, request) => {
+      queryClient.setQueryData(
+        healthExaminationKeys.batch(request.organizationId, batch.id),
+        batch
+      )
+      void queryClient.invalidateQueries({
+        queryKey: [...healthExaminationKeys.batches(request.organizationId), "list"],
+      })
+    },
+  })
+}
+
+export function useUpdateHealthExaminationBatch() {
+  const queryClient = useQueryClient()
+
+  return useMutation<HealthExaminationBatch, Error, UpdateHealthExaminationBatchRequest>({
+    mutationFn: (request) => updateHealthExaminationBatch(request),
+    retry: false,
+    onSuccess: (batch, request) => {
+      queryClient.setQueryData(
+        healthExaminationKeys.batch(request.organizationId, request.batchId),
+        batch
+      )
+      void queryClient.invalidateQueries({
+        queryKey: [...healthExaminationKeys.batches(request.organizationId), "list"],
+      })
+    },
+  })
+}
+
+export function useDeleteHealthExaminationBatch() {
+  const queryClient = useQueryClient()
+
+  return useMutation<void, Error, DeleteHealthExaminationBatchRequest>({
+    mutationFn: (request) => deleteHealthExaminationBatch(request),
+    retry: false,
+    // The detail cache entry is dropped by the page that shows it, once it stops observing it.
+    onSuccess: (_result, request) => {
+      void queryClient.invalidateQueries({
+        queryKey: [...healthExaminationKeys.batches(request.organizationId), "list"],
       })
     },
   })

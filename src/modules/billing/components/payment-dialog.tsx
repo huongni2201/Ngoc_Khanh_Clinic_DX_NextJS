@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { AlertCircle, Banknote, CheckCircle2, Clock3, Copy, Loader2, QrCode } from "lucide-react"
+import { AlertCircle, Banknote, CheckCircle2, Clock, Copy, Loader2, QrCode } from "@/shared/ui/product-icon"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -155,7 +155,7 @@ export function PaymentDialog({ open, onOpenChange, encounter, onPaid }: Payment
 
             {invoice?.paymentStatus === "PENDING" && invoice.paymentMethod === "VIETQR" && (
               <div className="space-y-4 rounded-lg border border-border bg-muted/40 p-4">
-                <div className="flex items-start gap-3"><Clock3 className="mt-0.5 size-5 text-primary" /><div><p className="font-semibold">Đang chờ ngân hàng xác nhận</p><p className="mt-1 text-xs text-muted-foreground">Bạn có thể đóng màn hình và tiếp tục phục vụ bệnh nhân khác. Trạng thái sẽ được cập nhật tự động.</p></div></div>
+                <div className="flex items-start gap-3"><Clock className="mt-0.5 size-5 text-primary" /><div><p className="font-semibold">Đang chờ ngân hàng xác nhận</p><p className="mt-1 text-xs text-muted-foreground">Bạn có thể đóng màn hình và tiếp tục phục vụ bệnh nhân khác. Trạng thái sẽ được cập nhật tự động.</p></div></div>
                 {invoice.transferIntent?.qrCodeUrl ? (
                   // The QR URL is supplied by the payment backend and may be a data URL.
                   // eslint-disable-next-line @next/next/no-img-element

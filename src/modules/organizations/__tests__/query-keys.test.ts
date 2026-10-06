@@ -6,9 +6,16 @@ describe("organizationKeys", () => {
     expect(organizationKeys.list({ page: 2, pageSize: 10 })).toEqual([
       "organizations",
       "list",
-      { page: 2, pageSize: 10 },
+      { search: "", page: 2, pageSize: 10, sortKey: "id", sortBy: "ASC" },
     ])
     expect(organizationKeys.lists()).toEqual(["organizations", "list"])
+  })
+
+  it("gives equivalent list parameters one cache key", () => {
+    expect(organizationKeys.list({ search: "  fpt  ", page: 1 })).toEqual(
+      organizationKeys.list({ search: "fpt", page: 1, pageSize: 10, sortKey: "id", sortBy: "ASC" })
+    )
+    expect(organizationKeys.list(undefined)).toEqual(organizationKeys.list({}))
   })
 
   it("groups detail queries beneath a shared detail prefix", () => {

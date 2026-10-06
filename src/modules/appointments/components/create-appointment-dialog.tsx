@@ -329,7 +329,7 @@ export function CreateAppointmentDialog({
         date: data.date,
         time: data.time,
         notes: data.notes || undefined,
-        bookingChannel: "FRONT_DESK",
+        bookingChannel: "RECEPTION",
         careProgram,
         organizationId:
           careProgram === "ORGANIZATION_HEALTH_EXAMINATION"
@@ -519,7 +519,7 @@ export function CreateAppointmentDialog({
                   /* Organization Workflow */
                   <div className="space-y-3">
                     <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground block">
-                      1. Chọn đoàn & Nhân viên
+                      1. Chọn đơn vị, đợt khám & người khám
                     </span>
 
                     {isOrganizationsError && (
@@ -555,7 +555,7 @@ export function CreateAppointmentDialog({
                                 ? "Đang tải đơn vị..."
                                 : isOrganizationsError
                                   ? "Danh sách đơn vị chưa khả dụng"
-                                  : "-- Chọn công ty / đơn vị --"
+                                  : "-- Chọn đơn vị --"
                             }
                           />
                         </SelectTrigger>
@@ -605,7 +605,7 @@ export function CreateAppointmentDialog({
                     {/* Participant select */}
                     <div className="space-y-1">
                       <Label className="text-xs font-medium text-foreground">
-                        Nhân viên trong đợt khám{" "}
+                        Người khám trong đợt khám{" "}
                         <span className="text-destructive">*</span>
                       </Label>
                       <Select
@@ -621,7 +621,7 @@ export function CreateAppointmentDialog({
                               selectedHealthExaminationBatchId
                                 ? isLinkingParticipant
                                 ? "Đang liên kết hồ sơ..."
-                                : "-- Chọn nhân viên khám --"
+                                : "-- Chọn người khám --"
                                 : "Vui lòng chọn đợt khám trước"
                             }
                           />

@@ -14,13 +14,13 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
+import { ApiClientError } from "@/shared/api/api-client"
 import { OrganizationDetail } from "../types"
 import {
   updateOrganizationSchema,
   type UpdateOrganizationFormValues,
 } from "../schemas"
-import { useUpdateOrganization } from "../hooks/use-organizations"
+import { useReloadOrganization, useUpdateOrganization } from "../hooks/use-organizations"
 
 interface EditOrganizationDialogProps {
   open: boolean
@@ -37,7 +37,17 @@ export function EditOrganizationDialog({
     mutateAsync: updateOrganization,
     isPending,
     error: updateError,
+    reset: resetUpdateError,
   } = useUpdateOrganization(organization.id)
+  const {
+    mutateAsync: reloadOrganization,
+    isPending: isReloading,
+    error: reloadError,
+  } = useReloadOrganization(organization.id)
+  // The version the next save is based on. It only moves when the user reloads after a 409.
+  const [baseVersion, setBaseVersion] = React.useState(organization.rowVersion)
+  const initializedRef = React.useRef(false)
+  const isConflict = updateError instanceof ApiClientError && updateError.status === 409
 
   const {
     register,
@@ -49,39 +59,68 @@ export function EditOrganizationDialog({
     defaultValues: {
       name: organization.name,
       taxCode: organization.taxCode || "",
+      phone: organization.phone,
+      email: organization.email,
       contactName: organization.contactName,
       contactPhone: organization.contactPhone,
-      contactJobTitle: organization.contactJobTitle || "",
-      address: organization.address || "",
-      note: organization.note || "",
+      contactEmail: organization.contactEmail,
+      address: organization.address,
     },
   })
 
-  // Synchronize form values whenever modal opens or organization changes
+  const toFormValues = React.useCallback(
+    (source: OrganizationDetail): UpdateOrganizationFormValues => ({
+      name: source.name,
+      taxCode: source.taxCode || "",
+      phone: source.phone,
+      email: source.email,
+      contactName: source.contactName,
+      contactPhone: source.contactPhone,
+      contactEmail: source.contactEmail,
+      address: source.address,
+    }),
+    []
+  )
+
+  // Fills the form once per opening. A background refetch while the dialog is open never replaces
+  // what the user typed; only the explicit reload after a 409 does.
   React.useEffect(() => {
-    if (open) {
-      reset({
-        name: organization.name,
-        taxCode: organization.taxCode || "",
-        contactName: organization.contactName,
-        contactPhone: organization.contactPhone,
-        contactJobTitle: organization.contactJobTitle || "",
-        address: organization.address || "",
-        note: organization.note || "",
-      })
+    if (!open) {
+      initializedRef.current = false
+      return
     }
-  }, [open, organization, reset])
+    if (!initializedRef.current) {
+      initializedRef.current = true
+      reset(toFormValues(organization))
+      setBaseVersion(organization.rowVersion)
+    }
+  }, [open, organization, reset, toFormValues])
+
+  // After a 409 the form keeps the user's input. Only an explicit reload replaces it, and the
+  // edit is never resubmitted automatically.
+  const handleReload = async () => {
+    try {
+      const latest = await reloadOrganization()
+      reset(toFormValues(latest))
+      setBaseVersion(latest.rowVersion)
+      resetUpdateError()
+    } catch {
+      // The reload error is rendered in the dialog.
+    }
+  }
 
   const onSubmit = async (values: UpdateOrganizationFormValues) => {
     try {
       await updateOrganization({
         name: values.name,
         taxCode: values.taxCode || undefined,
+        phone: values.phone,
+        email: values.email,
         contactName: values.contactName,
         contactPhone: values.contactPhone,
-        contactJobTitle: values.contactJobTitle || undefined,
-        address: values.address || undefined,
-        note: values.note || undefined,
+        contactEmail: values.contactEmail,
+        address: values.address,
+        rowVersion: baseVersion,
       })
       onOpenChange(false)
     } catch {
@@ -90,7 +129,8 @@ export function EditOrganizationDialog({
   }
 
   const handleCancel = () => {
-    reset()
+    reset(toFormValues(organization))
+    resetUpdateError()
     onOpenChange(false)
   }
 
@@ -112,8 +152,25 @@ export function EditOrganizationDialog({
         >
           <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-5">
           {updateError && (
+            <div role="alert" className="space-y-2 text-xs text-destructive">
+              <p>{updateError.message || "Không thể cập nhật đơn vị."}</p>
+              {isConflict && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleReload}
+                  disabled={isReloading}
+                  className="h-8 text-xs"
+                >
+                  {isReloading ? "Đang tải..." : "Tải lại dữ liệu mới nhất"}
+                </Button>
+              )}
+            </div>
+          )}
+          {reloadError && (
             <p role="alert" className="text-xs text-destructive">
-              {updateError.message || "Không thể cập nhật đơn vị."}
+              {reloadError.message || "Không thể tải lại dữ liệu đơn vị."}
             </p>
           )}
           {/* Tên đơn vị * */}
@@ -149,6 +206,18 @@ export function EditOrganizationDialog({
           </div>
 
           {/* Người liên hệ * & Số điện thoại * */}
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="edit-phone">Điện thoại đơn vị *</Label>
+              <Input id="edit-phone" type="tel" {...register("phone")} aria-invalid={!!errors.phone} aria-describedby={errors.phone ? "edit-phone-error" : undefined} />
+              {errors.phone && <p id="edit-phone-error" className="text-xs text-destructive">{errors.phone.message}</p>}
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="edit-email">Email đơn vị *</Label>
+              <Input id="edit-email" type="email" {...register("email")} aria-invalid={!!errors.email} aria-describedby={errors.email ? "edit-email-error" : undefined} />
+              {errors.email && <p id="edit-email-error" className="text-xs text-destructive">{errors.email.message}</p>}
+            </div>
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label
@@ -190,49 +259,28 @@ export function EditOrganizationDialog({
               )}
             </div>
           </div>
-
-          {/* Chức vụ người liên hệ */}
           <div className="space-y-1.5">
-            <Label htmlFor="edit-contactJobTitle" className="text-xs font-medium text-foreground">
-              Chức vụ người liên hệ
-            </Label>
-            <Input
-              id="edit-contactJobTitle"
-              placeholder="VD: Trưởng phòng nhân sự"
-              {...register("contactJobTitle")}
-              className="h-9 text-xs"
-            />
+            <Label htmlFor="edit-contact-email">Email người liên hệ *</Label>
+            <Input id="edit-contact-email" type="email" {...register("contactEmail")} aria-invalid={!!errors.contactEmail} aria-describedby={errors.contactEmail ? "edit-contact-email-error" : undefined} />
+            {errors.contactEmail && <p id="edit-contact-email-error" className="text-xs text-destructive">{errors.contactEmail.message}</p>}
           </div>
 
           {/* Địa chỉ */}
           <div className="space-y-1.5">
             <Label htmlFor="edit-address" className="text-xs font-medium text-foreground">
-              Địa chỉ
+              Địa chỉ *
             </Label>
             <Input
               id="edit-address"
               placeholder="VD: Tòa nhà FPT, số 10 Phạm Văn Bạch, Cầu Giấy, Hà Nội"
               {...register("address")}
               className="h-9 text-xs"
+              aria-invalid={!!errors.address}
+              aria-describedby={errors.address ? "edit-address-error" : undefined}
             />
+            {errors.address && <p id="edit-address-error" className="text-xs text-destructive">{errors.address.message}</p>}
             {errors.address && (
               <p className="text-[11px] text-destructive">{errors.address.message}</p>
-            )}
-          </div>
-
-          {/* Ghi chú */}
-          <div className="space-y-1.5">
-            <Label htmlFor="edit-note" className="text-xs font-medium text-foreground">
-              Ghi chú
-            </Label>
-            <Textarea
-              id="edit-note"
-              placeholder="VD: Đối tác khám sức khỏe định kỳ hằng năm."
-              {...register("note")}
-              className="text-xs min-h-[70px] resize-none"
-            />
-            {errors.note && (
-              <p className="text-[11px] text-destructive">{errors.note.message}</p>
             )}
           </div>
 
@@ -259,4 +307,3 @@ export function EditOrganizationDialog({
     </Dialog>
   )
 }
-

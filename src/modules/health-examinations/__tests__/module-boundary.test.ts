@@ -13,11 +13,17 @@ describe("health examination module boundary", () => {
       id: "service-1",
       code: "LAB-001",
       name: "Tổng phân tích tế bào máu",
+      serviceType: "LAB",
+      unitPrice: 90_000,
     }
     const batchService: HealthExaminationBatchService = {
+      id: "batch-service-1",
       serviceId: service.id,
+      code: service.code,
       name: service.name,
-      unitPrice: 0,
+      referencePrice: service.unitPrice,
+      negotiatedPrice: 80_000,
+      displayOrder: 1,
     }
 
     expect(batchService.serviceId).toBe(service.id)

@@ -29,6 +29,8 @@ interface HealthExaminationBatchTableProps {
   currentPage: number
   pageSize: number
   isLoading?: boolean
+  /** True when a search is applied, so an empty page means "no match" rather than "no batch". */
+  isFiltered?: boolean
   onCreateClick?: () => void
 }
 
@@ -52,6 +54,7 @@ export function HealthExaminationBatchTable({
   currentPage,
   pageSize,
   isLoading = false,
+  isFiltered = false,
   onCreateClick,
 }: HealthExaminationBatchTableProps) {
   const router = useRouter()
@@ -155,12 +158,16 @@ export function HealthExaminationBatchTable({
               <TableCell colSpan={5} className="py-14 text-center">
                 <CalendarDays className="mx-auto mb-3 size-9 text-muted-foreground" />
                 <p className="font-medium text-foreground">
-                  Chưa có đợt khám nào cho đơn vị này
+                  {isFiltered
+                    ? "Không tìm thấy đợt khám phù hợp"
+                    : "Chưa có đợt khám nào cho đơn vị này"}
                 </p>
                 <p className="mx-auto mt-1 mb-5 max-w-sm text-xs text-muted-foreground">
-                  Tạo đợt khám để cấu hình thời gian, địa điểm và hạng mục khám.
+                  {isFiltered
+                    ? "Thử đổi từ khóa tìm kiếm."
+                    : "Tạo đợt khám để cấu hình thời gian, địa điểm và hạng mục khám."}
                 </p>
-                {onCreateClick && (
+                {onCreateClick && !isFiltered && (
                   <Button type="button" onClick={onCreateClick}>
                     <Plus className="mr-1.5 size-3.5" />
                     Tạo đợt khám mới

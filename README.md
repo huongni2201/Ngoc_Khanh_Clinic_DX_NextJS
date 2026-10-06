@@ -27,8 +27,12 @@ Các lệnh kiểm tra:
 pnpm lint
 pnpm typecheck
 pnpm test
+pnpm check:terminology
 pnpm build
 ```
+
+Với thay đổi chỉ tài liệu/skill/hygiene, kiểm tra link, contract và git diff theo
+[definition of done](PROJECT_RULES.md#28-definition-of-done).
 
 ## Cấu hình API
 
@@ -63,7 +67,32 @@ Backend HTTP contract là nguồn chuẩn. Fixtures chỉ được Vitest nạp 
 
 ## Trạng thái tích hợp
 
-Organization CRUD và danh sách participant của batch đang gọi backend. Participant import chỉ hoạt động khi các API backend tương ứng (template, upload, mapping/validation, row preview, confirm, cancel) được triển khai cùng frontend. Batch list/create, service catalog, reports, authentication và patient/reception/doctor/appointment/billing APIs vẫn chưa có đủ contract trong checkout hiện tại. Production không nạp fixtures cho các endpoint còn thiếu.
+Backend hiện có list/tạo/xem/sửa/ngừng hoạt động organization, list/tạo/xem/sửa/xóa
+batch, list danh mục dịch vụ đang hoạt động (`GET /api/v1/catalog/services`) và auth. Luồng
+Staff đã nối đủ: **Đơn vị → Đợt khám** (danh sách trong tab Đợt khám của đơn vị, tạo, xem, sửa, xóa).
+Đối chiếu [API inventory](../Ngoc_Khanh_Clinic_DX_Springboot/docs/api/clean-slate-migration.md)
+trước tích hợp; handler tồn tại không đồng nghĩa production đã cấp quyền truy cập.
+
+Chưa hỗ trợ (backend chưa có endpoint): danh sách người khám, chi tiết khám (ma trận tiến độ),
+báo cáo và xuất file. Ba tab tương ứng trong trang đợt khám hiển thị "Chưa hỗ trợ" và không gửi
+request nào. Excel import đã bị bỏ khỏi hợp đồng ngày 2026-10-05 và code import FE đã được gỡ
+ngày 2026-10-06 (xem [cleanup inventory](docs/maintenance/frontend-cleanup-inventory.md)).
+Các việc còn lại được ghi tại [code follow-ups](docs/maintenance/code-follow-ups.md).
+Production không dùng fixtures làm fallback.
+
+## Chạy với backend thật (local)
+
+1. Chạy backend với profile `local` (Flyway nạp thêm `db/local`: 2 khoa và 5 dịch vụ mẫu, không có
+   tài khoản nào) cùng Redis; cấp một tài khoản STAFF có role cho môi trường local.
+2. Đặt `NEXT_PUBLIC_API_BASE_URL=http://localhost:8080` (xem `.env.example`) rồi `pnpm dev`.
+3. Smoke test trình duyệt thật (bỏ qua nếu thiếu biến môi trường; không commit thông tin đăng nhập):
+
+```bash
+E2E_STAFF_USERNAME=<staff> E2E_STAFF_PASSWORD=<mật khẩu> pnpm test:e2e:backend
+```
+
+`pnpm test:e2e` chạy các spec Playwright dùng backend giả lập trong trình duyệt
+(`e2e/support/mock-backend.ts`, có trạng thái, 409/404/403) để kiểm tra luồng đợt khám và các tab chưa hỗ trợ.
 
 ## Quy ước
 

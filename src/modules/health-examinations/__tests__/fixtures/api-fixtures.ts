@@ -1,11 +1,14 @@
+import { ApiClientError } from "@/shared/api/api-client"
 import {
   ClinicalService,
   HealthExaminationBatch,
+  HealthExaminationBatchStatus,
   CreateHealthExaminationBatchRequest,
+  DeleteHealthExaminationBatchRequest,
+  UpdateHealthExaminationBatchRequest,
   HealthExaminationBatchFilterParams,
   HealthExaminationBatchListResponse,
   HealthExaminationParticipant,
-  LegacyEmployeeImportRow,
   ParticipantExaminationProgress,
   ExaminationProgressFilterParams,
   ExaminationProgressResponse,
@@ -22,48 +25,97 @@ export const clinicalServiceCatalog: ClinicalService[] = [
     id: "item-kntq",
     code: "HM001",
     name: "Khám nội tổng quát",
-    description: "Đo sinh hiệu, khám tim mạch, hô hấp, tiêu hóa",
+    serviceType: "GENERAL",
+    unitPrice: 100000,
   },
   {
     id: "item-xnm",
     code: "HM002",
     name: "Xét nghiệm máu",
-    description: "Tổng phân tích tế bào máu 18 thông số",
+    serviceType: "GENERAL",
+    unitPrice: 100000,
   },
   {
     id: "item-xnnt",
     code: "HM003",
     name: "Xét nghiệm nước tiểu",
-    description: "Tổng phân tích nước tiểu 10 chỉ số",
+    serviceType: "GENERAL",
+    unitPrice: 100000,
   },
   {
     id: "item-saob",
     code: "HM004",
     name: "Siêu âm ổ bụng",
-    description: "Siêu âm màu tổng quát các tạng trong ổ bụng",
+    serviceType: "GENERAL",
+    unitPrice: 100000,
   },
   {
     id: "item-xqp",
     code: "HM005",
     name: "X-quang phổi",
-    description: "Chụp X-quang tim phổi thẳng kỹ thuật số",
+    serviceType: "GENERAL",
+    unitPrice: 100000,
   },
   {
     id: "item-km",
     code: "HM006",
     name: "Khám mắt",
-    description: "Kiểm tra thị lực, sắc giác, nhãn áp sơ bộ",
+    serviceType: "GENERAL",
+    unitPrice: 100000,
   },
   {
     id: "item-tmh",
     code: "HM007",
     name: "Tai mũi họng",
-    description: "Nội soi tai mũi họng tổng quát",
+    serviceType: "GENERAL",
+    unitPrice: 100000,
   },
 ]
 
+interface SeedBatch {
+  id: string
+  code: string
+  organizationId: string
+  name: string
+  startDate: string | null
+  endDate: string | null
+  status: HealthExaminationBatchStatus
+  services: { serviceId: string; name: string; unitPrice: number }[]
+  createdAt: string
+  updatedAt: string
+}
+
+function toBatch(seed: SeedBatch): HealthExaminationBatch {
+  return {
+    id: seed.id,
+    organizationId: seed.organizationId,
+    code: seed.code,
+    name: seed.name,
+    startDate: seed.startDate,
+    endDate: seed.endDate,
+    status: seed.status,
+    createdAt: seed.createdAt,
+    updatedAt: seed.updatedAt,
+    rowVersion: 0,
+    examinationDates: seed.startDate ? [seed.startDate] : [],
+    examinationSiteType: "CLINIC",
+    examinationSiteName: "Phòng khám Ngọc Khánh",
+    examinationSiteAddress: "1 Đường A, Hà Nội",
+    createdBy: "staff-1",
+    services: seed.services.map((service, index) => ({
+      id: `${seed.id}-${service.serviceId}`,
+      serviceId: service.serviceId,
+      code: clinicalServiceCatalog.find((item) => item.id === service.serviceId)?.code ?? null,
+      name: service.name,
+      referencePrice: service.unitPrice,
+      negotiatedPrice: service.unitPrice,
+      displayOrder: index + 1,
+    })),
+  }
+}
+
 // In-memory store for batches
-let healthExaminationBatchesStore: HealthExaminationBatch[] = [
+const seedBatches: SeedBatch[] = [
   {
     id: "batch-1",
     code: "DK001",
@@ -71,8 +123,7 @@ let healthExaminationBatchesStore: HealthExaminationBatch[] = [
     name: "Khám sức khỏe định kỳ 2026",
     startDate: "2026-09-18",
     endDate: null,
-    status: "IN_PROGRESS",
-    reason: "Đợt khám sức khỏe định kỳ CBNV 2026",
+    status: "READY",
     services: [
       {
         serviceId: "item-kntq",
@@ -121,7 +172,6 @@ let healthExaminationBatchesStore: HealthExaminationBatch[] = [
     startDate: "2025-10-15",
     endDate: null,
     status: "FINALIZED",
-    reason: "Đã hoàn tất kết luận và trả sổ Mẫu 03",
     services: [
       {
         serviceId: "item-kntq",
@@ -180,197 +230,163 @@ let healthExaminationBatchesStore: HealthExaminationBatch[] = [
   },
 ]
 
+let healthExaminationBatchesStore: HealthExaminationBatch[] = seedBatches.map(toBatch)
+
+// Fixture-only profile completeness used to derive matrix notes; not part of the participant model.
+type SeedProfileStatus = "VALID" | "MISSING_IDENTIFICATION_NUMBER" | "MISSING_SIGNATURE"
+type SeedParticipant = HealthExaminationParticipant & { profileStatus: SeedProfileStatus }
+
 // Base 10 participant rows matching the reference image
-const referenceParticipants: LegacyEmployeeImportRow[] = [
+const referenceParticipants: Omit<SeedParticipant, "batchId" | "participantType">[] = [
   {
     id: "emp-001",
-    employeeCode: "FPT001",
+    participantCode: "FPT001",
     fullName: "Trần Minh Đức",
-    dob: "14/03/1990",
+    dateOfBirth: "14/03/1990",
     gender: "Nam",
-    cccd: "090312345678",
-    phone: "0901 234 567",
-    department: "Kỹ thuật",
+    identificationNumber: "090312345678",
+    phoneNumber: "0901 234 567",
+    organizationUnit: "Kỹ thuật",
     jobTitle: "Kỹ sư",
     address: "Hà Nội",
-    joinDate: "01/06/2018",
-    contractType: "HĐLĐ",
     profileStatus: "VALID",
     note: "",
   },
   {
     id: "emp-002",
-    employeeCode: "FPT002",
+    participantCode: "FPT002",
     fullName: "Nguyễn Thu Hà",
-    dob: "22/08/1992",
+    dateOfBirth: "22/08/1992",
     gender: "Nữ",
-    cccd: "001189012345",
-    phone: "0987 654 321",
-    department: "Nhân sự",
+    identificationNumber: "001189012345",
+    phoneNumber: "0987 654 321",
+    organizationUnit: "Nhân sự",
     jobTitle: "Chuyên viên",
     address: "Hà Nội",
-    joinDate: "15/03/2019",
-    contractType: "HĐLĐ",
     profileStatus: "VALID",
     note: "",
   },
   {
     id: "emp-003",
-    employeeCode: "FPT003",
+    participantCode: "FPT003",
     fullName: "Lê Quang Huy",
-    dob: "05/01/1988",
+    dateOfBirth: "05/01/1988",
     gender: "Nam",
-    cccd: "012398765432",
-    phone: "0912 345 678",
-    department: "Kinh doanh",
+    identificationNumber: "012398765432",
+    phoneNumber: "0912 345 678",
+    organizationUnit: "Kinh doanh",
     jobTitle: "Trưởng nhóm",
     address: "Hồ Chí Minh",
-    joinDate: "20/07/2017",
-    contractType: "HĐLĐ",
     profileStatus: "MISSING_IDENTIFICATION_NUMBER",
     note: "",
   },
   {
     id: "emp-004",
-    employeeCode: "FPT004",
+    participantCode: "FPT004",
     fullName: "Phạm Thị Mai",
-    dob: "12/11/1993",
+    dateOfBirth: "12/11/1993",
     gender: "Nữ",
-    cccd: "022301234567",
-    phone: "0934 567 890",
-    department: "Tài chính",
+    identificationNumber: "022301234567",
+    phoneNumber: "0934 567 890",
+    organizationUnit: "Tài chính",
     jobTitle: "Kế toán",
     address: "Đà Nẵng",
-    joinDate: "01/12/2020",
-    contractType: "HĐLĐ",
     profileStatus: "VALID",
     note: "",
   },
   {
     id: "emp-005",
-    employeeCode: "FPT005",
+    participantCode: "FPT005",
     fullName: "Đặng Hoàng Nam",
-    dob: "28/06/1991",
+    dateOfBirth: "28/06/1991",
     gender: "Nam",
-    cccd: "034567890123",
-    phone: "0965 432 109",
-    department: "Kinh doanh",
+    identificationNumber: "034567890123",
+    phoneNumber: "0965 432 109",
+    organizationUnit: "Kinh doanh",
     jobTitle: "Chuyên viên",
     address: "Hà Nội",
-    joinDate: "10/05/2019",
-    contractType: "HĐLĐ",
     profileStatus: "MISSING_SIGNATURE",
     note: "",
   },
   {
     id: "emp-006",
-    employeeCode: "FPT006",
+    participantCode: "FPT006",
     fullName: "Nguyễn Văn Long",
-    dob: "17/09/1989",
+    dateOfBirth: "17/09/1989",
     gender: "Nam",
-    cccd: "028912345678",
-    phone: "0909 876 543",
-    department: "Công nghệ",
+    identificationNumber: "028912345678",
+    phoneNumber: "0909 876 543",
+    organizationUnit: "Công nghệ",
     jobTitle: "Chuyên viên",
     address: "Hà Nội",
-    joinDate: "03/11/2018",
-    contractType: "HĐLĐ",
     profileStatus: "VALID",
     note: "",
   },
   {
     id: "emp-007",
-    employeeCode: "FPT007",
+    participantCode: "FPT007",
     fullName: "Vũ Thị Thanh Huyền",
-    dob: "03/04/1994",
+    dateOfBirth: "03/04/1994",
     gender: "Nữ",
-    cccd: "031234567890",
-    phone: "0918 765 432",
-    department: "Nhân sự",
+    identificationNumber: "031234567890",
+    phoneNumber: "0918 765 432",
+    organizationUnit: "Nhân sự",
     jobTitle: "Chuyên viên",
     address: "Hải Phòng",
-    joinDate: "21/01/2021",
-    contractType: "HĐ thử việc",
     profileStatus: "MISSING_IDENTIFICATION_NUMBER",
     note: "",
   },
   {
     id: "emp-008",
-    employeeCode: "FPT008",
+    participantCode: "FPT008",
     fullName: "Hoàng Anh Tuấn",
-    dob: "19/12/1990",
+    dateOfBirth: "19/12/1990",
     gender: "Nam",
-    cccd: "040123456789",
-    phone: "0977 111 222",
-    department: "Sản xuất",
+    identificationNumber: "040123456789",
+    phoneNumber: "0977 111 222",
+    organizationUnit: "Sản xuất",
     jobTitle: "Kỹ thuật viên",
     address: "Bắc Ninh",
-    joinDate: "18/09/2018",
-    contractType: "HĐLĐ",
     profileStatus: "VALID",
     note: "",
   },
   {
     id: "emp-009",
-    employeeCode: "FPT009",
+    participantCode: "FPT009",
     fullName: "Đỗ Thị Kim Ngân",
-    dob: "27/05/1992",
+    dateOfBirth: "27/05/1992",
     gender: "Nữ",
-    cccd: "045678901234",
-    phone: "0983 222 111",
-    department: "Marketing",
+    identificationNumber: "045678901234",
+    phoneNumber: "0983 222 111",
+    organizationUnit: "Marketing",
     jobTitle: "Chuyên viên",
     address: "Hà Nội",
-    joinDate: "12/03/2020",
-    contractType: "HĐLĐ",
     profileStatus: "MISSING_SIGNATURE",
     note: "",
   },
   {
     id: "emp-010",
-    employeeCode: "FPT010",
+    participantCode: "FPT010",
     fullName: "Bùi Văn Duy",
-    dob: "09/10/1987",
+    dateOfBirth: "09/10/1987",
     gender: "Nam",
-    cccd: "052345678901",
-    phone: "0968 333 444",
-    department: "Kỹ thuật",
+    identificationNumber: "052345678901",
+    phoneNumber: "0968 333 444",
+    organizationUnit: "Kỹ thuật",
     jobTitle: "Tổ trưởng",
     address: "Hưng Yên",
-    joinDate: "01/08/2016",
-    contractType: "HĐLĐ",
     profileStatus: "VALID",
     note: "",
   },
 ]
 
 // Generate remaining 40 participants to reach exactly 50 participants
-export function mapLegacyEmployeeImportRow(
-  row: LegacyEmployeeImportRow,
-  batchId: string
-): HealthExaminationParticipant {
-  return {
-    id: row.id,
+const generateSeedParticipants = (batchId: string): SeedParticipant[] => {
+  const result: SeedParticipant[] = referenceParticipants.map((row) => ({
+    ...row,
     batchId,
-    participantCode: row.employeeCode,
     participantType: "EMPLOYEE",
-    fullName: row.fullName,
-    dateOfBirth: row.dob,
-    gender: row.gender,
-    identificationNumber: row.cccd,
-    phoneNumber: row.phone,
-    organizationUnit: row.department,
-    jobTitle: row.jobTitle,
-    address: row.address,
-    profileStatus: row.profileStatus ?? "VALID",
-    note: row.note,
-  }
-}
-
-const generateSeedParticipants = (batchId: string): HealthExaminationParticipant[] => {
-  const result: HealthExaminationParticipant[] = referenceParticipants.map((row) =>
-    mapLegacyEmployeeImportRow(row, batchId)
-  )
+  }))
 
   const extraNames = [
     "Ngô Bảo Châu", "Đinh Tiến Dũng", "Phan Thanh Hùng", "Lý Hải Đăng", "Dương Thu Thảo",
@@ -418,7 +434,7 @@ const generateSeedParticipants = (batchId: string): HealthExaminationParticipant
 }
 
 // In-memory participant store
-const participantsStore: HealthExaminationParticipant[] = generateSeedParticipants("batch-1")
+const participantsStore: SeedParticipant[] = generateSeedParticipants("batch-1")
 
 // Completed examination items by participant to match Tab 2 & Tab 3:
 // - Khám nội tổng quát: 50
@@ -492,46 +508,108 @@ export async function fetchHealthExaminationBatchById(
   const found = healthExaminationBatchesStore.find(
     (batch) => batch.id === batchId && batch.organizationId === organizationId
   )
-  if (!found) throw new Error("Không tìm thấy đợt khám.")
+  if (!found) {
+    throw new ApiClientError("Không tìm thấy hoặc đã bị xóa/ngừng hoạt động.", 404)
+  }
   return { ...found }
+}
+
+function buildServices(
+  batchId: string,
+  inputs: CreateHealthExaminationBatchRequest["services"]
+): HealthExaminationBatch["services"] {
+  return inputs.map((input, index) => {
+    const catalogItem = clinicalServiceCatalog.find((item) => item.id === input.serviceId)
+    return {
+      id: `${batchId}-${input.serviceId}`,
+      serviceId: input.serviceId,
+      code: catalogItem?.code ?? null,
+      name: catalogItem?.name ?? null,
+      referencePrice: catalogItem?.unitPrice ?? 0,
+      negotiatedPrice: input.negotiatedPrice,
+      displayOrder: index + 1,
+    }
+  })
 }
 
 export async function createHealthExaminationBatch(request: CreateHealthExaminationBatchRequest): Promise<HealthExaminationBatch> {
   await new Promise((resolve) => setTimeout(resolve, 150))
 
   const now = new Date().toISOString()
-
-  const mappedItems = request.services.map((item) => {
-    const catalogItem = clinicalServiceCatalog.find(
-      (c) => c.id === item.serviceId
-    )
-    return {
-      serviceId: item.serviceId,
-      name: catalogItem ? catalogItem.name : "Hạng mục khám",
-      unitPrice: item.negotiatedUnitPrice,
-    }
-  })
+  const id = `batch-${Date.now()}`
+  const dates = [...request.examinationDates].sort()
 
   const newBatch: HealthExaminationBatch = {
-    id: `batch-${Date.now()}`,
+    id,
     code: request.batchCode,
     organizationId: request.organizationId,
     name: request.batchName,
-    startDate: request.startDate || null,
-    endDate: request.endDate || null,
+    startDate: dates[0] ?? null,
+    endDate: dates[dates.length - 1] ?? null,
     status: "DRAFT",
-    reason: request.reason,
-    payerType: request.payerType,
+    rowVersion: 0,
+    examinationDates: dates,
     examinationSiteType: request.examinationSiteType,
     examinationSiteName: request.examinationSiteName,
     examinationSiteAddress: request.examinationSiteAddress,
-    services: mappedItems,
+    createdBy: "staff-1",
+    services: buildServices(id, request.services),
     createdAt: now,
     updatedAt: now,
   }
 
   healthExaminationBatchesStore = [newBatch, ...healthExaminationBatchesStore]
   return { ...newBatch }
+}
+
+export async function updateHealthExaminationBatch(
+  request: UpdateHealthExaminationBatchRequest
+): Promise<HealthExaminationBatch> {
+  await new Promise((resolve) => setTimeout(resolve, 100))
+  const current = healthExaminationBatchesStore.find(
+    (batch) => batch.id === request.batchId && batch.organizationId === request.organizationId
+  )
+  if (!current) {
+    throw new ApiClientError("Không tìm thấy hoặc đã bị xóa/ngừng hoạt động.", 404)
+  }
+  if (current.rowVersion !== request.rowVersion) {
+    throw new ApiClientError("Dữ liệu đã thay đổi hoặc không thỏa quy tắc nghiệp vụ. Vui lòng tải lại.", 409)
+  }
+
+  const dates = [...request.examinationDates].sort()
+  const updated: HealthExaminationBatch = {
+    ...current,
+    name: request.batchName,
+    startDate: dates[0] ?? null,
+    endDate: dates[dates.length - 1] ?? null,
+    examinationDates: dates,
+    examinationSiteType: request.examinationSiteType,
+    examinationSiteName: request.examinationSiteName,
+    examinationSiteAddress: request.examinationSiteAddress,
+    services: buildServices(current.id, request.services),
+    rowVersion: current.rowVersion + 1,
+    updatedAt: new Date().toISOString(),
+  }
+  healthExaminationBatchesStore = healthExaminationBatchesStore.map((batch) =>
+    batch.id === updated.id ? updated : batch
+  )
+  return { ...updated }
+}
+
+export async function deleteHealthExaminationBatch(
+  request: DeleteHealthExaminationBatchRequest
+): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, 100))
+  const current = healthExaminationBatchesStore.find(
+    (batch) => batch.id === request.batchId && batch.organizationId === request.organizationId
+  )
+  if (!current) {
+    throw new ApiClientError("Không tìm thấy hoặc đã bị xóa/ngừng hoạt động.", 404)
+  }
+  if (current.rowVersion !== request.rowVersion || current.status !== "DRAFT") {
+    throw new ApiClientError("Dữ liệu đã thay đổi hoặc không thỏa quy tắc nghiệp vụ. Vui lòng tải lại.", 409)
+  }
+  healthExaminationBatchesStore = healthExaminationBatchesStore.filter((batch) => batch.id !== current.id)
 }
 
 // ----------------------------------------------------
@@ -545,7 +623,7 @@ export async function fetchHealthExaminationBatchMatrix(
 
   const batch = healthExaminationBatchesStore.find((b) => b.id === batchId)
   const batchItems = (batch?.services || []).map((item) => {
-    let shortName = item.name
+    let shortName = item.name ?? ""
     if (item.serviceId === "item-kntq") shortName = "Khám nội"
     else if (item.serviceId === "item-xnm") shortName = "XN máu"
     else if (item.serviceId === "item-xnnt") shortName = "XN nước tiểu"
@@ -687,13 +765,13 @@ export async function fetchHealthExaminationBatchReport(batchId: string): Promis
 
   const reportItems: HealthExaminationServiceSummary[] = items.map((item) => {
     const examinedCount = countMap[item.serviceId] ?? 0
-    const totalAmount = examinedCount * item.unitPrice
+    const totalAmount = examinedCount * item.negotiatedPrice
 
     return {
       serviceId: item.serviceId,
-      name: item.name,
+      name: item.name ?? "",
       examinedCount,
-      unitPrice: item.unitPrice,
+      unitPrice: item.negotiatedPrice,
       totalAmount,
     }
   })
@@ -721,7 +799,7 @@ export async function fetchExaminationDetailExportData(batchId: string) {
   const allParticipants = participantsStore.filter((e) => e.batchId === batchId)
   const columns = (batch.services || []).map((item) => ({
     id: item.serviceId,
-    name: item.name,
+    name: item.name ?? "",
   }))
 
   const rows = allParticipants.map((e, index) => ({

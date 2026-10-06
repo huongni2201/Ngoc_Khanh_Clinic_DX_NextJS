@@ -18,6 +18,12 @@ diagnostics
 billing
 ```
 
+Terminology clarification — 2026-10-06: this list is the historical wording. In
+current code the people examined in a batch are `HealthExaminationParticipant`
+(inside `modules/health-examinations`, UI “Người khám”) and clinic personnel are
+`StaffMember`; there is no `employees` module. See the canonical vocabulary in
+[PROJECT_RULES §21](../../PROJECT_RULES.md).
+
 A purely technical folder structure such as global `components/`, `services/`, `hooks/` for all business code would spread one feature across unrelated folders.
 
 A very heavy architecture framework would add unnecessary ceremony for a new frontend.

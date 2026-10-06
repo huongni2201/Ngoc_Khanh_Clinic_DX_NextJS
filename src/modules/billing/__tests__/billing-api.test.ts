@@ -8,8 +8,11 @@ import {
   startTransferPayment,
 } from "../api"
 import { resetBillingStore } from "./fixtures/api-fixtures"
-import { initialEncounters, resetReceptionStore } from "@/modules/reception/__tests__/fixtures/api-fixtures"
-import { processPayment } from "@/modules/reception/api"
+import {
+  initialEncounters,
+  processPayment,
+  resetReceptionStore,
+} from "@/modules/reception/__tests__/fixtures/api-fixtures"
 
 const waitingEncounter = initialEncounters.find(
   (encounter) => encounter.paymentStatus === "PENDING"

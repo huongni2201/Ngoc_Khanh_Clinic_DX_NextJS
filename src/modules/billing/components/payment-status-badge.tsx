@@ -1,8 +1,8 @@
-import { AlertCircle, CheckCircle2, Clock3, Hourglass, XCircle } from "lucide-react"
+import { AlertCircle, CheckCircle2, Clock, Hourglass, XCircle } from "@/shared/ui/product-icon"
 import { Badge } from "@/components/ui/badge"
 import type { PaymentMethod, PaymentStatus } from "../types"
 
-const statusConfig: Record<PaymentStatus, { label: string; icon: typeof Clock3; className: string }> = {
+const statusConfig: Record<PaymentStatus, { label: string; icon: typeof Clock; className: string }> = {
   PENDING: { label: "Chờ thu tiền", icon: Hourglass, className: "border-border bg-muted text-muted-foreground" },
   PAID: { label: "Đã thanh toán", icon: CheckCircle2, className: "border-border bg-muted text-foreground" },
   FAILED: { label: "Cần kiểm tra", icon: AlertCircle, className: "border-destructive/30 bg-destructive/10 text-destructive" },

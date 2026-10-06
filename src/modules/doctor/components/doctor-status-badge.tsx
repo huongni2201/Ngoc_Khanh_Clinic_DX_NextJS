@@ -36,16 +36,16 @@ export function DoctorStatusBadge({
           <span>Đang khám</span>
         </span>
       )
-    case "WAITING_CLS":
+    case "WAITING_DIAGNOSTIC_RESULTS":
       return (
         <span
           className={cn(
-            "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium bg-status-cls-bg text-status-cls border border-status-cls/20",
+            "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium bg-status-diagnostic-bg text-status-diagnostic border border-status-diagnostic/20",
             className
           )}
         >
-          <span className="size-1.5 rounded-full bg-status-cls shrink-0" aria-hidden="true" />
-          <span>Chờ CLS</span>
+          <span className="size-1.5 rounded-full bg-status-diagnostic shrink-0" aria-hidden="true" />
+          <span>Chờ kết quả</span>
         </span>
       )
     case "WAITING_CONCLUSION":

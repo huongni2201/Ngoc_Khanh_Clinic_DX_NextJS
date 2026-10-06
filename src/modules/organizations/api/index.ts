@@ -2,6 +2,7 @@ import { apiClient } from "@/shared/api/api-client"
 import {
   organizationResponseSchema,
   type OrganizationRequestDto,
+  type UpdateOrganizationRequestDto,
   type OrganizationPageResponseDto,
   type OrganizationResponseDto,
 } from "../types/transport"
@@ -14,6 +15,8 @@ import type {
   UpdateOrganizationDto,
 } from "../types"
 
+import { normalizeOrganizationFilterParams } from "../utils/organization-list-params"
+
 const ORGANIZATIONS_ENDPOINT = "/api/v1/organizations"
 
 function mapOrganization(dto: OrganizationResponseDto): OrganizationDetail {
@@ -21,12 +24,14 @@ function mapOrganization(dto: OrganizationResponseDto): OrganizationDetail {
     id: dto.id,
     name: dto.name,
     taxCode: dto.taxCode ?? undefined,
-    address: dto.address ?? undefined,
-    contactName: dto.contactName,
+    phone: dto.phone,
+    email: dto.email,
+    address: dto.address,
+    contactName: dto.contactFullName,
     contactPhone: dto.contactPhone,
-    contactJobTitle: dto.contactJobTitle ?? undefined,
-    note: dto.note ?? undefined,
+    contactEmail: dto.contactEmail,
     status: dto.status,
+    rowVersion: dto.rowVersion,
   }
 }
 
@@ -38,27 +43,30 @@ function toRequest(dto: CreateOrganizationDto | UpdateOrganizationDto): Organiza
   return {
     name: dto.name,
     taxCode: dto.taxCode,
+    phone: dto.phone,
+    email: dto.email,
     address: dto.address,
-    contactName: dto.contactName,
+    contactFullName: dto.contactName,
     contactPhone: dto.contactPhone,
-    contactJobTitle: dto.contactJobTitle,
-    note: dto.note,
+    contactEmail: dto.contactEmail,
   }
 }
 
 export async function fetchOrganizations(
-  params?: OrganizationFilterParams
+  params?: OrganizationFilterParams,
+  signal?: AbortSignal
 ): Promise<OrganizationListResponse> {
+  const normalized = normalizeOrganizationFilterParams(params)
   const query = new URLSearchParams({
-    page: String(params?.page ?? 1),
-    size: String(params?.pageSize ?? 10),
-    ...(params?.search?.trim() ? { searchKey: params.search.trim() } : {}),
-    ...(params?.status ? { status: params.status } : {}),
-    sortKey: params?.sortKey ?? "id",
-    sortBy: params?.sortBy ?? "ASC",
+    page: String(normalized.page),
+    size: String(normalized.pageSize),
+    ...(normalized.search ? { searchKey: normalized.search } : {}),
+    sortKey: normalized.sortKey,
+    sortBy: normalized.sortBy,
   })
   const response = await apiClient.get<OrganizationPageResponseDto>(
-    `${ORGANIZATIONS_ENDPOINT}?${query.toString()}`
+    `${ORGANIZATIONS_ENDPOINT}?${query.toString()}`,
+    { signal }
   )
   if (!response.data) {
     throw new Error(response.message || "Phản hồi danh sách đơn vị không có dữ liệu.")
@@ -73,9 +81,13 @@ export async function fetchOrganizations(
   }
 }
 
-export async function fetchOrganizationById(id: string): Promise<OrganizationDetail> {
+export async function fetchOrganizationById(
+  id: string,
+  signal?: AbortSignal
+): Promise<OrganizationDetail> {
   const response = await apiClient.get<OrganizationResponseDto>(
-    `${ORGANIZATIONS_ENDPOINT}/${encodeURIComponent(id)}`
+    `${ORGANIZATIONS_ENDPOINT}/${encodeURIComponent(id)}`,
+    { signal }
   )
   if (!response.data) {
     throw new Error(response.message || "Phản hồi chi tiết đơn vị không có dữ liệu.")
@@ -98,9 +110,10 @@ export async function updateOrganization(
   id: string,
   dto: UpdateOrganizationDto
 ): Promise<OrganizationDetail> {
-  const response = await apiClient.put<OrganizationRequestDto, OrganizationResponseDto>(
+  const request: UpdateOrganizationRequestDto = { ...toRequest(dto), rowVersion: dto.rowVersion }
+  const response = await apiClient.put<UpdateOrganizationRequestDto, OrganizationResponseDto>(
     `${ORGANIZATIONS_ENDPOINT}/${encodeURIComponent(id)}`,
-    toRequest(dto)
+    request
   )
   if (!response.data) {
     throw new Error(response.message || "Phản hồi cập nhật đơn vị không hợp lệ.")
@@ -108,8 +121,8 @@ export async function updateOrganization(
   return requireOrganization(response.data)
 }
 
-export async function deactivateOrganization(id: string): Promise<void> {
+export async function deactivateOrganization(id: string, rowVersion: number): Promise<void> {
   await apiClient.delete<void>(
-    `${ORGANIZATIONS_ENDPOINT}/${encodeURIComponent(id)}`
+    `${ORGANIZATIONS_ENDPOINT}/${encodeURIComponent(id)}?rowVersion=${rowVersion}`
   )
 }

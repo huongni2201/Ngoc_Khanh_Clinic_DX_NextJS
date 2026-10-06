@@ -8,6 +8,7 @@ import {
   ArrowLeft01Icon,
   ArrowLeft02Icon,
   ArrowRight01Icon,
+  ArrowRight02Icon,
   Building03Icon,
   Calculator01Icon,
   Calendar03Icon,
@@ -40,6 +41,7 @@ import {
   HandshakeIcon,
   HeadphonesIcon,
   Home01Icon,
+  HourglassIcon,
   InformationCircleIcon,
   LinkSquare02Icon,
   Loading03Icon,
@@ -98,6 +100,7 @@ export const Activity = createProductIcon(Activity01Icon, "Activity")
 export const AlertCircle = createProductIcon(AlertCircleIcon, "AlertCircle")
 export const AlertTriangle = createProductIcon(Alert02Icon, "AlertTriangle")
 export const ArrowLeft = createProductIcon(ArrowLeft02Icon, "ArrowLeft")
+export const ArrowRight = createProductIcon(ArrowRight02Icon, "ArrowRight")
 export const Banknote = createProductIcon(Money01Icon, "Banknote")
 export const Building2 = createProductIcon(Building03Icon, "Building2")
 export const Calculator = createProductIcon(Calculator01Icon, "Calculator")
@@ -135,6 +138,7 @@ export const Headphones = createProductIcon(HeadphonesIcon, "Headphones")
 export const Heart = createProductIcon(FavouriteIcon, "Heart")
 export const HeartHandshake = createProductIcon(HandshakeIcon, "HeartHandshake")
 export const Home = createProductIcon(Home01Icon, "Home")
+export const Hourglass = createProductIcon(HourglassIcon, "Hourglass")
 export const Info = createProductIcon(InformationCircleIcon, "Info")
 export const ListChecks = createProductIcon(CheckListIcon, "ListChecks")
 export const Loader2 = createProductIcon(Loading03Icon, "Loader2")

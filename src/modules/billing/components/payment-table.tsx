@@ -1,6 +1,6 @@
 "use client"
 
-import { ArrowRight, Banknote, CreditCard, Eye, Wrench } from "lucide-react"
+import { ArrowRight, Banknote, CreditCard, Eye, RotateCcw } from "@/shared/ui/product-icon"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -73,7 +73,7 @@ export function PaymentTable({ invoices, isLoading, onSelect }: PaymentTableProp
               </TableCell>
               <TableCell className="text-right">
                 <Button size="sm" variant="outline" onClick={() => onSelect(invoice)}>
-                  {invoice.paymentStatus === "PENDING" ? <ArrowRight className="size-3.5" /> : invoice.paymentStatus === "PAID" ? <Eye className="size-3.5" /> : <Wrench className="size-3.5" />}
+                  {invoice.paymentStatus === "PENDING" ? <ArrowRight className="size-3.5" /> : invoice.paymentStatus === "PAID" ? <Eye className="size-3.5" /> : <RotateCcw className="size-3.5" />}
                   {actionLabel(invoice.paymentStatus, invoice.paymentMethod)}
                 </Button>
               </TableCell>

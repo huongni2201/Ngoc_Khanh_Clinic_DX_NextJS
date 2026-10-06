@@ -8,9 +8,9 @@ import { ArrowLeft, Building2 } from "@/shared/ui/product-icon"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import { PageHeader, ScreenLayout } from "@/shared/ui"
 import { useCreateOrganization } from "../hooks/use-organizations"
+import { createOrganizationErrorMessage } from "../utils/organization-errors"
 import {
   createOrganizationSchema,
   type CreateOrganizationFormValues,
@@ -29,11 +29,12 @@ export function OrganizationCreatePage() {
     defaultValues: {
       name: "",
       taxCode: "",
+      phone: "",
+      email: "",
       address: "",
       contactPerson: "",
       contactPhone: "",
-      contactJobTitle: "",
-      note: "",
+      contactEmail: "",
     },
   })
 
@@ -42,11 +43,12 @@ export function OrganizationCreatePage() {
       const created = await createOrg({
         name: values.name,
         taxCode: values.taxCode || undefined,
+        phone: values.phone,
+        email: values.email,
         contactName: values.contactPerson,
         contactPhone: values.contactPhone,
-        contactJobTitle: values.contactJobTitle || undefined,
-        address: values.address || undefined,
-        note: values.note || undefined,
+        contactEmail: values.contactEmail,
+        address: values.address,
       })
       router.push(`/organizations/${created.id}`)
     } catch {
@@ -69,7 +71,7 @@ export function OrganizationCreatePage() {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {error && (
             <p role="alert" className="text-sm text-destructive">
-              {error.message || "Không thể tạo đơn vị."}
+              {createOrganizationErrorMessage(error)}
             </p>
           )}
           {/* Card 1: Thông tin cơ bản */}
@@ -110,18 +112,31 @@ export function OrganizationCreatePage() {
                   className="h-9 text-xs"
                 />
               </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="phone">Điện thoại đơn vị *</Label>
+                <Input id="phone" type="tel" {...register("phone")} aria-invalid={!!errors.phone} aria-describedby={errors.phone ? "phone-error" : undefined} />
+                {errors.phone && <p id="phone-error" className="text-xs text-destructive">{errors.phone.message}</p>}
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="email">Email đơn vị *</Label>
+                <Input id="email" type="email" {...register("email")} aria-invalid={!!errors.email} aria-describedby={errors.email ? "email-error" : undefined} />
+                {errors.email && <p id="email-error" className="text-xs text-destructive">{errors.email.message}</p>}
+              </div>
 
               {/* Địa chỉ */}
               <div className="sm:col-span-2 space-y-1.5">
                 <Label htmlFor="address" className="text-xs font-medium text-foreground">
-                  Địa chỉ trụ sở / văn phòng
+                  Địa chỉ trụ sở / văn phòng <span className="text-destructive">*</span>
                 </Label>
                 <Input
                   id="address"
                   placeholder="VD: Tòa nhà FPT, số 10 Phạm Văn Bạch, Cầu Giấy, Hà Nội"
                   {...register("address")}
                   className="h-9 text-xs"
+                  aria-invalid={!!errors.address}
+                  aria-describedby={errors.address ? "address-error" : undefined}
                 />
+                {errors.address && <p id="address-error" className="text-xs text-destructive">{errors.address.message}</p>}
               </div>
             </div>
           </div>
@@ -165,37 +180,11 @@ export function OrganizationCreatePage() {
                 )}
               </div>
 
-              {/* Chức vụ người liên hệ */}
               <div className="sm:col-span-2 space-y-1.5">
-                <Label htmlFor="contactJobTitle" className="text-xs font-medium text-foreground">
-                  Chức vụ người liên hệ
-                </Label>
-                <Input
-                  id="contactJobTitle"
-                  placeholder="VD: Trưởng phòng nhân sự"
-                  {...register("contactJobTitle")}
-                  className="h-9 text-xs"
-                />
+                <Label htmlFor="contactEmail">Email người liên hệ *</Label>
+                <Input id="contactEmail" type="email" {...register("contactEmail")} aria-invalid={!!errors.contactEmail} aria-describedby={errors.contactEmail ? "contact-email-error" : undefined} />
+                {errors.contactEmail && <p id="contact-email-error" className="text-xs text-destructive">{errors.contactEmail.message}</p>}
               </div>
-            </div>
-          </div>
-
-          {/* Card 3: Ghi chú */}
-          <div className="rounded-lg border border-border bg-card p-6 space-y-4">
-            <h3 className="text-sm font-semibold text-foreground pb-2 border-b border-border">
-              Ghi chú bổ sung
-            </h3>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="note" className="text-xs font-medium text-foreground">
-                Ghi chú nội bộ
-              </Label>
-              <Textarea
-                id="note"
-                placeholder="Nhập ghi chú hoặc yêu cầu đặc biệt của đơn vị này..."
-                {...register("note")}
-                className="text-xs min-h-[80px]"
-              />
             </div>
           </div>
 

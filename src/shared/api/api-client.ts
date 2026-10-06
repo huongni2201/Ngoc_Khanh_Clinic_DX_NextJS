@@ -21,13 +21,39 @@ export interface ApiClientRequestOptions
 export class ApiClientError extends Error {
   readonly status: number
   readonly code?: number
+  /** Raw backend text. For debugging only: it is English and must not be rendered. */
+  readonly serverMessage?: string
 
-  constructor(message: string, status: number, code?: number) {
+  constructor(message: string, status: number, code?: number, serverMessage?: string) {
     super(message)
     this.name = "ApiClientError"
     this.status = status
     this.code = code
+    this.serverMessage = serverMessage
   }
+}
+
+/**
+ * Vietnamese text for HTTP failures the backend reports with English messages. The envelope has no
+ * business error code, so a 409 cannot be told apart (stale version, duplicate code, rule violation).
+ * Statuses without a mapped text keep the backend message.
+ */
+function statusMessage(status: number): string | undefined {
+  if (status === 400) return "Thông tin không hợp lệ. Vui lòng kiểm tra lại."
+  if (status === 403) return "Không được phép thực hiện thao tác này."
+  if (status === 404) return "Không tìm thấy hoặc đã bị xóa/ngừng hoạt động."
+  if (status === 409) return "Dữ liệu đã thay đổi hoặc không thỏa quy tắc nghiệp vụ. Vui lòng tải lại."
+  if (status >= 500) return "Máy chủ gặp lỗi. Vui lòng thử lại sau."
+  return undefined
+}
+
+function responseError(response: Response, payload: ApiResponse<unknown> | undefined, fallback: string) {
+  return new ApiClientError(
+    statusMessage(response.status) ?? payload?.message ?? fallback,
+    response.status,
+    payload?.code,
+    payload?.message
+  )
 }
 
 function getApiBaseUrl() {
@@ -100,6 +126,16 @@ async function request<T>(path: string, options: ApiClientRequestOptions = {}) {
   const headers = new Headers(options.headers)
   headers.set("Accept", "application/json")
 
+  if (options.method && !["GET", "HEAD", "OPTIONS"].includes(options.method.toUpperCase())) {
+    const csrf = await request<{ headerName: string; token: string }>(
+      "/api/v1/auth/csrf", { method: "GET" }
+    )
+    if (!csrf.data || typeof csrf.data.headerName !== "string" || typeof csrf.data.token !== "string") {
+      throw new ApiClientError("Phản hồi CSRF từ máy chủ không hợp lệ.", 200)
+    }
+    headers.set(csrf.data.headerName, csrf.data.token)
+  }
+
   const body = serializeBody(options.body)
   if (body !== undefined && !(body instanceof FormData) && !(body instanceof Blob)) {
     headers.set("Content-Type", "application/json")
@@ -112,11 +148,10 @@ async function request<T>(path: string, options: ApiClientRequestOptions = {}) {
 
     const payload = await readJson(response)
     if (!response.ok) {
-      const errorPayload = isApiResponse(payload) ? payload : undefined
-      throw new ApiClientError(
-        errorPayload?.message ?? "Yêu cầu tới máy chủ thất bại.",
-        response.status,
-        errorPayload?.code
+      throw responseError(
+        response,
+        isApiResponse(payload) ? payload : undefined,
+        "Yêu cầu tới máy chủ thất bại."
       )
     }
 
@@ -141,12 +176,20 @@ export const apiClient = {
     return request<T>(path, { ...options, method: "GET" })
   },
 
-  async post<TRequest, TResponse>(path: string, body: TRequest) {
-    return request<TResponse>(path, { method: "POST", body })
+  async post<TRequest, TResponse>(
+    path: string,
+    body: TRequest,
+    options?: Pick<ApiClientRequestOptions, "signal">
+  ) {
+    return request<TResponse>(path, { signal: options?.signal, method: "POST", body })
   },
 
-  async put<TRequest, TResponse>(path: string, body: TRequest) {
-    return request<TResponse>(path, { method: "PUT", body })
+  async put<TRequest, TResponse>(
+    path: string,
+    body: TRequest,
+    options?: Pick<ApiClientRequestOptions, "signal">
+  ) {
+    return request<TResponse>(path, { signal: options?.signal, method: "PUT", body })
   },
 
   async delete<T>(path: string, options?: ApiClientRequestOptions) {
@@ -168,11 +211,10 @@ export const apiClient = {
       async (response) => {
         if (!response.ok) {
           const payload = await readJson(response)
-          const errorPayload = isApiResponse(payload) ? payload : undefined
-          throw new ApiClientError(
-            errorPayload?.message ?? "Không thể tải tệp từ máy chủ.",
-            response.status,
-            errorPayload?.code
+          throw responseError(
+            response,
+            isApiResponse(payload) ? payload : undefined,
+            "Không thể tải tệp từ máy chủ."
           )
         }
 

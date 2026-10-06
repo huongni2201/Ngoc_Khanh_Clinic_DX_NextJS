@@ -4,14 +4,14 @@ import * as React from "react"
 import { UseFormReturn, useFieldArray } from "react-hook-form"
 import { Info } from "@/shared/ui/product-icon"
 import type {
-  CreateHealthExaminationBatchFormValues,
+  HealthExaminationBatchFormValues,
   ValidatedHealthExaminationBatchFormValues,
 } from "../../schemas/health-examination-batch.schema"
 import { ExaminationItemRow } from "./examination-item-row"
 
 interface ExaminationItemPriceTableProps {
   form: UseFormReturn<
-    CreateHealthExaminationBatchFormValues,
+    HealthExaminationBatchFormValues,
     unknown,
     ValidatedHealthExaminationBatchFormValues
   >
@@ -65,10 +65,10 @@ export function ExaminationItemPriceTable({
         </div>
 
         {/* Helper text with info icon */}
-        <div className="flex items-center gap-1.5 text-xs text-primary/85 font-normal">
+        <div className="flex items-center gap-1.5 text-xs text-primary font-normal">
           <Info className="size-3.5 shrink-0" />
           <span className="italic">
-            Chỉ hạng mục được chọn mới được nhập giá.
+            Giá thỏa thuận mặc định bằng giá tham chiếu của danh mục.
           </span>
         </div>
       </div>
@@ -85,8 +85,11 @@ export function ExaminationItemPriceTable({
                 <th className="py-2.5 px-4 text-left font-semibold">
                   Hạng mục
                 </th>
+                <th className="py-2.5 px-4 text-right font-semibold w-36">
+                  Giá tham chiếu
+                </th>
                 <th className="py-2.5 px-4 text-left font-semibold w-48 sm:w-56">
-                  Đơn giá
+                  Giá thỏa thuận
                 </th>
               </tr>
             </thead>
@@ -94,7 +97,7 @@ export function ExaminationItemPriceTable({
               {isLoading ? (
                 <tr>
                   <td
-                    colSpan={3}
+                    colSpan={4}
                     className="py-8 text-center text-xs text-muted-foreground"
                   >
                     Đang tải danh mục hạng mục khám...
@@ -103,7 +106,7 @@ export function ExaminationItemPriceTable({
               ) : fields.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={3}
+                    colSpan={4}
                     className="py-8 text-center text-xs text-muted-foreground"
                   >
                     Không có hạng mục khám nào.
@@ -115,23 +118,32 @@ export function ExaminationItemPriceTable({
 
                   // Check for field-specific error for this row's unitPrice
                   const rowError =
-                    errors.services?.[index]?.unitPrice?.message
+                    errors.services?.[index]?.negotiatedPrice?.message
 
                   return (
                     <ExaminationItemRow
                       key={field.id}
                       index={index}
                       name={currentItem.name}
+                      code={currentItem.code}
+                      referencePrice={currentItem.referencePrice}
                       selected={Boolean(currentItem.selected)}
-                      unitPrice={currentItem.unitPrice || 0}
+                      negotiatedPrice={currentItem.negotiatedPrice || 0}
                       onToggle={(checked) => {
                         setValue(`services.${index}.selected`, checked, {
                           shouldValidate: true,
                           shouldDirty: true,
                         })
+                        if (checked && !currentItem.negotiatedPrice) {
+                          setValue(
+                            `services.${index}.negotiatedPrice`,
+                            currentItem.referencePrice,
+                            { shouldDirty: true }
+                          )
+                        }
                       }}
                       onPriceChange={(price) => {
-                        setValue(`services.${index}.unitPrice`, price, {
+                        setValue(`services.${index}.negotiatedPrice`, price, {
                           shouldValidate: true,
                           shouldDirty: true,
                         })

@@ -91,7 +91,7 @@ export function TodayAppointmentsDialog({
         const matchCode = apt.patientCode.toLowerCase().includes(q)
         const matchPhone = apt.phoneNumber.includes(q)
         const matchAppt = apt.appointmentCode.toLowerCase().includes(q)
-        const matchCompany = apt.organizationName?.toLowerCase().includes(q) || false
+        const matchOrganization = apt.organizationName?.toLowerCase().includes(q) || false
         const matchParticipantCode =
           apt.participantCode?.toLowerCase().includes(q) || false
         if (
@@ -99,7 +99,7 @@ export function TodayAppointmentsDialog({
           !matchCode &&
           !matchPhone &&
           !matchAppt &&
-          !matchCompany &&
+          !matchOrganization &&
           !matchParticipantCode
         ) {
           return false
@@ -153,7 +153,7 @@ export function TodayAppointmentsDialog({
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Tìm theo tên BN, SĐT, mã hẹn, công ty..."
+              placeholder="Tìm theo tên BN, SĐT, mã hẹn, đơn vị..."
               className="h-8.5 pl-8.5 pr-3 text-xs bg-card border-border"
             />
           </div>

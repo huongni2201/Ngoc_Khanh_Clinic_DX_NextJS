@@ -200,7 +200,7 @@ export function ExaminationMatrixTable({
                             {emp.note}
                           </span>
                         ) : (
-                          <span className="text-muted-foreground/30">—</span>
+                          <span className="text-muted-foreground">—</span>
                         )}
                       </td>
                     </tr>

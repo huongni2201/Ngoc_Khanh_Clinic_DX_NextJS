@@ -1,38 +1,32 @@
-import { unavailableDevelopmentApi } from "@/shared/api/development-fixture-error"
+import { unavailableApi } from "@/shared/api/api-unavailable"
+import type {
+  DoctorCounters,
+  DoctorEncounter,
+  DoctorFilterParams,
+  DoctorWorklistResponse,
+  NextDoctorAction,
+} from "../types"
 
-type DoctorApi = typeof import("../__tests__/fixtures/api-fixtures")
-
-export function fetchDoctorWorklist(
-  ...args: Parameters<DoctorApi["fetchDoctorWorklist"]>
-): ReturnType<DoctorApi["fetchDoctorWorklist"]> {
-  void args
-  return unavailableDevelopmentApi("worklist bác sĩ")
+export function fetchDoctorWorklist(params?: DoctorFilterParams): Promise<DoctorWorklistResponse> {
+  void params
+  return unavailableApi("worklist bác sĩ")
 }
 
-export function fetchDoctorCounters(
-  ...args: Parameters<DoctorApi["fetchDoctorCounters"]>
-): ReturnType<DoctorApi["fetchDoctorCounters"]> {
-  void args
-  return unavailableDevelopmentApi("thống kê worklist bác sĩ")
+export function fetchDoctorCounters(): Promise<DoctorCounters> {
+  return unavailableApi("thống kê worklist bác sĩ")
 }
 
-export function fetchDoctorEncounterById(
-  ...args: Parameters<DoctorApi["fetchDoctorEncounterById"]>
-): ReturnType<DoctorApi["fetchDoctorEncounterById"]> {
-  void args
-  return unavailableDevelopmentApi("chi tiết lượt khám của bác sĩ")
+export function fetchDoctorEncounterById(id: string): Promise<DoctorEncounter | null> {
+  void id
+  return unavailableApi("chi tiết lượt khám của bác sĩ")
 }
 
-export function fetchDoctorNextAction(
-  ...args: Parameters<DoctorApi["fetchDoctorNextAction"]>
-): ReturnType<DoctorApi["fetchDoctorNextAction"]> {
-  void args
-  return unavailableDevelopmentApi("hành động tiếp theo của bác sĩ")
+export function fetchDoctorNextAction(doctorParam?: string): Promise<NextDoctorAction> {
+  void doctorParam
+  return unavailableApi("hành động tiếp theo của bác sĩ")
 }
 
-export function startDoctorEncounter(
-  ...args: Parameters<DoctorApi["startDoctorEncounter"]>
-): ReturnType<DoctorApi["startDoctorEncounter"]> {
-  void args
-  return unavailableDevelopmentApi("bắt đầu lượt khám")
+export function startDoctorEncounter(id: string): Promise<DoctorEncounter | null> {
+  void id
+  return unavailableApi("bắt đầu lượt khám")
 }

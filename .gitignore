@@ -44,5 +44,8 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-.supperpower
+.superpowers/
+.superpower/
+.pnpm-store/
+auth-test.log
 .codegraph

@@ -135,7 +135,7 @@ export function EncounterHistoryTable({ patientId }: EncounterHistoryTableProps)
                     <div className="flex items-center justify-end gap-1 text-primary">
                       <Link
                         href={`/patients/${patientId}/encounters/${enc.id}`}
-                        className="p-1 hover:text-primary/80 transition-colors"
+                        className="p-1 hover:text-primary transition-colors"
                         title="Xem chi tiết lượt khám"
                         onClick={(e) => e.stopPropagation()}
                       >

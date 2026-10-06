@@ -3,22 +3,27 @@
 import { Controller, type UseFormReturn } from "react-hook-form"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import type {
-  CreateHealthExaminationBatchFormValues,
-  ValidatedHealthExaminationBatchFormValues,
+import {
+  BATCH_CODE_MAX_LENGTH,
+  BATCH_NAME_MAX_LENGTH,
+  type HealthExaminationBatchFormValues,
+  type ValidatedHealthExaminationBatchFormValues,
 } from "../../schemas/health-examination-batch.schema"
+import { ExaminationDatesField } from "./examination-dates-field"
 
 interface HealthExaminationBatchBasicInfoSectionProps {
   form: UseFormReturn<
-    CreateHealthExaminationBatchFormValues,
+    HealthExaminationBatchFormValues,
     unknown,
     ValidatedHealthExaminationBatchFormValues
   >
+  /** The batch code cannot change after creation: the backend rejects a different code. */
+  codeReadOnly?: boolean
 }
 
 export function HealthExaminationBatchBasicInfoSection({
   form,
+  codeReadOnly = false,
 }: HealthExaminationBatchBasicInfoSectionProps) {
   const {
     register,
@@ -37,10 +42,15 @@ export function HealthExaminationBatchBasicInfoSection({
           </Label>
           <Input
             id="batch-code"
-            maxLength={40}
+            maxLength={BATCH_CODE_MAX_LENGTH}
+            readOnly={codeReadOnly}
+            aria-readonly={codeReadOnly}
             aria-invalid={Boolean(errors.batchCode)}
             {...register("batchCode")}
           />
+          {codeReadOnly && (
+            <p className="text-[11px] text-muted-foreground">Không thể đổi mã sau khi đã tạo.</p>
+          )}
           {errors.batchCode && (
             <p className="text-xs text-destructive" role="alert">
               {errors.batchCode.message}
@@ -54,7 +64,7 @@ export function HealthExaminationBatchBasicInfoSection({
           </Label>
           <Input
             id="batch-name"
-            maxLength={250}
+            maxLength={BATCH_NAME_MAX_LENGTH}
             aria-invalid={Boolean(errors.batchName)}
             {...register("batchName")}
           />
@@ -64,6 +74,18 @@ export function HealthExaminationBatchBasicInfoSection({
             </p>
           )}
         </div>
+
+        <Controller
+          name="examinationDates"
+          control={control}
+          render={({ field }) => (
+            <ExaminationDatesField
+              value={field.value ?? []}
+              onChange={field.onChange}
+              error={errors.examinationDates?.message ?? errors.examinationDates?.root?.message}
+            />
+          )}
+        />
 
         <div className="space-y-1.5">
           <Label htmlFor="examination-site-type">
@@ -84,7 +106,7 @@ export function HealthExaminationBatchBasicInfoSection({
               >
                 <option value="">Chọn loại địa điểm</option>
                 <option value="CLINIC">Tại phòng khám</option>
-                <option value="COMPANY">Tại đơn vị</option>
+                <option value="ORGANIZATION_SITE">Tại đơn vị</option>
               </select>
             )}
           />
@@ -101,7 +123,6 @@ export function HealthExaminationBatchBasicInfoSection({
           </Label>
           <Input
             id="examination-site-name"
-            maxLength={250}
             aria-invalid={Boolean(errors.examinationSiteName)}
             {...register("examinationSiteName")}
           />
@@ -113,62 +134,17 @@ export function HealthExaminationBatchBasicInfoSection({
         </div>
 
         <div className="space-y-1.5 md:col-span-2">
-          <Label htmlFor="examination-site-address">Địa chỉ địa điểm khám</Label>
+          <Label htmlFor="examination-site-address">
+            Địa chỉ địa điểm khám <span className="text-destructive">*</span>
+          </Label>
           <Input
             id="examination-site-address"
-            maxLength={500}
             aria-invalid={Boolean(errors.examinationSiteAddress)}
             {...register("examinationSiteAddress")}
           />
           {errors.examinationSiteAddress && (
             <p className="text-xs text-destructive" role="alert">
               {errors.examinationSiteAddress.message}
-            </p>
-          )}
-        </div>
-
-        <div className="space-y-1.5">
-          <Label htmlFor="batch-start-date">Ngày bắt đầu</Label>
-          <Input
-            id="batch-start-date"
-            type="date"
-            aria-invalid={Boolean(errors.startDate)}
-            {...register("startDate")}
-          />
-          {errors.startDate && (
-            <p className="text-xs text-destructive" role="alert">
-              {errors.startDate.message}
-            </p>
-          )}
-        </div>
-
-        <div className="space-y-1.5">
-          <Label htmlFor="batch-end-date">Ngày kết thúc</Label>
-          <Input
-            id="batch-end-date"
-            type="date"
-            aria-invalid={Boolean(errors.endDate)}
-            {...register("endDate")}
-          />
-          {errors.endDate && (
-            <p className="text-xs text-destructive" role="alert">
-              {errors.endDate.message}
-            </p>
-          )}
-        </div>
-
-        <div className="space-y-1.5 md:col-span-2">
-          <Label htmlFor="batch-reason">Lý do khám</Label>
-          <Textarea
-            id="batch-reason"
-            maxLength={300}
-            rows={3}
-            aria-invalid={Boolean(errors.reason)}
-            {...register("reason")}
-          />
-          {errors.reason && (
-            <p className="text-xs text-destructive" role="alert">
-              {errors.reason.message}
             </p>
           )}
         </div>

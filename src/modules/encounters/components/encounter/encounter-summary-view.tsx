@@ -216,7 +216,7 @@ export function EncounterSummaryView({ data, onNavigateTab }: EncounterSummaryVi
               variant="ghost"
               size="sm"
               onClick={() => onNavigateTab("diagnosis")}
-              className="h-7 text-xs text-primary hover:text-primary/80"
+              className="h-7 text-xs text-primary hover:text-primary"
             >
               Chi tiết <ChevronRight className="ml-1 size-3.5" />
             </Button>
@@ -265,7 +265,7 @@ export function EncounterSummaryView({ data, onNavigateTab }: EncounterSummaryVi
               variant="ghost"
               size="sm"
               onClick={() => onNavigateTab("lab")}
-              className="h-7 text-xs text-primary hover:text-primary/80"
+              className="h-7 text-xs text-primary hover:text-primary"
             >
               Tất cả (7) <ChevronRight className="ml-1 size-3.5" />
             </Button>

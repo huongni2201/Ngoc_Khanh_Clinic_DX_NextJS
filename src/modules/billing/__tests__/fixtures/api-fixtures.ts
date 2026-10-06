@@ -4,7 +4,7 @@ import {
   fetchReceptionInvoices,
   processPayment as processReceptionPayment,
 } from "@/modules/reception/__tests__/fixtures/api-fixtures"
-import type { LegacyReceptionInvoice as ReceptionInvoice } from "@/modules/reception"
+import type { FixtureReceptionInvoice as ReceptionInvoice } from "@/modules/reception/__tests__/fixtures/api-fixtures"
 import type {
   BillableEncounter,
   ConfirmTransferPaymentDto,
@@ -24,7 +24,7 @@ const finalizationLocks = new Map<string, Promise<Invoice>>()
 
 const now = () => new Date().toISOString()
 
-function mapLegacyPaymentMethod(method?: ReceptionInvoice["paymentMethod"]): PaymentMethod | undefined {
+function mapReceptionPaymentMethod(method?: ReceptionInvoice["paymentMethod"]): PaymentMethod | undefined {
   if (method === "TRANSFER") return "BANK_TRANSFER"
   return method
 }
@@ -64,7 +64,7 @@ function mapReceptionInvoice(
     discount: invoice.discount,
     total: invoice.total,
     paymentStatus: invoice.isPaid ? "PAID" : "PENDING",
-    paymentMethod: mapLegacyPaymentMethod(invoice.paymentMethod),
+    paymentMethod: mapReceptionPaymentMethod(invoice.paymentMethod),
     createdAt: encounter?.createdAt ?? timestamp,
     updatedAt: timestamp,
     paidAt: invoice.paidAt,

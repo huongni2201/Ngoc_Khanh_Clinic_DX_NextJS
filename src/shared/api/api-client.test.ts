@@ -8,6 +8,30 @@ afterEach(() => {
 })
 
 describe("apiClient", () => {
+  it("fetches a fresh masked CSRF token for every unsafe request", async () => {
+    const requests: Array<{ path: string; options: RequestInit }> = []
+    vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL, options: RequestInit) => {
+      requests.push({ path: new URL(String(input)).pathname, options })
+      if (String(input).endsWith("/auth/csrf")) {
+        return Response.json({ result: "OK", code: 200, data: { headerName: "X-XSRF-TOKEN", token: "masked-token" } })
+      }
+      return Response.json({ result: "OK", code: 200 })
+    }))
+
+    await apiClient.post("/api/v1/organizations", {})
+    await apiClient.put("/api/v1/organizations/one", {})
+    await apiClient.delete("/api/v1/organizations/one")
+
+    expect(requests.map(({ path }) => path)).toEqual([
+      "/api/v1/auth/csrf", "/api/v1/organizations",
+      "/api/v1/auth/csrf", "/api/v1/organizations/one",
+      "/api/v1/auth/csrf", "/api/v1/organizations/one",
+    ])
+    for (const { options } of requests.filter(({ path }) => path !== "/api/v1/auth/csrf")) {
+      expect(new Headers(options.headers).get("X-XSRF-TOKEN")).toBe("masked-token")
+      expect(options.credentials).toBe("include")
+    }
+  })
   it("sends the session cookie for protected JSON and file requests", async () => {
     const request = vi.fn()
       .mockResolvedValueOnce(new Response(JSON.stringify({ result: "OK", code: 200, data: [] })))
@@ -52,19 +76,23 @@ describe("apiClient", () => {
   })
 
   it("does not force a JSON content type onto a multipart upload", async () => {
-    const request = vi.fn().mockResolvedValue(new Response(JSON.stringify({ result: "OK", code: 200 })))
+    const request = vi.fn()
+      .mockResolvedValueOnce(Response.json({ result: "OK", code: 200, data: { headerName: "X-XSRF-TOKEN", token: "masked" } }))
+      .mockResolvedValueOnce(Response.json({ result: "OK", code: 200 }))
     vi.stubGlobal("fetch", request)
     const upload = new FormData()
     upload.append("file", new File(["roster"], "roster.xlsx"))
 
     await apiClient.post("/imports", upload)
 
-    expect(request.mock.calls[0][1].body).toBe(upload)
-    expect(new Headers(request.mock.calls[0][1].headers).has("Content-Type")).toBe(false)
+    expect(request.mock.calls[1][1].body).toBe(upload)
+    expect(new Headers(request.mock.calls[1][1].headers).has("Content-Type")).toBe(false)
   })
 
   it("accepts a 204 response without an API envelope", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 204 })))
+    vi.stubGlobal("fetch", vi.fn()
+      .mockResolvedValueOnce(Response.json({ result: "OK", code: 200, data: { headerName: "X-XSRF-TOKEN", token: "masked" } }))
+      .mockResolvedValueOnce(new Response(null, { status: 204 })))
 
     await expect(apiClient.delete<void>("/resource")).resolves.toEqual({
       result: "OK",
@@ -81,7 +109,7 @@ describe("apiClient", () => {
     } satisfies Partial<ApiClientError>)
   })
 
-  it("preserves the common API code for server errors", async () => {
+  it("preserves the common API code and keeps the raw server message out of the display message", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue(
@@ -95,8 +123,78 @@ describe("apiClient", () => {
     await expect(apiClient.get("/resource")).rejects.toMatchObject({
       status: 409,
       code: 409,
-      message: "Preview is stale",
+      message: "Dữ liệu đã thay đổi hoặc không thỏa quy tắc nghiệp vụ. Vui lòng tải lại.",
+      serverMessage: "Preview is stale",
     } satisfies Partial<ApiClientError>)
+  })
+
+  it.each([
+    [400, "Invalid request", "Thông tin không hợp lệ. Vui lòng kiểm tra lại."],
+    [403, "You are not authorized to perform this action", "Không được phép thực hiện thao tác này."],
+    [404, "Organization not found", "Không tìm thấy hoặc đã bị xóa/ngừng hoạt động."],
+    [409, "Business rule could not be completed", "Dữ liệu đã thay đổi hoặc không thỏa quy tắc nghiệp vụ. Vui lòng tải lại."],
+    [500, "An unexpected error occurred", "Máy chủ gặp lỗi. Vui lòng thử lại sau."],
+    [503, "Service unavailable", "Máy chủ gặp lỗi. Vui lòng thử lại sau."],
+  ])("shows a Vietnamese message for HTTP %i instead of the English server text", async (status, serverMessage, expected) => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(
+      Response.json({ result: "NG", code: status, message: serverMessage }, { status })
+    ))
+
+    const error = await apiClient.get("/resource").catch((reason: unknown) => reason)
+
+    expect(error).toBeInstanceOf(ApiClientError)
+    expect(error).toMatchObject({ status, code: status, message: expected, serverMessage })
+    expect((error as ApiClientError).message).not.toContain(serverMessage)
+  })
+
+  it("shows the Vietnamese status message when the error body is not an API envelope", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("<html>Bad gateway</html>", { status: 502 })))
+
+    await expect(apiClient.get("/resource")).rejects.toMatchObject({
+      status: 502,
+      message: "Máy chủ gặp lỗi. Vui lòng thử lại sau.",
+    })
+  })
+
+  it("keeps the server message for statuses without a mapped Vietnamese text", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(
+      Response.json({ result: "NG", code: 429, message: "Too many attempts" }, { status: 429 })
+    ))
+
+    await expect(apiClient.get("/resource")).rejects.toMatchObject({
+      status: 429,
+      message: "Too many attempts",
+    })
+  })
+
+  it("maps blob download failures to the same Vietnamese messages", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(
+      Response.json({ result: "NG", code: 404, message: "Not found" }, { status: 404 })
+    ))
+
+    await expect(apiClient.getBlob("/report")).rejects.toMatchObject({
+      status: 404,
+      message: "Không tìm thấy hoặc đã bị xóa/ngừng hoạt động.",
+      serverMessage: "Not found",
+    })
+  })
+
+  it.each([
+    ["post", (signal: AbortSignal) => apiClient.post("/api/v1/resource", {}, { signal })],
+    ["put", (signal: AbortSignal) => apiClient.put("/api/v1/resource", {}, { signal })],
+    ["delete", (signal: AbortSignal) => apiClient.delete("/api/v1/resource", { signal })],
+  ])("cancels an unsafe %s request through the given signal", async (_name, send) => {
+    const controller = new AbortController()
+    controller.abort()
+    const paths: string[] = []
+    vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL) => {
+      paths.push(new URL(String(input)).pathname)
+      return Response.json({ result: "OK", code: 200, data: { headerName: "X-XSRF-TOKEN", token: "masked" } })
+    }))
+
+    await expect(send(controller.signal)).rejects.toMatchObject({ name: "AbortError" })
+
+    expect(paths).not.toContain("/api/v1/resource")
   })
 
   it("requires an API base URL in production", async () => {

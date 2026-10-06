@@ -1,45 +1,40 @@
-import { unavailableDevelopmentApi } from "@/shared/api/development-fixture-error"
+import { unavailableApi } from "@/shared/api/api-unavailable"
+import type {
+  BillableEncounter,
+  ConfirmTransferPaymentDto,
+  Invoice,
+  PaymentCounters,
+  PaymentListParams,
+  PaymentListResult,
+  ProcessCashPaymentDto,
+  StartTransferPaymentDto,
+} from "../types"
 
-type BillingApi = typeof import("../__tests__/fixtures/api-fixtures")
-
-export function fetchInvoiceByEncounter(
-  ...args: Parameters<BillingApi["fetchInvoiceByEncounter"]>
-): ReturnType<BillingApi["fetchInvoiceByEncounter"]> {
-  void args
-  return unavailableDevelopmentApi("hóa đơn lượt khám")
+export function fetchInvoiceByEncounter(encounter: BillableEncounter): Promise<Invoice> {
+  void encounter
+  return unavailableApi("hóa đơn lượt khám")
 }
 
-export function fetchPayments(
-  ...args: Parameters<BillingApi["fetchPayments"]>
-): ReturnType<BillingApi["fetchPayments"]> {
-  void args
-  return unavailableDevelopmentApi("danh sách thanh toán")
+export function fetchPayments(params?: PaymentListParams): Promise<PaymentListResult> {
+  void params
+  return unavailableApi("danh sách thanh toán")
 }
 
-export function fetchPaymentCounters(
-  ...args: Parameters<BillingApi["fetchPaymentCounters"]>
-): ReturnType<BillingApi["fetchPaymentCounters"]> {
-  void args
-  return unavailableDevelopmentApi("thống kê thanh toán")
+export function fetchPaymentCounters(): Promise<PaymentCounters> {
+  return unavailableApi("thống kê thanh toán")
 }
 
-export function startTransferPayment(
-  ...args: Parameters<BillingApi["startTransferPayment"]>
-): ReturnType<BillingApi["startTransferPayment"]> {
-  void args
-  return unavailableDevelopmentApi("khởi tạo thanh toán chuyển khoản")
+export function startTransferPayment(dto: StartTransferPaymentDto): Promise<Invoice> {
+  void dto
+  return unavailableApi("khởi tạo thanh toán chuyển khoản")
 }
 
-export function processCashPayment(
-  ...args: Parameters<BillingApi["processCashPayment"]>
-): ReturnType<BillingApi["processCashPayment"]> {
-  void args
-  return unavailableDevelopmentApi("thu tiền mặt")
+export function processCashPayment(dto: ProcessCashPaymentDto): Promise<Invoice> {
+  void dto
+  return unavailableApi("thu tiền mặt")
 }
 
-export function recordTransferConfirmation(
-  ...args: Parameters<BillingApi["recordTransferConfirmation"]>
-): ReturnType<BillingApi["recordTransferConfirmation"]> {
-  void args
-  return unavailableDevelopmentApi("xác nhận thanh toán chuyển khoản")
+export function recordTransferConfirmation(dto: ConfirmTransferPaymentDto): Promise<Invoice> {
+  void dto
+  return unavailableApi("xác nhận thanh toán chuyển khoản")
 }

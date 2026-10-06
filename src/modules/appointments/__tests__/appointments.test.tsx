@@ -62,7 +62,7 @@ describe("Appointments Module (Lịch hẹn)", () => {
     })
   })
 
-  it("creates an appointment with booking channel automatically recorded as front desk", async () => {
+  it("creates an appointment with booking channel automatically recorded as reception", async () => {
     const created = await createAppointment({
       patientId: "pat-001",
       examinationType: "Khám tổng quát",
@@ -71,10 +71,10 @@ describe("Appointments Module (Lịch hẹn)", () => {
       date: "2026-09-25",
       time: "08:30",
       notes: "Hẹn khám sức khỏe",
-      bookingChannel: "FRONT_DESK",
+      bookingChannel: "RECEPTION",
     })
 
-    expect(created.bookingChannel).toBe("FRONT_DESK")
+    expect(created.bookingChannel).toBe("RECEPTION")
     expect(created.appointmentCode).toMatch(/^LH-/)
     expect(created.patientName).toBe("Nguyễn Văn Minh")
   })
@@ -142,13 +142,13 @@ describe("Appointments Module (Lịch hẹn)", () => {
     )
 
     expect(screen.getByText("Khám đơn vị")).toBeInTheDocument()
-    expect(screen.getByText("1. Chọn đoàn & Nhân viên")).toBeInTheDocument()
+    expect(screen.getByText("1. Chọn đơn vị, đợt khám & người khám")).toBeInTheDocument()
     expect(screen.getByText("Đơn vị")).toBeInTheDocument()
     expect(screen.getByText("Đợt khám sức khỏe")).toBeInTheDocument()
-    expect(screen.getByText("Nhân viên trong đợt khám")).toBeInTheDocument()
+    expect(screen.getByText("Người khám trong đợt khám")).toBeInTheDocument()
   })
 
-  it("supports creating organization appointment with organization and employee metadata", async () => {
+  it("supports creating organization appointment with organization and participant metadata", async () => {
     const created = await createAppointment({
       patientId: "pat-103",
       examinationType: "Khám sức khỏe đơn vị",

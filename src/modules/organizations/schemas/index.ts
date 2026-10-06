@@ -7,38 +7,36 @@ const contactPhoneSchema = z
   .max(30, { message: "Số điện thoại không được vượt quá 30 ký tự" })
   .regex(/^(?=.*\d)[0-9+() -]+$/, { message: "Số điện thoại không hợp lệ" })
 
+const requiredEmailSchema = z.email({ message: "Email không hợp lệ" })
+
+const organizationFields = {
+  name: z.string().trim().min(2, { message: "Tên đơn vị phải có ít nhất 2 ký tự" }).max(300, { message: "Tên đơn vị không được vượt quá 300 ký tự" }),
+  taxCode: z.string().trim().max(50, { message: "Mã số thuế không được vượt quá 50 ký tự" }).optional(),
+  phone: contactPhoneSchema,
+  email: requiredEmailSchema,
+  address: z.string().trim().min(1, { message: "Địa chỉ là bắt buộc" }),
+  contactPhone: contactPhoneSchema,
+  contactEmail: requiredEmailSchema,
+}
+
 export const createOrganizationSchema = z.object({
-  name: z
-    .string()
-    .trim()
-    .min(2, { message: "Tên đơn vị phải có ít nhất 2 ký tự" }),
-  taxCode: z.string().trim().optional(),
+  ...organizationFields,
   contactPerson: z
     .string()
     .trim()
-    .min(2, { message: "Người liên hệ là bắt buộc" }),
-  contactPhone: contactPhoneSchema,
-  contactJobTitle: z.string().trim().optional(),
-  note: z.string().trim().optional(),
-  address: z.string().trim().optional(),
+    .min(2, { message: "Người liên hệ là bắt buộc" })
+    .max(200, { message: "Tên người liên hệ không được vượt quá 200 ký tự" }),
 })
 
 export type CreateOrganizationFormValues = z.infer<typeof createOrganizationSchema>
 
 export const updateOrganizationSchema = z.object({
-  name: z
-    .string()
-    .trim()
-    .min(2, { message: "Tên đơn vị phải có ít nhất 2 ký tự" }),
-  taxCode: z.string().trim().optional(),
+  ...organizationFields,
   contactName: z
     .string()
     .trim()
-    .min(2, { message: "Người liên hệ là bắt buộc" }),
-  contactPhone: contactPhoneSchema,
-  contactJobTitle: z.string().trim().optional(),
-  address: z.string().trim().optional(),
-  note: z.string().trim().optional(),
+    .min(2, { message: "Người liên hệ là bắt buộc" })
+    .max(200, { message: "Tên người liên hệ không được vượt quá 200 ký tự" }),
 })
 
 export type UpdateOrganizationFormValues = z.infer<typeof updateOrganizationSchema>

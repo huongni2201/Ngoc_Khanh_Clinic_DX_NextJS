@@ -25,14 +25,12 @@ export function OrganizationInfoCard({ organization }: OrganizationInfoCardProps
       label: "Số điện thoại",
       value: organization.contactPhone || "—",
     },
-    { label: "Chức vụ liên hệ", value: organization.contactJobTitle || "—" },
+    { label: "Điện thoại đơn vị", value: organization.phone },
+    { label: "Email đơn vị", value: organization.email },
+    { label: "Email người liên hệ", value: organization.contactEmail },
     {
       label: "Địa chỉ",
       value: organization.address || "—",
-    },
-    {
-      label: "Ghi chú",
-      value: organization.note || "—",
     },
   ]
 

@@ -5,17 +5,6 @@ import type { ReceptionWorklistStage } from "../lib/reception-worklist-stage"
 
 export type CheckInStatus = "NOT_CHECKED_IN" | "CHECKED_IN"
 
-/** Transport-only status used while the reception mock/API is migrated. */
-export type LegacyReceptionStatus =
-  | "WAITING_RECEPTION"
-  | "RECEIVED"
-  | "WAITING_EXAM"
-  | "EXAMINING"
-  | "WAITING_PAYMENT"
-  | "WAITING_RESULT"
-  | "COMPLETED"
-  | "CANCELLED"
-
 export type ReceptionTab =
   | "ALL"
   | "WAITING_CHECK_IN"
@@ -54,13 +43,6 @@ export interface Encounter {
   createdAt: string
 }
 
-export type LegacyReceptionEncounter = Omit<
-  Encounter,
-  "checkInStatus" | "encounterStatus" | "paymentStatus" | "diagnosticWorkflowStatus" | "worklistStage"
-> & {
-  status: LegacyReceptionStatus
-}
-
 export interface ClinicRoom {
   id: string
   name: string
@@ -70,33 +52,6 @@ export interface ClinicRoom {
   status: "ACTIVE" | "BUSY" | "OFF"
   waitingCount: number
   estimatedWaitTime: string
-}
-
-/** Legacy billing payload owned by the reception transport adapter. */
-export interface LegacyBillableItem {
-  id: string
-  name: string
-  unitPrice: number
-  quantity: number
-  amount: number
-  category?: string
-}
-
-export interface LegacyReceptionInvoice {
-  id: string
-  encounterId: string
-  encounterCode: string
-  patientId: string
-  patientName: string
-  patientCode: string
-  items: LegacyBillableItem[]
-  subtotal: number
-  discount: number
-  total: number
-  paymentMethod: "CASH" | "TRANSFER"
-  isPaid: boolean
-  paidAt?: string
-  cashierName?: string
 }
 
 export interface ReceptionCounters {
@@ -128,11 +83,4 @@ export interface AssignRoomDto {
   encounterId: string
   roomId: string
   physicianId: string
-}
-
-export interface ProcessPaymentDto {
-  encounterId: string
-  paymentMethod: "CASH" | "TRANSFER"
-  discount?: number
-  printReceipt?: boolean
 }

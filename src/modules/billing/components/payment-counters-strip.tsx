@@ -1,6 +1,6 @@
 "use client"
 
-import { AlertCircle, CheckCircle2, Hourglass, Loader2 } from "lucide-react"
+import { AlertCircle, CheckCircle2, Hourglass, Loader2 } from "@/shared/ui/product-icon"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import type { PaymentCounters, PaymentStatusFilter } from "../types"

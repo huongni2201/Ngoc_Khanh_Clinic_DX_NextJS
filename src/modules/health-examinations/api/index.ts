@@ -1,7 +1,8 @@
-import { unavailableDevelopmentApi } from "@/shared/api/development-fixture-error"
+import { unavailableApi } from "@/shared/api/api-unavailable"
 import { apiClient } from "@/shared/api/api-client"
 import type {
   CreateHealthExaminationBatchRequest,
+  DeleteHealthExaminationBatchRequest,
   ExaminationProgressFilterParams,
   ExaminationProgressResponse,
   HealthExaminationBatch,
@@ -10,6 +11,7 @@ import type {
   HealthExaminationBatchSummary,
   HealthExaminationBatchReportSummary,
   ClinicalService,
+  UpdateHealthExaminationBatchRequest,
 } from "../types"
 import type {
   ExportDetailMatrixData,
@@ -18,16 +20,24 @@ import type {
 import {
   healthExaminationBatchDetailResponseSchema,
   healthExaminationBatchPageResponseSchema,
-  type HealthExaminationBatchConfigurationRequestDto,
+  serviceCatalogPageResponseSchema,
+  type HealthExaminationBatchCreateRequestDto,
   type HealthExaminationBatchDetailResponseDto,
   type HealthExaminationBatchSummaryResponseDto,
-  type PageResponse,
+  type HealthExaminationBatchUpdateRequestDto,
 } from "../types/transport"
+import { normalizeBatchFilterParams } from "../utils/batch-list-params"
 
 const ORGANIZATIONS_ENDPOINT = "/api/v1/organizations"
+const SERVICE_CATALOG_ENDPOINT = "/api/v1/catalog/services"
+const SERVICE_CATALOG_PAGE_SIZE = 100
 
 function batchEndpoint(organizationId: string) {
   return `${ORGANIZATIONS_ENDPOINT}/${encodeURIComponent(organizationId)}/health-examination-batches`
+}
+
+function batchItemEndpoint(organizationId: string, batchId: string) {
+  return `${batchEndpoint(organizationId)}/${encodeURIComponent(batchId)}`
 }
 
 function mapBatchSummary(
@@ -44,6 +54,7 @@ function mapBatchSummary(
     status: batch.status,
     createdAt: batch.createdAt,
     updatedAt: batch.updatedAt,
+    rowVersion: batch.rowVersion,
   }
 }
 
@@ -52,36 +63,58 @@ function mapBatch(
 ): HealthExaminationBatch {
   return {
     ...mapBatchSummary(batch, batch.organizationId),
-    reason: batch.reason,
-    payerType: batch.payerType,
+    examinationDates: batch.days.map((day) => day.examinationDate).sort(),
     examinationSiteType: batch.examinationSiteType,
     examinationSiteName: batch.examinationSiteName,
     examinationSiteAddress: batch.examinationSiteAddress,
-    masterTemplateVersionId: batch.masterTemplateVersionId,
-    finalizedAt: batch.finalizedAt,
-    closedAt: batch.closedAt,
     createdBy: batch.createdBy,
-    services: batch.services.map((service) => ({
+    services: [...batch.services]
+      .sort((left, right) => left.displayOrder - right.displayOrder)
+      .map((service) => ({
+        id: service.id,
+        serviceId: service.serviceId,
+        code: service.serviceCode ?? null,
+        name: service.serviceName ?? null,
+        referencePrice: service.referencePriceSnapshot,
+        negotiatedPrice: service.negotiatedPrice,
+        displayOrder: service.displayOrder,
+      })),
+  }
+}
+
+function toConfigurationBody(
+  request: CreateHealthExaminationBatchRequest
+): HealthExaminationBatchCreateRequestDto {
+  return {
+    batchCode: request.batchCode,
+    batchName: request.batchName,
+    examinationDates: [...request.examinationDates].sort(),
+    examinationSiteType: request.examinationSiteType,
+    examinationSiteName: request.examinationSiteName,
+    examinationSiteAddress: request.examinationSiteAddress,
+    services: request.services.map((service) => ({
       serviceId: service.serviceId,
-      name: service.serviceName,
-      unitPrice: service.negotiatedUnitPrice,
+      negotiatedPrice: service.negotiatedPrice,
     })),
   }
 }
 
 export async function fetchHealthExaminationBatchesByOrganization(
   organizationId: string,
-  params?: HealthExaminationBatchFilterParams
+  params?: HealthExaminationBatchFilterParams,
+  signal?: AbortSignal
 ): Promise<HealthExaminationBatchListResponse> {
+  const normalized = normalizeBatchFilterParams(params)
   const query = new URLSearchParams({
-    page: String(params?.page ?? 1),
-    size: String(params?.pageSize ?? 10),
-    sortKey: params?.sortKey ?? "id",
-    sortBy: params?.sortBy ?? "ASC",
-    ...(params?.search?.trim() ? { searchKey: params.search.trim() } : {}),
+    page: String(normalized.page),
+    size: String(normalized.pageSize),
+    sortKey: normalized.sortKey,
+    sortBy: normalized.sortBy,
+    ...(normalized.search ? { searchKey: normalized.search } : {}),
   })
-  const response = await apiClient.get<PageResponse<HealthExaminationBatchSummaryResponseDto>>(
-    `${batchEndpoint(organizationId)}?${query}`
+  const response = await apiClient.get<unknown>(
+    `${batchEndpoint(organizationId)}?${query}`,
+    { signal }
   )
   if (!response.data) {
     throw new Error(response.message || "Phản hồi danh sách đợt khám không có dữ liệu.")
@@ -99,10 +132,12 @@ export async function fetchHealthExaminationBatchesByOrganization(
 
 export async function fetchHealthExaminationBatchById(
   organizationId: string,
-  batchId: string
+  batchId: string,
+  signal?: AbortSignal
 ): Promise<HealthExaminationBatch> {
-  const response = await apiClient.get<HealthExaminationBatchDetailResponseDto>(
-    `${batchEndpoint(organizationId)}/${encodeURIComponent(batchId)}`
+  const response = await apiClient.get<unknown>(
+    batchItemEndpoint(organizationId, batchId),
+    { signal }
   )
   if (!response.data) {
     throw new Error(response.message || "Phản hồi chi tiết đợt khám không có dữ liệu.")
@@ -114,23 +149,10 @@ export async function fetchHealthExaminationBatchById(
 export async function createHealthExaminationBatch(
   request: CreateHealthExaminationBatchRequest
 ): Promise<HealthExaminationBatch> {
-  const { organizationId, services, ...values } = request
-  const body: HealthExaminationBatchConfigurationRequestDto = {
-    batchCode: values.batchCode,
-    batchName: values.batchName,
-    startDate: values.startDate || null,
-    endDate: values.endDate || null,
-    reason: values.reason?.trim() || null,
-    payerType: values.payerType?.trim() || null,
-    examinationSiteType: values.examinationSiteType,
-    examinationSiteName: values.examinationSiteName,
-    examinationSiteAddress: values.examinationSiteAddress?.trim() || null,
-    services,
-  }
-  const response = await apiClient.post<
-    HealthExaminationBatchConfigurationRequestDto,
-    HealthExaminationBatchDetailResponseDto
-  >(`${batchEndpoint(organizationId)}`, body)
+  const response = await apiClient.post<HealthExaminationBatchCreateRequestDto, unknown>(
+    batchEndpoint(request.organizationId),
+    toConfigurationBody(request)
+  )
   if (!response.data) {
     throw new Error(response.message || "Phản hồi tạo đợt khám không có dữ liệu.")
   }
@@ -138,8 +160,56 @@ export async function createHealthExaminationBatch(
   return mapBatch(healthExaminationBatchDetailResponseSchema.parse(response.data))
 }
 
-export function fetchClinicalServiceCatalog(): Promise<ClinicalService[]> {
-  return unavailableDevelopmentApi("danh mục dịch vụ khám")
+export async function updateHealthExaminationBatch(
+  request: UpdateHealthExaminationBatchRequest
+): Promise<HealthExaminationBatch> {
+  const body: HealthExaminationBatchUpdateRequestDto = {
+    ...toConfigurationBody(request),
+    rowVersion: request.rowVersion,
+  }
+  const response = await apiClient.put<HealthExaminationBatchUpdateRequestDto, unknown>(
+    batchItemEndpoint(request.organizationId, request.batchId),
+    body
+  )
+  if (!response.data) {
+    throw new Error(response.message || "Phản hồi cập nhật đợt khám không có dữ liệu.")
+  }
+
+  return mapBatch(healthExaminationBatchDetailResponseSchema.parse(response.data))
+}
+
+export async function deleteHealthExaminationBatch(
+  request: DeleteHealthExaminationBatchRequest
+): Promise<void> {
+  await apiClient.delete<void>(
+    `${batchItemEndpoint(request.organizationId, request.batchId)}?rowVersion=${encodeURIComponent(
+      String(request.rowVersion)
+    )}`
+  )
+}
+
+/** Active catalog services, first page only (the catalog is small and the picker has no paging). */
+export async function fetchClinicalServiceCatalog(
+  signal?: AbortSignal
+): Promise<ClinicalService[]> {
+  const query = new URLSearchParams({
+    page: "1",
+    size: String(SERVICE_CATALOG_PAGE_SIZE),
+    sortKey: "code",
+    sortBy: "ASC",
+  })
+  const response = await apiClient.get<unknown>(`${SERVICE_CATALOG_ENDPOINT}?${query}`, { signal })
+  if (!response.data) {
+    throw new Error(response.message || "Phản hồi danh mục dịch vụ khám không có dữ liệu.")
+  }
+
+  return serviceCatalogPageResponseSchema.parse(response.data).items.map((item) => ({
+    id: item.id,
+    code: item.code,
+    name: item.name,
+    serviceType: item.serviceType,
+    unitPrice: item.unitPrice,
+  }))
 }
 
 export function fetchHealthExaminationBatchMatrix(
@@ -148,28 +218,28 @@ export function fetchHealthExaminationBatchMatrix(
 ): Promise<ExaminationProgressResponse> {
   void batchId
   void params
-  return unavailableDevelopmentApi("tiến độ khám")
+  return unavailableApi("tiến độ khám")
 }
 
 export function fetchHealthExaminationBatchReport(
   batchId: string
 ): Promise<HealthExaminationBatchReportSummary> {
   void batchId
-  return unavailableDevelopmentApi("báo cáo đợt khám")
+  return unavailableApi("báo cáo đợt khám")
 }
 
 export function fetchExaminationDetailExportData(
   batchId: string
 ): Promise<ExportDetailMatrixData> {
   void batchId
-  return unavailableDevelopmentApi("xuất tiến độ khám")
+  return unavailableApi("xuất tiến độ khám")
 }
 
 export function fetchExaminationSummaryExportData(
   batchId: string
 ): Promise<ExportSummaryData> {
   void batchId
-  return unavailableDevelopmentApi("xuất báo cáo đợt khám")
+  return unavailableApi("xuất báo cáo đợt khám")
 }
 
 export * from "./participants"

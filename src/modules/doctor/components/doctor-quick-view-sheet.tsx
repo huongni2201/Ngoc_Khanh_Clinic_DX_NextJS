@@ -114,7 +114,7 @@ export function DoctorQuickViewSheet({
           <div className="rounded-lg border border-border p-3 space-y-2 bg-card">
             <h4 className="font-semibold text-foreground flex items-center gap-1.5 text-xs">
               <ClipboardList className="size-3.5 text-primary" />
-              Chỉ định CLS ({encounter.prescribedItemsCount} hạng mục)
+              Chỉ định cận lâm sàng ({encounter.prescribedItemsCount} hạng mục)
             </h4>
             <div className="space-y-1.5">
               {encounter.prescribedItems?.map((item) => (

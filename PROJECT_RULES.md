@@ -6,23 +6,16 @@
 
 This is a **real production clinic application**.
 
-Current MVP priority:
+Corporate health examinations are the primary vertical slice. Supported backend
+HTTP scope is organization list/create/get/update/deactivate, batch list/create/get/update/delete, the active service catalog list (`GET /api/v1/catalog/services`) and authentication.
+See [the backend inventory](../Ngoc_Khanh_Clinic_DX_Springboot/docs/api/clean-slate-migration.md)
+for current routes. Handler existence does not imply production authorization.
 
-```text
-Organization
-→ Health Examination Batch
-→ Participant Roster
-→ Excel Import
-→ Validation
-→ Bulk Selection
-→ Mẫu số 03 Preview
-→ Bulk Print
-→ Participant Check-in
-→ Patient Link/Create
-→ Encounter
-```
-
-Organization/corporate health checks are the current primary vertical slice.
+Roster, visit preparation and issued-record history follow
+[accepted backend workflows](../Ngoc_Khanh_Clinic_DX_Springboot/docs/architecture/03-domain-and-workflows.md);
+domain/storage contracts do not imply public endpoints. Excel import was removed
+on 2026-10-05; there is no under-18 eligibility rejection. Legacy frontend
+integrations are tracked in [code follow-ups](docs/maintenance/code-follow-ups.md).
 
 ---
 
@@ -88,25 +81,18 @@ Contains shadcn/ui primitives and intentionally maintained primitive variants.
 
 Contains domain/business feature code.
 
-Initial modules may include:
+Current module directories:
 
 ```text
 auth/
 organizations/
 health-examinations/
-participants/ (owned by health-examinations)
-health-check-print/
-```
-
-Later:
-
-```text
+appointments/
+billing/
+doctor/
 patients/
 encounters/
 reception/
-clinical/
-diagnostics/
-billing/
 ```
 
 A module may contain only what it needs:
@@ -277,7 +263,8 @@ Do not duplicate validation rules in multiple components.
 Frontend validation improves user experience but is not authoritative. Backend
 validation remains authoritative for required business data, duplicate identity,
 organization scope, batch membership, participant uniqueness, service
-eligibility, age eligibility, import confirmation and persistence constraints.
+eligibility and persistence constraints. Do not introduce age rejection or
+removed import behavior through frontend validation.
 
 Frontend may validate early for immediate feedback, but it must still handle and
 display backend validation results.
@@ -357,15 +344,16 @@ derived from an authoritative source.
 When a backend endpoint exists, frontend API code must call that endpoint as
 implemented. Do not rename backend path segments locally for readability.
 
-For example, the participant endpoint remains:
+For example, the organization detail endpoint exists:
 
 ```http
-GET /api/v1/organizations/{organizationId}/health-examination-batches/{batchId}/participant
+GET /api/v1/organizations/{organizationId}
 ```
 
-Do not replace it with `/employees`, `/participants` or `/roster`. A route
-rename is a backend contract change and must be implemented/versioned there
-first.
+Organization list/deactivate (`DELETE` with `rowVersion`), batch list/create/get/update/delete
+and the active service catalog list exist. The participant list, examination matrix, report and
+export endpoints do not exist in the current backend, so those tabs show "Chưa hỗ trợ" and send no request. Check [the API inventory](../Ngoc_Khanh_Clinic_DX_Springboot/docs/api/clean-slate-migration.md)
+before enabling an integration. Path renames require a backend contract change.
 
 ### Backend Enum and Lifecycle Status Rule
 
@@ -378,14 +366,12 @@ underlying transport value:
 ```text
 DRAFT             → Nháp
 READY             → Sẵn sàng
-IN_PROGRESS       → Đang khám
-RESULT_PROCESSING → Đang xử lý kết quả
 FINALIZED         → Đã hoàn tất chuyên môn
 CLOSED            → Đã đóng
-CANCELED          → Đã hủy
 ```
 
-Centralize display mapping and use exhaustive handling where practical.
+BatchStatus has exactly these four values. Record/attendance/reconciliation
+states do not extend it. Centralize display mapping and exhaustive handling.
 
 ### No Runtime Mock Fallback
 
@@ -421,7 +407,7 @@ Preserve backend date/time values in API, cache and application layers:
 
 ```text
 LocalDate:      2026-09-29
-OffsetDateTime: 2026-09-29T18:30:00+07:00
+Instant (UTC): 2026-09-29T11:30:00Z
 ```
 
 Do not store presentation-formatted values such as `29/09/2026` in transport
@@ -452,7 +438,9 @@ Organization
 
 `HealthExaminationParticipant` and `Patient` are separate concepts.
 
-Do not create Patient records for all imported participants.
+Roster addition never creates Patient or Encounter. Visit preparation links or
+creates Patient by exact CCCD. There is no age-eligibility rejection. The flow
+below describes domain direction; its HTTP endpoints are not yet available.
 
 Correct check-in flow:
 
@@ -491,31 +479,13 @@ Later:
 
 ---
 
-## 12. Excel Import
+## 12. Removed Excel Import
 
-Excel import is P0.
-
-```text
-Download Template
-→ Fill Template
-→ Choose File
-→ Upload
-→ Backend Parse
-→ Backend Validate
-→ Validation Preview
-→ Confirm Import
-→ Persist
-```
-
-Column mapping is optional and is only introduced if the product explicitly
-supports arbitrary customer spreadsheet formats. For the controlled clinic
-template, backend parsing and validation are authoritative.
-
-Frontend may provide early feedback for required fields, valid dates, age >= 18
-on examination date, duplicate identity and leading-zero preservation, but it
-must display backend validation results.
-
-Never silently import invalid rows. Show row/cell errors. Keep parsing logic outside page components. Blocking invalid rows cannot enter bulk print.
+Excel roster import is removed from the current product contract (2026-10-05).
+No template/upload/mapping/preview/confirm/cancel endpoint is supported.
+Remaining frontend import code is migration debt, not a P0 feature or a reference
+for new work. See [code follow-ups](docs/maintenance/code-follow-ups.md).
+Historical database records do not restore an application workflow.
 
 ---
 
@@ -579,6 +549,9 @@ workflow-first
 ```
 
 ### Color & Design Token Discipline — Mandatory
+
+Read [the design reference](design-system/ngoc-khanh-clinic/MASTER.md) for visual
+usage and contrast limitations; globals.css owns implemented token values.
 
 - **No custom / arbitrary colors**: Forbidden to use arbitrary hex/rgb/hsl values (e.g. `#123456`, `rgb(...)`), Tailwind arbitrary values (e.g. `text-[#...]`, `bg-[#...]`, `border-[#...]`), inline style colors (`style={{ color: '...' }}`), or arbitrary unmapped palette classes (`bg-blue-500`, `text-slate-600`, `border-emerald-400`, etc.) in component code.
 - **Single source of truth (`src/app/globals.css`)**: All colors MUST strictly be derived from the semantic design tokens defined in `src/app/globals.css` (Tailwind `@theme inline` variables, mapped via `:root` and `.dark`):
@@ -711,7 +684,10 @@ Avoid premature optimization, but prevent obvious issues: server pagination for 
 
 Use Vitest + Testing Library. Use Playwright for critical E2E workflows.
 
-Critical tests include organization creation, health-examination batch creation, Excel validation, under-18 rejection, duplicate identity, bulk selection, Mẫu số 03 mapping, print-batch preparation and participant check-in.
+Test supported organization/batch and authentication contracts, backend errors,
+exact enums and date mapping. Roster, bulk selection, print mapping and visit
+preparation tests apply when the feature is authorized and its contract exists.
+Removed import and age-rejection expectations are not current acceptance criteria.
 
 Tests verify behavior through public interfaces, not implementation details.
 
@@ -764,7 +740,7 @@ Before modifying code:
 
 ## 28. Definition of Done
 
-Run all configured applicable checks:
+For runtime/build changes, run all configured applicable checks:
 
 ```bash
 pnpm lint
@@ -773,33 +749,22 @@ pnpm test
 pnpm build
 ```
 
+For documentation/skill/ignore/line-ending-policy changes without runtime/build
+edits, verify links/anchors, skill resources, contract consistency and git diffs.
+A line-ending policy change does not authorize repository-wide renormalization.
+
 For UI work also verify reuse search, loading/empty/error states, accessibility basics, desktop workflow and no unnecessary duplicate primitive.
 
 ---
 
 ## 29. Current Implementation Order
 
-```text
-1. Frontend foundation
-2. App shell/providers
-3. HTTP client/API conventions
-4. Organization List
-5. Organization Detail
-6. Health Examination Batch
-7. Participant Roster
-8. Excel Import Wizard
-9. Participant Validation
-10. Bulk Selection
-11. Mẫu số 03 Renderer
-12. Print Preview
-13. Bulk Print
-14. Participant Check-in
-15. Patient Link/Create
-16. Encounter
-17. Doctor Workflow
-18. Diagnostics
-19. Billing
-```
+Integrate supported organization list/create/detail/update/deactivate, batch
+list/create/detail/update/delete, the service catalog and authentication contracts first. Track mismatched callers in
+[code follow-ups](docs/maintenance/code-follow-ups.md).
+Roster, examination matrix, report, export, printing and downstream
+clinical workflows require approved backend HTTP contracts before enablement.
+No Excel import implementation is planned under the current baseline.
 
 ---
 

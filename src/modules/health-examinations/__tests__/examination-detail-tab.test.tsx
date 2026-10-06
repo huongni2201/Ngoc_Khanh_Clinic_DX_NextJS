@@ -10,7 +10,7 @@ describe("ExaminationMatrixTable", () => {
         categoryColumns={[{ id: "cat-1", name: "Khám nội" }]}
         items={[
           {
-            id: "employee-1",
+            id: "participant-1",
             participantCode: "NV001",
             fullName: "Nguyễn Văn A",
             examinations: { "cat-1": "COMPLETED" },

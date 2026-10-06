@@ -3,7 +3,7 @@
 import * as React from "react"
 import { cn } from "@/lib/utils"
 
-export type HealthExaminationBatchTabType = "participants" | "examination" | "report"
+export type HealthExaminationBatchTabType = "overview" | "participants" | "examination" | "report"
 
 interface HealthExaminationBatchTabsProps {
   activeTab: HealthExaminationBatchTabType
@@ -15,6 +15,7 @@ export function HealthExaminationBatchTabs({
   onTabChange,
 }: HealthExaminationBatchTabsProps) {
   const tabs: { key: HealthExaminationBatchTabType; label: string }[] = [
+    { key: "overview", label: "Tổng quan" },
     { key: "participants", label: "Người khám" },
     { key: "examination", label: "Chi tiết khám" },
     { key: "report", label: "Báo cáo" },

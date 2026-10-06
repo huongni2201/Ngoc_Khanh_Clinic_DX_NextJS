@@ -5,8 +5,11 @@ import { QueryCache, QueryClient, QueryClientProvider } from "@tanstack/react-qu
 import { AuthSessionSync, replaceSession, notifySessionChanged } from "@/modules/auth"
 import { HttpError } from "@/shared/api/http-client"
 import { ApiClientError } from "@/shared/api/api-client"
+import { ApiUnavailableError } from "@/shared/api/api-unavailable"
 
 export function shouldRetryQuery(failureCount: number, error: unknown) {
+  if (error instanceof ApiUnavailableError) return false
+
   if (
     (error instanceof ApiClientError || error instanceof HttpError) &&
     error.status !== undefined &&

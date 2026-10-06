@@ -5,12 +5,14 @@ export const organizationFixture: OrganizationResponseDto = {
   id: "org-1",
   name: "Công ty Cổ phần FPT",
   taxCode: "0101243150",
+  phone: "0900000001",
+  email: "office@example.invalid",
   address: "Tòa nhà FPT, Cầu Giấy, Hà Nội",
-  contactName: "Nguyễn Văn Hùng",
+  contactFullName: "Nguyễn Văn Hùng",
   contactPhone: "0912345678",
-  contactJobTitle: "Quản lý",
-  note: "Đối tác khám sức khỏe định kỳ hằng năm.",
+  contactEmail: "person@example.invalid",
   status: "ACTIVE",
+  rowVersion: 3,
 }
 
 export function mockOrganizationFetch() {
@@ -19,10 +21,14 @@ export function mockOrganizationFetch() {
     const method = init?.method ?? "GET"
     const organizationId = requestUrl.pathname.split("/").at(-1)
 
+    if (requestUrl.pathname.endsWith("/auth/csrf")) {
+      return jsonResponse({ result: "OK", code: 200, data: { headerName: "X-XSRF-TOKEN", token: "masked" } })
+    }
+
     if (method === "DELETE") return new Response(null, { status: 204 })
 
     if (method === "PUT") {
-      return jsonResponse({ result: "OK", code: 200, data: {} })
+      return jsonResponse({ result: "OK", code: 200, data: { ...organizationFixture, rowVersion: 4 } })
     }
 
     if (method === "POST") {

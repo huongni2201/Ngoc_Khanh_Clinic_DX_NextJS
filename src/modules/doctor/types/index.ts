@@ -1,7 +1,7 @@
 export type DoctorEncounterStatus =
   | "WAITING_EXAM"
   | "EXAMINING"
-  | "WAITING_CLS"
+  | "WAITING_DIAGNOSTIC_RESULTS"
   | "WAITING_CONCLUSION"
   | "COMPLETED"
 
@@ -59,7 +59,7 @@ export interface NextDoctorAction {
 export interface DoctorCounters {
   waitingExam: number
   examining: number
-  waitingCls: number
+  waitingDiagnosticResults: number
   waitingConclusion: number
   completed: number
 }

@@ -29,13 +29,3 @@ export const assignRoomSchema = z.object({
 })
 
 export type AssignRoomFormValues = z.infer<typeof assignRoomSchema>
-
-export const processPaymentSchema = z.object({
-  paymentMethod: z.enum(["CASH", "TRANSFER"], {
-    error: "Vui lòng chọn phương thức thanh toán",
-  }),
-  discount: z.number().min(0, "Giảm giá không được âm").default(0),
-  printReceipt: z.boolean().default(true),
-})
-
-export type ProcessPaymentFormValues = z.infer<typeof processPaymentSchema>

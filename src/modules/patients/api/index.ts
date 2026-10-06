@@ -1,38 +1,34 @@
-import { unavailableDevelopmentApi } from "@/shared/api/development-fixture-error"
+import { unavailableApi } from "@/shared/api/api-unavailable"
+import type {
+  CreatePatientDto,
+  Patient,
+  PatientCounters,
+  PatientFilterParams,
+  UpdatePatientDto,
+} from "../types"
 
-type PatientApi = typeof import("../__tests__/fixtures/api-fixtures")
-
-export function searchPatients(
-  ...args: Parameters<PatientApi["searchPatients"]>
-): ReturnType<PatientApi["searchPatients"]> {
-  void args
-  return unavailableDevelopmentApi("tìm kiếm bệnh nhân")
+export function searchPatients(query?: string, params?: PatientFilterParams): Promise<Patient[]> {
+  void query
+  void params
+  return unavailableApi("tìm kiếm bệnh nhân")
 }
 
-export function fetchPatientById(
-  ...args: Parameters<PatientApi["fetchPatientById"]>
-): ReturnType<PatientApi["fetchPatientById"]> {
-  void args
-  return unavailableDevelopmentApi("chi tiết bệnh nhân")
+export function fetchPatientById(id: string): Promise<Patient> {
+  void id
+  return unavailableApi("chi tiết bệnh nhân")
 }
 
-export function createPatient(
-  ...args: Parameters<PatientApi["createPatient"]>
-): ReturnType<PatientApi["createPatient"]> {
-  void args
-  return unavailableDevelopmentApi("tạo hồ sơ bệnh nhân")
+export function createPatient(dto: CreatePatientDto): Promise<Patient> {
+  void dto
+  return unavailableApi("tạo hồ sơ bệnh nhân")
 }
 
-export function updatePatient(
-  ...args: Parameters<PatientApi["updatePatient"]>
-): ReturnType<PatientApi["updatePatient"]> {
-  void args
-  return unavailableDevelopmentApi("cập nhật hồ sơ bệnh nhân")
+export function updatePatient(id: string, dto: UpdatePatientDto): Promise<Patient> {
+  void id
+  void dto
+  return unavailableApi("cập nhật hồ sơ bệnh nhân")
 }
 
-export function fetchPatientCounters(
-  ...args: Parameters<PatientApi["fetchPatientCounters"]>
-): ReturnType<PatientApi["fetchPatientCounters"]> {
-  void args
-  return unavailableDevelopmentApi("thống kê bệnh nhân")
+export function fetchPatientCounters(): Promise<PatientCounters> {
+  return unavailableApi("thống kê bệnh nhân")
 }

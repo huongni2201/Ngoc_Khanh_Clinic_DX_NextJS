@@ -1,237 +1,26 @@
-# Ngọc Khánh Clinic Frontend — Local Skills Guide
-
-This repository intentionally keeps a **small frontend skill set** plus a language-agnostic coding-guidance skill.
-
-Skills live in:
-
-```text
-.agents/skills/
-```
-
-Before applying a skill, read its `SKILL.md`.
-
-Repository rules and accepted ADRs override generic skill examples.
-
----
-
-## Approved Project Skills
-
-```text
-architecture-decision-records
-code-review
-diagnosing-bugs
-error-handling-patterns
-frontend-design
-javascript-testing-patterns
-karpathy-guidelines
-react-state-management
-security-best-practices
-setup-pre-commit
-tailwind-design-system
-tdd
-ui-styling
-ui-ux-pro-max
-web-design-guidelines
-```
-
-Do not load every skill for every task. Use only skills that materially help the current work.
-
-## Coding Discipline
-
-### `karpathy-guidelines`
-Use for implementation, review, and refactoring to keep changes scoped, surface assumptions, avoid unnecessary complexity, and define verifiable success criteria. Repository rules and accepted ADRs override generic skill examples.
-
----
-
-## UI / UX
-
-### `ui-ux-pro-max`
-Use for new screens, information architecture, workflow UX, accessibility, responsive behavior, density, tables/forms and design-system review.
-
-### `frontend-design`
-Use for page/component composition and visual hierarchy. Repository rules override generic marketing-style guidance; this is an operational healthcare system.
-
-### `ui-styling`
-Use for shadcn/Tailwind implementation, variants and visual refinement.
-
-### `tailwind-design-system`
-Use for Tailwind v4 tokens, semantic tokens, CVA variants and consistent styling. **Reuse existing shadcn components before following skill examples that create primitives.**
-
-### `web-design-guidelines`
-Use for accessibility, layout, responsiveness, forms, tables and keyboard usability.
-
----
-
-## React / State
-
-### `react-state-management`
-Use for TanStack Query vs Zustand, URL/local state, form state ownership and cache invalidation.
-
-Repository default:
-
-```text
-TanStack Query   → server state
-React Hook Form  → form state
-URL params       → shareable state
-React state      → local state
-Zustand          → true cross-component client-only state
-```
-
----
-
-## Error Handling
-
-### `error-handling-patterns`
-Use for HTTP errors, mutation failures, async failures, form submission errors, retries and normalized frontend errors.
-
----
-
-## Testing / Reliability
-
-### `javascript-testing-patterns`
-Use for Vitest, Testing Library, hooks/components, mocks and fixtures.
-
-### `tdd`
-Use for deterministic business rules such as age eligibility, Excel validation, duplicate CCCD, bulk selection, Mẫu số 03 mapping and status transitions.
-
-### `diagnosing-bugs`
-Use when behavior differs from requirements or tests/build/state fail. Find root cause before patching symptoms.
-
----
-
-## Review / Security / Tooling
-
-### `code-review`
-Use after a meaningful feature/refactor and before merging important changes.
-
-### `security-best-practices`
-Use for auth/session handling, token storage, XSS-sensitive rendering, browser storage, healthcare data exposure and frontend permission behavior.
-
-### `setup-pre-commit`
-Use for commit-time tooling. Adapt examples to pnpm and actual package scripts.
-
-### `architecture-decision-records`
-Use only for long-lived decisions such as architecture, reuse strategy, state ownership, API/error strategy, auth/session strategy and print architecture.
-
----
-
-## Skills by Task
-
-### New Operational Screen
-
-```text
-ui-ux-pro-max
-frontend-design
-ui-styling
-web-design-guidelines
-tailwind-design-system
-```
-
-Add `react-state-management` only when state ownership is non-trivial.
-
-### Data / State Feature
-
-```text
-react-state-management
-error-handling-patterns
-javascript-testing-patterns
-```
-
-### Form Workflow
-
-```text
-react-state-management
-error-handling-patterns
-javascript-testing-patterns
-web-design-guidelines
-```
-
-### Excel Import
-
-```text
-tdd
-javascript-testing-patterns
-error-handling-patterns
-react-state-management
-ui-ux-pro-max
-```
-
-### Mẫu số 03 / Print
-
-```text
-javascript-testing-patterns
-ui-ux-pro-max
-web-design-guidelines
-```
-
-### Bug Fix
-
-```text
-diagnosing-bugs
-javascript-testing-patterns
-```
-
-### Security-Sensitive Frontend Work
-
-```text
-security-best-practices
-javascript-testing-patterns
-```
-
-### UI Code Review
-
-```text
-code-review
-web-design-guidelines
-ui-styling
-```
-
-### Long-Lived Architecture Change
-
-```text
-architecture-decision-records
-code-review
-```
-
----
-
-## Mandatory Reuse Check for UI Tasks
-
-Before creating a component:
-
-1. Search current module.
-2. Search `src/shared`.
-3. Search `src/components/ui`.
-4. Check the configured shadcn registry.
-5. Compose existing primitives.
-6. Create new UI only if none of the above works.
-
-Do not use a skill's sample code as justification to duplicate an existing project/shadcn component.
-
----
-
-## Skills Intentionally Not Kept in This FE Repo
-
-Do not add backend-oriented skills such as Spring/Java/MapStruct, Gradle/JaCoCo, SQL optimization, Python backend/testing, async Python workers or backend CRUD generators.
-
----
-
-## Suggested Agent Prompt
-
-```text
-Read AGENTS.md, PROJECT_RULES.md, PROJECT_SKILLS.md and relevant ADRs first.
-
-Inspect existing reusable components before creating new UI.
-Use only the relevant local frontend skills from .agents/skills/.
-Apply karpathy-guidelines to coding tasks when relevant.
-Do not invent backend APIs.
-Backend HTTP contracts are authoritative.
-Make frontend transport DTOs match backend request/response DTOs exactly.
-Use mappers/view models for UI-specific shape instead of changing transport DTOs.
-Do not preserve mock contracts when real backend contracts exist.
-Do not add demo data to production paths.
-Reuse shadcn and existing project components before writing new primitives.
-
-Run applicable lint, typecheck, tests and build before completion.
-Report reused components, changed files, assumptions and remaining risks.
-```
+# Ngọc Khánh Clinic Frontend — Skill Routing
+
+Local skills live in `.agents/skills/`. Read the selected `SKILL.md` and load only
+resources relevant to the task. [PROJECT_RULES.md](PROJECT_RULES.md) and accepted
+ADRs override generic examples. State, reuse and color policies are owned there.
+
+| Task | Local skill | Boundary |
+|---|---|---|
+| Focused implementation/refactoring | [karpathy-guidelines](.agents/skills/karpathy-guidelines/SKILL.md) | Scoped changes and observable acceptance criteria. |
+| Workflow UX/accessibility | [ui-ux-pro-max](.agents/skills/ui-ux-pro-max/SKILL.md), [web-design-guidelines](.agents/skills/web-design-guidelines/SKILL.md) | Operational healthcare screens and real screen states. |
+| Composition/visual refinement | [frontend-design](.agents/skills/frontend-design/SKILL.md), [ui-styling](.agents/skills/ui-styling/SKILL.md) | Reuse project/shadcn UI before creating primitives. |
+| Tokens/variants | [tailwind-design-system](.agents/skills/tailwind-design-system/SKILL.md) | Semantic tokens in globals.css. |
+| State/cache ownership | [react-state-management](.agents/skills/react-state-management/SKILL.md) | Follow PROJECT_RULES §6. |
+| HTTP/mutation failures | [error-handling-patterns](.agents/skills/error-handling-patterns/SKILL.md) | Actual backend envelope and shared client. |
+| Tests | [javascript-testing-patterns](.agents/skills/javascript-testing-patterns/SKILL.md), [tdd](.agents/skills/tdd/SKILL.md) for explicit test-first work | Supported contracts; no removed import or age-rejection assumptions. |
+| Bug diagnosis | [diagnosing-bugs](.agents/skills/diagnosing-bugs/SKILL.md) | Trace supported callers. |
+| Diff review | [code-review](.agents/skills/code-review/SKILL.md) | Requires a base and originating specification. |
+| Explicit security review/secure defaults | [security-best-practices](.agents/skills/security-best-practices/SKILL.md) | Browser, React and this frontend's Next.js server boundary. |
+| Explicit threat model | [security-threat-model](.agents/skills/security-threat-model/SKILL.md) | Within this repository's scope. |
+| Commit tooling | [setup-pre-commit](.agents/skills/setup-pre-commit/SKILL.md) | Adapt to pnpm and configured scripts. |
+| Lasting architecture decision | [architecture-decision-records](.agents/skills/architecture-decision-records/SKILL.md) | Routine component extraction needs no ADR. |
+
+For editing agent instructions, use `writing-for-agents` or `skill-creator` only
+if present in the active session catalog. These are not bundled local skills.
+Do not install skills merely to satisfy this table or add backend-oriented
+skill resources to this frontend repository.

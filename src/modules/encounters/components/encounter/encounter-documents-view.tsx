@@ -94,7 +94,7 @@ export function EncounterDocumentsView({ data }: EncounterDocumentsViewProps) {
                         type="button"
                         title="Xem tài liệu"
                         onClick={() => alert(`Xem tài liệu: ${doc.name}`)}
-                        className="p-1 hover:text-primary/80 transition-colors"
+                        className="p-1 hover:text-primary transition-colors"
                       >
                         <Eye className="size-4" />
                       </button>
@@ -102,7 +102,7 @@ export function EncounterDocumentsView({ data }: EncounterDocumentsViewProps) {
                         type="button"
                         title="Tải về"
                         onClick={() => alert(`Tải về: ${doc.name}`)}
-                        className="p-1 hover:text-primary/80 transition-colors"
+                        className="p-1 hover:text-primary transition-colors"
                       >
                         <Download className="size-4" />
                       </button>
@@ -110,7 +110,7 @@ export function EncounterDocumentsView({ data }: EncounterDocumentsViewProps) {
                         type="button"
                         title="In tài liệu"
                         onClick={() => alert(`In tài liệu: ${doc.name}`)}
-                        className="p-1 hover:text-primary/80 transition-colors"
+                        className="p-1 hover:text-primary transition-colors"
                       >
                         <Printer className="size-4" />
                       </button>

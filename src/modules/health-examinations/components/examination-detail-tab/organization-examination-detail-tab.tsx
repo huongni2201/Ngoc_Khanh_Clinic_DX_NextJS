@@ -35,7 +35,7 @@ import {
   useOrganizationHealthExaminationBatches,
   useHealthExaminationBatchMatrix,
   type ParticipantExaminationProgress,
-  type HealthExaminationBatch,
+  type HealthExaminationBatchSummary,
 } from "@/modules/health-examinations"
 import { getHealthExaminationBatchStatusLabel } from "../../utils/batch-status"
 import { formatHealthExaminationDate } from "../../utils/format-health-examination-date"
@@ -60,17 +60,13 @@ export function OrganizationExaminationDetailTab({
 
   const batches = React.useMemo(() => batchesResponse?.data || [], [batchesResponse?.data])
 
-  // 2. Determine default batch (IN_PROGRESS first, or first batch)
-  const defaultBatch = React.useMemo(() => {
-    if (batches.length === 0) return null
-    const inProgressBatch = batches.find((b) => b.status === "IN_PROGRESS")
-    return inProgressBatch || batches[0]
-  }, [batches])
+  // 2. Determine default batch (the first one returned)
+  const defaultBatch = React.useMemo(() => batches[0] ?? null, [batches])
 
   const [selectedBatchId, setSelectedBatchId] = React.useState<string>("")
   const effectiveBatchId = selectedBatchId || defaultBatch?.id || ""
 
-  const activeBatch: HealthExaminationBatch | undefined = React.useMemo(() => {
+  const activeBatch: HealthExaminationBatchSummary | undefined = React.useMemo(() => {
     return batches.find((b) => b.id === effectiveBatchId) || defaultBatch || undefined
   }, [batches, effectiveBatchId, defaultBatch])
 
@@ -273,8 +269,6 @@ export function OrganizationExaminationDetailTab({
         {activeBatch && (
           <div className="text-xs text-muted-foreground flex items-center gap-2">
             <span>Thời gian: <strong className="text-foreground">{[activeBatch.startDate, activeBatch.endDate].filter((date): date is string => Boolean(date)).map(formatHealthExaminationDate).join(" – ") || "Chưa thiết lập"}</strong></span>
-            <span>•</span>
-            <span>Địa điểm: <strong className="text-foreground">{activeBatch.examinationSiteName || "Chưa có thông tin"}</strong></span>
           </div>
         )}
       </div>

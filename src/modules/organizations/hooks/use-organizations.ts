@@ -16,7 +16,8 @@ import {
 export function useOrganizations(params?: OrganizationFilterParams) {
   return useQuery({
     queryKey: organizationKeys.list(params),
-    queryFn: () => fetchOrganizations(params),
+    queryFn: ({ signal }) => fetchOrganizations(params, signal),
+    meta: { requiresAuth: true },
     retry: false,
   })
 }
@@ -24,7 +25,8 @@ export function useOrganizations(params?: OrganizationFilterParams) {
 export function useOrganization(id: string) {
   return useQuery({
     queryKey: organizationKeys.detail(id),
-    queryFn: () => fetchOrganizationById(id),
+    queryFn: ({ signal }) => fetchOrganizationById(id, signal),
+    meta: { requiresAuth: true },
     enabled: !!id,
   })
 }
@@ -52,17 +54,31 @@ export function useUpdateOrganization(id: string) {
   })
 }
 
-export function useDeactivateOrganization(id: string) {
+/**
+ * Reads the latest version after a 409. It replaces the cached detail and refreshes the lists, and
+ * never resubmits the user's edit.
+ */
+export function useReloadOrganization(id: string) {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: () => deactivateOrganization(id),
-    onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: organizationKeys.detail(id) }),
-        queryClient.invalidateQueries({ queryKey: organizationKeys.lists() }),
-      ])
+    mutationFn: () => fetchOrganizationById(id),
+    onSuccess: async (organization) => {
+      queryClient.setQueryData(organizationKeys.detail(id), organization)
+      await queryClient.invalidateQueries({ queryKey: organizationKeys.lists() })
     },
   })
 }
 
+export function useDeactivateOrganization(id: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (rowVersion: number) => deactivateOrganization(id, rowVersion),
+    onSuccess: async () => {
+      // The backend reports an INACTIVE organization as 404, so the detail must not be refetched.
+      queryClient.removeQueries({ queryKey: organizationKeys.detail(id) })
+      await queryClient.invalidateQueries({ queryKey: organizationKeys.lists() })
+    },
+  })
+}

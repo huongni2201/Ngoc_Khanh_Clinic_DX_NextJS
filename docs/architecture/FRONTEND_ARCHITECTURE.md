@@ -109,10 +109,9 @@ See ADR-0002.
 
 ## Styling & Color Tokens
 
-- **Single source of truth**: `src/app/globals.css`.
-- **No arbitrary colors**: Hardcoded hex/rgb/hsl values, arbitrary Tailwind classes, inline style colors and unmapped palette classes are forbidden in components.
-- **Semantic tokens only**: Use the semantic tokens defined in `src/app/globals.css`.
-- **Token additions**: New clinic status colors must be declared in `src/app/globals.css` for both `:root` and `.dark`.
+[PROJECT_RULES §15](../../PROJECT_RULES.md#15-ui--ux) owns color/token policy.
+[MASTER](../../design-system/ngoc-khanh-clinic/MASTER.md) describes visual usage and
+contrast limitations; implemented token values live in `src/app/globals.css`.
 
 ## State Ownership
 
@@ -181,38 +180,16 @@ Organization
 ```
 
 `HealthExaminationParticipant` is a batch membership record and is not
-automatically a `Patient`.
+automatically a `Patient`. This is domain direction; roster/check-in HTTP handlers
+are not yet implemented in the current backend.
 
 ## Corporate Health Examination Flow
 
-```text
-Organization List
-  ↓
-Organization Detail
-  ↓
-Health Examination Batch
-  ↓
-Participant Roster
-  ↓
-Excel Template / Import
-  ↓
-Backend Parse and Validate
-  ↓
-Validation Preview
-  ↓
-Confirm Import
-  ↓
-Mẫu số 03 Preview / Print
-  ↓
-Participant Arrival
-  ↓
-Patient Match/Create
-  ↓
-Encounter
-```
-
-The backend remains authoritative for validation, persistence, lifecycle
-statuses and calculated report values.
+Current backend HTTP operations are organization list/create/get/update/deactivate,
+batch create/list and authentication. See [the API inventory](../../../Ngoc_Khanh_Clinic_DX_Springboot/docs/api/clean-slate-migration.md).
+Excel roster import was removed on 2026-10-05. Roster, print and visit preparation
+are domain/UI directions requiring explicit HTTP contracts. Existing FE callers
+do not make missing endpoints supported. See [code follow-ups](../maintenance/code-follow-ups.md).
 
 ## Route Direction
 
@@ -246,16 +223,16 @@ AppShell mounts protected screens and the payment notifier only after `/me`
 verification. AppHeader receives real identity display values and uses the auth
 module's public logout hook. The root QueryProvider mounts cross-tab synchronization
 and handles 401 errors from queries explicitly marked `requiresAuth`. Shared
-transport remains independent of the auth module. The participant-roster API uses
+transport remains independent of the auth module. The legacy participant-roster adapter uses
 the shared API client, includes session cookies and forwards cancellation signals.
-Both shared client entry points use the same cookie-aware transport with a
+Its backend route is currently absent. Both shared client entry points use the same cookie-aware transport with a
 15-second timeout. QueryProvider recognizes their HTTP error contracts without
 turning permission failures into logout.
 
 Staff with effective assignments enter the staff workspace. Patients and roleless
 staff remain signed in with a notice and logout action; business data is cleared
 when `/me` removes workspace access. See [ADR-0006](../adr/0006-shared-user-login.md) and
-[setup/testing guide](../api/staff-auth-frontend.md). Backend authorization remains
+[cookie/CSRF decision](../adr/0005-staff-cookie-session.md). Backend authorization remains
 required; the client boundary does not protect server-side data access.
 
 Update this file when the **current architecture** changes.

@@ -2,44 +2,49 @@ import {
   Encounter,
   ReceptionCounters,
   ClinicRoom,
-  LegacyReceptionEncounter,
-  LegacyReceptionInvoice,
   ReceptionFilterParams,
   PatientCheckInRequest,
   AssignRoomDto,
-  ProcessPaymentDto,
 } from "../../types"
 import { fetchPatientById } from "@/modules/patients/__tests__/fixtures/api-fixtures"
-import type { EncounterStatus } from "@/modules/encounters/types"
 import { deriveReceptionWorklistStage } from "../../lib/reception-worklist-stage"
 
-function mapLegacyEncounter(legacy: LegacyReceptionEncounter): Encounter {
-  const { status, ...encounterFields } = legacy
-  const checkInStatus = status === "WAITING_RECEPTION" ? "NOT_CHECKED_IN" : "CHECKED_IN"
-  const encounterStatus: EncounterStatus =
-    status === "EXAMINING"
-      ? "IN_PROGRESS"
-      : status === "CANCELLED"
-        ? "CANCELLED"
-        : status === "WAITING_RECEPTION" || status === "RECEIVED" || status === "WAITING_EXAM"
-          ? "PLANNED"
-          : "COMPLETED"
-  const paymentStatus = status === "WAITING_PAYMENT" ? "PENDING" : undefined
-  const diagnosticWorkflowStatus = status === "WAITING_RESULT" ? "IN_PROGRESS" : undefined
+/**
+ * Fixture-only invoice seed owned by this reception fixture. Billing owns the
+ * production Invoice / Payment / PaymentReceipt model; billing fixtures read this
+ * shape only to seed their own store.
+ */
+export interface FixtureBillableItem {
+  id: string
+  name: string
+  unitPrice: number
+  quantity: number
+  amount: number
+  category?: string
+}
 
-  return {
-    ...encounterFields,
-    checkInStatus,
-    encounterStatus,
-    paymentStatus,
-    diagnosticWorkflowStatus,
-    worklistStage: deriveReceptionWorklistStage({
-      checkInStatus,
-      encounterStatus,
-      paymentStatus,
-      diagnosticWorkflowStatus,
-    }),
-  }
+export interface FixtureReceptionInvoice {
+  id: string
+  encounterId: string
+  encounterCode: string
+  patientId: string
+  patientName: string
+  patientCode: string
+  items: FixtureBillableItem[]
+  subtotal: number
+  discount: number
+  total: number
+  paymentMethod: "CASH" | "TRANSFER"
+  isPaid: boolean
+  paidAt?: string
+  cashierName?: string
+}
+
+export interface FixtureProcessPaymentInput {
+  encounterId: string
+  paymentMethod: "CASH" | "TRANSFER"
+  discount?: number
+  printReceipt?: boolean
 }
 
 export const initialRooms: ClinicRoom[] = [
@@ -95,7 +100,7 @@ export const initialRooms: ClinicRoom[] = [
   },
 ]
 
-const initialLegacyEncounters: LegacyReceptionEncounter[] = [
+export const initialEncounters: Encounter[] = [
   {
     id: "enc-001",
     encounterCode: "LK-260924-001",
@@ -109,9 +114,11 @@ const initialLegacyEncounters: LegacyReceptionEncounter[] = [
     identificationNumber: "001085002456",
     arrivalTime: "08:15",
     examinationType: "Khám tổng quát",
-    status: "WAITING_RECEPTION",
     printFormOnCheckIn: true,
     createdAt: "2026-09-24T08:15:00Z",
+    checkInStatus: "NOT_CHECKED_IN",
+    encounterStatus: "PLANNED",
+    worklistStage: "WAITING_CHECK_IN",
   },
   {
     id: "enc-002",
@@ -130,9 +137,11 @@ const initialLegacyEncounters: LegacyReceptionEncounter[] = [
     roomName: "Phòng 101 - Khám Nội tổng quát",
     physicianId: "doc-01",
     physicianName: "BS.CKI Trần Văn Minh",
-    status: "EXAMINING",
     printFormOnCheckIn: true,
     createdAt: "2026-09-24T08:30:00Z",
+    checkInStatus: "CHECKED_IN",
+    encounterStatus: "IN_PROGRESS",
+    worklistStage: "IN_EXAMINATION",
   },
   {
     id: "enc-003",
@@ -151,9 +160,12 @@ const initialLegacyEncounters: LegacyReceptionEncounter[] = [
     roomName: "Phòng 102 - Khám Cơ xương khớp",
     physicianId: "doc-02",
     physicianName: "BS. Lê Đức Anh",
-    status: "WAITING_PAYMENT",
     printFormOnCheckIn: true,
     createdAt: "2026-09-24T08:45:00Z",
+    checkInStatus: "CHECKED_IN",
+    encounterStatus: "COMPLETED",
+    paymentStatus: "PENDING",
+    worklistStage: "WAITING_PAYMENT",
   },
   {
     id: "enc-004",
@@ -168,9 +180,11 @@ const initialLegacyEncounters: LegacyReceptionEncounter[] = [
     identificationNumber: "001190004312",
     arrivalTime: "09:00",
     examinationType: "Khám thai",
-    status: "WAITING_RECEPTION",
     printFormOnCheckIn: true,
     createdAt: "2026-09-24T09:00:00Z",
+    checkInStatus: "NOT_CHECKED_IN",
+    encounterStatus: "PLANNED",
+    worklistStage: "WAITING_CHECK_IN",
   },
   {
     id: "enc-005",
@@ -189,9 +203,12 @@ const initialLegacyEncounters: LegacyReceptionEncounter[] = [
     roomName: "Phòng 103 - Khám Hô hấp",
     physicianId: "doc-03",
     physicianName: "BS. Phạm Quang Huy",
-    status: "WAITING_RESULT",
     printFormOnCheckIn: true,
     createdAt: "2026-09-24T08:20:00Z",
+    checkInStatus: "CHECKED_IN",
+    encounterStatus: "COMPLETED",
+    diagnosticWorkflowStatus: "IN_PROGRESS",
+    worklistStage: "WAITING_DIAGNOSTIC_RESULTS",
   },
   {
     id: "enc-006",
@@ -210,9 +227,11 @@ const initialLegacyEncounters: LegacyReceptionEncounter[] = [
     roomName: "Phòng 101 - Khám Nội tổng quát",
     physicianId: "doc-01",
     physicianName: "BS.CKI Trần Văn Minh",
-    status: "WAITING_EXAM",
     printFormOnCheckIn: true,
     createdAt: "2026-09-24T08:05:00Z",
+    checkInStatus: "CHECKED_IN",
+    encounterStatus: "PLANNED",
+    worklistStage: "WAITING_EXAMINATION",
   },
   {
     id: "enc-007",
@@ -231,9 +250,11 @@ const initialLegacyEncounters: LegacyReceptionEncounter[] = [
     roomName: "Phòng 104 - Khám Tổng quát",
     physicianId: "doc-04",
     physicianName: "BS. Nguyễn Thị Lan",
-    status: "COMPLETED",
     printFormOnCheckIn: true,
     createdAt: "2026-09-24T07:50:00Z",
+    checkInStatus: "CHECKED_IN",
+    encounterStatus: "COMPLETED",
+    worklistStage: "COMPLETED",
   },
   {
     id: "enc-008",
@@ -248,18 +269,18 @@ const initialLegacyEncounters: LegacyReceptionEncounter[] = [
     identificationNumber: "001195007788",
     arrivalTime: "08:55",
     examinationType: "Khám da liễu",
-    status: "RECEIVED",
     printFormOnCheckIn: true,
     createdAt: "2026-09-24T08:55:00Z",
+    checkInStatus: "CHECKED_IN",
+    encounterStatus: "PLANNED",
+    worklistStage: "WAITING_EXAMINATION",
   },
 ]
-
-export const initialEncounters: Encounter[] = initialLegacyEncounters.map(mapLegacyEncounter)
 
 let encountersStore: Encounter[] = [...initialEncounters]
 let roomsStore: ClinicRoom[] = [...initialRooms]
 
-const initialInvoices: LegacyReceptionInvoice[] = [
+const initialInvoices: FixtureReceptionInvoice[] = [
   {
     id: "inv-001",
     encounterId: "enc-003",
@@ -293,7 +314,7 @@ const initialInvoices: LegacyReceptionInvoice[] = [
   },
 ]
 
-let invoicesStore: LegacyReceptionInvoice[] = [...initialInvoices]
+let invoicesStore: FixtureReceptionInvoice[] = [...initialInvoices]
 
 function withWorklistStage(encounter: Encounter): Encounter {
   const invoice = invoicesStore.find((item) => item.encounterId === encounter.id)
@@ -426,7 +447,7 @@ export async function checkInPatient(dto: PatientCheckInRequest): Promise<Encoun
 
   // Create default initial fee item for check-in
   const defaultFee = 150000
-  const invoice: LegacyReceptionInvoice = {
+  const invoice: FixtureReceptionInvoice = {
     id: `inv-${Date.now()}`,
     encounterId: newEncounter.id,
     encounterCode: newEncounter.encounterCode,
@@ -485,7 +506,7 @@ export async function assignRoomAndDoctor(
 
 export async function fetchInvoiceByEncounter(
   encounterId: string
-): Promise<LegacyReceptionInvoice> {
+): Promise<FixtureReceptionInvoice> {
   await new Promise((resolve) => setTimeout(resolve, 50))
 
   const invoice = invoicesStore.find((i) => i.encounterId === encounterId)
@@ -500,7 +521,7 @@ export async function fetchInvoiceByEncounter(
 
   // Generate standard invoice for encounter
   const standardFee = 150000
-  const newInvoice: LegacyReceptionInvoice = {
+  const newInvoice: FixtureReceptionInvoice = {
     id: `inv-${Date.now()}`,
     encounterId: encounter.id,
     encounterCode: encounter.encounterCode,
@@ -529,12 +550,12 @@ export async function fetchInvoiceByEncounter(
 }
 
 /** Read-only adapter seam for billing; the store remains owned by reception until the API is wired. */
-export async function fetchReceptionInvoices(): Promise<LegacyReceptionInvoice[]> {
+export async function fetchReceptionInvoices(): Promise<FixtureReceptionInvoice[]> {
   await new Promise((resolve) => setTimeout(resolve, 30))
   return [...invoicesStore]
 }
 
-export async function processPayment(dto: ProcessPaymentDto): Promise<LegacyReceptionInvoice> {
+export async function processPayment(dto: FixtureProcessPaymentInput): Promise<FixtureReceptionInvoice> {
   await new Promise((resolve) => setTimeout(resolve, 100))
 
   const invoiceIndex = invoicesStore.findIndex(
@@ -548,7 +569,7 @@ export async function processPayment(dto: ProcessPaymentDto): Promise<LegacyRece
   const discount = dto.discount || 0
   const total = Math.max(0, currentInvoice.subtotal - discount)
 
-  const updatedInvoice: LegacyReceptionInvoice = {
+  const updatedInvoice: FixtureReceptionInvoice = {
     ...currentInvoice,
     discount,
     total,

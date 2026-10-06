@@ -11,22 +11,18 @@ export interface PageResponse<T> {
 export const HEALTH_EXAMINATION_BATCH_STATUSES = [
   "DRAFT",
   "READY",
-  "IN_PROGRESS",
-  "RESULT_PROCESSING",
   "FINALIZED",
   "CLOSED",
-  "CANCELED",
-  "DELETED",
 ] as const
 
 export type HealthExaminationBatchStatus =
   (typeof HEALTH_EXAMINATION_BATCH_STATUSES)[number]
 
-export type ExaminationSiteType = "CLINIC" | "COMPANY"
+export type ExaminationSiteType = "CLINIC" | "ORGANIZATION_SITE"
 
 const batchStatusSchema = z.enum(HEALTH_EXAMINATION_BATCH_STATUSES)
 const optionalDateSchema = z.iso.date().nullable()
-const optionalTextSchema = z.string().nullable()
+const rowVersionSchema = z.number().int().nonnegative()
 
 export const healthExaminationBatchSummaryResponseSchema = z.object({
   id: z.string().min(1),
@@ -37,22 +33,29 @@ export const healthExaminationBatchSummaryResponseSchema = z.object({
   status: batchStatusSchema,
   createdAt: z.string(),
   updatedAt: z.string(),
+  rowVersion: rowVersionSchema,
 })
 
 export type HealthExaminationBatchSummaryResponseDto = z.infer<
   typeof healthExaminationBatchSummaryResponseSchema
 >
 
+const batchDayResponseSchema = z.object({
+  id: z.string().min(1),
+  examinationDate: z.iso.date(),
+})
+
 const batchServiceResponseSchema = z.object({
   id: z.string().min(1),
   serviceId: z.string().min(1),
-  serviceCode: z.string(),
-  serviceName: z.string(),
-  negotiatedUnitPrice: z.number().nonnegative(),
-  currency: z.string(),
+  // Names come from the catalog and are null when the catalog row can no longer be resolved.
+  serviceCode: z.string().nullable().optional(),
+  serviceName: z.string().nullable().optional(),
+  referencePriceSnapshot: z.number().nonnegative(),
+  negotiatedPrice: z.number().nonnegative(),
   displayOrder: z.number().int(),
-  status: z.string(),
-  documentTemplateVersionId: optionalTextSchema,
+  active: z.boolean(),
+  rowVersion: rowVersionSchema,
 })
 
 export const healthExaminationBatchDetailResponseSchema = z.object({
@@ -60,20 +63,17 @@ export const healthExaminationBatchDetailResponseSchema = z.object({
   organizationId: z.string().min(1),
   batchCode: z.string(),
   batchName: z.string(),
+  days: z.array(batchDayResponseSchema),
   startDate: optionalDateSchema,
   endDate: optionalDateSchema,
-  reason: optionalTextSchema,
-  payerType: optionalTextSchema,
-  examinationSiteType: z.enum(["CLINIC", "COMPANY"]),
+  examinationSiteType: z.enum(["CLINIC", "ORGANIZATION_SITE"]),
   examinationSiteName: z.string(),
-  examinationSiteAddress: optionalTextSchema,
-  masterTemplateVersionId: z.string().min(1),
+  examinationSiteAddress: z.string().nullable(),
   status: batchStatusSchema,
-  finalizedAt: optionalTextSchema,
-  closedAt: optionalTextSchema,
   createdBy: z.string().min(1),
   createdAt: z.string(),
   updatedAt: z.string(),
+  rowVersion: rowVersionSchema,
   services: z.array(batchServiceResponseSchema),
 })
 
@@ -81,18 +81,44 @@ export type HealthExaminationBatchDetailResponseDto = z.infer<
   typeof healthExaminationBatchDetailResponseSchema
 >
 
-export interface HealthExaminationBatchConfigurationRequestDto {
+export interface HealthExaminationBatchServiceRequestDto {
+  serviceId: string
+  negotiatedPrice: number
+}
+
+export interface HealthExaminationBatchCreateRequestDto {
   batchCode: string
   batchName: string
-  startDate: string | null
-  endDate: string | null
-  reason: string | null
-  payerType: string | null
+  examinationDates: string[]
   examinationSiteType: ExaminationSiteType
   examinationSiteName: string
-  examinationSiteAddress: string | null
-  services: { serviceId: string; negotiatedUnitPrice: number }[]
+  examinationSiteAddress: string
+  services: HealthExaminationBatchServiceRequestDto[]
 }
+
+export interface HealthExaminationBatchUpdateRequestDto
+  extends HealthExaminationBatchCreateRequestDto {
+  rowVersion: number
+}
+
+export const serviceCatalogItemResponseSchema = z.object({
+  id: z.string().min(1),
+  code: z.string(),
+  name: z.string(),
+  serviceType: z.string(),
+  unitPrice: z.number().nonnegative(),
+  active: z.boolean(),
+})
+
+export type ServiceCatalogItemResponseDto = z.infer<typeof serviceCatalogItemResponseSchema>
+
+export const serviceCatalogPageResponseSchema = z.object({
+  items: z.array(serviceCatalogItemResponseSchema),
+  page: z.number().int().positive(),
+  size: z.number().int().positive().max(100),
+  totalElements: z.number().int().nonnegative(),
+  totalPages: z.number().int().nonnegative(),
+})
 
 export const healthExaminationBatchPageResponseSchema = z.object({
   items: z.array(healthExaminationBatchSummaryResponseSchema),

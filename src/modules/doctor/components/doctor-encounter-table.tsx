@@ -43,7 +43,7 @@ function getPrimaryAction(status: DoctorEncounterStatus): {
         variant: "default",
         className: "bg-primary text-primary-foreground hover:bg-primary/90 shadow-2xs",
       }
-    case "WAITING_CLS":
+    case "WAITING_DIAGNOSTIC_RESULTS":
       return {
         label: "Xem kết quả",
         variant: "outline",

@@ -9,18 +9,7 @@ import { fetchPatientById } from "@/modules/patients/__tests__/fixtures/api-fixt
 
 const todayStr = "2026-09-24"
 
-type LegacyAppointmentRow = Omit<
-  Appointment,
-  "bookingChannel" | "careProgram" | "healthExaminationBatchId" | "healthExaminationBatchName" | "participantCode"
-> & {
-  source: "ONLINE" | "RECEPTION" | "ORGANIZATION"
-  type: "INDIVIDUAL" | "ORGANIZATION"
-  batchId?: string
-  batchName?: string
-  employeeCode?: string
-}
-
-const legacyInitialAppointments: LegacyAppointmentRow[] = [
+const initialAppointments: Appointment[] = [
   {
     id: "apt-001",
     appointmentCode: "LH-260924-001",
@@ -37,8 +26,8 @@ const legacyInitialAppointments: LegacyAppointmentRow[] = [
     physicianName: "BS. Nguyễn Thị Lan",
     roomId: "room-104",
     roomName: "Phòng 104 - Khám Tổng quát",
-    source: "ONLINE",
-    type: "INDIVIDUAL",
+    bookingChannel: "ONLINE",
+    careProgram: "INDIVIDUAL",
     status: "ARRIVED",
     notes: "Đặt qua website phòng khám",
     createdAt: "2026-09-23T14:30:00Z",
@@ -59,8 +48,8 @@ const legacyInitialAppointments: LegacyAppointmentRow[] = [
     physicianName: "BS.CKI Trần Văn Minh",
     roomId: "room-101",
     roomName: "Phòng 101 - Khám Nội tổng quát",
-    source: "RECEPTION",
-    type: "INDIVIDUAL",
+    bookingChannel: "RECEPTION",
+    careProgram: "INDIVIDUAL",
     status: "BOOKED",
     notes: "Tái khám định kỳ",
     createdAt: "2026-09-24T07:15:00Z",
@@ -81,8 +70,8 @@ const legacyInitialAppointments: LegacyAppointmentRow[] = [
     physicianName: "BS. Lê Đức Anh",
     roomId: "room-102",
     roomName: "Phòng 102 - Khám Cơ xương khớp / Tim mạch",
-    source: "ONLINE",
-    type: "INDIVIDUAL",
+    bookingChannel: "ONLINE",
+    careProgram: "INDIVIDUAL",
     status: "CONFIRMED",
     notes: "Khám theo dõi huyết áp",
     createdAt: "2026-09-22T10:00:00Z",
@@ -103,13 +92,13 @@ const legacyInitialAppointments: LegacyAppointmentRow[] = [
     physicianName: "BS. Lê Đức Anh",
     roomId: "room-102",
     roomName: "Phòng 102 - Khám Cơ xương khớp",
-    source: "ORGANIZATION",
-    type: "ORGANIZATION",
+    bookingChannel: "IMPORT",
+    careProgram: "ORGANIZATION_HEALTH_EXAMINATION",
     organizationId: "ent-2",
     organizationName: "Công ty Cổ phần FPT",
-    batchId: "batch-1",
-    batchName: "Khám sức khỏe định kỳ 2026",
-    employeeCode: "FPT004",
+    healthExaminationBatchId: "batch-1",
+    healthExaminationBatchName: "Khám sức khỏe định kỳ 2026",
+    participantCode: "FPT004",
     status: "CONFIRMED",
     notes: "Khám đoàn FPT đợt 1",
     createdAt: "2026-09-23T16:00:00Z",
@@ -130,8 +119,8 @@ const legacyInitialAppointments: LegacyAppointmentRow[] = [
     physicianName: "ThS.BS Đỗ Mỹ Linh",
     roomId: "room-105",
     roomName: "Phòng 105 - Khám Chuyên khoa",
-    source: "ONLINE",
-    type: "INDIVIDUAL",
+    bookingChannel: "ONLINE",
+    careProgram: "INDIVIDUAL",
     status: "BOOKED",
     notes: "Dị ứng mẩn đỏ",
     createdAt: "2026-09-24T06:00:00Z",
@@ -152,13 +141,13 @@ const legacyInitialAppointments: LegacyAppointmentRow[] = [
     physicianName: "BS. Nguyễn Thị Lan",
     roomId: "room-104",
     roomName: "Phòng 104 - Khám Tổng quát",
-    source: "ORGANIZATION",
-    type: "ORGANIZATION",
+    bookingChannel: "IMPORT",
+    careProgram: "ORGANIZATION_HEALTH_EXAMINATION",
     organizationId: "ent-1",
     organizationName: "Samsung Electronics Việt Nam",
-    batchId: "batch-samsung-1",
-    batchName: "Đợt khám sức khỏe cán bộ 2026",
-    employeeCode: "SS0106",
+    healthExaminationBatchId: "batch-samsung-1",
+    healthExaminationBatchName: "Đợt khám sức khỏe cán bộ 2026",
+    participantCode: "SS0106",
     status: "CONFIRMED",
     notes: "Khám gói VIP Samsung",
     createdAt: "2026-09-23T11:20:00Z",
@@ -179,8 +168,8 @@ const legacyInitialAppointments: LegacyAppointmentRow[] = [
     physicianName: "BS. Phạm Quang Huy",
     roomId: "room-103",
     roomName: "Phòng 103 - Khám Hô hấp",
-    source: "ONLINE",
-    type: "INDIVIDUAL",
+    bookingChannel: "ONLINE",
+    careProgram: "INDIVIDUAL",
     status: "CONFIRMED",
     notes: "Ho khan kéo dài",
     createdAt: "2026-09-21T09:00:00Z",
@@ -201,43 +190,13 @@ const legacyInitialAppointments: LegacyAppointmentRow[] = [
     physicianName: "BS.CKI Trần Văn Minh",
     roomId: "room-101",
     roomName: "Phòng 101 - Khám Nội tổng quát",
-    source: "RECEPTION",
-    type: "INDIVIDUAL",
+    bookingChannel: "RECEPTION",
+    careProgram: "INDIVIDUAL",
     status: "CONFIRMED",
     notes: "Kiểm tra chỉ số đường huyết",
     createdAt: "2026-09-23T08:00:00Z",
   },
 ]
-
-function mapLegacyAppointment(source: LegacyAppointmentRow): Appointment {
-  const {
-    source: legacyBookingChannel,
-    type: legacyCareProgram,
-    batchId,
-    batchName,
-    employeeCode,
-    ...appointment
-  } = source
-
-  return {
-    ...appointment,
-    bookingChannel:
-      legacyBookingChannel === "ONLINE"
-        ? "ONLINE"
-        : legacyBookingChannel === "ORGANIZATION"
-        ? "IMPORT"
-        : "FRONT_DESK",
-    careProgram:
-      legacyCareProgram === "ORGANIZATION"
-        ? "ORGANIZATION_HEALTH_EXAMINATION"
-        : "INDIVIDUAL",
-    healthExaminationBatchId: batchId,
-    healthExaminationBatchName: batchName,
-    participantCode: employeeCode,
-  }
-}
-
-const initialAppointments: Appointment[] = legacyInitialAppointments.map(mapLegacyAppointment)
 
 let appointmentsStore: Appointment[] = [...initialAppointments]
 
@@ -358,7 +317,7 @@ export async function createAppointment(
     physicianName: "BS. Phụ trách",
     roomId: dto.roomId,
     roomName: "Phòng khám",
-    bookingChannel: dto.bookingChannel || "FRONT_DESK",
+    bookingChannel: dto.bookingChannel || "RECEPTION",
     status: "CONFIRMED",
     careProgram:
       dto.careProgram ||

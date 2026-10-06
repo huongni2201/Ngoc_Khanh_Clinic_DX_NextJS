@@ -67,6 +67,10 @@ It should not own business-specific endpoint logic.
 
 Normalize failures into a stable shape such as:
 
+This is a frontend normalization example, not the backend wire envelope.
+Optional fieldErrors/requestId must come from actual evidence; the current backend
+does not supply those fields. See [its envelope policy](../../../Ngoc_Khanh_Clinic_DX_Springboot/PROJECT_RULES.md#envelope-errors-and-pagination).
+
 ```ts
 type AppError = {
   code: string

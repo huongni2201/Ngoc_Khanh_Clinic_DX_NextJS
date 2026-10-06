@@ -10,13 +10,20 @@ export interface ClinicalService {
   id: string
   code: string
   name: string
-  description?: string
+  serviceType: string
+  /** Catalog reference price (VND). */
+  unitPrice: number
 }
 
 export interface HealthExaminationBatchService {
+  id: string
   serviceId: string
-  name: string
-  unitPrice: number
+  /** Null when the catalog row can no longer be resolved. */
+  code: string | null
+  name: string | null
+  referencePrice: number
+  negotiatedPrice: number
+  displayOrder: number
 }
 
 export interface HealthExaminationBatchSummary {
@@ -29,38 +36,45 @@ export interface HealthExaminationBatchSummary {
   endDate: string | null
   createdAt: string
   updatedAt: string
+  rowVersion: number
 }
 
 export interface HealthExaminationBatch extends HealthExaminationBatchSummary {
-  reason?: string | null
-  payerType?: string | null
-  examinationSiteType?: ExaminationSiteType
-  examinationSiteName?: string
-  examinationSiteAddress?: string | null
-  masterTemplateVersionId?: string
-  finalizedAt?: string | null
-  closedAt?: string | null
-  createdBy?: string
-  services?: HealthExaminationBatchService[]
+  /** Examination dates (yyyy-MM-dd), ascending. */
+  examinationDates: string[]
+  examinationSiteType: ExaminationSiteType
+  examinationSiteName: string
+  examinationSiteAddress: string | null
+  createdBy: string
+  services: HealthExaminationBatchService[]
 }
 
-export interface CreateHealthExaminationBatchServiceInput {
+export interface HealthExaminationBatchServiceInput {
   serviceId: string
-  negotiatedUnitPrice: number
+  negotiatedPrice: number
 }
 
 export interface CreateHealthExaminationBatchRequest {
   organizationId: string
   batchCode: string
   batchName: string
-  startDate: string
-  endDate: string
-  reason?: string
-  payerType?: string
+  examinationDates: string[]
   examinationSiteType: ExaminationSiteType
   examinationSiteName: string
-  examinationSiteAddress?: string
-  services: CreateHealthExaminationBatchServiceInput[]
+  examinationSiteAddress: string
+  services: HealthExaminationBatchServiceInput[]
+}
+
+export interface UpdateHealthExaminationBatchRequest
+  extends CreateHealthExaminationBatchRequest {
+  batchId: string
+  rowVersion: number
+}
+
+export interface DeleteHealthExaminationBatchRequest {
+  organizationId: string
+  batchId: string
+  rowVersion: number
 }
 
 export interface HealthExaminationBatchFilterParams {
@@ -86,11 +100,6 @@ export type HealthExaminationParticipantType =
   | "MEMBER"
   | "OTHER"
 
-export type ParticipantProfileStatus =
-  | "VALID"
-  | "MISSING_IDENTIFICATION_NUMBER"
-  | "MISSING_SIGNATURE"
-
 export interface HealthExaminationParticipant {
   id: string
   batchId: string
@@ -106,26 +115,6 @@ export interface HealthExaminationParticipant {
   address?: string
   /** Server-owned status of the participant inside the examination batch. */
   batchParticipantStatus?: string
-  /** Legacy import-preview status; not populated by committed BE participants. */
-  profileStatus?: ParticipantProfileStatus
-  note?: string
-}
-
-/** Legacy employee-only columns accepted at the import boundary. */
-export interface LegacyEmployeeImportRow {
-  id: string
-  employeeCode?: string
-  fullName: string
-  dob?: string
-  gender?: "Nam" | "Nữ"
-  cccd?: string
-  phone?: string
-  department?: string
-  jobTitle?: string
-  address?: string
-  joinDate?: string
-  contractType?: string
-  profileStatus?: ParticipantProfileStatus
   note?: string
 }
 

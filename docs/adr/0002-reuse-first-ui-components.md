@@ -55,6 +55,11 @@ Button + Dialog + form schema
 
 The domain component adds business behavior.
 
+Terminology clarification — 2026-10-06: `CreateCompanyDialog` is the historical
+example name. The current component is `CreateOrganizationDialog`; `Organization`
+is the domain term for the examined unit and `Company`/`Enterprise` are not used as
+domain aliases. The reuse decision is unchanged.
+
 ### Incorrect
 
 ```text

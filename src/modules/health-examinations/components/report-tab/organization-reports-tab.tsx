@@ -34,7 +34,7 @@ import {
   useHealthExaminationBatchMatrix,
   useExportExamDetail,
   useExportExamSummary,
-  type HealthExaminationBatch,
+  type HealthExaminationBatchSummary,
 } from "@/modules/health-examinations"
 import { formatVND } from "@/shared/ui/money-input"
 import { getHealthExaminationBatchStatusLabel } from "../../utils/batch-status"
@@ -62,19 +62,15 @@ export function OrganizationReportsTab({
 
   const batches = React.useMemo(() => batchesResponse?.data || [], [batchesResponse?.data])
 
-  // 2. Select default batch (IN_PROGRESS first or latest)
-  const defaultBatch = React.useMemo(() => {
-    if (batches.length === 0) return null
-    const inProgressBatch = batches.find((b) => b.status === "IN_PROGRESS")
-    return inProgressBatch || batches[0]
-  }, [batches])
+  // 2. Select default batch (the first one returned)
+  const defaultBatch = React.useMemo(() => batches[0] ?? null, [batches])
 
   const [selectedBatchId, setSelectedBatchId] = React.useState<string>("")
   const [reportType, setReportType] = React.useState<ReportType>("SERVICE_SUMMARY")
 
   const effectiveBatchId = selectedBatchId || defaultBatch?.id || ""
 
-  const activeBatch: HealthExaminationBatch | undefined = React.useMemo(() => {
+  const activeBatch: HealthExaminationBatchSummary | undefined = React.useMemo(() => {
     return batches.find((b) => b.id === effectiveBatchId) || defaultBatch || undefined
   }, [batches, effectiveBatchId, defaultBatch])
 
@@ -199,7 +195,7 @@ export function OrganizationReportsTab({
     )
   }
 
-  const isBatchInProgress = activeBatch?.status === "IN_PROGRESS"
+  const isBatchInProgress = activeBatch?.status === "READY"
 
   return (
     <div className="space-y-5">
@@ -500,7 +496,7 @@ export function OrganizationReportsTab({
                                   <Check className="size-2.5" />
                                 </span>
                               ) : (
-                                <span className="text-muted-foreground/40 text-xs">—</span>
+                                <span className="text-muted-foreground text-xs">—</span>
                               )}
                             </TableCell>
                           )

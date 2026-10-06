@@ -42,9 +42,18 @@ Use TanStack Query.
 
 Prefer URL search params when the search/filter should survive refresh and be shareable.
 
+Terminology clarification — 2026-10-06: “Company List Data” and “Company Search
+Query” are the historical example names. Read them as organization list data and
+organization search query (`Organization`, UI “Đơn vị”). The state decisions are unchanged.
+
 ### Excel Import Form State
 
 Use React Hook Form with Zod validation.
+
+Applicability note — 2026-10-05: this is a historical state-ownership example.
+The owner removed Excel roster import under
+[backend ADR-0013](../../../Ngoc_Khanh_Clinic_DX_Springboot/docs/adr/0013-clean-slate-application-contract.md#roster-import-scope).
+The state decision remains accepted; the example does not authorize restoring import.
 
 ### Sidebar Collapsed State
 

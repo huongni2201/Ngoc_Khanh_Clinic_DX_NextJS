@@ -19,6 +19,7 @@ import {
   type CreateOrganizationFormValues,
 } from "../schemas"
 import { useCreateOrganization } from "../hooks/use-organizations"
+import { createOrganizationErrorMessage } from "../utils/organization-errors"
 
 interface CreateOrganizationDialogProps {
   open: boolean
@@ -47,8 +48,11 @@ export function CreateOrganizationDialog({
     defaultValues: {
       name: "",
       taxCode: "",
+      phone: "",
+      email: "",
       contactPerson: "",
       contactPhone: "",
+      contactEmail: "",
       address: "",
     },
   })
@@ -58,11 +62,12 @@ export function CreateOrganizationDialog({
       const created = await createOrganization({
         name: values.name,
         taxCode: values.taxCode || undefined,
-        address: values.address || undefined,
+        phone: values.phone,
+        email: values.email,
+        address: values.address,
         contactName: values.contactPerson,
         contactPhone: values.contactPhone,
-        contactJobTitle: values.contactJobTitle || undefined,
-        note: values.note || undefined,
+        contactEmail: values.contactEmail,
       })
       reset()
       onOpenChange(false)
@@ -96,7 +101,7 @@ export function CreateOrganizationDialog({
           <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-5">
           {createError && (
             <p role="alert" className="text-xs text-destructive">
-              {createError.message || "Không thể tạo đơn vị."}
+              {createOrganizationErrorMessage(createError)}
             </p>
           )}
           {/* Tên đơn vị * */}
@@ -134,6 +139,18 @@ export function CreateOrganizationDialog({
           </div>
 
           {/* Người liên hệ * & Số điện thoại * */}
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="create-phone">Điện thoại đơn vị *</Label>
+              <Input id="create-phone" type="tel" {...register("phone")} aria-invalid={!!errors.phone} aria-describedby={errors.phone ? "create-phone-error" : undefined} />
+              {errors.phone && <p id="create-phone-error" className="text-xs text-destructive">{errors.phone.message}</p>}
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="create-email">Email đơn vị *</Label>
+              <Input id="create-email" type="email" {...register("email")} aria-invalid={!!errors.email} aria-describedby={errors.email ? "create-email-error" : undefined} />
+              {errors.email && <p id="create-email-error" className="text-xs text-destructive">{errors.email.message}</p>}
+            </div>
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label
@@ -175,6 +192,11 @@ export function CreateOrganizationDialog({
               )}
             </div>
           </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="create-contact-email">Email người liên hệ *</Label>
+            <Input id="create-contact-email" type="email" {...register("contactEmail")} aria-invalid={!!errors.contactEmail} aria-describedby={errors.contactEmail ? "create-contact-email-error" : undefined} />
+            {errors.contactEmail && <p id="create-contact-email-error" className="text-xs text-destructive">{errors.contactEmail.message}</p>}
+          </div>
 
           {/* Địa chỉ */}
           <div className="space-y-1.5">
@@ -182,14 +204,17 @@ export function CreateOrganizationDialog({
               htmlFor="address"
               className="text-xs font-medium text-foreground"
             >
-              Địa chỉ
+              Địa chỉ *
             </Label>
             <Input
               id="address"
               placeholder="VD: Tòa nhà FPT, Phố Duy Tân, Cầu Giấy, Hà Nội"
               {...register("address")}
               className="h-9 text-xs"
+              aria-invalid={!!errors.address}
+              aria-describedby={errors.address ? "create-address-error" : undefined}
             />
+            {errors.address && <p id="create-address-error" className="text-xs text-destructive">{errors.address.message}</p>}
           </div>
 
           </div>
@@ -215,4 +240,3 @@ export function CreateOrganizationDialog({
     </Dialog>
   )
 }
-

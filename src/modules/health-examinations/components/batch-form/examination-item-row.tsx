@@ -2,13 +2,15 @@
 
 import * as React from "react"
 import { Checkbox } from "@/components/ui/checkbox"
-import { MoneyInput } from "@/shared/ui"
+import { MoneyInput, formatVND } from "@/shared/ui"
 
 interface ExaminationItemRowProps {
   index: number
   name: string
+  code: string
+  referencePrice: number
   selected: boolean
-  unitPrice: number
+  negotiatedPrice: number
   onToggle: (checked: boolean) => void
   onPriceChange: (price: number) => void
   error?: string
@@ -17,34 +19,29 @@ interface ExaminationItemRowProps {
 export function ExaminationItemRow({
   index,
   name,
+  code,
+  referencePrice,
   selected,
-  unitPrice,
+  negotiatedPrice,
   onToggle,
   onPriceChange,
   error,
 }: ExaminationItemRowProps) {
   const checkboxId = `exam-item-checkbox-${index}`
 
-  const handleCheckedChange = (checked: boolean) => {
-    onToggle(checked)
-    if (!checked) onPriceChange(0)
-  }
-
   return (
     <tr className="border-b border-divider hover:bg-hover/50 transition-colors">
-      {/* Checkbox column */}
       <td className="py-2.5 px-4 text-center align-middle w-14">
         <div className="flex items-center justify-center">
           <Checkbox
             id={checkboxId}
             checked={selected}
-            onCheckedChange={handleCheckedChange}
+            onCheckedChange={(checked) => onToggle(Boolean(checked))}
             aria-label={`Chọn hạng mục ${name}`}
           />
         </div>
       </td>
 
-      {/* Item name column */}
       <td className="py-2.5 px-4 text-left align-middle">
         <label
           htmlFor={checkboxId}
@@ -52,21 +49,23 @@ export function ExaminationItemRow({
         >
           {name}
         </label>
+        {code && <div className="text-[11px] text-muted-foreground">Mã: {code}</div>}
       </td>
 
-      {/* Price input column */}
+      <td className="py-2.5 px-4 text-right align-middle text-xs text-muted-foreground w-36">
+        {formatVND(referencePrice)}
+      </td>
+
       <td className="py-2.5 px-4 align-middle w-48 sm:w-56">
         <div className="space-y-1">
           <MoneyInput
-            value={selected ? unitPrice : 0}
-            onChange={(val) => {
-              if (selected) {
-                onPriceChange(val)
-              }
+            value={selected ? negotiatedPrice : 0}
+            onChange={(value) => {
+              if (selected) onPriceChange(value)
             }}
             disabled={!selected}
             error={Boolean(error)}
-            aria-label={`Đơn giá cho ${name}`}
+            aria-label={`Giá thỏa thuận cho ${name}`}
           />
           {selected && error && (
             <p className="text-[11px] text-destructive font-medium">{error}</p>

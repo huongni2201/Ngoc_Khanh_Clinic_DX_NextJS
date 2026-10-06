@@ -6,12 +6,14 @@ export const organizationResponseSchema = z.object({
   id: z.string().min(1),
   name: z.string(),
   taxCode: optionalNullableString,
-  address: optionalNullableString,
-  contactName: z.string(),
+  phone: z.string(),
+  email: z.string(),
+  address: z.string(),
+  contactFullName: z.string(),
   contactPhone: z.string(),
-  contactJobTitle: optionalNullableString,
-  note: optionalNullableString,
-  status: z.string(),
+  contactEmail: z.string(),
+  status: z.enum(["ACTIVE", "INACTIVE"]),
+  rowVersion: z.number().int().nonnegative(),
 })
 
 export type OrganizationResponseDto = z.infer<typeof organizationResponseSchema>
@@ -19,11 +21,16 @@ export type OrganizationResponseDto = z.infer<typeof organizationResponseSchema>
 export interface OrganizationRequestDto {
   name: string
   taxCode?: string
-  address?: string
-  contactName: string
+  phone: string
+  email: string
+  address: string
+  contactFullName: string
   contactPhone: string
-  contactJobTitle?: string
-  note?: string
+  contactEmail: string
+}
+
+export interface UpdateOrganizationRequestDto extends OrganizationRequestDto {
+  rowVersion: number
 }
 
 export interface OrganizationPageResponseDto {

@@ -94,7 +94,7 @@ export const initialDoctorEncounters: DoctorEncounter[] = [
     roomName: "Nội tổng quát",
     chiefComplaint: "Đau bụng, rối loạn tiêu hóa",
     prescribedItemsCount: 3,
-    status: "WAITING_CLS",
+    status: "WAITING_DIAGNOSTIC_RESULTS",
     assignedDoctor: "BS. Trần Minh Khoa",
     phoneNumber: "0974 556 778",
     identificationNumber: "001195003421",
@@ -239,7 +239,7 @@ export const initialDoctorEncounters: DoctorEncounter[] = [
     roomName: "Nội tổng quát",
     chiefComplaint: "Chóng mặt, mệt mỏi",
     prescribedItemsCount: 3,
-    status: "WAITING_CLS",
+    status: "WAITING_DIAGNOSTIC_RESULTS",
     assignedDoctor: "BS. Trần Minh Khoa",
     phoneNumber: "0962 334 455",
     identificationNumber: "001192008901",
@@ -305,7 +305,7 @@ export const initialDoctorEncounters: DoctorEncounter[] = [
     // Distribution matching counters:
     // waitingExam: 12 (rows 1, 6, 8, + 9 more = 12)
     // examining: 3 (row 2, + 2 more = 3)
-    // waitingCls: 6 (rows 3, 7, + 4 more = 6)
+    // waitingDiagnosticResults: 6 (rows 3, 7, + 4 more = 6)
     // waitingConclusion: 4 (row 4, + 3 more = 4)
     // completed: 18 (row 5, + 17 more = 18)
     let status: DoctorEncounter["status"] = "COMPLETED"
@@ -314,7 +314,7 @@ export const initialDoctorEncounters: DoctorEncounter[] = [
     } else if (idx < 11) {
       status = "EXAMINING"
     } else if (idx < 15) {
-      status = "WAITING_CLS"
+      status = "WAITING_DIAGNOSTIC_RESULTS"
     } else if (idx < 18) {
       status = "WAITING_CONCLUSION"
     } else {
@@ -435,7 +435,7 @@ export function resetMockDoctorEncounters() {
 export const initialCounters: DoctorCounters = {
   waitingExam: 12,
   examining: 3,
-  waitingCls: 6,
+  waitingDiagnosticResults: 6,
   waitingConclusion: 4,
   completed: 18,
 }
@@ -523,10 +523,10 @@ export async function fetchDoctorCounters(): Promise<DoctorCounters> {
   const myEncounters = initialDoctorEncounters.filter((e) => e.assignedDoctor.includes("Trần Minh Khoa"))
   const waitingExam = myEncounters.filter((e) => e.status === "WAITING_EXAM").length
   const examining = myEncounters.filter((e) => e.status === "EXAMINING").length
-  const waitingCls = myEncounters.filter((e) => e.status === "WAITING_CLS").length
+  const waitingDiagnosticResults = myEncounters.filter((e) => e.status === "WAITING_DIAGNOSTIC_RESULTS").length
   const waitingConclusion = myEncounters.filter((e) => e.status === "WAITING_CONCLUSION").length
   const completed = myEncounters.filter((e) => e.status === "COMPLETED").length
-  return { waitingExam, examining, waitingCls, waitingConclusion, completed }
+  return { waitingExam, examining, waitingDiagnosticResults, waitingConclusion, completed }
 }
 
 export async function fetchDoctorEncounterById(id: string): Promise<DoctorEncounter | null> {

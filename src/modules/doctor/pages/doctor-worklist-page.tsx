@@ -113,7 +113,7 @@ export function DoctorWorklistPage() {
     if (nextAction.actionType === "NEXT") {
       await startEncounterMutation.mutateAsync(encounter.id)
     }
-    const tabParam = encounter.status === "WAITING_CLS" ? "?tab=lab" : ""
+    const tabParam = encounter.status === "WAITING_DIAGNOSTIC_RESULTS" ? "?tab=lab" : ""
     router.push(`/patients/${encounter.patientId}/encounters/${encounter.id}${tabParam}`)
   }
 
@@ -122,7 +122,7 @@ export function DoctorWorklistPage() {
     if (encounter.status === "WAITING_EXAM") {
       await startEncounterMutation.mutateAsync(encounter.id)
     }
-    const tabParam = encounter.status === "WAITING_CLS" ? "?tab=lab" : ""
+    const tabParam = encounter.status === "WAITING_DIAGNOSTIC_RESULTS" ? "?tab=lab" : ""
     router.push(`/patients/${encounter.patientId}/encounters/${encounter.id}${tabParam}`)
   }
 

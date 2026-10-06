@@ -10,7 +10,7 @@ export type AppointmentStatus =
   | "NO_SHOW"
 
 export type CareProgram = "INDIVIDUAL" | "ORGANIZATION_HEALTH_EXAMINATION"
-export type BookingChannel = "FRONT_DESK" | "ONLINE" | "IMPORT" | "OTHER"
+export type BookingChannel = "RECEPTION" | "ONLINE" | "IMPORT" | "OTHER"
 
 export type AppointmentTab =
   | "ALL"

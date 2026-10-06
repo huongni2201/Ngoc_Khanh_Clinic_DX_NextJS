@@ -42,7 +42,7 @@ function renderWithClient(ui: React.ReactElement) {
   )
 }
 
-describe("Doctor Worklist — Danh sách lượt khám", () => {
+describe("Danh sách lượt khám của bác sĩ", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     resetMockDoctorEncounters()
@@ -106,7 +106,7 @@ describe("Doctor Worklist — Danh sách lượt khám", () => {
     await waitFor(() => {
       expect(countersRegion).toHaveTextContent("12") // Chờ khám
       expect(countersRegion).toHaveTextContent("3")  // Đang khám
-      expect(countersRegion).toHaveTextContent("6")  // Chờ CLS
+      expect(countersRegion).toHaveTextContent("6")  // Chờ kết quả
       expect(countersRegion).toHaveTextContent("4")  // Chờ kết luận
       expect(countersRegion).toHaveTextContent("18") // Hoàn tất
     })

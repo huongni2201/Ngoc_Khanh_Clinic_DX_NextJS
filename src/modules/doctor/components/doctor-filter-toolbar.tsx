@@ -114,8 +114,8 @@ export function DoctorFilterToolbar({
                   ? "Chờ khám"
                   : status === "EXAMINING"
                   ? "Đang khám"
-                  : status === "WAITING_CLS"
-                  ? "Chờ CLS"
+                  : status === "WAITING_DIAGNOSTIC_RESULTS"
+                  ? "Chờ kết quả"
                   : status === "WAITING_CONCLUSION"
                   ? "Chờ kết luận"
                   : "Hoàn tất"}
@@ -125,7 +125,7 @@ export function DoctorFilterToolbar({
               <SelectItem value="ALL">Tất cả</SelectItem>
               <SelectItem value="WAITING_EXAM">Chờ khám</SelectItem>
               <SelectItem value="EXAMINING">Đang khám</SelectItem>
-              <SelectItem value="WAITING_CLS">Chờ CLS</SelectItem>
+              <SelectItem value="WAITING_DIAGNOSTIC_RESULTS">Chờ kết quả</SelectItem>
               <SelectItem value="WAITING_CONCLUSION">Chờ kết luận</SelectItem>
               <SelectItem value="COMPLETED">Hoàn tất</SelectItem>
             </SelectContent>
