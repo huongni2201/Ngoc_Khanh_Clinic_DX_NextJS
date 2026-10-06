@@ -215,9 +215,11 @@ Later:
 ### User authentication implementation
 
 `modules/auth` owns STAFF/PATIENT login, logout, session schemas, hooks and AuthBoundary.
-The flow is component → auth hook → auth API → `shared/api/http-client` → identity.
-The browser sends HttpOnly cookies with `credentials: "include"`; frontend code
-does not receive or persist a JWT/session ID. TanStack Query owns the session view.
+The flow is component → auth hook → auth API → `shared/api/http-client` → backend
+`accesscontrol` (login, me, logout). The browser sends the HttpOnly session cookie
+with `credentials: "include"`; frontend code never receives or persists the session
+ID and sends no CSRF token (the backend checks `Origin` and CORS). TanStack Query
+owns the session view.
 
 AppShell mounts protected screens and the payment notifier only after `/me`
 verification. AppHeader receives real identity display values and uses the auth
@@ -229,10 +231,11 @@ Its backend route is currently absent. Both shared client entry points use the s
 15-second timeout. QueryProvider recognizes their HTTP error contracts without
 turning permission failures into logout.
 
-Staff with effective assignments enter the staff workspace. Patients and roleless
-staff remain signed in with a notice and logout action; business data is cleared
-when `/me` removes workspace access. See [ADR-0006](../adr/0006-shared-user-login.md) and
-[cookie/CSRF decision](../adr/0005-staff-cookie-session.md). Backend authorization remains
+Every STAFF session enters the staff workspace, matching the backend. Patients
+remain signed in with a notice and logout action; business data is cleared when
+`/me` removes workspace access. See [ADR-0007](../adr/0007-session-login-backend-adr-0014.md),
+[ADR-0006](../adr/0006-shared-user-login.md) and
+[ADR-0005](../adr/0005-staff-cookie-session.md). Backend authorization remains
 required; the client boundary does not protect server-side data access.
 
 Update this file when the **current architecture** changes.

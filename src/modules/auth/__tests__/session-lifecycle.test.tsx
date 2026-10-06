@@ -7,7 +7,7 @@ import { useUserSession } from "../hooks/use-user-session"
 import { AuthBoundary } from "../components/auth-boundary"
 import { AuthSessionSync } from "../components/auth-session-sync"
 import { replaceSession, SESSION_QUERY_KEY } from "../utils/session-cache"
-import { csrf, ok, patientSession, staffSession } from "./fixtures"
+import { me as ok, patientSession, staffSession } from "./fixtures"
 import { QueryProvider } from "@/providers/query-provider"
 import { httpClient } from "@/shared/api/http-client"
 import { apiClient } from "@/shared/api/api-client"
@@ -85,9 +85,9 @@ describe("session lifecycle", () => {
     const { client, wrapper } = setup()
     client.setQueryData(SESSION_QUERY_KEY, staffSession)
     client.setQueryData(["patients"], ["private"])
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValueOnce(csrf())
+    vi.stubGlobal("fetch", vi.fn()
       .mockResolvedValueOnce(new Response(null, { status: 503 }))
-      .mockResolvedValueOnce(csrf()).mockResolvedValueOnce(new Response(null, { status: 204 })))
+      .mockResolvedValueOnce(new Response(null, { status: 204 })))
     const { result } = renderHook(() => useLogout(), { wrapper })
     await act(async () => { expect(await result.current.logout()).toBe(false) })
     expect(client.getQueryData(SESSION_QUERY_KEY)).toEqual(staffSession)
@@ -119,16 +119,25 @@ describe("session lifecycle", () => {
     expect(client.getQueryData(["patients"])).toBeUndefined()
   })
 
-  it("removes business data and hides protected children when staff loses every role", async () => {
+  it("lets staff without roles into the workspace, as the backend does", async () => {
     const { client, wrapper } = setup()
     client.setQueryData(SESSION_QUERY_KEY, staffSession)
     client.setQueryData(["patients"], ["private"])
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(ok({ ...staffSession, roleAssignments: [] })))
     render(<AuthBoundary>{() => <p>Clinical data</p>}</AuthBoundary>, { wrapper })
+    expect(await screen.findByText("Clinical data")).toBeInTheDocument()
+    expect(client.getQueryData(["patients"])).toEqual(["private"])
+  })
+
+  it("removes business data when the same account is no longer staff", async () => {
+    const { client, wrapper } = setup()
+    client.setQueryData(SESSION_QUERY_KEY, staffSession)
+    client.setQueryData(["patients"], ["private"])
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(ok({ ...patientSession, userId: staffSession.userId })))
+    render(<AuthBoundary>{() => <p>Clinical data</p>}</AuthBoundary>, { wrapper })
     expect(await screen.findByRole("button", { name: "Đăng xuất" })).toBeInTheDocument()
     expect(screen.queryByText("Clinical data")).not.toBeInTheDocument()
     expect(client.getQueryData(["patients"])).toBeUndefined()
-    expect(client.getQueryData(SESSION_QUERY_KEY)).toMatchObject({ userId: staffSession.userId, roleAssignments: [] })
   })
 
   it("does not mount staff children for a patient session", async () => {

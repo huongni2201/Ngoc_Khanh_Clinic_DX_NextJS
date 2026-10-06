@@ -8,6 +8,17 @@ import { errorMessage, HttpError } from "@/shared/api/http-client"
 import { notifySessionChanged, replaceSession, SESSION_QUERY_KEY } from "../utils/session-cache"
 import type { LoginCredentials } from "../types"
 
+// 403 on sign-in/sign-out means the backend rejected the request origin (ADR-0014).
+function authFailureMessage(error: unknown): string {
+  if (error instanceof HttpError && error.status === 403) {
+    return "Yêu cầu bị từ chối do nguồn truy cập không hợp lệ. Vui lòng tải lại trang."
+  }
+  if (error instanceof HttpError && error.status === 503) {
+    return "Hệ thống đăng nhập tạm thời không khả dụng. Vui lòng thử lại sau."
+  }
+  return errorMessage(error)
+}
+
 export function useAuth() {
   const client = useQueryClient()
   const session = useUserSession()
@@ -27,9 +38,7 @@ export function useAuth() {
     } catch (error) {
       setLoginError(error instanceof HttpError && error.status === 401
         ? "Tên đăng nhập hoặc mật khẩu không chính xác."
-        : error instanceof HttpError && error.status === 403
-          ? "Yêu cầu đăng nhập bị từ chối. Vui lòng thử lại để lấy mã xác thực mới."
-          : errorMessage(error))
+        : authFailureMessage(error))
       if (error instanceof HttpError && error.status === 429 && error.retryAfterSeconds) {
         setRetryAt(Date.now() + error.retryAfterSeconds * 1000)
       }
@@ -69,9 +78,7 @@ export function useLogout() {
       notifySessionChanged()
       return true
     } catch (error) {
-      setLogoutError(error instanceof HttpError && error.status === 403
-        ? "Yêu cầu đăng xuất bị từ chối. Vui lòng thử lại để lấy mã xác thực mới."
-        : errorMessage(error))
+      setLogoutError(authFailureMessage(error))
       return false
     } finally {
       busy.current = false

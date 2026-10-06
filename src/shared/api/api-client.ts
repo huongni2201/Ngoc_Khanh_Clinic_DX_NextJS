@@ -126,16 +126,6 @@ async function request<T>(path: string, options: ApiClientRequestOptions = {}) {
   const headers = new Headers(options.headers)
   headers.set("Accept", "application/json")
 
-  if (options.method && !["GET", "HEAD", "OPTIONS"].includes(options.method.toUpperCase())) {
-    const csrf = await request<{ headerName: string; token: string }>(
-      "/api/v1/auth/csrf", { method: "GET" }
-    )
-    if (!csrf.data || typeof csrf.data.headerName !== "string" || typeof csrf.data.token !== "string") {
-      throw new ApiClientError("Phản hồi CSRF từ máy chủ không hợp lệ.", 200)
-    }
-    headers.set(csrf.data.headerName, csrf.data.token)
-  }
-
   const body = serializeBody(options.body)
   if (body !== undefined && !(body instanceof FormData) && !(body instanceof Blob)) {
     headers.set("Content-Type", "application/json")

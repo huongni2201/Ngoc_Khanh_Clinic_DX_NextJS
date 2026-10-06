@@ -26,7 +26,7 @@ export function LoginPage() {
     retrySession,
   } = useAuth()
 
-  // Only staff with effective assignments enter the internal workspace.
+  // Only STAFF accounts enter the internal workspace; patients see the access notice.
   React.useEffect(() => {
     if (!isCheckingAuth && isAuthenticated && canAccessStaffWorkspace(currentUser)) {
       router.replace("/organizations")

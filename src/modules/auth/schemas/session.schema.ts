@@ -1,13 +1,10 @@
 import { z } from "zod"
 
+// Mirrors the backend UserPrincipal (accesscontrol::access, ADR-0014).
 const assignmentSchema = z.object({
-  assignmentId: z.uuid(),
+  roleId: z.uuid(),
   roleCode: z.string(),
   permissions: z.array(z.string()),
-  departmentId: z.uuid().nullable(),
-  roomId: z.uuid().nullable(),
-  validFrom: z.iso.datetime(),
-  validTo: z.iso.datetime().nullable(),
 })
 
 const sessionFields = {
@@ -22,10 +19,5 @@ export const userSessionSchema = z.discriminatedUnion("principalType", [
 ])
 
 export const sessionEnvelopeSchema = z.object({
-  result: z.literal("OK"), code: z.literal(200), message: z.string(), data: userSessionSchema,
-})
-
-export const csrfEnvelopeSchema = z.object({
-  result: z.literal("OK"), code: z.literal(200), message: z.string(),
-  data: z.object({ token: z.string().min(1), headerName: z.literal("X-XSRF-TOKEN") }),
+  result: z.literal("OK"), code: z.literal(200), message: z.string().optional(), data: userSessionSchema,
 })

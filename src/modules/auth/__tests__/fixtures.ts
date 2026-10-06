@@ -1,14 +1,14 @@
 import type { UserSession } from "../types"
 
+// Shape of the backend UserPrincipal (accesscontrol::access, ADR-0014).
 export const staffSession: UserSession = {
   userId: "11111111-1111-4111-8111-111111111111",
   staffId: "22222222-2222-4222-8222-222222222222",
   patientId: null,
   username: "staff.test", principalType: "STAFF",
   roleAssignments: [{
-    assignmentId: "33333333-3333-4333-8333-333333333333", roleCode: "STAFF",
-    permissions: ["encounter.read"], departmentId: null, roomId: null,
-    validFrom: "2026-01-01T00:00:00Z", validTo: null,
+    roleId: "33333333-3333-4333-8333-333333333333", roleCode: "DOCTOR",
+    permissions: ["ORGANIZATION_READ"],
   }],
   idleExpiresAt: "2026-09-29T12:30:00Z", absoluteExpiresAt: "2026-09-29T20:00:00Z",
 }
@@ -23,9 +23,12 @@ export const patientSession: UserSession = {
   roleAssignments: [],
 }
 
+/** Login response: the backend adds a message. */
 export function ok(data: unknown) {
-  return Response.json({ result: "OK", code: 200, message: "Success", data })
+  return Response.json({ result: "OK", code: 200, message: "Signed in", data })
 }
-export function csrf() {
-  return ok({ token: "masked-token", headerName: "X-XSRF-TOKEN" })
+
+/** `/auth/me` response: the backend omits the message. */
+export function me(data: unknown) {
+  return Response.json({ result: "OK", code: 200, data })
 }

@@ -20,8 +20,9 @@ Accepted ADRs should not be rewritten to change history. When a decision changes
 | [0002](0002-reuse-first-ui-components.md) | Reuse-first UI component strategy | Accepted |
 | [0003](0003-frontend-state-management.md) | Frontend state ownership | Accepted |
 | [0004](0004-api-client-error-contract.md) | API client and frontend error contract | Accepted |
-| [0005](0005-staff-cookie-session.md) | Staff authentication with backend cookie sessions | Accepted |
-| [0006](0006-shared-user-login.md) | Shared user login and staff workspace access | Accepted |
+| [0005](0005-staff-cookie-session.md) | Staff authentication with backend cookie sessions | Accepted; CSRF exchange superseded by 0007 |
+| [0006](0006-shared-user-login.md) | Shared user login and staff workspace access | Accepted; access rule superseded by 0007 |
+| [0007](0007-session-login-backend-adr-0014.md) | Align login with the backend session-cookie contract | Accepted |
 
 ## When to Create an ADR
 

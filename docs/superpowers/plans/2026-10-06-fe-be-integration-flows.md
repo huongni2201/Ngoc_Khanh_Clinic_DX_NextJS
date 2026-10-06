@@ -47,7 +47,7 @@
 
 | ID | Bằng chứng | Ảnh hưởng tới plan |
 |---|---|---|
-| A1 | BE `UserSessionResponse` trả `accountId, staffMemberId, accountType, roleAssignments[{roleId, roleCode, permissions, grantedBy, grantedAt}]`; FE `session.schema.ts` đòi `userId, staffId, principalType, assignmentId, departmentId, roomId, validFrom, validTo`. Nếu đúng như source hiện tại, login/me trên BE thật sẽ báo “Phản hồi máy chủ không hợp lệ”. | Nghiệm thu UI trên BE thật (Phase 2, 4–8) **phụ thuộc** A1 được xử lý ở nhánh auth. Trong lúc chờ: phát triển bằng test Vitest/mock và kiểm API bằng curl/Playwright `request` (gọi BE trực tiếp, không qua parse của FE). |
+| A1 | **Đã xử lý 2026-10-06** bởi [ADR-0007](../../adr/0007-session-login-backend-adr-0014.md): FE theo `UserPrincipal` của BE `accesscontrol`, bỏ CSRF, BE thêm CORS. Mô tả ban đầu: BE `UserSessionResponse` trả `accountId, staffMemberId, accountType, roleAssignments[{roleId, roleCode, permissions, grantedBy, grantedAt}]`; FE `session.schema.ts` đòi `userId, staffId, principalType, assignmentId, departmentId, roomId, validFrom, validTo`. Nếu đúng như source hiện tại, login/me trên BE thật sẽ báo “Phản hồi máy chủ không hợp lệ”. | Nghiệm thu UI trên BE thật (Phase 2, 4–8) **phụ thuộc** A1 được xử lý ở nhánh auth. Trong lúc chờ: phát triển bằng test Vitest/mock và kiểm API bằng curl/Playwright `request` (gọi BE trực tiếp, không qua parse của FE). |
 | A2 | `mock-created-by` thừa trong `application-local.yaml`; chưa chặn tổ hợp profile prod+local ([BE follow-ups](../../../../Ngoc_Khanh_Clinic_DX_Springboot/docs/maintenance/code-follow-ups.md)). | Không chặn local integration; chặn production. |
 
 ---

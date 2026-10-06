@@ -21,10 +21,6 @@ export function mockOrganizationFetch() {
     const method = init?.method ?? "GET"
     const organizationId = requestUrl.pathname.split("/").at(-1)
 
-    if (requestUrl.pathname.endsWith("/auth/csrf")) {
-      return jsonResponse({ result: "OK", code: 200, data: { headerName: "X-XSRF-TOKEN", token: "masked" } })
-    }
-
     if (method === "DELETE") return new Response(null, { status: 204 })
 
     if (method === "PUT") {

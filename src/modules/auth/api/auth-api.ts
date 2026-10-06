@@ -1,6 +1,6 @@
 import { z } from "zod"
 import { httpClient, HttpError } from "@/shared/api/http-client"
-import { csrfEnvelopeSchema, sessionEnvelopeSchema } from "../schemas/session.schema"
+import { sessionEnvelopeSchema } from "../schemas/session.schema"
 import type { LoginCredentials, UserSession } from "../types"
 
 function parse<T>(schema: z.ZodType<T>, response: unknown): T {
@@ -10,14 +10,9 @@ function parse<T>(schema: z.ZodType<T>, response: unknown): T {
 }
 
 export const authApi = {
-  async csrf() {
-    return parse(csrfEnvelopeSchema, await httpClient("/api/v1/auth/csrf")).data
-  },
   async login(credentials: LoginCredentials): Promise<UserSession> {
-    const csrf = await authApi.csrf()
     return parse(sessionEnvelopeSchema, await httpClient("/api/v1/auth/login", {
       method: "POST",
-      headers: { [csrf.headerName]: csrf.token },
       body: JSON.stringify({ username: credentials.username, password: credentials.password }),
     })).data
   },
@@ -30,10 +25,7 @@ export const authApi = {
     }
   },
   async logout(): Promise<void> {
-    const csrf = await authApi.csrf()
-    const response = await httpClient("/api/v1/auth/logout", {
-      method: "POST", headers: { [csrf.headerName]: csrf.token },
-    })
+    const response = await httpClient("/api/v1/auth/logout", { method: "POST" })
     if (response !== undefined) throw new HttpError("INVALID_RESPONSE", "Chưa xác nhận được đăng xuất. Vui lòng thử lại.")
   },
 }
