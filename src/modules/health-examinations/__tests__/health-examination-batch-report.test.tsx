@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 import "@testing-library/jest-dom/vitest"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import * as batchApi from "@/modules/health-examinations/api"
+import { apiClient } from "@/shared/api/api-client"
 import { HealthExaminationBatchDetailPage } from "../pages/health-examination-batch-detail-page"
 import type { HealthExaminationBatch } from "../types"
 
@@ -26,14 +27,24 @@ const batch: HealthExaminationBatch = {
 
 afterEach(() => {
   mockNavigation.search = ""
-  vi.unstubAllGlobals()
+  vi.restoreAllMocks()
 })
 
 describe("Health examination batch report tab", () => {
-  it("shows 'Chưa hỗ trợ' once the report tab is chosen and never asks for a report", async () => {
+  it("reads the payment summary once the report tab is chosen and never uses the organization-level report", async () => {
     vi.spyOn(batchApi, "fetchHealthExaminationBatchById").mockResolvedValue(batch)
-    const report = vi.spyOn(batchApi, "fetchHealthExaminationBatchReport")
-    const exportData = vi.spyOn(batchApi, "fetchExaminationSummaryExportData")
+    const legacyReport = vi.spyOn(batchApi, "fetchHealthExaminationBatchReport")
+    const legacyExport = vi.spyOn(batchApi, "fetchExaminationSummaryExportData")
+    const get = vi.spyOn(apiClient, "get").mockResolvedValue({
+      result: "OK",
+      code: 200,
+      message: "ok",
+      data: {
+        batchId: "batch-1", batchCode: "DK001", batchName: "Khám định kỳ", batchStatus: "FINALIZED",
+        provisional: false, registeredCount: 1, attendedCount: 1, reconciledCount: 1, items: [],
+        totalAmount: 0, generatedAt: "2026-10-07T03:00:00Z",
+      },
+    })
     const user = userEvent.setup()
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
     const page = () => (
@@ -51,8 +62,12 @@ describe("Health examination batch report tab", () => {
     ).search
     rendered.rerender(page())
 
-    expect(await screen.findByText("Chưa hỗ trợ")).toBeInTheDocument()
-    expect(report).not.toHaveBeenCalled()
-    expect(exportData).not.toHaveBeenCalled()
+    expect(await screen.findByText("Chưa có dữ liệu khám để tổng hợp.")).toBeInTheDocument()
+    expect(get).toHaveBeenCalledWith(
+      "/api/v1/organizations/org-1/health-examination-batches/batch-1/reports/payment-summary",
+      expect.anything()
+    )
+    expect(legacyReport).not.toHaveBeenCalled()
+    expect(legacyExport).not.toHaveBeenCalled()
   })
 })

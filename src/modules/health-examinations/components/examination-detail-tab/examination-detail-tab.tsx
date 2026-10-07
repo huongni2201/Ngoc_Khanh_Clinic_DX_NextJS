@@ -1,143 +1,175 @@
 "use client"
 
 import * as React from "react"
-import { AlertCircle, RefreshCw } from "@/shared/ui/product-icon"
+import { AlertCircle, Download, RefreshCw, Upload } from "@/shared/ui/product-icon"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
+import {
+  useExaminationDetails,
+  useExaminationSummary,
+  useExportExaminationDetails,
+} from "../../hooks/use-examination-details"
+import type {
+  ExaminationStatusFilter,
+  HealthExaminationBatchService,
+} from "../../types"
+import { isExaminationImportAllowed } from "../../utils/examination-detail-labels"
+import { ExaminationDetailImportDialog } from "./examination-detail-import-dialog"
 import { ExaminationDetailToolbar } from "./examination-detail-toolbar"
 import { ExaminationMatrixTable } from "./examination-matrix-table"
-import { useHealthExaminationBatchMatrix } from "../../hooks/use-health-examination-batches"
+import { ExaminationSummaryStrip } from "./examination-summary-strip"
+
+const PAGE_SIZE = 10
+const SEARCH_DEBOUNCE_MS = 300
 
 interface ExaminationDetailTabProps {
-  batchId: string
+  organizationId: string
+  batch: {
+    id: string
+    status: string
+    /** The matrix columns, in display order. */
+    services: HealthExaminationBatchService[]
+  }
+  /** UX only: the backend decides. When false nothing is requested. */
+  canRead?: boolean
+  /** UX only: the backend decides. Shows the import when true and the batch accepts changes. */
+  canImport?: boolean
 }
 
-export function ExaminationDetailTab({ batchId }: ExaminationDetailTabProps) {
+export function ExaminationDetailTab({
+  organizationId,
+  batch,
+  canRead = true,
+  canImport = false,
+}: ExaminationDetailTabProps) {
   const [search, setSearch] = React.useState("")
   const [debouncedSearch, setDebouncedSearch] = React.useState("")
-  const [organizationUnit, setDepartment] = React.useState("ALL")
-  const [examStatus, setExamStatus] = React.useState("ALL")
+  const [statusFilter, setStatusFilter] = React.useState<ExaminationStatusFilter | undefined>()
   const [page, setPage] = React.useState(1)
-  const [selectedIds, setSelectedIds] = React.useState<string[]>([])
+  const [isImportOpen, setIsImportOpen] = React.useState(false)
 
-  // Debounce search input
   React.useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(search)
       setPage(1)
-    }, 300)
-
+    }, SEARCH_DEBOUNCE_MS)
     return () => clearTimeout(timer)
   }, [search])
 
-  const handleSearchChange = (val: string) => {
-    setSearch(val)
-  }
+  const details = useExaminationDetails(
+    organizationId,
+    batch.id,
+    { search: debouncedSearch, statusFilter, page, pageSize: PAGE_SIZE },
+    { enabled: canRead }
+  )
+  const summary = useExaminationSummary(organizationId, batch.id, { enabled: canRead })
+  const exportDetails = useExportExaminationDetails(organizationId, batch.id)
 
-  const handleDepartmentChange = (val: string) => {
-    setDepartment(val)
-    setPage(1)
-  }
+  const importAllowed = canImport && isExaminationImportAllowed(batch.status)
+  const items = details.data?.data ?? []
+  const filtered = Boolean(debouncedSearch.trim() || statusFilter)
 
-  const handleExamStatusChange = (val: string) => {
-    setExamStatus(val)
-    setPage(1)
-  }
+  const handleExport = () => exportDetails.mutate()
 
-  const { data, isLoading, isError, refetch } = useHealthExaminationBatchMatrix(batchId, {
-    search: debouncedSearch,
-    organizationUnit,
-    examStatus,
-    page,
-    pageSize: 10,
-  })
+  const actions = (
+    <>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={handleExport}
+        disabled={exportDetails.isPending}
+      >
+        <Download className="mr-1.5 size-3.5" />
+        {exportDetails.isPending ? "Đang xuất..." : "Xuất Excel"}
+      </Button>
+      {importAllowed && (
+        <Button type="button" size="sm" onClick={() => setIsImportOpen(true)}>
+          <Upload className="mr-1.5 size-3.5" />
+          Nhập Excel
+        </Button>
+      )}
+    </>
+  )
 
-  const categoryColumns = data?.services || []
-  const items = data?.data || []
-  const total = data?.total || 0
-  const totalPages = data?.totalPages || 1
-
-  const handleToggleSelect = (id: string) => {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+  if (!canRead) {
+    return (
+      <div role="status" className="rounded-lg border border-border bg-muted p-6 text-sm text-muted-foreground">
+        <p className="font-medium text-foreground">Không có quyền xem</p>
+        <p className="mt-1">Tài khoản của bạn chưa được cấp quyền xem chi tiết khám của đợt khám này.</p>
+      </div>
     )
-  }
-
-  const handleToggleSelectAll = () => {
-    const currentIds = items.map((i) => i.id)
-    const isAllSelected = currentIds.every((id) => selectedIds.includes(id))
-
-    if (isAllSelected) {
-      setSelectedIds((prev) => prev.filter((id) => !currentIds.includes(id)))
-    } else {
-      setSelectedIds((prev) => Array.from(new Set([...prev, ...currentIds])))
-    }
   }
 
   return (
     <div className="space-y-4">
-      {/* 1. Toolbar */}
+      <ExaminationSummaryStrip summary={summary.data} isLoading={summary.isLoading} />
+
       <ExaminationDetailToolbar
         search={search}
-        onSearchChange={handleSearchChange}
-        organizationUnit={organizationUnit}
-        onDepartmentChange={handleDepartmentChange}
-        examStatus={examStatus}
-        onExamStatusChange={handleExamStatusChange}
+        onSearchChange={setSearch}
+        statusFilter={statusFilter}
+        onStatusFilterChange={(value) => {
+          setStatusFilter(value)
+          setPage(1)
+        }}
+        actions={actions}
       />
 
-      {/* 2. Error State */}
-      {isError ? (
-        <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-8 text-center space-y-3">
-          <div className="size-10 rounded-full bg-destructive/10 text-destructive flex items-center justify-center mx-auto">
+      {exportDetails.isError && (
+        <p role="alert" className="text-xs text-destructive">
+          {exportDetails.error.message || "Không thể xuất file Excel."}
+        </p>
+      )}
+
+      {details.isError ? (
+        <div className="space-y-3 rounded-lg border border-destructive/20 bg-destructive/5 p-8 text-center">
+          <div className="mx-auto flex size-10 items-center justify-center rounded-full bg-destructive/10 text-destructive">
             <AlertCircle className="size-5" />
           </div>
-          <p className="text-sm font-semibold text-foreground">
-            Không thể tải chi tiết khám.
+          <p className="text-sm font-semibold text-foreground">Không thể tải chi tiết khám.</p>
+          <p role="alert" className="mx-auto max-w-sm text-xs text-muted-foreground">
+            {details.error instanceof Error && details.error.message
+              ? details.error.message
+              : "Đã xảy ra lỗi khi tải chi tiết khám của đợt khám này. Vui lòng thử lại."}
           </p>
-          <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-            Đã xảy ra lỗi khi tải ma trận chi tiết khám của đợt khám này. Vui lòng thử lại.
-          </p>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => refetch()}
-            className="text-xs h-8 "
-          >
-            <RefreshCw className="size-3.5 mr-1.5" />
+          <Button variant="outline" size="sm" onClick={() => void details.refetch()} className="h-8 text-xs">
+            <RefreshCw className="mr-1.5 size-3.5" />
             Thử lại
           </Button>
         </div>
-      ) : isLoading ? (
-        /* 3. Loading Skeleton */
+      ) : details.isLoading ? (
         <div className="space-y-3">
-          <div className="rounded-lg border border-border bg-card  overflow-hidden p-4 space-y-3">
+          <div className="space-y-3 overflow-hidden rounded-lg border border-border bg-card p-4">
             <Skeleton className="h-9 w-full rounded-md" />
-            {Array.from({ length: 8 }).map((_, i) => (
-              <Skeleton key={i} className="h-8 w-full rounded-md" />
+            {Array.from({ length: 8 }).map((_, index) => (
+              <Skeleton key={index} className="h-8 w-full rounded-md" />
             ))}
-          </div>
-          <div className="flex justify-between items-center pt-2">
-            <Skeleton className="h-4 w-48" />
-            <Skeleton className="h-8 w-64" />
           </div>
         </div>
       ) : (
-        /* 4. Matrix Table */
         <ExaminationMatrixTable
-          categoryColumns={categoryColumns}
+          services={batch.services}
           items={items}
-          totalItems={total}
+          totalItems={details.data?.total ?? 0}
           currentPage={page}
-          pageSize={10}
-          totalPages={totalPages}
+          pageSize={PAGE_SIZE}
+          totalPages={details.data?.totalPages || 1}
           onPageChange={setPage}
-          selectedIds={selectedIds}
-          onToggleSelect={handleToggleSelect}
-          onToggleSelectAll={handleToggleSelectAll}
+          filtered={filtered}
+        />
+      )}
+
+      {importAllowed && (
+        <ExaminationDetailImportDialog
+          open={isImportOpen}
+          onOpenChange={setIsImportOpen}
+          organizationId={organizationId}
+          batchId={batch.id}
+          onExport={handleExport}
+          isExporting={exportDetails.isPending}
         />
       )}
     </div>
   )
 }
-

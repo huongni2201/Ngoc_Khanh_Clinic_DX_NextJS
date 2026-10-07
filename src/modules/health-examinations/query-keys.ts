@@ -1,4 +1,5 @@
 import type {
+  ExaminationDetailListFilterParams,
   ExaminationProgressFilterParams,
   HealthExaminationBatchFilterParams,
   ParticipantListFilterParams,
@@ -24,10 +25,32 @@ export const healthExaminationKeys = {
     [...healthExaminationKeys.all, "batch-matrix", batchId, params] as const,
   participantsRoot: (organizationId: string, batchId: string) =>
     [...healthExaminationKeys.batch(organizationId, batchId), "participants"] as const,
+  participantDetail: (organizationId: string, batchId: string, participantId: string) =>
+    [
+      ...healthExaminationKeys.participantsRoot(organizationId, batchId),
+      "detail",
+      participantId,
+    ] as const,
   participants: (
     organizationId: string,
     batchId: string,
     params: ParticipantListFilterParams
   ) =>
     [...healthExaminationKeys.participantsRoot(organizationId, batchId), params] as const,
+  examinationDetailsRoot: (organizationId: string, batchId: string) =>
+    [...healthExaminationKeys.batch(organizationId, batchId), "examination-details"] as const,
+  examinationDetails: (
+    organizationId: string,
+    batchId: string,
+    params: ExaminationDetailListFilterParams
+  ) =>
+    [
+      ...healthExaminationKeys.examinationDetailsRoot(organizationId, batchId),
+      "list",
+      params,
+    ] as const,
+  examinationSummary: (organizationId: string, batchId: string) =>
+    [...healthExaminationKeys.examinationDetailsRoot(organizationId, batchId), "summary"] as const,
+  paymentReport: (organizationId: string, batchId: string) =>
+    [...healthExaminationKeys.batch(organizationId, batchId), "payment-report"] as const,
 }

@@ -11,6 +11,8 @@ export interface PageBreadcrumbItem {
 
 export interface PageHeaderProps {
   breadcrumbs?: readonly PageBreadcrumbItem[]
+  /** Identity mark shown beside the title block, e.g. an organization monogram. */
+  leading?: ReactNode
   title: ReactNode
   titleAccessory?: ReactNode
   description?: ReactNode
@@ -20,6 +22,7 @@ export interface PageHeaderProps {
 
 export function PageHeader({
   breadcrumbs,
+  leading,
   title,
   titleAccessory,
   description,
@@ -72,16 +75,19 @@ export function PageHeader({
       ) : null}
 
       <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0 flex-1 space-y-1">
-          <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-pretty text-2xl font-semibold leading-[1.25] tracking-tight text-foreground">
-              {title}
-            </h1>
-            {titleAccessory}
+        <div className="flex min-w-0 flex-1 items-start gap-4">
+          {leading ? <div className="shrink-0">{leading}</div> : null}
+          <div className="min-w-0 flex-1 space-y-1">
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 className="text-pretty text-2xl font-semibold leading-[1.25] tracking-tight text-foreground">
+                {title}
+              </h1>
+              {titleAccessory}
+            </div>
+            {description ? (
+              <p className="text-sm text-muted-foreground">{description}</p>
+            ) : null}
           </div>
-          {description ? (
-            <p className="text-sm text-muted-foreground">{description}</p>
-          ) : null}
         </div>
         {actions ? (
           <div className="flex shrink-0 flex-wrap items-center gap-2">

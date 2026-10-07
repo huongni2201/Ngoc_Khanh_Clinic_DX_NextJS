@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Download, Upload } from "@/shared/ui/product-icon"
+import { Download, Upload, UserPlus } from "@/shared/ui/product-icon"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
@@ -9,15 +9,23 @@ import {
   useHealthExaminationBatchParticipants,
 } from "../../hooks/use-health-examination-batches"
 import type {
+  HealthExaminationBatchDay,
+  HealthExaminationParticipant,
   ParticipantAttendanceStatus,
   ParticipantRosterStatus,
   ParticipantSortKey,
 } from "../../types"
-import { isParticipantImportAllowed } from "../../utils/participant-labels"
+import {
+  isParticipantChangeAllowed,
+  isParticipantImportAllowed,
+} from "../../utils/participant-labels"
+import { CancelParticipantDialog } from "./cancel-participant-dialog"
 import { EmptyParticipantsState } from "./empty-participants-state"
+import { ParticipantFormDialog } from "./participant-form-dialog"
 import { ParticipantImportDialog } from "./participant-import-dialog"
 import { ParticipantsTable } from "./participants-table"
 import { ParticipantsToolbar } from "./participants-toolbar"
+import { ReactivateParticipantDialog } from "./reactivate-participant-dialog"
 
 const PAGE_SIZE = 10
 
@@ -29,11 +37,15 @@ interface ParticipantsTabProps {
     status: string
     /** Version the Excel template is prepared for; sent back with the upload. */
     rowVersion: number
+    /** The batch days a Participant can be scheduled on (for the add and edit form). */
+    days?: HealthExaminationBatchDay[]
   }
   /** UX only: the backend decides. When false the list is not requested at all. */
   canRead?: boolean
   /** UX only: the backend decides. Hides the template and import actions when false. */
   canImport?: boolean
+  /** UX only: the backend decides. Shows add, edit, cancel and reactivate when true and the batch allows it. */
+  canManage?: boolean
 }
 
 export function ParticipantsTab({
@@ -42,6 +54,7 @@ export function ParticipantsTab({
   batch,
   canRead = true,
   canImport = false,
+  canManage = false,
 }: ParticipantsTabProps) {
   const [search, setSearch] = React.useState("")
   const [rosterStatus, setRosterStatus] = React.useState<ParticipantRosterStatus | undefined>()
@@ -52,6 +65,11 @@ export function ParticipantsTab({
   const [sortKey, setSortKey] = React.useState<ParticipantSortKey>("id")
   const [sortBy, setSortBy] = React.useState<"ASC" | "DESC">("ASC")
   const [isImportOpen, setIsImportOpen] = React.useState(false)
+  const [isCreateOpen, setIsCreateOpen] = React.useState(false)
+  const [editing, setEditing] = React.useState<HealthExaminationParticipant | null>(null)
+  const [cancelling, setCancelling] = React.useState<HealthExaminationParticipant | null>(null)
+  const [reactivating, setReactivating] = React.useState<HealthExaminationParticipant | null>(null)
+  const [notice, setNotice] = React.useState<string | null>(null)
 
   const { data, isLoading, isError, error, refetch } = useHealthExaminationBatchParticipants(
     organizationId,
@@ -62,6 +80,8 @@ export function ParticipantsTab({
   const templateDownload = useDownloadParticipantImportTemplate(organizationId, batchId)
 
   const importAllowed = canImport && isParticipantImportAllowed(batch.status)
+  const changeAllowed = canManage && isParticipantChangeAllowed(batch.status)
+  const days = batch.days ?? []
   const hasFilter = Boolean(search.trim() || rosterStatus || attendanceStatus)
   const participants = data?.data ?? []
   const total = data?.total ?? 0
@@ -85,24 +105,42 @@ export function ParticipantsTab({
   const handleDownloadTemplate = () =>
     templateDownload.mutate({ batchCode: batch.code })
 
-  const actions = importAllowed ? (
-    <>
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        onClick={handleDownloadTemplate}
-        disabled={templateDownload.isPending}
-      >
-        <Download className="mr-1.5 size-3.5" />
-        {templateDownload.isPending ? "Đang tải..." : "Tải file mẫu"}
-      </Button>
-      <Button type="button" size="sm" onClick={() => setIsImportOpen(true)}>
-        <Upload className="mr-1.5 size-3.5" />
-        Nhập từ Excel
-      </Button>
-    </>
-  ) : undefined
+  const actions =
+    importAllowed || changeAllowed ? (
+      <>
+        {changeAllowed && (
+          <Button
+            type="button"
+            size="sm"
+            onClick={() => {
+              setNotice(null)
+              setIsCreateOpen(true)
+            }}
+          >
+            <UserPlus className="mr-1.5 size-3.5" />
+            Thêm người khám
+          </Button>
+        )}
+        {importAllowed && (
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleDownloadTemplate}
+              disabled={templateDownload.isPending}
+            >
+              <Download className="mr-1.5 size-3.5" />
+              {templateDownload.isPending ? "Đang tải..." : "Tải file mẫu"}
+            </Button>
+            <Button type="button" size="sm" onClick={() => setIsImportOpen(true)}>
+              <Upload className="mr-1.5 size-3.5" />
+              Nhập từ Excel
+            </Button>
+          </>
+        )}
+      </>
+    ) : undefined
 
   if (!canRead) {
     return (
@@ -125,6 +163,12 @@ export function ParticipantsTab({
           onAttendanceStatusChange={resetPage(setAttendanceStatus)}
           actions={actions}
         />
+      )}
+
+      {notice && (
+        <p role="status" className="text-xs text-muted-foreground">
+          {notice}
+        </p>
       )}
 
       {templateDownload.isError && (
@@ -161,7 +205,7 @@ export function ParticipantsTab({
         <EmptyParticipantsState
           actions={actions}
           note={
-            importAllowed || !canImport
+            importAllowed || changeAllowed || (!canImport && !canManage)
               ? undefined
               : "Đợt khám này không còn nhận danh sách người khám mới."
           }
@@ -177,7 +221,84 @@ export function ParticipantsTab({
           sortKey={sortKey}
           sortBy={sortBy}
           onSortChange={handleSortChange}
+          canManage={changeAllowed}
+          onEdit={(participant) => {
+            setNotice(null)
+            setEditing(participant)
+          }}
+          onCancel={(participant) => {
+            setNotice(null)
+            setCancelling(participant)
+          }}
+          onReactivate={
+            changeAllowed
+              ? (participant) => {
+                  setNotice(null)
+                  setReactivating(participant)
+                }
+              : undefined
+          }
         />
+      )}
+
+      {changeAllowed && (
+        <>
+          <ParticipantFormDialog
+            mode="create"
+            open={isCreateOpen}
+            onOpenChange={setIsCreateOpen}
+            organizationId={organizationId}
+            batchId={batchId}
+            days={days}
+            onSaved={() => setNotice("Đã thêm người khám vào danh sách.")}
+            onNotice={setNotice}
+            onReactivateCandidate={(participant) => {
+              setNotice(null)
+              setIsCreateOpen(false)
+              setReactivating(participant)
+            }}
+          />
+          <ParticipantFormDialog
+            mode="edit"
+            open={editing !== null}
+            onOpenChange={(open) => {
+              if (!open) setEditing(null)
+            }}
+            organizationId={organizationId}
+            batchId={batchId}
+            days={days}
+            participantId={editing?.id}
+            onSaved={() => setNotice("Đã cập nhật thông tin người khám.")}
+            onNotice={setNotice}
+          />
+          <CancelParticipantDialog
+            open={cancelling !== null}
+            onOpenChange={(open) => {
+              if (!open) setCancelling(null)
+            }}
+            organizationId={organizationId}
+            batchId={batchId}
+            participant={cancelling}
+            onCancelled={(participant) =>
+              setNotice(`Đã hủy người khám ${participant.fullName}.`)
+            }
+            onNotice={setNotice}
+          />
+          <ReactivateParticipantDialog
+            open={reactivating !== null}
+            onOpenChange={(open) => {
+              if (!open) setReactivating(null)
+            }}
+            organizationId={organizationId}
+            batchId={batchId}
+            participant={reactivating}
+            days={days}
+            onReactivated={(participant) =>
+              setNotice(`Đã khôi phục người khám ${participant.fullName}.`)
+            }
+            onNotice={setNotice}
+          />
+        </>
       )}
 
       {importAllowed && (

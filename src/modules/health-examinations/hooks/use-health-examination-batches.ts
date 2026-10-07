@@ -14,18 +14,18 @@ import {
   fetchExaminationSummaryExportData,
 } from "@/modules/health-examinations/api"
 import {
+  cancelParticipant,
+  createParticipant,
   fetchHealthExaminationBatchParticipants,
+  fetchParticipantDetail,
   fetchParticipantImportTemplate,
   importHealthExaminationBatchParticipants,
+  reactivateParticipant,
+  updateParticipant,
 } from "../api/participants"
 import { healthExaminationKeys } from "../query-keys"
-import {
-  downloadFile,
-  generateDetailHorizontalCSV,
-  generateSummaryVerticalCSV,
-  sanitizeFileName,
-} from "../utils/export-excel"
 import { saveBlobAs } from "../utils/download-blob"
+import { sanitizeFileName } from "../utils/file-name"
 import {
   CreateHealthExaminationBatchRequest,
   DeleteHealthExaminationBatchRequest,
@@ -36,6 +36,12 @@ import {
   HealthExaminationBatchListResponse,
   ParticipantListFilterParams,
   ParticipantListResponse,
+  ParticipantDetail,
+  CreateParticipantRequest,
+  UpdateParticipantRequest,
+  CancelParticipantRequest,
+  ReactivateParticipantRequest,
+  HealthExaminationParticipant,
   ImportParticipantsRequest,
   ParticipantImportResult,
   ExaminationProgressFilterParams,
@@ -198,6 +204,114 @@ export function useImportHealthExaminationBatchParticipants() {
   })
 }
 
+/**
+ * The complete Participant for the edit form. It is always fetched fresh when the dialog opens: the
+ * list only carries the masked CCCD, and an old copy could hold a stale `rowVersion`.
+ */
+export function useParticipantDetail(
+  organizationId: string,
+  batchId: string,
+  participantId: string | undefined,
+  options?: { enabled?: boolean }
+) {
+  return useQuery<ParticipantDetail>({
+    queryKey: healthExaminationKeys.participantDetail(
+      organizationId,
+      batchId,
+      participantId ?? ""
+    ),
+    queryFn: ({ signal }) =>
+      fetchParticipantDetail(organizationId, batchId, participantId ?? "", signal),
+    meta: { requiresAuth: true },
+    retry: false,
+    enabled: Boolean(organizationId && batchId && participantId) && (options?.enabled ?? true),
+    staleTime: 0,
+    gcTime: 0,
+  })
+}
+
+/** Adds one Participant by hand. It never retries: a second submit would be a duplicate CCCD. */
+export function useCreateParticipant() {
+  const queryClient = useQueryClient()
+
+  return useMutation<ParticipantDetail, Error, CreateParticipantRequest>({
+    mutationFn: (request) => createParticipant(request),
+    retry: false,
+    onSuccess: (_result, request) => {
+      void queryClient.invalidateQueries({
+        queryKey: healthExaminationKeys.participantsRoot(request.organizationId, request.batchId),
+      })
+    },
+  })
+}
+
+export function useUpdateParticipant() {
+  const queryClient = useQueryClient()
+
+  return useMutation<ParticipantDetail, Error, UpdateParticipantRequest>({
+    mutationFn: (request) => updateParticipant(request),
+    retry: false,
+    onSuccess: (_result, request) => {
+      void queryClient.invalidateQueries({
+        queryKey: healthExaminationKeys.participantsRoot(request.organizationId, request.batchId),
+      })
+    },
+  })
+}
+
+export function useCancelParticipant() {
+  const queryClient = useQueryClient()
+
+  return useMutation<void, Error, CancelParticipantRequest>({
+    mutationFn: (request) => cancelParticipant(request),
+    retry: false,
+    onSuccess: (_result, request) => {
+      void queryClient.invalidateQueries({
+        queryKey: healthExaminationKeys.participantsRoot(request.organizationId, request.batchId),
+      })
+    },
+  })
+}
+
+/** Returns a cancelled Participant to the active roster. It never retries. */
+export function useReactivateParticipant() {
+  const queryClient = useQueryClient()
+
+  return useMutation<ParticipantDetail, Error, ReactivateParticipantRequest>({
+    mutationFn: (request) => reactivateParticipant(request),
+    retry: false,
+    onSuccess: (_result, request) => {
+      void queryClient.invalidateQueries({
+        queryKey: healthExaminationKeys.participantsRoot(request.organizationId, request.batchId),
+      })
+    },
+  })
+}
+
+/**
+ * Finds the cancelled Participant that holds a CCCD, after adding the same CCCD was refused as a
+ * duplicate. It resolves to `null` when no cancelled Participant holds it. A lookup failure
+ * rejects so the caller can fall back to the plain duplicate message.
+ */
+export function useFindCancelledParticipant() {
+  return useMutation<
+    HealthExaminationParticipant | null,
+    Error,
+    { organizationId: string; batchId: string; identificationNumber: string }
+  >({
+    mutationFn: async ({ organizationId, batchId, identificationNumber }) => {
+      const result = await fetchHealthExaminationBatchParticipants(organizationId, batchId, {
+        identificationNumber,
+        rosterStatus: "CANCELLED",
+        page: 1,
+        pageSize: 1,
+      })
+      return result.data.find((participant) => participant.rosterStatus === "CANCELLED") ?? null
+    },
+    retry: false,
+  })
+}
+
 export function useHealthExaminationBatchMatrix(
   batchId: string,
   params?: ExaminationProgressFilterParams
@@ -217,41 +331,22 @@ export function useHealthExaminationBatchReport(batchId: string) {
   })
 }
 
+/**
+ * Organization-level exports have no backend yet: both mutations reject as unavailable without
+ * sending a request. The batch screens use the real exports in `use-examination-details`.
+ */
 export function useExportExamDetail() {
-  return useMutation<
-    { filename: string; rowCount: number },
-    Error,
-    { batchId: string; batchName?: string }
-  >({
-    mutationFn: async ({ batchId, batchName }) => {
-      const data = await fetchExaminationDetailExportData(batchId)
-      const csv = generateDetailHorizontalCSV(data)
-      const sanitized =
-        sanitizeFileName(batchName || data.batchName) || data.batchCode || batchId
-      const filename = `chi-tiet-kham-${sanitized}.csv`
-      downloadFile(csv, filename)
-      return { filename, rowCount: data.rows.length }
+  return useMutation<void, Error, { batchId: string; batchName?: string }>({
+    mutationFn: async ({ batchId }) => {
+      await fetchExaminationDetailExportData(batchId)
     },
   })
 }
 
 export function useExportExamSummary() {
-  return useMutation<
-    { filename: string; itemCount: number },
-    Error,
-    { batchId: string; batchName?: string }
-  >({
-    mutationFn: async ({ batchId, batchName }) => {
-      const data = await fetchExaminationSummaryExportData(batchId)
-      const csv = generateSummaryVerticalCSV(data)
-      const sanitized =
-        sanitizeFileName(batchName || data.batchName) || data.batchCode || batchId
-      const filename = `bao-cao-tong-hop-${sanitized}.csv`
-      downloadFile(csv, filename)
-      return { filename, itemCount: data.items.length }
+  return useMutation<void, Error, { batchId: string; batchName?: string }>({
+    mutationFn: async ({ batchId }) => {
+      await fetchExaminationSummaryExportData(batchId)
     },
   })
 }
-
-
-

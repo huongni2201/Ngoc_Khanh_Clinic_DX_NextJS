@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test"
 import { mockBackend, ORGANIZATION_ID } from "./support/mock-backend"
 
-const ORGANIZATION_URL = `/organizations/${ORGANIZATION_ID}?tab=batches`
+const ORGANIZATION_URL = `/organizations/${ORGANIZATION_ID}`
 
 async function fillBatchForm(page: Page, code: string, name: string) {
   const dialog = page.getByRole("dialog")
@@ -42,7 +42,7 @@ test("create, view, edit and delete a batch through the real UI flow", async ({ 
 
   await page.getByRole("button", { name: "Xóa đợt khám" }).click()
   await page.getByRole("button", { name: "Xác nhận xóa" }).click()
-  await expect(page).toHaveURL(new RegExp(`/organizations/${ORGANIZATION_ID}\\?tab=batches$`))
+  await expect(page).toHaveURL(new RegExp(`/organizations/${ORGANIZATION_ID}$`))
   await expect(page.getByText("Chưa có đợt khám nào cho đơn vị này")).toBeVisible()
   expect(backend.batches).toHaveLength(0)
   expect(backend.unexpected).toEqual([])
@@ -91,7 +91,7 @@ test("a missing batch shows a not-found state with a way back", async ({ page })
   await page.goto(`/organizations/${ORGANIZATION_ID}/health-examination-batches/does-not-exist`)
   await expect(page.getByText("Không tìm thấy đợt khám")).toBeVisible()
   await page.getByRole("link", { name: /Về danh sách đợt khám/ }).click()
-  await expect(page).toHaveURL(new RegExp(`/organizations/${ORGANIZATION_ID}\\?tab=batches$`))
+  await expect(page).toHaveURL(new RegExp(`/organizations/${ORGANIZATION_ID}$`))
   expect(backend.unexpected).toEqual([])
 })
 

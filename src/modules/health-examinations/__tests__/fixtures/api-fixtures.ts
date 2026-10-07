@@ -17,6 +17,8 @@ import {
 } from "../../types"
 
 export * from "../../api/participants"
+export * from "../../api/examination-details"
+export * from "../../api/reports"
 
 // Master catalog of clinic's examination items (matching reference image)
 export const clinicalServiceCatalog: ClinicalService[] = [

@@ -39,27 +39,30 @@ describe("OrganizationDetailPage", () => {
     vi.unstubAllEnvs()
   })
 
-  it("renders details from the backend contract and only available tabs", async () => {
+  it("opens on the batch list and keeps the organization details beside it", async () => {
     renderWithClient(<OrganizationDetailPage organizationId="org-1" />)
 
     expect(await screen.findByRole("heading", { name: organizationFixture.name })).toBeInTheDocument()
-    expect(screen.getAllByText(organizationFixture.contactPhone)).not.toHaveLength(0)
-    expect(screen.getByRole("button", { name: "Thông tin" })).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: "Đợt khám" })).toBeInTheDocument()
-    expect(screen.queryByRole("button", { name: "Chi tiết khám" })).not.toBeInTheDocument()
-    expect(screen.queryByRole("button", { name: "Báo cáo" })).not.toBeInTheDocument()
-    expect(screen.queryByRole("button", { name: "Tạo đợt khám mới" })).not.toBeInTheDocument()
-  })
-
-  it("uses the URL for the batch tab and shows the organization's batch list", async () => {
-    mockNavigation.search = "tab=batches"
-    renderWithClient(<OrganizationDetailPage organizationId="org-1" />)
+    expect(screen.getByRole("heading", { name: "Đợt khám" })).toBeInTheDocument()
     expect(await screen.findByText("Chưa có đợt khám nào cho đơn vị này")).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Tạo đợt khám" })).toBeInTheDocument()
-    expect(screen.queryByText(/Backend chưa cung cấp API/)).not.toBeInTheDocument()
 
-    await userEvent.setup().click(screen.getByRole("button", { name: "Thông tin" }))
-    expect(mockNavigation.push).toHaveBeenCalledWith("/organizations/org-1", { scroll: false })
+    expect(screen.getByRole("complementary", { name: "Thông tin đơn vị" })).toBeInTheDocument()
+    expect(screen.getAllByText(organizationFixture.contactPhone)).not.toHaveLength(0)
+    expect(screen.getByText(organizationFixture.email)).toBeInTheDocument()
+    // The old Thông tin / Đợt khám tab bar is gone; details no longer sit behind a tab.
+    expect(screen.queryByRole("button", { name: "Thông tin" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Chi tiết khám" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Báo cáo" })).not.toBeInTheDocument()
+  })
+
+  it("ignores the legacy tab query and still opens on the batch list", async () => {
+    mockNavigation.search = "tab=batches"
+    renderWithClient(<OrganizationDetailPage organizationId="org-1" />)
+
+    expect(await screen.findByText("Chưa có đợt khám nào cho đơn vị này")).toBeInTheDocument()
+    expect(screen.queryByText(/Backend chưa cung cấp API/)).not.toBeInTheDocument()
+    expect(mockNavigation.push).not.toHaveBeenCalled()
   })
 
   it("shows a safe error state when the organization cannot be loaded", async () => {

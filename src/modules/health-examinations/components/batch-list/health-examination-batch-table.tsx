@@ -2,7 +2,8 @@
 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { CalendarDays, Eye, MoreHorizontal, Plus } from "@/shared/ui/product-icon"
+import { CalendarDays, Eye, Plus } from "@/shared/ui/product-icon"
+import { StatusPill } from "@/shared/ui"
 import {
   Table,
   TableBody,
@@ -11,28 +12,25 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import type { HealthExaminationBatchSummary } from "../../types"
-import { getHealthExaminationBatchStatusLabel } from "../../utils/batch-status"
+import {
+  HEALTH_EXAMINATION_BATCH_STATUS_TONES,
+  getHealthExaminationBatchStatusLabel,
+} from "../../utils/batch-status"
 import { formatHealthExaminationDate } from "../../utils/format-health-examination-date"
 
 interface HealthExaminationBatchTableProps {
   organizationId: string
   batches: HealthExaminationBatchSummary[]
-  currentPage: number
-  pageSize: number
   isLoading?: boolean
   /** True when a search is applied, so an empty page means "no match" rather than "no batch". */
   isFiltered?: boolean
   onCreateClick?: () => void
 }
+
+const HEAD_CLASS = "h-10 px-4 text-xs font-semibold text-table-header-fg"
 
 function formatBatchDateRange(batch: HealthExaminationBatchSummary) {
   const startDate = batch.startDate
@@ -51,8 +49,6 @@ function formatBatchDateRange(batch: HealthExaminationBatchSummary) {
 export function HealthExaminationBatchTable({
   organizationId,
   batches,
-  currentPage,
-  pageSize,
   isLoading = false,
   isFiltered = false,
   onCreateClick,
@@ -63,113 +59,98 @@ export function HealthExaminationBatchTable({
 
   return (
     <div className="overflow-hidden rounded-lg border border-border bg-card">
-      <Table>
+      <Table className="min-w-[36rem]">
         <TableHeader>
-          <TableRow className="border-b border-border bg-muted/50">
-            <TableHead className="w-14 px-4 text-center">STT</TableHead>
-            <TableHead className="px-4">Đợt khám</TableHead>
-            <TableHead className="px-4">Thời gian</TableHead>
-            <TableHead className="px-4">Trạng thái</TableHead>
-            <TableHead className="px-3 text-center">Thao tác</TableHead>
+          <TableRow className="border-b border-border bg-table-header-bg hover:bg-table-header-bg">
+            <TableHead className={`${HEAD_CLASS} w-[46%] min-w-52`}>Đợt khám</TableHead>
+            <TableHead className={HEAD_CLASS}>Thời gian</TableHead>
+            <TableHead className={HEAD_CLASS}>Trạng thái</TableHead>
+            <TableHead className={`${HEAD_CLASS} w-16 text-right`}>
+              <span className="sr-only">Thao tác</span>
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {isLoading ? (
             Array.from({ length: 4 }, (_, index) => (
-              <TableRow key={index}>
+              <TableRow key={index} className="hover:bg-transparent">
                 <TableCell className="px-4 py-3">
-                  <Skeleton className="mx-auto h-4 w-4" />
+                  <div className="space-y-1.5">
+                    <Skeleton className="h-4 w-48" />
+                    <Skeleton className="h-3 w-24" />
+                  </div>
                 </TableCell>
                 <TableCell className="px-4 py-3">
-                  <Skeleton className="h-4 w-48" />
-                </TableCell>
-                <TableCell className="px-4 py-3">
-                  <Skeleton className="h-4 w-28" />
+                  <Skeleton className="h-4 w-32" />
                 </TableCell>
                 <TableCell className="px-4 py-3">
                   <Skeleton className="h-6 w-24 rounded-full" />
                 </TableCell>
-                <TableCell className="px-3 py-3">
-                  <Skeleton className="mx-auto size-8 rounded-lg" />
+                <TableCell className="px-4 py-3">
+                  <Skeleton className="ml-auto size-8 rounded-lg" />
                 </TableCell>
               </TableRow>
             ))
           ) : batches.length > 0 ? (
-            batches.map((batch, index) => (
+            batches.map((batch) => (
               <TableRow
                 key={batch.id}
                 onClick={() => router.push(batchHref(batch.id))}
-                className="cursor-pointer border-b border-divider transition-colors hover:bg-hover/60"
+                className="group cursor-pointer"
               >
-                <TableCell className="px-4 py-3.5 text-center text-xs text-muted-foreground">
-                  {(currentPage - 1) * pageSize + index + 1}
-                </TableCell>
-                <TableCell className="px-4 py-3.5">
+                <TableCell className="px-4 py-3 whitespace-normal">
                   <Link
                     href={batchHref(batch.id)}
-                    className="font-semibold text-foreground hover:text-primary"
+                    className="text-sm font-medium text-foreground transition-colors group-hover:text-primary"
                   >
                     {batch.name}
                   </Link>
-                  <div className="mt-0.5 text-[11px] text-muted-foreground">
+                  <div className="mt-0.5 font-mono text-xs tabular-nums text-muted-foreground">
                     Mã: {batch.code}
                   </div>
                 </TableCell>
-                <TableCell className="px-4 py-3.5 text-xs text-foreground">
+                <TableCell className="px-4 py-3 text-sm text-foreground">
                   {formatBatchDateRange(batch)}
                 </TableCell>
-                <TableCell className="px-4 py-3.5">
-                  <span className="inline-flex rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-foreground">
+                <TableCell className="px-4 py-3">
+                  <StatusPill tone={HEALTH_EXAMINATION_BATCH_STATUS_TONES[batch.status]}>
                     {getHealthExaminationBatchStatusLabel(batch.status)}
-                  </span>
+                  </StatusPill>
                 </TableCell>
                 <TableCell
-                  className="px-3 py-3.5 text-center"
+                  className="px-4 py-3 text-right"
                   onClick={(event) => event.stopPropagation()}
                 >
-                  <DropdownMenu>
-                    <DropdownMenuTrigger
-                      render={
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          aria-label={`Thao tác đợt khám ${batch.name}`}
-                          className="size-8 text-muted-foreground hover:text-foreground"
-                        />
-                      }
-                    >
-                      <MoreHorizontal className="size-4" />
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-36">
-                      <DropdownMenuItem
-                        onClick={() => router.push(batchHref(batch.id))}
-                        className="cursor-pointer text-xs"
-                      >
-                        <Eye className="mr-2 size-3.5" />
-                        Xem chi tiết
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => router.push(batchHref(batch.id))}
+                    className="size-8 cursor-pointer rounded-lg border-border p-0 text-secondary-foreground hover:bg-surface-alt hover:text-foreground"
+                    title={`Xem chi tiết - ${batch.name}`}
+                    aria-label={`Xem chi tiết đợt khám ${batch.name}`}
+                  >
+                    <Eye className="size-3.5" />
+                  </Button>
                 </TableCell>
               </TableRow>
             ))
           ) : (
-            <TableRow>
-              <TableCell colSpan={5} className="py-14 text-center">
-                <CalendarDays className="mx-auto mb-3 size-9 text-muted-foreground" />
+            <TableRow className="hover:bg-transparent">
+              <TableCell colSpan={4} className="py-14 text-center">
+                <CalendarDays aria-hidden="true" className="mx-auto mb-3 size-9 text-muted-foreground" />
                 <p className="font-medium text-foreground">
                   {isFiltered
                     ? "Không tìm thấy đợt khám phù hợp"
                     : "Chưa có đợt khám nào cho đơn vị này"}
                 </p>
-                <p className="mx-auto mt-1 mb-5 max-w-sm text-xs text-muted-foreground">
+                <p className="mx-auto mt-1 mb-5 max-w-sm whitespace-normal text-xs text-muted-foreground">
                   {isFiltered
                     ? "Thử đổi từ khóa tìm kiếm."
                     : "Tạo đợt khám để cấu hình thời gian, địa điểm và hạng mục khám."}
                 </p>
                 {onCreateClick && !isFiltered && (
                   <Button type="button" onClick={onCreateClick}>
-                    <Plus className="mr-1.5 size-3.5" />
+                    <Plus className="size-4" />
                     Tạo đợt khám mới
                   </Button>
                 )}

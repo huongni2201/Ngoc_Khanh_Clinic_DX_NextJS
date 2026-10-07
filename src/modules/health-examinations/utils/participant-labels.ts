@@ -35,3 +35,24 @@ export const PARTICIPANT_RECONCILIATION_STATUS_LABELS: Record<
 export function isParticipantImportAllowed(batchStatus: string) {
   return batchStatus === "DRAFT" || batchStatus === "READY"
 }
+
+/** Batch states in which the backend still accepts adding, editing and cancelling a Participant. */
+export function isParticipantChangeAllowed(batchStatus: string) {
+  return batchStatus === "DRAFT" || batchStatus === "READY"
+}
+
+/** Why a Participant cannot be cancelled, or `null` when it can (the backend decides in the end). */
+export function getParticipantCancelBlockReason(participant: {
+  preparedAt?: string
+  attendanceStatus: ParticipantAttendanceStatus
+  reconciliationStatus: ParticipantReconciliationStatus
+}): string | null {
+  if (
+    participant.preparedAt ||
+    participant.attendanceStatus === "ATTENDED" ||
+    participant.reconciliationStatus === "RECONCILED"
+  ) {
+    return "Không thể hủy người khám đã được chuẩn bị lượt khám, đã đến khám hoặc đã đối soát."
+  }
+  return null
+}

@@ -2,7 +2,8 @@
 
 import * as React from "react"
 import { useRouter } from "next/navigation"
-import { Eye, Edit3, Search } from "@/shared/ui/product-icon"
+import { Building2, Edit3, Eye, Plus } from "@/shared/ui/product-icon"
+import { SearchField, StatusPill } from "@/shared/ui"
 import {
   Table,
   TableHeader,
@@ -12,7 +13,6 @@ import {
   TableCell,
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import type { Organization, OrganizationDetail } from "../types"
 import { EditOrganizationDialog } from "./edit-organization-dialog"
@@ -20,21 +20,31 @@ import { EditOrganizationDialog } from "./edit-organization-dialog"
 interface OrganizationTableProps {
   organizations: Organization[]
   isLoading?: boolean
-  currentPage?: number
-  pageSize?: number
   totalItems?: number
   searchTerm?: string
   onSearchChange?: (search: string) => void
+  onCreateClick?: () => void
+}
+
+const HEAD_CLASS = "h-10 px-4 text-xs font-semibold text-table-header-fg"
+const ICON_BUTTON_CLASS =
+  "size-8 cursor-pointer rounded-lg border-border p-0 text-secondary-foreground hover:bg-surface-alt hover:text-foreground"
+
+function statusPresentation(status: Organization["status"]) {
+  return status === "ACTIVE"
+    ? { tone: "success" as const, label: "Hoạt động" }
+    : status === "INACTIVE"
+      ? { tone: "neutral" as const, label: "Ngừng hoạt động" }
+      : { tone: "neutral" as const, label: status }
 }
 
 export function OrganizationTable({
   organizations,
   isLoading,
-  currentPage = 1,
-  pageSize = 10,
   totalItems,
   searchTerm = "",
   onSearchChange,
+  onCreateClick,
 }: OrganizationTableProps) {
   const router = useRouter()
   const [organizationToEdit, setOrganizationToEdit] = React.useState<OrganizationDetail | null>(null)
@@ -59,252 +69,162 @@ export function OrganizationTable({
     return () => clearTimeout(timer)
   }, [searchValue, searchTerm, onSearchChange])
 
-  const handleRowClick = (organizationId: string) => {
+  const openOrganization = (organizationId: string) => {
     router.push(`/organizations/${organizationId}`)
   }
 
-  const renderCardHeader = (count?: number) => (
-    <>
-      <div className="flex items-center justify-between border-b border-border px-5 pt-4 pb-0 gap-3">
-        <div className="flex items-center gap-2">
-          <h2 className="text-base font-bold text-foreground tracking-tight">
-            Danh sách đơn vị
-          </h2>
-          <span className="text-xs px-2 py-0.5 rounded-full bg-surface-alt font-medium text-primary">
-            {count ?? (totalItems !== undefined ? totalItems : organizations.length)}
-          </span>
-        </div>
+  const total = totalItems ?? organizations.length
+  const isFiltered = searchTerm.trim().length > 0
 
-      </div>
-
-      {/* Filter Strip */}
+  return (
+    <div
+      data-slot="organization-table"
+      className="flex flex-1 flex-col overflow-hidden rounded-lg border border-border bg-card"
+    >
       {onSearchChange && (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-5 py-3 border-b border-border bg-surface-alt/50">
-          <div className="relative w-full sm:w-80">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
-            <Input
-              value={searchValue}
-              onChange={(e) => setSearchValue(e.target.value)}
-              placeholder="Tìm theo tên đơn vị, mã số thuế, người liên hệ..."
-              className="h-8.5 pl-8.5 pr-3 text-xs bg-card border-border"
-            />
-          </div>
+        <div className="flex flex-col gap-3 border-b border-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <SearchField
+            value={searchValue}
+            onChange={setSearchValue}
+            placeholder="Tìm theo tên đơn vị, mã số thuế, người liên hệ..."
+            label="Tìm đơn vị"
+            className="sm:max-w-md"
+          />
+          {!isLoading && (
+            <p className="text-xs text-muted-foreground" aria-live="polite">
+              <span className="font-semibold text-foreground">{total}</span> đơn vị
+            </p>
+          )}
         </div>
       )}
-    </>
-  )
 
-  if (isLoading) {
-    return (
-      <div className="flex flex-col flex-1 rounded-lg border border-border bg-card overflow-hidden ">
-        {renderCardHeader(totalItems ?? 0)}
-        <Table className="w-full">
-          <TableHeader>
-            <TableRow className="bg-surface-alt/40 hover:bg-surface-alt/40 border-b border-border">
-              <TableHead className="h-9 px-3 text-[11px] font-semibold text-foreground text-center w-12">
-                STT
-              </TableHead>
-              <TableHead className="h-9 px-4 text-[11px] font-semibold text-foreground w-[24%]">
-                Tên đơn vị
-              </TableHead>
-              <TableHead className="h-9 px-4 text-[11px] font-semibold text-foreground w-[14%]">
-                Mã số thuế
-              </TableHead>
-              <TableHead className="h-9 px-4 text-[11px] font-semibold text-foreground w-[24%]">
-                Địa chỉ
-              </TableHead>
-              <TableHead className="h-9 px-4 text-[11px] font-semibold text-foreground w-[16%]">
-                Người liên hệ
-              </TableHead>
-              <TableHead className="h-9 px-4 text-[11px] font-semibold text-foreground w-[12%]">
-                Trạng thái
-              </TableHead>
-              <TableHead className="h-9 px-3 text-[11px] font-semibold text-foreground text-right pr-4 w-28">
-                Thao tác
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {Array.from({ length: 10 }).map((_, idx) => (
-              <TableRow key={idx} className="border-b border-table-divider">
-                <TableCell className="px-3 py-3 text-center">
-                  <Skeleton className="h-4 w-5 mx-auto" />
-                </TableCell>
+      <Table className="min-w-[44rem]">
+        <TableHeader>
+          <TableRow className="border-b border-border bg-table-header-bg hover:bg-table-header-bg">
+            <TableHead className={`${HEAD_CLASS} w-[30%] min-w-56`}>Tên đơn vị</TableHead>
+            <TableHead className={`${HEAD_CLASS} w-[30%] min-w-48`}>Địa chỉ</TableHead>
+            <TableHead className={`${HEAD_CLASS} w-[18%]`}>Người liên hệ</TableHead>
+            <TableHead className={`${HEAD_CLASS} w-[14%]`}>Trạng thái</TableHead>
+            <TableHead className={`${HEAD_CLASS} w-24 text-right`}>
+              <span className="sr-only">Thao tác</span>
+            </TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {isLoading ? (
+            Array.from({ length: 8 }).map((_, index) => (
+              <TableRow key={index} className="hover:bg-transparent">
                 <TableCell className="px-4 py-3">
-                  <Skeleton className="h-4 w-48" />
-                </TableCell>
-                <TableCell className="px-4 py-3">
-                  <Skeleton className="h-4 w-24" />
+                  <div className="space-y-1.5">
+                    <Skeleton className="h-4 w-48" />
+                    <Skeleton className="h-3 w-24" />
+                  </div>
                 </TableCell>
                 <TableCell className="px-4 py-3">
                   <Skeleton className="h-4 w-52" />
                 </TableCell>
                 <TableCell className="px-4 py-3">
-                  <div className="space-y-1">
-                    <Skeleton className="h-3.5 w-24" />
+                  <div className="space-y-1.5">
+                    <Skeleton className="h-4 w-24" />
                     <Skeleton className="h-3 w-20" />
                   </div>
                 </TableCell>
                 <TableCell className="px-4 py-3">
                   <Skeleton className="h-6 w-24 rounded-full" />
                 </TableCell>
-                <TableCell className="px-3 py-3 text-right pr-4">
-                  <Skeleton className="size-7.5 rounded-lg ml-auto" />
+                <TableCell className="px-4 py-3">
+                  <Skeleton className="ml-auto h-8 w-[4.5rem] rounded-lg" />
                 </TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-    )
-  }
+            ))
+          ) : organizations.length === 0 ? (
+            <TableRow className="hover:bg-transparent">
+              <TableCell colSpan={5} className="py-16 text-center">
+                <Building2 aria-hidden="true" className="mx-auto mb-3 size-9 text-muted-foreground" />
+                <p className="text-sm font-medium text-foreground">
+                  {isFiltered ? "Không tìm thấy đơn vị phù hợp" : "Chưa có đơn vị nào"}
+                </p>
+                <p className="mx-auto mt-1 mb-5 max-w-sm whitespace-normal text-xs text-muted-foreground">
+                  {isFiltered
+                    ? "Thử đổi từ khóa hoặc tìm theo mã số thuế."
+                    : "Thêm đơn vị đầu tiên để bắt đầu tạo đợt khám sức khỏe."}
+                </p>
+                {onCreateClick && !isFiltered && (
+                  <Button type="button" onClick={onCreateClick}>
+                    <Plus className="size-4" />
+                    Thêm đơn vị
+                  </Button>
+                )}
+              </TableCell>
+            </TableRow>
+          ) : (
+            organizations.map((organization) => {
+              const status = statusPresentation(organization.status)
 
-  if (organizations.length === 0) {
-    return (
-      <div className="flex flex-col flex-1 rounded-lg border border-border bg-card overflow-hidden ">
-        {renderCardHeader(0)}
-        <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-          <p className="text-sm font-medium text-foreground">Không tìm thấy đơn vị nào</p>
-          <p className="text-xs text-muted-foreground mt-1">
-            Thử thay đổi từ khóa tìm kiếm.
-          </p>
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <div className="flex flex-col flex-1 rounded-lg border border-border bg-card overflow-hidden ">
-      {renderCardHeader()}
-      <Table className="w-full">
-        <TableHeader>
-          <TableRow className="bg-surface-alt/40 hover:bg-surface-alt/40 border-b border-border">
-            {/* 1. STT */}
-            <TableHead className="h-9 px-3 text-[11px] font-semibold text-foreground text-center w-12">
-              STT
-            </TableHead>
-
-            {/* 2. Tên đơn vị */}
-            <TableHead className="h-9 px-4 text-[11px] font-semibold text-foreground w-[24%]">
-              Tên đơn vị
-            </TableHead>
-
-            {/* 3. Mã số thuế */}
-            <TableHead className="h-9 px-4 text-[11px] font-semibold text-foreground w-[14%]">
-              Mã số thuế
-            </TableHead>
-
-            {/* 4. Địa chỉ */}
-            <TableHead className="h-9 px-4 text-[11px] font-semibold text-foreground w-[24%]">
-              Địa chỉ
-            </TableHead>
-
-            {/* 5. Người liên hệ */}
-            <TableHead className="h-9 px-4 text-[11px] font-semibold text-foreground w-[16%]">
-              Người liên hệ
-            </TableHead>
-
-            {/* 6. Trạng thái */}
-            <TableHead className="h-9 px-4 text-[11px] font-semibold text-foreground w-[12%]">
-              Trạng thái
-            </TableHead>
-
-            {/* 7. Thao tác */}
-            <TableHead className="h-9 px-3 text-[11px] font-semibold text-foreground text-right pr-4 w-28">
-              Thao tác
-            </TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {organizations.map((organization, index) => {
-            const sttNumber = (currentPage - 1) * pageSize + index + 1
-
-            return (
-              <TableRow
-                key={organization.id}
-                onClick={() => handleRowClick(organization.id)}
-                className="group cursor-pointer border-b border-divider transition-colors hover:bg-hover/60"
-              >
-                {/* 1. STT */}
-                <TableCell className="px-3 py-2.5 text-center text-xs font-mono text-muted-foreground">
-                  {sttNumber}
-                </TableCell>
-
-                {/* 2. Tên đơn vị (không có logo) */}
-                <TableCell className="px-4 py-2.5 whitespace-normal">
-                  <span className="font-medium text-xs text-foreground group-hover:text-primary transition-colors line-clamp-2">
-                    {organization.name}
-                  </span>
-                </TableCell>
-
-                {/* 3. Mã số thuế */}
-                <TableCell className="px-4 py-2.5 text-xs text-muted-foreground">
-                  {organization.taxCode || "—"}
-                </TableCell>
-
-                {/* 4. Địa chỉ */}
-                <TableCell className="px-4 py-2.5 text-xs text-muted-foreground whitespace-normal">
-                  <span className="line-clamp-2" title={organization.address}>
-                    {organization.address || "—"}
-                  </span>
-                </TableCell>
-
-                {/* 5. Người liên hệ */}
-                <TableCell className="px-4 py-2.5">
-                  <div className="flex flex-col text-xs">
-                    <span className="font-medium text-foreground">
-                      {organization.contactName}
+              return (
+                <TableRow
+                  key={organization.id}
+                  onClick={() => openOrganization(organization.id)}
+                  className="group cursor-pointer"
+                >
+                  <TableCell className="px-4 py-3 whitespace-normal">
+                    <span className="line-clamp-2 text-sm font-medium text-foreground transition-colors group-hover:text-primary">
+                      {organization.name}
                     </span>
-                    <span className="text-[11px] text-muted-foreground">
+                    <span className="mt-0.5 block font-mono text-xs tabular-nums text-muted-foreground">
+                      {organization.taxCode || "Chưa có mã số thuế"}
+                    </span>
+                  </TableCell>
+                  <TableCell className="px-4 py-3 whitespace-normal text-sm text-secondary-foreground">
+                    <span className="line-clamp-2" title={organization.address}>
+                      {organization.address || "—"}
+                    </span>
+                  </TableCell>
+                  <TableCell className="px-4 py-3">
+                    <span className="block text-sm font-medium text-foreground">
+                      {organization.contactName || "—"}
+                    </span>
+                    <span className="mt-0.5 block font-mono text-xs tabular-nums text-muted-foreground">
                       {organization.contactPhone}
                     </span>
-                  </div>
-                </TableCell>
-
-                {/* 6. Trạng thái */}
-                <TableCell className="px-4 py-2.5">
-                  {organization.status === "ACTIVE"
-                    ? "Hoạt động"
-                    : organization.status === "INACTIVE"
-                      ? "Ngừng hoạt động"
-                      : organization.status}
-                </TableCell>
-
-                {/* 7. Thao tác */}
-                <TableCell
-                  className="px-3 py-2.5 text-right pr-4"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <div className="flex items-center justify-end gap-1.5">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleRowClick(organization.id)}
-                      className="size-7.5 p-0 text-secondary-foreground hover:text-foreground hover:bg-surface-alt border-border rounded-lg cursor-pointer "
-                      title={`Xem chi tiết - ${organization.name}`}
-                      aria-label={`Xem chi tiết cho ${organization.name}`}
-                    >
-                      <Eye className="size-3.5" />
-                      <span className="sr-only">Xem chi tiết</span>
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setOrganizationToEdit(organization)}
-                      className="size-7.5 p-0 text-secondary-foreground hover:text-foreground hover:bg-surface-alt border-border rounded-lg cursor-pointer "
-                      title={`Chỉnh sửa - ${organization.name}`}
-                      aria-label={`Chỉnh sửa cho ${organization.name}`}
-                    >
-                      <Edit3 className="size-3.5" />
-                      <span className="sr-only">Chỉnh sửa</span>
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            )
-          })}
+                  </TableCell>
+                  <TableCell className="px-4 py-3">
+                    <StatusPill tone={status.tone}>{status.label}</StatusPill>
+                  </TableCell>
+                  <TableCell
+                    className="px-4 py-3 text-right"
+                    onClick={(event) => event.stopPropagation()}
+                  >
+                    <div className="flex items-center justify-end gap-1.5">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openOrganization(organization.id)}
+                        className={ICON_BUTTON_CLASS}
+                        title={`Xem chi tiết - ${organization.name}`}
+                        aria-label={`Xem chi tiết cho ${organization.name}`}
+                      >
+                        <Eye className="size-3.5" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setOrganizationToEdit(organization)}
+                        className={ICON_BUTTON_CLASS}
+                        title={`Chỉnh sửa - ${organization.name}`}
+                        aria-label={`Chỉnh sửa cho ${organization.name}`}
+                      >
+                        <Edit3 className="size-3.5" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              )
+            })
+          )}
         </TableBody>
       </Table>
+
       {organizationToEdit && (
         <EditOrganizationDialog
           open
@@ -317,4 +237,3 @@ export function OrganizationTable({
     </div>
   )
 }
-

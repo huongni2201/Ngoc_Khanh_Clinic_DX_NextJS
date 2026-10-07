@@ -29,23 +29,26 @@ export function HealthExaminationBatchSummaryStrip({
   ]
 
   return (
-    <Card className="rounded-lg border border-border bg-card overflow-hidden">
+    <Card className="gap-0 py-0">
       <CardContent className="p-0">
-        <div className="grid grid-cols-1 divide-y divide-border/70 sm:grid-cols-3 sm:divide-y-0 sm:divide-x">
+        <dl className="grid grid-cols-1 divide-y divide-divider sm:grid-cols-3 sm:divide-x sm:divide-y-0">
           {items.map(({ icon: Icon, label, value }) => (
-            <div key={label} className="flex items-center gap-4 px-6 py-4">
-              <div className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                <Icon className="size-6 stroke-[1.75]" />
-              </div>
-              <div className="flex min-w-0 flex-col">
-                <span className="text-xs font-medium text-muted-foreground">{label}</span>
-                <span className="mt-0.5 truncate text-sm font-bold text-foreground sm:text-base">
+            <div key={label} className="flex items-center gap-3 px-5 py-4">
+              <span
+                aria-hidden="true"
+                className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-selected text-primary"
+              >
+                <Icon className="size-5" />
+              </span>
+              <div className="min-w-0">
+                <dt className="text-xs font-medium text-muted-foreground">{label}</dt>
+                <dd className="mt-0.5 truncate text-sm font-semibold text-foreground" title={value}>
                   {value}
-                </span>
+                </dd>
               </div>
             </div>
           ))}
-        </div>
+        </dl>
       </CardContent>
     </Card>
   )

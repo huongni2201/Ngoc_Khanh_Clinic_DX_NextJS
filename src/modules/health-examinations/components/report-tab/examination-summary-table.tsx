@@ -1,11 +1,11 @@
 import * as React from "react"
 import { Skeleton } from "@/components/ui/skeleton"
-import { HealthExaminationServiceSummary } from "../../types"
+import type { PaymentSummaryItem } from "../../types"
 import { ExaminationSummaryRow } from "./examination-summary-row"
 import { ReportTotalRow } from "./report-total-row"
 
 export interface ExaminationSummaryTableProps {
-  items: HealthExaminationServiceSummary[]
+  items: PaymentSummaryItem[]
   totalAmount: number
   isLoading?: boolean
 }
@@ -57,7 +57,7 @@ export function ExaminationSummaryTable({
           <tbody className="divide-y divide-table-divider">
             {items.map((item) => (
               <ExaminationSummaryRow
-                key={item.serviceId}
+                key={`${item.batchServiceId}:${item.unitPrice}`}
                 item={item}
               />
             ))}

@@ -1,6 +1,6 @@
 import { Skeleton } from "@/components/ui/skeleton"
 
-export type ScreenLoadingVariant = "list" | "worklist" | "detail" | "encounter"
+export type ScreenLoadingVariant = "list" | "worklist" | "detail" | "encounter" | "workspace"
 
 export interface ScreenLoadingSkeletonProps {
   variant?: ScreenLoadingVariant
@@ -10,6 +10,7 @@ const actionSkeletonWidths = {
   list: ["w-36"],
   worklist: ["w-32", "w-36"],
   detail: ["w-36", "w-36"],
+  workspace: ["w-36", "w-36"],
   encounter: [],
 } as const
 
@@ -69,6 +70,21 @@ function SummarySkeleton({ variant }: { variant: ScreenLoadingVariant }) {
 export function ScreenLoadingSkeleton({
   variant = "list",
 }: ScreenLoadingSkeletonProps) {
+  if (variant === "workspace") {
+    return (
+      <div role="status" aria-label="Đang tải nội dung…" className="w-full space-y-5">
+        <HeaderSkeleton variant={variant} />
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_20rem]">
+          <div className="space-y-3">
+            <Skeleton className="h-9 w-full max-w-sm rounded-md" />
+            <Skeleton className="h-80 w-full rounded-lg" />
+          </div>
+          <Skeleton className="h-80 w-full rounded-lg" />
+        </div>
+      </div>
+    )
+  }
+
   const showToolbar = variant === "list" || variant === "worklist"
 
   return (

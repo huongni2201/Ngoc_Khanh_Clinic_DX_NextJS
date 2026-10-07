@@ -1,7 +1,6 @@
 // Pages
 export { OrganizationListPage } from "./pages/organization-list-page"
 export { OrganizationDetailPage } from "./pages/organization-detail-page"
-export { OrganizationCreatePage } from "./pages/organization-create-page"
 
 // Screen 01 Components
 export { OrganizationPageHeader } from "./components/organization-page-header"
@@ -10,8 +9,6 @@ export { CreateOrganizationDialog } from "./components/create-organization-dialo
 
 // Screen 02 Components
 export { OrganizationDetailHeader } from "./components/organization-detail-header"
-export { OrganizationSummaryStrip } from "./components/organization-summary-strip"
-export { OrganizationTabs } from "./components/organization-tabs"
 export { OrganizationInfoCard } from "./components/organization-info-card"
 export { EditOrganizationDialog } from "./components/edit-organization-dialog"
 
@@ -29,4 +26,3 @@ export { organizationKeys } from "./query-keys"
 // Types & Schemas
 export * from "./types"
 export * from "./schemas"
-

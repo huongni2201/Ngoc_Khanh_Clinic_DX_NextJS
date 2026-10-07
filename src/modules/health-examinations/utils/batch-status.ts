@@ -11,6 +11,17 @@ export const HEALTH_EXAMINATION_BATCH_STATUS_LABELS: Record<
   CLOSED: "Đã đóng",
 }
 
+/** Status tone for StatusPill: draft is neutral, ready is informational, finalized is done. */
+export const HEALTH_EXAMINATION_BATCH_STATUS_TONES: Record<
+  HealthExaminationBatchStatus,
+  "neutral" | "info" | "success"
+> = {
+  DRAFT: "neutral",
+  READY: "info",
+  FINALIZED: "success",
+  CLOSED: "neutral",
+}
+
 export function getHealthExaminationBatchStatusLabel(
   status: HealthExaminationBatchStatus
 ) {

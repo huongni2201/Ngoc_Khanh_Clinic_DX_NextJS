@@ -44,4 +44,29 @@ describe("healthExaminationKeys", () => {
       "clinical-services",
     ])
   })
+
+  it("keeps the Participant detail under the participants root so one invalidation refreshes both", () => {
+    const root = healthExaminationKeys.participantsRoot("org-1", "batch-1")
+    const detail = healthExaminationKeys.participantDetail("org-1", "batch-1", "p-1")
+    expect(detail.slice(0, root.length)).toEqual(root)
+    expect(detail).not.toEqual(healthExaminationKeys.participantDetail("org-1", "batch-1", "p-2"))
+    expect(detail).not.toEqual(healthExaminationKeys.participantDetail("org-2", "batch-1", "p-1"))
+  })
+
+  it("keeps the examination detail queries under one root so an import refreshes the list and the counters", () => {
+    const root = healthExaminationKeys.examinationDetailsRoot("org-1", "batch-1")
+    const list = healthExaminationKeys.examinationDetails("org-1", "batch-1", { page: 2 })
+    const summary = healthExaminationKeys.examinationSummary("org-1", "batch-1")
+    expect(list.slice(0, root.length)).toEqual(root)
+    expect(summary.slice(0, root.length)).toEqual(root)
+    expect(list).not.toEqual(healthExaminationKeys.examinationDetails("org-1", "batch-1", { page: 3 }))
+    expect(list).not.toEqual(healthExaminationKeys.examinationDetails("org-2", "batch-1", { page: 2 }))
+  })
+
+  it("keeps the payment report of one batch apart from the examination details", () => {
+    const report = healthExaminationKeys.paymentReport("org-1", "batch-1")
+    const root = healthExaminationKeys.examinationDetailsRoot("org-1", "batch-1")
+    expect(report).not.toEqual(root)
+    expect(report).not.toEqual(healthExaminationKeys.paymentReport("org-1", "batch-2"))
+  })
 })

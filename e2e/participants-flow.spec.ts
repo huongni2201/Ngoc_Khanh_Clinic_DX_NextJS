@@ -12,6 +12,7 @@ const CORS = {
 const PERMISSIONS = {
   read: "HEALTH_EXAMINATION_PARTICIPANT_READ",
   import: "HEALTH_EXAMINATION_PARTICIPANT_IMPORT",
+  manage: "HEALTH_EXAMINATION_PARTICIPANT_MANAGE",
 }
 
 function participant(index: number, batchId: string) {
@@ -206,4 +207,201 @@ test("a session without the read permission never requests the list", async ({ p
 
   await expect(page.getByText("Không có quyền xem")).toBeVisible()
   expect(participants.listRequests).toEqual([])
+})
+
+interface StoredParticipant {
+  id: string
+  fullName: string
+  identificationNumber: string
+  rosterStatus: "ACTIVE" | "CANCELLED"
+  rowVersion: number
+  batchDayId: string
+}
+
+interface ManageMock {
+  rows: StoredParticipant[]
+  reactivations: { path: string; body: Record<string, unknown> }[]
+}
+
+/**
+ * Stateful Participant backend for the manual add, cancel and reactivate flow. Registered after
+ * `mockBackend`, so these routes win for the Participant endpoints only.
+ */
+async function mockManageableParticipants(page: Page, batchId: string, permissions: string[]) {
+  const mock: ManageMock = { rows: [], reactivations: [] }
+  const base = `/api/v1/organizations/${ORGANIZATION_ID}/health-examination-batches/${batchId}/participants`
+  let sequence = 0
+
+  const envelope = (route: Route, status: number, data?: unknown, message = "OK") =>
+    route.fulfill({
+      status,
+      headers: { ...CORS, "Content-Type": "application/json" },
+      body: JSON.stringify({ result: status < 400 ? "OK" : "NG", code: status, message, data: data ?? null }),
+    })
+
+  const summary = (row: StoredParticipant) => ({
+    id: row.id,
+    batchId,
+    batchDayId: row.batchDayId,
+    examinationDate: "2026-10-20",
+    participantCode: null,
+    fullName: row.fullName,
+    dateOfBirth: "1990-03-14",
+    sex: "FEMALE",
+    identificationNumberMasked: `********${row.identificationNumber.slice(-4)}`,
+    departmentName: "Phòng Kế toán",
+    positionName: "Kế toán viên",
+    rosterStatus: row.rosterStatus,
+    attendanceStatus: "UNCONFIRMED",
+    reconciliationStatus: "PENDING",
+    actualExaminationDate: null,
+    preparedAt: null,
+    rowVersion: row.rowVersion,
+  })
+  const detail = (row: StoredParticipant) => ({
+    ...summary(row),
+    identificationNumber: row.identificationNumber,
+    phone: null,
+    email: null,
+    patientLinked: false,
+    source: "MANUAL",
+    createdAt: "2026-10-07T01:00:00Z",
+    updatedAt: "2026-10-07T01:00:00Z",
+  })
+
+  await page.route(`${API}/api/**`, async (route) => {
+    const request = route.request()
+    const url = new URL(request.url())
+    const path = url.pathname
+    const method = request.method()
+
+    if (path === "/api/v1/auth/me") {
+      const now = Date.now()
+      return envelope(route, 200, {
+        principalType: "STAFF",
+        userId: "11111111-1111-4111-8111-111111111111",
+        staffId: "22222222-2222-4222-8222-222222222222",
+        patientId: null,
+        username: "staff.test",
+        roleAssignments: [{
+          roleId: "33333333-3333-4333-8333-333333333333",
+          roleCode: "CLINIC_MANAGER",
+          permissions: ["ORGANIZATION_READ", "HEALTH_EXAMINATION_BATCH_READ", ...permissions],
+        }],
+        idleExpiresAt: new Date(now + 30 * 60_000).toISOString(),
+        absoluteExpiresAt: new Date(now + 8 * 3600_000).toISOString(),
+      })
+    }
+    if (!path.startsWith(base)) return route.fallback()
+    if (method === "OPTIONS") return route.fulfill({ status: 204, headers: CORS })
+
+    if (path === base && method === "GET") {
+      const cccd = url.searchParams.get("identificationNumber")
+      const status = url.searchParams.get("rosterStatus")
+      const items = mock.rows.filter(
+        (row) =>
+          (!cccd || row.identificationNumber === cccd) && (!status || row.rosterStatus === status)
+      )
+      return envelope(route, 200, {
+        items: items.map(summary),
+        page: 1,
+        size: 10,
+        totalElements: items.length,
+        totalPages: items.length ? 1 : 0,
+      })
+    }
+    if (path === base && method === "POST") {
+      const body = request.postDataJSON() as Record<string, string>
+      if (mock.rows.some((row) => row.identificationNumber === body.identificationNumber)) {
+        return envelope(route, 409, undefined, "Participant identity already exists in this batch")
+      }
+      sequence += 1
+      const row: StoredParticipant = {
+        id: `0199dddd-0000-7000-8000-${String(sequence).padStart(12, "0")}`,
+        fullName: body.fullName,
+        identificationNumber: body.identificationNumber,
+        rosterStatus: "ACTIVE",
+        rowVersion: 0,
+        batchDayId: body.batchDayId,
+      }
+      mock.rows.push(row)
+      return envelope(route, 201, detail(row), "Created")
+    }
+
+    const item = /\/participants\/([^/]+)(\/reactivate)?$/.exec(path)
+    const row = item ? mock.rows.find((candidate) => candidate.id === item[1]) : undefined
+    if (!item || !row) return route.fallback()
+
+    if (method === "DELETE") {
+      row.rosterStatus = "CANCELLED"
+      row.rowVersion += 1
+      return route.fulfill({ status: 204, headers: CORS })
+    }
+    if (item[2] && method === "POST") {
+      mock.reactivations.push({ path, body: request.postDataJSON() as Record<string, unknown> })
+      if (row.rosterStatus !== "CANCELLED") {
+        return envelope(route, 409, undefined, "Participant is not cancelled")
+      }
+      row.rosterStatus = "ACTIVE"
+      row.rowVersion += 1
+      return envelope(route, 200, detail(row))
+    }
+    return route.fallback()
+  })
+
+  return mock
+}
+
+test("adds, cancels and reactivates a Participant on the same row", async ({ page }) => {
+  const backend = await mockBackend(page)
+  const batch = backend.seedBatch()
+  const participants = await mockManageableParticipants(page, batch.id, [
+    PERMISSIONS.read,
+    PERMISSIONS.manage,
+  ])
+  await page.goto(`/organizations/${ORGANIZATION_ID}/health-examination-batches/${batch.id}?tab=participants`)
+
+  async function fillAndSubmitAddForm() {
+    await page.getByRole("button", { name: "Thêm người khám" }).first().click()
+    const dialog = page.getByRole("dialog")
+    await dialog.getByLabel(/Họ và tên/).fill("Trần Thị B")
+    await dialog.getByLabel(/Ngày sinh/).fill("1990-03-14")
+    await dialog.getByLabel(/Giới tính/).selectOption("FEMALE")
+    await dialog.getByLabel(/CCCD/).fill("098765432109")
+    await dialog.getByLabel(/Đơn vị\/Phòng ban/).fill("Phòng Kế toán")
+    await dialog.getByLabel(/Chức vụ/).fill("Kế toán viên")
+    await dialog.getByRole("button", { name: "Thêm người khám" }).click()
+    return dialog
+  }
+
+  // Add.
+  await expect(page.getByText("Chưa có người khám trong đợt khám")).toBeVisible()
+  await fillAndSubmitAddForm()
+  const row = page.getByRole("row", { name: /Trần Thị B/ })
+  await expect(row).toBeVisible()
+  await expect(row.getByText("Đang trong danh sách")).toBeVisible()
+  const originalId = participants.rows[0].id
+
+  // Cancel.
+  await page.getByRole("button", { name: "Hủy người khám Trần Thị B" }).click()
+  await page.getByRole("dialog").getByRole("button", { name: "Hủy người khám", exact: true }).click()
+  await expect(row.getByText("Đã hủy")).toBeVisible()
+  await expect(page.getByRole("button", { name: "Khôi phục người khám Trần Thị B" })).toBeVisible()
+
+  // Adding the same CCCD again is refused and points at the cancelled row.
+  const addDialog = await fillAndSubmitAddForm()
+  await expect(addDialog.getByText(/CCCD này thuộc người khám/)).toContainText("Trần Thị B")
+  await addDialog.getByRole("button", { name: "Khôi phục người khám này" }).click()
+
+  // Reactivate, keeping the day it already had.
+  const reactivateDialog = page.getByRole("dialog")
+  await reactivateDialog.getByRole("button", { name: "Khôi phục người khám", exact: true }).click()
+  await expect(row.getByText("Đang trong danh sách")).toBeVisible()
+
+  expect(participants.rows).toHaveLength(1)
+  expect(participants.rows[0].id).toBe(originalId)
+  expect(participants.reactivations).toHaveLength(1)
+  expect(participants.reactivations[0].path).toMatch(new RegExp(`/participants/${originalId}/reactivate$`))
+  expect(participants.reactivations[0].body).toMatchObject({ rowVersion: 1 })
+  expect(backend.unexpected).toEqual([])
 })

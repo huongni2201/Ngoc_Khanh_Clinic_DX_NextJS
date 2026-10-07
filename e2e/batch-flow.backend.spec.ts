@@ -64,6 +64,6 @@ test("organization to batch chain works on the real backend", async ({ page }) =
 
   await page.getByRole("button", { name: "Xóa đợt khám" }).click()
   await page.getByRole("button", { name: "Xác nhận xóa" }).click()
-  await expect(page).toHaveURL(/\?tab=batches$/)
+  await expect(page).toHaveURL(/\/organizations\/[^/?]+$/)
   await expect(page.getByText("Chưa có đợt khám nào cho đơn vị này")).toBeVisible()
 })

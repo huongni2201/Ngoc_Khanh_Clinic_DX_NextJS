@@ -1,3 +1,8 @@
-/** Backend permission codes (migration V003). Used only to decide which actions are shown. */
+/** Backend permission codes (migrations V003, V004). Used only to decide which actions are shown. */
 export const PARTICIPANT_READ_PERMISSION = "HEALTH_EXAMINATION_PARTICIPANT_READ"
 export const PARTICIPANT_IMPORT_PERMISSION = "HEALTH_EXAMINATION_PARTICIPANT_IMPORT"
+export const PARTICIPANT_MANAGE_PERMISSION = "HEALTH_EXAMINATION_PARTICIPANT_MANAGE"
+/** Backend permission codes of the examination detail and payment report routes (migration V005). */
+export const EXAMINATION_SERVICE_READ_PERMISSION = "HEALTH_EXAMINATION_SERVICE_READ"
+export const EXAMINATION_SERVICE_RECONCILE_PERMISSION = "HEALTH_EXAMINATION_SERVICE_RECONCILE"
+export const EXAMINATION_REPORT_READ_PERMISSION = "HEALTH_EXAMINATION_REPORT_READ"

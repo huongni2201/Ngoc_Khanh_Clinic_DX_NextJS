@@ -2,12 +2,14 @@
 
 import { ChevronDown, ChevronRight } from "@/shared/ui/product-icon"
 import { DataTablePagination } from "@/shared/ui"
+import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import type { HealthExaminationParticipant, ParticipantSortKey } from "../../types"
 import {
   PARTICIPANT_ATTENDANCE_STATUS_LABELS,
   PARTICIPANT_ROSTER_STATUS_LABELS,
   PARTICIPANT_SEX_LABELS,
+  getParticipantCancelBlockReason,
 } from "../../utils/participant-labels"
 import { formatHealthExaminationDate } from "../../utils/format-health-examination-date"
 
@@ -21,6 +23,11 @@ interface ParticipantsTableProps {
   sortKey: ParticipantSortKey
   sortBy: "ASC" | "DESC"
   onSortChange: (sortKey: ParticipantSortKey) => void
+  /** Shows the action column. UX only: the backend decides every change. */
+  canManage?: boolean
+  onEdit?: (participant: HealthExaminationParticipant) => void
+  onCancel?: (participant: HealthExaminationParticipant) => void
+  onReactivate?: (participant: HealthExaminationParticipant) => void
 }
 
 function StatusPill({ children, tone = "muted" }: { children: string; tone?: "muted" | "warning" }) {
@@ -69,6 +76,76 @@ function SortableHeader({ label, sortKey, activeKey, direction, onSort }: Sortab
   )
 }
 
+interface ParticipantRowActionsProps {
+  participant: HealthExaminationParticipant
+  onEdit?: (participant: HealthExaminationParticipant) => void
+  onCancel?: (participant: HealthExaminationParticipant) => void
+  onReactivate?: (participant: HealthExaminationParticipant) => void
+}
+
+/**
+ * Edit and cancel for one row. A cancelled Participant can only be reactivated; the backend still
+ * decides.
+ */
+function ParticipantRowActions({
+  participant,
+  onEdit,
+  onCancel,
+  onReactivate,
+}: ParticipantRowActionsProps) {
+  if (participant.rosterStatus === "CANCELLED") {
+    if (!onReactivate) return <span className="text-muted-foreground">—</span>
+    return (
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="h-7 px-2.5 text-xs"
+        aria-label={`Khôi phục người khám ${participant.fullName}`}
+        onClick={() => onReactivate(participant)}
+      >
+        Khôi phục
+      </Button>
+    )
+  }
+  const blockReason = getParticipantCancelBlockReason(participant)
+  const reasonId = `cancel-block-${participant.id}`
+
+  return (
+    <div className="flex items-center gap-1.5">
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="h-7 px-2.5 text-xs"
+        aria-label={`Sửa người khám ${participant.fullName}`}
+        onClick={() => onEdit?.(participant)}
+      >
+        Sửa
+      </Button>
+      <span title={blockReason ?? undefined}>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="h-7 px-2.5 text-xs"
+          aria-label={`Hủy người khám ${participant.fullName}`}
+          aria-describedby={blockReason ? reasonId : undefined}
+          disabled={blockReason !== null}
+          onClick={() => onCancel?.(participant)}
+        >
+          Hủy
+        </Button>
+        {blockReason && (
+          <span id={reasonId} className="sr-only">
+            {blockReason}
+          </span>
+        )}
+      </span>
+    </div>
+  )
+}
+
 export function ParticipantsTable({
   participants,
   totalItems,
@@ -79,7 +156,12 @@ export function ParticipantsTable({
   sortKey,
   sortBy,
   onSortChange,
+  canManage = false,
+  onEdit,
+  onCancel,
+  onReactivate,
 }: ParticipantsTableProps) {
+  const columnCount = canManage ? 11 : 10
   const sortProps = { activeKey: sortKey, direction: sortBy, onSort: onSortChange }
 
   return (
@@ -100,12 +182,13 @@ export function ParticipantsTable({
                 <SortableHeader label="Ngày khám" sortKey="examinationDate" {...sortProps} />
                 <th className="py-3 px-3 text-left font-semibold">Danh sách</th>
                 <th className="py-3 px-3 text-left font-semibold">Tiếp nhận</th>
+                {canManage && <th className="py-3 px-3 text-left font-semibold">Thao tác</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-table-divider">
               {participants.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="py-10 text-center text-muted-foreground text-xs">
+                  <td colSpan={columnCount} className="py-10 text-center text-muted-foreground text-xs">
                     Không tìm thấy người khám phù hợp với bộ lọc tìm kiếm.
                   </td>
                 </tr>
@@ -149,6 +232,16 @@ export function ParticipantsTable({
                         {PARTICIPANT_ATTENDANCE_STATUS_LABELS[participant.attendanceStatus]}
                       </StatusPill>
                     </td>
+                    {canManage && (
+                      <td className="py-2.5 px-3 whitespace-nowrap">
+                        <ParticipantRowActions
+                          participant={participant}
+                          onEdit={onEdit}
+                          onCancel={onCancel}
+                          onReactivate={onReactivate}
+                        />
+                      </td>
+                    )}
                   </tr>
                 ))
               )}

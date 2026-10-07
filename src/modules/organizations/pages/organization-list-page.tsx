@@ -2,7 +2,8 @@
 
 import * as React from "react"
 import { useSearchParams, useRouter, usePathname } from "next/navigation"
-import { AlertCircle } from "@/shared/ui/product-icon"
+import { AlertCircle, RefreshCw } from "@/shared/ui/product-icon"
+import { Button } from "@/components/ui/button"
 import { OrganizationPageHeader } from "../components/organization-page-header"
 import { OrganizationTable } from "../components/organization-table"
 import { DataTablePagination, ScreenLayout } from "@/shared/ui"
@@ -50,7 +51,7 @@ export function OrganizationListPage() {
   )
 
   // Data fetching hook
-  const { data, isLoading, isError, error } = useOrganizations({
+  const { data, isLoading, isError, error, refetch } = useOrganizations({
     search,
     page,
     pageSize: 10,
@@ -63,11 +64,18 @@ export function OrganizationListPage() {
 
       {/* Error State */}
       {isError && (
-        <div role="status" className="p-4 rounded-lg border border-border bg-muted flex items-center gap-3 text-xs text-foreground">
-          <div className="flex items-center gap-2">
+        <div
+          role="alert"
+          className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-muted p-4 text-xs text-foreground"
+        >
+          <span className="flex items-center gap-2">
             <AlertCircle className="size-4 shrink-0 text-muted-foreground" />
-            <span>{error instanceof Error ? error.message : "Không thể tải danh sách đơn vị."}</span>
-          </div>
+            {error instanceof Error ? error.message : "Không thể tải danh sách đơn vị."}
+          </span>
+          <Button type="button" variant="outline" size="sm" onClick={() => void refetch()}>
+            <RefreshCw className="size-3.5" />
+            Thử lại
+          </Button>
         </div>
       )}
 
@@ -77,11 +85,10 @@ export function OrganizationListPage() {
           <OrganizationTable
             organizations={data?.data || []}
             isLoading={isLoading}
-            currentPage={data?.page || 1}
-            pageSize={data?.pageSize || 10}
             totalItems={data?.total || 0}
             searchTerm={search}
             onSearchChange={(q) => updateUrlParams({ q })}
+            onCreateClick={() => setIsCreateOpen(true)}
           />
         </div>
       )}

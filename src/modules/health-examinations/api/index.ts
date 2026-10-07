@@ -13,10 +13,6 @@ import type {
   ClinicalService,
   UpdateHealthExaminationBatchRequest,
 } from "../types"
-import type {
-  ExportDetailMatrixData,
-  ExportSummaryData,
-} from "../utils/export-excel"
 import {
   healthExaminationBatchDetailResponseSchema,
   healthExaminationBatchPageResponseSchema,
@@ -64,6 +60,9 @@ function mapBatch(
   return {
     ...mapBatchSummary(batch, batch.organizationId),
     examinationDates: batch.days.map((day) => day.examinationDate).sort(),
+    examinationDays: batch.days
+      .map((day) => ({ id: day.id, examinationDate: day.examinationDate }))
+      .sort((left, right) => left.examinationDate.localeCompare(right.examinationDate)),
     examinationSiteType: batch.examinationSiteType,
     examinationSiteName: batch.examinationSiteName,
     examinationSiteAddress: batch.examinationSiteAddress,
@@ -228,18 +227,16 @@ export function fetchHealthExaminationBatchReport(
   return unavailableApi("báo cáo đợt khám")
 }
 
-export function fetchExaminationDetailExportData(
-  batchId: string
-): Promise<ExportDetailMatrixData> {
+export function fetchExaminationDetailExportData(batchId: string): Promise<unknown> {
   void batchId
   return unavailableApi("xuất tiến độ khám")
 }
 
-export function fetchExaminationSummaryExportData(
-  batchId: string
-): Promise<ExportSummaryData> {
+export function fetchExaminationSummaryExportData(batchId: string): Promise<unknown> {
   void batchId
   return unavailableApi("xuất báo cáo đợt khám")
 }
 
 export * from "./participants"
+export * from "./examination-details"
+export * from "./reports"

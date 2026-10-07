@@ -1,225 +1,137 @@
 "use client"
 
-import * as React from "react"
-import { Checkbox } from "@/components/ui/checkbox"
 import { DataTablePagination } from "@/shared/ui"
-import { ParticipantExaminationProgress, ClinicalServiceColumn } from "../../types"
 import { cn } from "@/lib/utils"
+import type { ExaminationDetailRow, HealthExaminationBatchService } from "../../types"
+import { MISSING_SERVICE_NAME } from "../../utils/batch-form-values"
+import {
+  getExaminationStatus,
+  getExaminationStatusLabel,
+  isServicePerformed,
+} from "../../utils/examination-detail-labels"
+import { formatHealthExaminationDate } from "../../utils/format-health-examination-date"
 
 interface ExaminationMatrixTableProps {
-  categoryColumns: ClinicalServiceColumn[]
-  items: ParticipantExaminationProgress[]
+  /** The columns: the services of the batch, in display order. */
+  services: HealthExaminationBatchService[]
+  items: ExaminationDetailRow[]
   totalItems: number
   currentPage: number
   pageSize: number
   totalPages: number
   onPageChange: (page: number) => void
-  selectedIds: string[]
-  onToggleSelect: (id: string) => void
-  onToggleSelectAll: () => void
+  /** True when a filter or search is active, which only changes the empty message. */
+  filtered?: boolean
 }
 
+const STATUS_TONES = {
+  UNCONFIRMED: "bg-muted text-muted-foreground",
+  ABSENT: "bg-muted text-muted-foreground",
+  ATTENDED_PENDING: "bg-status-in-progress-bg text-status-in-progress",
+  RECONCILED: "bg-status-completed-bg text-status-completed",
+} as const
+
 export function ExaminationMatrixTable({
-  categoryColumns,
+  services,
   items,
   totalItems,
   currentPage,
   pageSize,
   totalPages,
   onPageChange,
-  selectedIds,
-  onToggleSelect,
-  onToggleSelectAll,
+  filtered = false,
 }: ExaminationMatrixTableProps) {
-  const isAllSelected =
-    items.length > 0 && items.every((emp) => selectedIds.includes(emp.id))
-
-  const isSomeSelected =
-    items.some((emp) => selectedIds.includes(emp.id)) && !isAllSelected
-
-  // Check if there are any completed exams among current items
-  const hasAnyCompleted = items.some(
-    (emp) =>
-      (emp.completedServiceIds && emp.completedServiceIds.length > 0) ||
-      Object.values(emp.examinations || {}).some((st) => st === "COMPLETED")
-  )
-
   return (
     <div className="space-y-4">
-      {/* Table Container with Horizontal Scroll */}
-      <div className="rounded-lg border border-border bg-card  overflow-hidden">
-        <div className="overflow-x-auto scrollbar-thin">
-          <table className="w-full text-xs border-collapse min-w-[1000px]">
+      <div className="overflow-hidden rounded-lg border border-border bg-card">
+        <div className="scrollbar-thin overflow-x-auto">
+          <table className="w-full min-w-[900px] border-collapse text-xs">
             <thead>
-              <tr className="bg-table-header-bg border-b border-border text-table-header-fg font-semibold select-none">
-                {/* 1. Checkbox */}
-                <th className="py-3 px-3.5 text-center w-10 sticky left-0 z-20 bg-table-header-bg">
-                  <Checkbox
-                    checked={isAllSelected}
-                    indeterminate={isSomeSelected}
-                    onCheckedChange={() => onToggleSelectAll()}
-                    aria-label="Chọn tất cả người khám"
-                  />
-                </th>
-
-                {/* 2. Mã người khám */}
-                <th className="py-3 px-3.5 text-left font-semibold w-24 sticky left-[40px] z-20 bg-table-header-bg">
+              <tr className="select-none border-b border-border bg-table-header-bg font-semibold text-table-header-fg">
+                <th className="sticky left-0 z-20 w-28 bg-table-header-bg px-3.5 py-3 text-left font-semibold">
                   Mã người khám
                 </th>
-
-                {/* 3. Họ tên */}
-                <th className="py-3 px-3.5 text-left font-semibold min-w-[150px] sticky left-[136px] z-20 bg-table-header-bg border-r border-border/60">
+                <th className="sticky left-[112px] z-20 min-w-[150px] border-r border-border/60 bg-table-header-bg px-3.5 py-3 text-left font-semibold">
                   Họ tên
                 </th>
-
-                {/* 4. Đơn vị công tác */}
-                <th className="py-3 px-3.5 text-left font-semibold min-w-[130px]">
-                  Đơn vị công tác
-                </th>
-
-                {/* Dynamic Examination Columns from Configured Items */}
-                {categoryColumns.map((cat) => (
+                <th className="min-w-[130px] px-3.5 py-3 text-left font-semibold">Đơn vị công tác</th>
+                <th className="min-w-[100px] px-3.5 py-3 text-left font-semibold">Ngày khám</th>
+                {services.map((service) => (
                   <th
-                    key={cat.id}
-                    className="py-3 px-3 text-center font-semibold whitespace-nowrap min-w-[85px]"
+                    key={service.id}
+                    className="min-w-[85px] whitespace-nowrap px-3 py-3 text-center font-semibold"
                   >
                     <span className="line-clamp-2 leading-tight">
-                      {cat.name}
+                      {service.name ?? MISSING_SERVICE_NAME}
                     </span>
                   </th>
                 ))}
-
-                {/* Ghi chú */}
-                <th className="py-3 px-3.5 text-left font-semibold min-w-[110px]">
-                  Ghi chú
-                </th>
+                <th className="min-w-[150px] px-3.5 py-3 text-left font-semibold">Trạng thái</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-table-divider">
               {items.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={5 + categoryColumns.length}
-                    className="py-10 text-center text-muted-foreground text-xs"
+                    colSpan={5 + services.length}
+                    className="py-10 text-center text-xs text-muted-foreground"
                   >
-                    Không tìm thấy người khám phù hợp với điều kiện tìm kiếm.
+                    {filtered
+                      ? "Không tìm thấy người khám phù hợp với điều kiện tìm kiếm."
+                      : "Đợt khám chưa có người khám trong danh sách."}
                   </td>
                 </tr>
               ) : (
-                items.map((emp) => {
-                  const isSelected = selectedIds.includes(emp.id)
-
-                  return (
-                    <tr
-                      key={emp.id}
-                      data-selected={isSelected}
-                      className={cn(
-                        "group border-b border-divider transition-colors hover:bg-hover/50",
-                        isSelected && "bg-selected hover:bg-hover/70"
-                      )}
-                    >
-                      {/* Checkbox */}
+                items.map((row) => (
+                  <tr
+                    key={row.id}
+                    className="group border-b border-divider transition-colors hover:bg-hover/50"
+                  >
+                    <td className="sticky left-0 z-10 whitespace-nowrap bg-card px-3.5 py-2.5 font-medium text-foreground group-hover:bg-hover/50">
+                      {row.participantCode ?? "—"}
+                    </td>
+                    <td className="sticky left-[112px] z-10 whitespace-nowrap border-r border-border/60 bg-card px-3.5 py-2.5 font-medium text-foreground group-hover:bg-hover/50">
+                      {row.fullName}
+                    </td>
+                    <td className="whitespace-nowrap px-3.5 py-2.5 text-secondary-foreground">
+                      {row.departmentName}
+                    </td>
+                    <td className="whitespace-nowrap px-3.5 py-2.5 text-secondary-foreground">
+                      {formatHealthExaminationDate(row.actualExaminationDate ?? row.examinationDate)}
+                    </td>
+                    {services.map((service) => (
                       <td
-                        className={cn(
-                          "py-2.5 px-3.5 text-center sticky left-0 z-10 bg-card group-hover:bg-hover/50",
-                          isSelected && "bg-selected group-hover:bg-hover/70"
-                        )}
+                        key={service.id}
+                        className="whitespace-nowrap px-3 py-2.5 text-center align-middle"
                       >
-                        <Checkbox
-                          checked={isSelected}
-                          onCheckedChange={() => onToggleSelect(emp.id)}
-                          aria-label={`Chọn người khám ${emp.fullName}`}
-                        />
-                      </td>
-
-                      {/* Mã người khám */}
-                      <td
-                        className={cn(
-                          "py-2.5 px-3.5 font-medium text-foreground whitespace-nowrap sticky left-[40px] z-10 bg-card group-hover:bg-hover/50",
-                          isSelected && "bg-selected group-hover:bg-hover/70"
-                        )}
-                      >
-                        {emp.participantCode}
-                      </td>
-
-                      {/* Họ tên */}
-                      <td
-                        className={cn(
-                          "py-2.5 px-3.5 font-medium text-foreground whitespace-nowrap sticky left-[136px] z-10 bg-card group-hover:bg-hover/50 border-r border-border/60",
-                          isSelected && "bg-selected group-hover:bg-hover/70"
-                        )}
-                      >
-                        {emp.fullName}
-                      </td>
-
-                      {/* Đơn vị công tác */}
-                      <td className="py-2.5 px-3.5 text-secondary-foreground whitespace-nowrap">
-                        {emp.organizationUnit}
-                      </td>
-
-                      {/* Dynamic Examination Matrix Cells */}
-                      {categoryColumns.map((cat) => {
-                        const isCompleted =
-                          emp.examinations?.[cat.id] === "COMPLETED" ||
-                          emp.completedServiceIds?.includes(cat.id)
-
-                        return (
-                          <td
-                            key={cat.id}
-                            className="py-2.5 px-3 text-center align-middle whitespace-nowrap"
+                        {isServicePerformed(row, service.id) && (
+                          <span
+                            title="Đã khám"
+                            className="inline-flex select-none items-center justify-center text-sm font-bold text-primary"
                           >
-                            {isCompleted && (
-                              <span className="inline-flex items-center justify-center font-bold text-primary text-sm select-none">
-                                X
-                              </span>
-                            )}
-                          </td>
-                        )
-                      })}
-
-                      {/* Ghi chú Badge */}
-                      <td className="py-2.5 px-3.5 whitespace-nowrap">
-                        {emp.note === "Đủ hồ sơ" ? (
-                          <span className="inline-flex items-center rounded-full bg-status-success-bg px-2.5 py-0.5 text-[11px] font-medium text-status-success select-none whitespace-nowrap">
-                            Đủ hồ sơ
+                            X
                           </span>
-                        ) : emp.note === "Khám bù" ? (
-                          <span className="inline-flex items-center rounded-full bg-status-warning-bg px-2.5 py-0.5 text-[11px] font-medium text-status-warning select-none whitespace-nowrap">
-                            Khám bù
-                          </span>
-                        ) : emp.note === "Thiếu chữ ký" ? (
-                          <span className="inline-flex items-center rounded-full bg-status-warning-bg px-2.5 py-0.5 text-[11px] font-medium text-status-warning select-none whitespace-nowrap">
-                            Thiếu chữ ký
-                          </span>
-                        ) : emp.note === "Thiếu CCCD" ? (
-                          <span className="inline-flex items-center rounded-full bg-status-warning-bg px-2.5 py-0.5 text-[11px] font-medium text-status-warning select-none whitespace-nowrap">
-                            Thiếu CCCD
-                          </span>
-                        ) : emp.note ? (
-                          <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground select-none whitespace-nowrap">
-                            {emp.note}
-                          </span>
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
                         )}
                       </td>
-                    </tr>
-                  )
-                })
+                    ))}
+                    <td className="whitespace-nowrap px-3.5 py-2.5">
+                      <span
+                        className={cn(
+                          "inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium",
+                          STATUS_TONES[getExaminationStatus(row)]
+                        )}
+                      >
+                        {getExaminationStatusLabel(row)}
+                      </span>
+                    </td>
+                  </tr>
+                ))
               )}
             </tbody>
           </table>
         </div>
       </div>
 
-      {/* Helper notice if participants exist but no completed exams yet */}
-      {items.length > 0 && !hasAnyCompleted && (
-        <div className="rounded-lg bg-muted/40 border border-border/80 px-3.5 py-2 text-xs text-muted-foreground text-center">
-          Chưa ghi nhận hạng mục khám hoàn thành.
-        </div>
-      )}
-
-      {/* Pagination */}
       <DataTablePagination
         currentPage={currentPage}
         pageSize={pageSize}
@@ -231,4 +143,3 @@ export function ExaminationMatrixTable({
     </div>
   )
 }
-

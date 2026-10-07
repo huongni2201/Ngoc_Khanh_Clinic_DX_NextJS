@@ -100,8 +100,6 @@ export function OrganizationHealthExaminationBatchesTab({
           <HealthExaminationBatchTable
             organizationId={organizationId}
             batches={data?.data ?? []}
-            currentPage={data?.page ?? page}
-            pageSize={data?.pageSize ?? BATCH_DEFAULT_PAGE_SIZE}
             isLoading={isLoading}
             isFiltered={Boolean(search)}
             onCreateClick={() => setIsCreateOpen(true)}

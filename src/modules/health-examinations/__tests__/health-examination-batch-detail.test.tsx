@@ -91,7 +91,7 @@ describe("HealthExaminationBatchDetailPage", () => {
     expect(await screen.findByText("Không tìm thấy đợt khám")).toBeInTheDocument()
     expect(screen.getByRole("link", { name: /Về danh sách đợt khám/ })).toHaveAttribute(
       "href",
-      "/organizations/org-1?tab=batches"
+      "/organizations/org-1"
     )
     expect(screen.queryByRole("button", { name: "Thử lại" })).not.toBeInTheDocument()
   })
@@ -133,7 +133,7 @@ describe("HealthExaminationBatchDetailPage", () => {
       await waitFor(() =>
         expect(remove).toHaveBeenCalledWith({ organizationId: "org-1", batchId: "batch-1", rowVersion: 4 })
       )
-      await waitFor(() => expect(nav.push).toHaveBeenCalledWith("/organizations/org-1?tab=batches"))
+      await waitFor(() => expect(nav.push).toHaveBeenCalledWith("/organizations/org-1"))
       expect(invalidate).toHaveBeenCalledWith({
         queryKey: [...healthExaminationKeys.batches("org-1"), "list"],
       })
@@ -316,26 +316,98 @@ describe("HealthExaminationBatchDetailPage", () => {
     })
   })
 
-  describe("tabs the backend cannot serve yet", () => {
-    it.each([
-      ["Chi tiết khám", "examination", "Chi tiết khám"],
-      ["Báo cáo", "report", "Báo cáo đợt khám"],
-    ])("%s shows 'Chưa hỗ trợ' and sends no request for it", async (label, tab, feature) => {
-      nav.search = `tab=${tab}`
+  describe("examination detail and report tabs", () => {
+    const session = (permissions: string[]) => ({
+      userId: "u-1", staffId: "s-1", patientId: null, username: "staff", principalType: "STAFF" as const,
+      roleAssignments: [{ roleId: "r-1", roleCode: "CLINIC_MANAGER", permissions }],
+      idleExpiresAt: "2026-10-07T12:00:00Z", absoluteExpiresAt: "2026-10-07T20:00:00Z",
+    })
+    const envelope = (data: unknown) => ({ result: "OK" as const, code: 200, message: "ok", data })
+    const emptyPage = envelope({ items: [], page: 1, size: 10, totalElements: 0, totalPages: 0 })
+    const summary = envelope({
+      registered: 0, unconfirmed: 0, attended: 0, absent: 0, reconciled: 0, pendingReconciliation: 0,
+    })
+    const report = envelope({
+      batchId: "batch-1", batchCode: "DK001", batchName: "Khám định kỳ 2026", batchStatus: "DRAFT",
+      provisional: true, registeredCount: 0, attendedCount: 0, reconciledCount: 0,
+      items: [{
+        batchServiceId: "s1", serviceCode: "HM001", serviceName: "Khám nội tổng quát",
+        displayOrder: 1, unitPrice: 90000, examinedCount: 2, amount: 180000,
+      }],
+      totalAmount: 180000, generatedAt: "2026-10-07T03:00:00Z",
+    })
+
+    function mockBackend() {
       vi.spyOn(batchApi, "fetchHealthExaminationBatchById").mockResolvedValue(batch)
-      const fetchMock = vi.fn()
-      vi.stubGlobal("fetch", fetchMock)
-      const matrix = vi.spyOn(batchApi, "fetchHealthExaminationBatchMatrix")
-      const report = vi.spyOn(batchApi, "fetchHealthExaminationBatchReport")
+      return vi.spyOn(apiClient, "get").mockImplementation(async (path: string) =>
+        path.includes("/payment-summary") ? report : path.includes("/summary") ? summary : emptyPage
+      )
+    }
+
+    it("loads the examination detail tab from the examination-details endpoints", async () => {
+      nav.search = "tab=examination"
+      const get = mockBackend()
       renderPage()
 
-      const notice = (await screen.findByText("Chưa hỗ trợ")).parentElement
-      expect(notice).toHaveTextContent(feature)
-      expect(screen.getByRole("button", { name: label })).toBeInTheDocument()
-      expect(fetchMock).not.toHaveBeenCalled()
-      expect(matrix).not.toHaveBeenCalled()
-      expect(report).not.toHaveBeenCalled()
-      vi.unstubAllGlobals()
+      expect(await screen.findByText("Đợt khám chưa có người khám trong danh sách.")).toBeInTheDocument()
+      expect(screen.queryByText("Chưa hỗ trợ")).not.toBeInTheDocument()
+      const paths = get.mock.calls.map(([path]) => String(path))
+      expect(paths).toContainEqual(
+        expect.stringContaining("/organizations/org-1/health-examination-batches/batch-1/examination-details?")
+      )
+      expect(paths).toContainEqual(expect.stringMatching(/\/examination-details\/summary$/))
+      expect(screen.getByText("Khám nội tổng quát")).toBeInTheDocument()
+    })
+
+    it("loads the report tab from the payment summary endpoint", async () => {
+      nav.search = "tab=report"
+      const get = mockBackend()
+      renderPage()
+
+      expect(await screen.findByText("Tạm tính")).toBeInTheDocument()
+      expect(screen.queryByText("Chưa hỗ trợ")).not.toBeInTheDocument()
+      expect(
+        get.mock.calls.some(([path]) => String(path).endsWith("/reports/payment-summary"))
+      ).toBe(true)
+      expect(screen.getByRole("button", { name: "Xuất Word" })).toBeInTheDocument()
+    })
+
+    it("hides both tabs from a session without their permissions and falls back to the overview", async () => {
+      nav.search = "tab=report"
+      const get = mockBackend()
+      const { queryClient } = renderPage()
+      queryClient.setQueryData(["auth", "session"], session(["HEALTH_EXAMINATION_PARTICIPANT_READ"]))
+
+      await screen.findByRole("heading", { name: "Khám định kỳ 2026" })
+      await waitFor(() => expect(screen.queryByRole("button", { name: "Báo cáo" })).not.toBeInTheDocument())
+      expect(screen.queryByRole("button", { name: "Chi tiết khám" })).not.toBeInTheDocument()
+      expect(screen.getByRole("button", { name: "Người khám" })).toBeInTheDocument()
+      expect(screen.getByText("Dịch vụ và giá thỏa thuận")).toBeInTheDocument()
+      expect(get).not.toHaveBeenCalledWith(expect.stringContaining("payment-summary"), expect.anything())
+    })
+
+    it("shows each tab and action only with its own permission", async () => {
+      nav.search = "tab=examination"
+      mockBackend()
+      const { queryClient } = renderPage()
+      queryClient.setQueryData(
+        ["auth", "session"],
+        session(["HEALTH_EXAMINATION_SERVICE_READ", "HEALTH_EXAMINATION_REPORT_READ"])
+      )
+
+      expect(await screen.findByRole("button", { name: "Xuất Excel" })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: "Báo cáo" })).toBeInTheDocument()
+      expect(screen.queryByRole("button", { name: "Nhập Excel" })).not.toBeInTheDocument()
+
+      queryClient.setQueryData(
+        ["auth", "session"],
+        session([
+          "HEALTH_EXAMINATION_SERVICE_READ",
+          "HEALTH_EXAMINATION_SERVICE_RECONCILE",
+          "HEALTH_EXAMINATION_REPORT_READ",
+        ])
+      )
+      expect(await screen.findByRole("button", { name: "Nhập Excel" })).toBeInTheDocument()
     })
 
     it("switches tabs through the URL", async () => {

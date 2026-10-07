@@ -39,9 +39,17 @@ export interface HealthExaminationBatchSummary {
   rowVersion: number
 }
 
+export interface HealthExaminationBatchDay {
+  id: string
+  /** `yyyy-MM-dd`. */
+  examinationDate: string
+}
+
 export interface HealthExaminationBatch extends HealthExaminationBatchSummary {
   /** Examination dates (yyyy-MM-dd), ascending. */
   examinationDates: string[]
+  /** The batch days with their identifiers, ascending by date; a Participant is scheduled on one. */
+  examinationDays?: HealthExaminationBatchDay[]
   examinationSiteType: ExaminationSiteType
   examinationSiteName: string
   examinationSiteAddress: string | null
@@ -130,6 +138,8 @@ export type ParticipantSortKey =
 
 export interface ParticipantListFilterParams {
   search?: string
+  /** Exact CCCD match; used to find the cancelled Participant that holds a CCCD. */
+  identificationNumber?: string
   rosterStatus?: ParticipantRosterStatus
   attendanceStatus?: ParticipantAttendanceStatus
   reconciliationStatus?: ParticipantReconciliationStatus
@@ -145,6 +155,77 @@ export interface ParticipantListResponse {
   page: number
   pageSize: number
   totalPages: number
+}
+
+/** A Participant in full, as the detail endpoint returns it. Only for accounts that manage Participants. */
+export interface ParticipantDetail extends HealthExaminationParticipant {
+  /** The complete CCCD; the list only carries the masked value. */
+  identificationNumber: string
+  phone?: string
+  email?: string
+  /** The Participant was prepared for a visit: the CCCD can no longer change. */
+  patientLinked: boolean
+  source: "IMPORT" | "MANUAL"
+  createdAt: string
+  updatedAt: string
+}
+
+/** Values of the add/edit Participant form. Every field is a string the user can type. */
+export interface ParticipantFormValues {
+  participantCode: string
+  fullName: string
+  /** `yyyy-MM-dd` or empty. */
+  dateOfBirth: string
+  sex: ParticipantSex | ""
+  identificationNumber: string
+  phone: string
+  email: string
+  departmentName: string
+  positionName: string
+  batchDayId: string
+}
+
+/** Validated fields of a Participant sent to the backend. */
+export interface ParticipantInput {
+  participantCode?: string
+  fullName: string
+  dateOfBirth: string
+  sex: ParticipantSex
+  identificationNumber: string
+  phone?: string
+  email?: string
+  departmentName: string
+  positionName: string
+  batchDayId: string
+}
+
+export interface CreateParticipantRequest extends ParticipantInput {
+  organizationId: string
+  batchId: string
+}
+
+export interface UpdateParticipantRequest extends ParticipantInput {
+  organizationId: string
+  batchId: string
+  participantId: string
+  /** Version of the Participant the form was filled from. */
+  rowVersion: number
+}
+
+export interface CancelParticipantRequest {
+  organizationId: string
+  batchId: string
+  participantId: string
+  rowVersion: number
+}
+
+export interface ReactivateParticipantRequest {
+  organizationId: string
+  batchId: string
+  participantId: string
+  rowVersion: number
+  /** Examination day to put the Participant on; omitted keeps the day it had when cancelled. */
+  batchDayId?: string
 }
 
 export interface ImportParticipantsRequest {
@@ -219,4 +300,108 @@ export interface HealthExaminationBatchReportSummary {
   batchId: string
   items: HealthExaminationServiceSummary[]
   totalAmount: number
+}
+
+/** One Participant row of the examination detail matrix (dates stay ISO strings). */
+export interface ExaminationDetailRow {
+  id: string
+  participantCode?: string
+  fullName: string
+  identificationNumberMasked: string
+  departmentName: string
+  positionName: string
+  examinationDate: string
+  attendanceStatus: ParticipantAttendanceStatus
+  actualExaminationDate?: string
+  reconciliationStatus: ParticipantReconciliationStatus
+  /** Batch service ids recorded as performed; the matrix columns are the batch services. */
+  performedBatchServiceIds: string[]
+  rowVersion: number
+}
+
+export type ExaminationDetailSortKey = "id" | "participantCode" | "fullName" | "examinationDate"
+
+/**
+ * The status choices of the screen. The backend has no screen status: each choice is a pair of
+ * attendance and reconciliation filters.
+ */
+export type ExaminationStatusFilter =
+  | "UNCONFIRMED"
+  | "ABSENT"
+  | "ATTENDED_PENDING"
+  | "RECONCILED"
+
+export interface ExaminationDetailListFilterParams {
+  page?: number
+  pageSize?: number
+  search?: string
+  sortKey?: ExaminationDetailSortKey
+  sortBy?: "ASC" | "DESC"
+  statusFilter?: ExaminationStatusFilter
+}
+
+export interface ExaminationDetailListResponse {
+  data: ExaminationDetailRow[]
+  total: number
+  page: number
+  pageSize: number
+  totalPages: number
+}
+
+export interface ExaminationSummary {
+  registered: number
+  unconfirmed: number
+  attended: number
+  absent: number
+  reconciled: number
+  pendingReconciliation: number
+}
+
+export interface ImportExaminationDetailsRequest {
+  organizationId: string
+  batchId: string
+  file: File
+  /** One key per chosen file, reused while the same file is resent. */
+  idempotencyKey: string
+}
+
+export interface ExaminationDetailImportResult {
+  importJobId: string
+  batchId: string
+  totalRows: number
+  updatedParticipants: number
+  unchangedParticipants: number
+  performedItems: number
+  completedAt: string
+}
+
+export interface PaymentSummaryItem {
+  batchServiceId: string
+  serviceCode?: string
+  serviceName?: string
+  displayOrder: number
+  unitPrice: number
+  examinedCount: number
+  amount: number
+}
+
+export interface PaymentSummaryReport {
+  batchId: string
+  batchCode: string
+  batchName: string
+  batchStatus: HealthExaminationBatchStatus
+  /** True until the batch is finalized: the figures may still change. */
+  provisional: boolean
+  registeredCount: number
+  attendedCount: number
+  reconciledCount: number
+  items: PaymentSummaryItem[]
+  totalAmount: number
+  generatedAt: string
+}
+
+/** A file the backend generated, ready to be saved. */
+export interface DownloadedFile {
+  blob: Blob
+  fileName: string
 }

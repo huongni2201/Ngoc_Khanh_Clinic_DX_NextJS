@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { useSearchParams, useRouter, usePathname } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { AlertCircle, RefreshCw, ArrowLeft } from "@/shared/ui/product-icon"
 import { Button } from "@/components/ui/button"
 import {
@@ -21,8 +21,6 @@ import {
   useReloadOrganization,
 } from "../hooks/use-organizations"
 import { OrganizationDetailHeader } from "../components/organization-detail-header"
-import { OrganizationSummaryStrip } from "../components/organization-summary-strip"
-import { OrganizationTabs, type OrganizationTabType } from "../components/organization-tabs"
 import { OrganizationInfoCard } from "../components/organization-info-card"
 import { OrganizationHealthExaminationBatchesTab } from "@/modules/health-examinations"
 import { EditOrganizationDialog } from "../components/edit-organization-dialog"
@@ -34,24 +32,7 @@ interface OrganizationDetailPageProps {
 export function OrganizationDetailPage({
   organizationId,
 }: OrganizationDetailPageProps) {
-  const searchParams = useSearchParams()
   const router = useRouter()
-  const pathname = usePathname()
-
-  const tabParam = searchParams?.get("tab")
-  const activeTab: OrganizationTabType =
-    tabParam === "batches" ? "batches" : "info"
-
-  const handleTabChange = (tab: OrganizationTabType) => {
-    const params = new URLSearchParams(searchParams?.toString() || "")
-    if (tab === "info") {
-      params.delete("tab")
-    } else {
-      params.set("tab", tab)
-    }
-    const query = params.toString() ? `?${params.toString()}` : ""
-    router.push(`${pathname}${query}`, { scroll: false })
-  }
 
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false)
 
@@ -98,7 +79,7 @@ export function OrganizationDetailPage({
 
   // Loading skeleton state matching screen layout exactly
   if (isLoading) {
-    return <ScreenLoadingSkeleton variant="detail" />
+    return <ScreenLoadingSkeleton variant="workspace" />
   }
 
   // Error state
@@ -136,7 +117,7 @@ export function OrganizationDetailPage({
 
   return (
     <ScreenLayout data-slot="organization-detail-page" className="gap-6">
-      {/* 1. Breadcrumbs, Titles, Status Badge & Actions */}
+      {/* 1. Identity: name, status, tax code, address and actions */}
       <OrganizationDetailHeader
         organization={organization}
         onEditClick={() => setIsEditDialogOpen(true)}
@@ -144,28 +125,24 @@ export function OrganizationDetailPage({
         isDeactivating={deactivateMutation.isPending}
       />
 
-      {/* 2. 4-column Summary Strip */}
-      <OrganizationSummaryStrip organization={organization} />
-
-      {/* 3. Tab Navigation (4 tabs) */}
-      <OrganizationTabs activeTab={activeTab} onTabChange={handleTabChange} />
-
-      {/* 4. Tab Content */}
-      <div className="pt-1">
-        {activeTab === "info" && (
-          <OrganizationInfoCard organization={organization} />
-        )}
-
-        {activeTab === "batches" && (
+      {/* 2. Work area: the batches are the job, the organization details are reference */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start xl:grid-cols-[minmax(0,1fr)_22rem]">
+        <section aria-labelledby="organization-batches-heading" className="min-w-0 space-y-3">
+          <h2 id="organization-batches-heading" className="text-base font-semibold text-foreground">
+            Đợt khám
+          </h2>
           <OrganizationHealthExaminationBatchesTab
             organizationId={organization.id}
             organizationName={organization.name}
             organizationAddress={organization.address}
           />
-        )}
+        </section>
+        <aside aria-label="Thông tin đơn vị" className="min-w-0 lg:sticky lg:top-0">
+          <OrganizationInfoCard organization={organization} />
+        </aside>
       </div>
 
-      {/* 5. Deactivate confirmation */}
+      {/* 3. Deactivate confirmation */}
       <Dialog open={isDeactivateOpen} onOpenChange={handleDeactivateOpenChange}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -217,7 +194,7 @@ export function OrganizationDetailPage({
         </DialogContent>
       </Dialog>
 
-      {/* 6. Edit Organization Modal Dialog */}
+      {/* 4. Edit Organization Modal Dialog */}
       <EditOrganizationDialog
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}

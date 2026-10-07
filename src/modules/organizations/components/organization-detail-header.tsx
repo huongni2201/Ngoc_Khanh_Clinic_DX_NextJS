@@ -3,7 +3,8 @@
 import { Edit02Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Button } from "@/components/ui/button"
-import { PageHeader } from "@/shared/ui"
+import { PageHeader, StatusPill } from "@/shared/ui"
+import { Building2, MapPin } from "@/shared/ui/product-icon"
 import { OrganizationDetail } from "../types"
 
 interface OrganizationDetailHeaderProps {
@@ -19,16 +20,13 @@ export function OrganizationDetailHeader({
   onDeactivateClick,
   isDeactivating,
 }: OrganizationDetailHeaderProps) {
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case "ACTIVE":
-        return "Hoạt động"
-      case "INACTIVE":
-        return "Ngừng hoạt động"
-      default:
-        return status
-    }
-  }
+  const isActive = organization.status === "ACTIVE"
+  const statusLabel =
+    organization.status === "ACTIVE"
+      ? "Hoạt động"
+      : organization.status === "INACTIVE"
+        ? "Ngừng hoạt động"
+        : organization.status
 
   return (
     <PageHeader
@@ -36,25 +34,37 @@ export function OrganizationDetailHeader({
         { label: "Đơn vị", href: "/organizations" },
         { label: organization.name },
       ]}
-      title={organization.name}
-      titleAccessory={
-        <span className="inline-flex items-center gap-1.5 rounded-md bg-muted px-2 py-1 text-xs font-medium text-foreground">
-          <span
-            className={`size-1.5 shrink-0 rounded-full ${
-              organization.status === "ACTIVE" ? "bg-status-success" : "bg-muted-foreground"
-            }`}
-          />
-          {getStatusLabel(organization.status)}
+      leading={
+        <span
+          aria-hidden="true"
+          className="flex size-12 items-center justify-center rounded-xl border border-border bg-selected text-primary"
+        >
+          <Building2 className="size-6" />
         </span>
       }
-      description="Khách hàng đơn vị"
+      title={organization.name}
+      titleAccessory={<StatusPill tone={isActive ? "success" : "neutral"}>{statusLabel}</StatusPill>}
+      description={
+        <span className="flex flex-wrap items-center gap-x-4 gap-y-1">
+          <span>
+            Mã số thuế{" "}
+            <span className="font-mono text-[13px] tabular-nums text-foreground">
+              {organization.taxCode || "—"}
+            </span>
+          </span>
+          {organization.address ? (
+            <span className="inline-flex min-w-0 items-center gap-1.5">
+              <MapPin aria-hidden="true" className="size-3.5 shrink-0" />
+              <span className="truncate" title={organization.address}>
+                {organization.address}
+              </span>
+            </span>
+          ) : null}
+        </span>
+      }
       actions={
         <>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onEditClick}
-          >
+          <Button type="button" variant="outline" onClick={onEditClick}>
             <HugeiconsIcon icon={Edit02Icon} className="size-4" />
             Chỉnh sửa đơn vị
           </Button>
@@ -73,4 +83,3 @@ export function OrganizationDetailHeader({
     />
   )
 }
-

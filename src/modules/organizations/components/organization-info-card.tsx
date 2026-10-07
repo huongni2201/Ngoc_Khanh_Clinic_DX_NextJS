@@ -1,61 +1,56 @@
 "use client"
 
-import * as React from "react"
+import { InfoList } from "@/shared/ui"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { OrganizationDetail } from "../types"
 
 interface OrganizationInfoCardProps {
   organization: OrganizationDetail
 }
 
+/** Reference card shown beside the batch list, so contact details are one glance away. */
 export function OrganizationInfoCard({ organization }: OrganizationInfoCardProps) {
-  const fields = [
-    {
-      label: "Tên đơn vị",
-      value: organization.name,
-    },
-    {
-      label: "Mã số thuế",
-      value: organization.taxCode || "—",
-    },
-    {
-      label: "Người liên hệ",
-      value: organization.contactName || "—",
-    },
-    {
-      label: "Số điện thoại",
-      value: organization.contactPhone || "—",
-    },
-    { label: "Điện thoại đơn vị", value: organization.phone },
-    { label: "Email đơn vị", value: organization.email },
-    { label: "Email người liên hệ", value: organization.contactEmail },
-    {
-      label: "Địa chỉ",
-      value: organization.address || "—",
-    },
-  ]
-
   return (
-    <div className="w-full rounded-lg border border-border bg-card p-6 sm:p-8 ">
-      <h2 className="text-lg font-bold tracking-tight text-foreground mb-4 sm:mb-6">
-        Thông tin đơn vị
-      </h2>
-
-      <div className="divide-y divide-table-divider">
-        {fields.map((field) => (
-          <div
-            key={field.label}
-            className="flex flex-col sm:flex-row sm:items-start py-4 first:pt-0 last:pb-0"
+    <Card data-slot="organization-info-card" className="gap-0 py-0">
+      <CardHeader className="border-b border-border px-5 py-4">
+        <h2 className="text-base font-semibold text-foreground">Thông tin đơn vị</h2>
+      </CardHeader>
+      <CardContent className="space-y-5 px-5 py-4">
+        <section aria-labelledby="organization-contact-heading" className="space-y-3">
+          <h3
+            id="organization-contact-heading"
+            className="text-xs font-semibold uppercase tracking-wide text-secondary-foreground"
           >
-            <span className="w-48 sm:w-64 shrink-0 text-sm text-secondary-foreground font-normal">
-              {field.label}
-            </span>
-            <span className="mt-1 sm:mt-0 flex-1 text-sm font-medium text-foreground break-words">
-              {field.value}
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
+            Người liên hệ
+          </h3>
+          <InfoList
+            items={[
+              { label: "Họ và tên", value: organization.contactName },
+              { label: "Số điện thoại", value: organization.contactPhone, mono: true },
+              { label: "Email", value: organization.contactEmail },
+            ]}
+          />
+        </section>
+        <section
+          aria-labelledby="organization-general-heading"
+          className="space-y-3 border-t border-border pt-5"
+        >
+          <h3
+            id="organization-general-heading"
+            className="text-xs font-semibold uppercase tracking-wide text-secondary-foreground"
+          >
+            Đơn vị
+          </h3>
+          <InfoList
+            items={[
+              { label: "Mã số thuế", value: organization.taxCode, mono: true },
+              { label: "Điện thoại đơn vị", value: organization.phone, mono: true },
+              { label: "Email đơn vị", value: organization.email },
+              { label: "Địa chỉ", value: organization.address },
+            ]}
+          />
+        </section>
+      </CardContent>
+    </Card>
   )
 }
-
