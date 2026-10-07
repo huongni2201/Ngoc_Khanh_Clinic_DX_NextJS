@@ -44,7 +44,6 @@ import {
   useOrganizationHealthExaminationBatches,
   useHealthExaminationBatchParticipants,
 } from "@/modules/health-examinations/hooks/use-health-examination-batches"
-import { searchPatients } from "@/modules/patients/api"
 import { Patient } from "@/modules/patients"
 import { Appointment, CareProgram } from "../types"
 import { cn } from "@/lib/utils"
@@ -173,54 +172,15 @@ export function CreateAppointmentDialog({
 
   const linkParticipantToPatient = React.useCallback(
     async (participant: (typeof participants)[0]) => {
-      try {
-        setIsLinkingParticipant(true)
-        setServerError(null)
-
-        if (!participant.identificationNumber) {
-          setServerError("Không thể liên kết: người khám chưa có CCCD.")
-          return
-        }
-
-        const existing = await searchPatients(participant.identificationNumber)
-        const linkedPatient = existing.find(
-          (patient) =>
-            patient.identificationNumber === participant.identificationNumber
-        )
-
-        if (!linkedPatient) {
-          setServerError(
-            "Không tìm thấy hồ sơ theo CCCD. Backend chưa cung cấp API tạo bệnh nhân."
-          )
-          return
-        }
-
-        setPatientOverride(linkedPatient)
-        setValue("patientId", linkedPatient.id, { shouldValidate: true })
-        setValue("examinationType", "Khám sức khỏe đơn vị", {
-          shouldValidate: true,
-        })
-
-        const ent = organizations.find((e) => e.id === selectedOrganizationId)
-        const batch = batches.find((b) => b.id === selectedHealthExaminationBatchId)
-
-        setValue("careProgram", "ORGANIZATION_HEALTH_EXAMINATION")
-        setValue("organizationId", selectedOrganizationId)
-        setValue("organizationName", ent?.name || "")
-        setValue("healthExaminationBatchId", selectedHealthExaminationBatchId)
-        setValue("healthExaminationBatchName", batch?.name || "")
-        setValue("participantCode", participant.participantCode || "")
-      } catch (err) {
-        setServerError(
-          err instanceof Error
-            ? err.message
-            : "Không thể liên kết người khám với hồ sơ bệnh nhân"
-        )
-      } finally {
-        setIsLinkingParticipant(false)
-      }
+      // The participant list only exposes a masked CCCD, so the patient cannot
+      // be matched automatically. The user must choose the patient record.
+      void participant
+      setIsLinkingParticipant(false)
+      setServerError(
+        "Không thể tự liên kết hồ sơ: danh sách người khám chỉ hiển thị CCCD đã che. Vui lòng chọn hồ sơ bệnh nhân."
+      )
     },
-    [batches, organizations, selectedHealthExaminationBatchId, selectedOrganizationId, setValue]
+    []
   )
 
   // Synchronize form fields when opening
@@ -629,7 +589,7 @@ export function CreateAppointmentDialog({
                         <SelectContent>
                           {participants.map((participant) => (
                             <SelectItem key={participant.id} value={participant.participantCode || participant.id}>
-                              {participant.participantCode || participant.id} - {participant.fullName} ({participant.organizationUnit})
+                              {participant.participantCode || participant.id} - {participant.fullName} ({participant.departmentName})
                             </SelectItem>
                           ))}
                         </SelectContent>

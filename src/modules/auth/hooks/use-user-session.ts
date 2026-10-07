@@ -2,7 +2,7 @@
 
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { authApi } from "../api/auth-api"
-import { clearBusinessData, SESSION_QUERY_KEY } from "../utils/session-cache"
+import { clearBusinessData, hasSessionHint, setSessionHint, SESSION_QUERY_KEY } from "../utils/session-cache"
 import type { UserSession } from "../types"
 import { canAccessStaffWorkspace } from "../utils/staff-workspace-access"
 
@@ -11,18 +11,20 @@ export function useUserSession() {
   return useQuery({
     queryKey: SESSION_QUERY_KEY,
     queryFn: async ({ signal }) => {
-      const session = await authApi.me(signal)
+      const session = hasSessionHint() ? await authApi.me(signal) : null
       signal.throwIfAborted()
       const previous = client.getQueryData<UserSession | null>(SESSION_QUERY_KEY)
       if (!session || previous?.userId !== session.userId || !canAccessStaffWorkspace(session)) {
         await clearBusinessData(client)
       }
       signal.throwIfAborted()
+      setSessionHint(Boolean(session))
       return session
     },
     retry: false,
-    staleTime: 0,
-    refetchOnMount: "always",
+    staleTime: 30_000,
+    refetchOnMount: true,
+    retryOnMount: false,
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
   })

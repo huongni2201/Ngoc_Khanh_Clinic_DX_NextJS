@@ -221,9 +221,9 @@ with `credentials: "include"`; frontend code never receives or persists the sess
 ID and sends no CSRF token (the backend checks `Origin` and CORS). TanStack Query
 owns the session view.
 
-AppShell mounts protected screens and the payment notifier only after `/me`
-verification. AppHeader receives real identity display values and uses the auth
-module's public logout hook. The root QueryProvider mounts cross-tab synchronization
+AppShell mounts protected screens and the payment notifier only after a successful
+login or session verification. AppHeader receives real identity display values and
+uses the auth module's public logout hook. The root QueryProvider mounts cross-tab synchronization
 and handles 401 errors from queries explicitly marked `requiresAuth`. Shared
 transport remains independent of the auth module. The legacy participant-roster adapter uses
 the shared API client, includes session cookies and forwards cancellation signals.
@@ -233,9 +233,15 @@ turning permission failures into logout.
 
 Every STAFF session enters the staff workspace, matching the backend. Patients
 remain signed in with a notice and logout action; business data is cleared when
-`/me` removes workspace access. See [ADR-0007](../adr/0007-session-login-backend-adr-0014.md),
-[ADR-0006](../adr/0006-shared-user-login.md) and
-[ADR-0005](../adr/0005-staff-cookie-session.md). Backend authorization remains
+`/me` removes workspace access. Session restoration uses a non-sensitive
+`nkc-session-present=1` localStorage hint, never identity or authorization data.
+Without the hint, fresh visitors see login without an `/me` request; with it,
+`/me` verifies the HttpOnly cookie. A 401 or successful logout clears the hint
+and business data; a transient outage preserves the hint and exposes retry.
+Cross-tab signals reset the query and re-read the hint. See
+[ADR-0007](../adr/0007-session-login-backend-adr-0014.md) for the backend contract
+and [ADR-0008](../adr/0008-login-session-restoration.md) for restoration behavior.
+Backend authorization remains
 required; the client boundary does not protect server-side data access.
 
 Update this file when the **current architecture** changes.

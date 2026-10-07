@@ -14,6 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { hasStaffPermission, useCachedUserSession } from "@/modules/auth"
 import { ApiClientError } from "@/shared/api/api-client"
 import { PageHeader, ScreenLayout, ScreenLoadingSkeleton, formatVND } from "@/shared/ui"
 import {
@@ -28,10 +29,15 @@ import {
   type HealthExaminationBatchTabType,
 } from "../components/health-examination-batch-tabs"
 import { healthExaminationKeys } from "../query-keys"
+import { ParticipantsTab } from "../components/participants-tab/participants-tab"
 import { UnsupportedBatchTab } from "../components/unsupported-batch-tab"
 import { MISSING_SERVICE_NAME } from "../utils/batch-form-values"
 import { EXAMINATION_SITE_TYPE_LABELS, isBatchEditable } from "../utils/batch-labels"
 import { getHealthExaminationBatchStatusLabel } from "../utils/batch-status"
+import {
+  PARTICIPANT_IMPORT_PERMISSION,
+  PARTICIPANT_READ_PERMISSION,
+} from "../utils/participant-permissions"
 import { formatHealthExaminationDate } from "../utils/format-health-examination-date"
 import type { HealthExaminationBatch } from "../types"
 
@@ -42,10 +48,9 @@ interface HealthExaminationBatchDetailPageProps {
 
 const TAB_PARAM = "tab"
 const UNSUPPORTED_TABS: Record<
-  Exclude<HealthExaminationBatchTabType, "overview">,
+  Exclude<HealthExaminationBatchTabType, "overview" | "participants">,
   string
 > = {
-  participants: "Danh sách người khám",
   examination: "Chi tiết khám",
   report: "Báo cáo đợt khám",
 }
@@ -148,6 +153,12 @@ export function HealthExaminationBatchDetailPage({
   const batchesHref = `/organizations/${encodeURIComponent(organizationId)}?tab=batches`
 
   const queryClient = useQueryClient()
+  const currentUser = useCachedUserSession()
+  // Display only; the backend checks every request. An unknown session still tries to read.
+  const canReadParticipants = currentUser
+    ? hasStaffPermission(currentUser, PARTICIPANT_READ_PERMISSION)
+    : true
+  const canImportParticipants = hasStaffPermission(currentUser, PARTICIPANT_IMPORT_PERMISSION)
   const [isDeleted, setIsDeleted] = React.useState(false)
   // After a successful delete the page stops observing the batch so no request for it is sent.
   const { data: batch, isLoading, isError, error, refetch } = useHealthExaminationBatchDetail(
@@ -292,6 +303,14 @@ export function HealthExaminationBatchDetailPage({
       <div className="pt-1">
         {activeTab === "overview" ? (
           <BatchOverview batch={batch} />
+        ) : activeTab === "participants" ? (
+          <ParticipantsTab
+            organizationId={organizationId}
+            batchId={batch.id}
+            batch={{ code: batch.code, status: batch.status, rowVersion: batch.rowVersion }}
+            canRead={canReadParticipants}
+            canImport={canImportParticipants}
+          />
         ) : (
           <UnsupportedBatchTab feature={UNSUPPORTED_TABS[activeTab]} />
         )}

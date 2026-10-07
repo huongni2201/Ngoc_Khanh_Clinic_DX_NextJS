@@ -8,7 +8,9 @@ owns HTTP availability.
 
 | Priority | Evidence | Required follow-up and acceptance evidence |
 |---|---|---|
-| Medium | Participant list, examination matrix, report and export callers (`ParticipantsTab`, `OrganizationExaminationDetailTab`, `OrganizationReportsTab`, `utils/export-excel.ts`) are kept as roadmap code but are not mounted; the batch detail page shows "Chưa hỗ trợ" for those tabs and sends no request. | When the backend publishes those contracts, rebuild each caller on the real DTOs (legacy components still use the old fixture shapes), mount the tab and add tests/E2E. Until then do not add mock success. |
+| Medium | Examination matrix, report and export callers (`OrganizationExaminationDetailTab`, `OrganizationReportsTab`, `utils/export-excel.ts`) are kept as roadmap code but are not mounted; the batch detail page shows "Chưa hỗ trợ" for those tabs and sends no request. | When the backend publishes those contracts, rebuild each caller on the real DTOs (legacy components still use the old fixture shapes), mount the tab and add tests/E2E. Until then do not add mock success. |
+| Medium | The appointment dialog (`create-appointment-dialog.tsx`) used to link a Participant to a Patient by full CCCD. The Participant list now returns only a masked CCCD, so the dialog asks the user to choose the patient record instead. | When the backend exposes a Participant-to-Patient link (or a server-side lookup), restore automatic linking through it; never request or store the full CCCD in the list. |
+| Low | Participant list is a local-state table (search, two status filters, sort, paging). The reconciliation status filter and the `batchDayId`/CCCD filters of the backend are not exposed in the UI. | Add them when a workflow needs them. |
 | Medium | The batch form selects dates with a native date input plus an "add day" list, and the catalog picker reads only the first page (size 100) of `GET /api/v1/catalog/services`. | Replace with a calendar multi-select if UX needs it; add catalog search/paging if the catalog exceeds 100 active services. |
 | Low | `pnpm build` could not be verified on Linux: the `@hugeicons/core-free-icons` barrel references `Grid2x2*Icon.js` while the package ships `Grid2X2*Icon.js`, so webpack fails on case-sensitive file systems (the same import exists on `main`). Next dev/Playwright and Vitest are unaffected. | Verify `pnpm build` on Windows/macOS (case-insensitive) or import icons from direct paths; track upstream fix. |
 
@@ -27,8 +29,10 @@ owns HTTP availability.
 Details and evidence per finding are in
 [the cleanup inventory](frontend-cleanup-inventory.md#kết-quả-triển-khai-2026-10-06).
 
-- Roster import chain (API, hooks, dialog, template/upload/mapping/preview/confirm/cancel
+- Legacy roster import chain (API, hooks, dialog, template/upload/mapping/preview/confirm/cancel
   callers, import-preview types and fixtures) removed. No age-eligibility rejection remains.
+  On 2026-10-06 a new, single-step Participant import and list were added for the new backend
+  endpoints (`PROJECT_RULES.md` section 12); none of the removed code was reused.
 - `cn` evaluated and kept: it matched clsx + tailwind-merge on 28 conflict cases.
   `shadcn` moved to devDependencies; `lucide-react` removed after the six billing callers
   moved to the Hugeicons adapter; lockfile updated.

@@ -17,8 +17,9 @@ vertical slice. Preserve Participant terminology and Vietnamese product copy.
 Explicit owner instructions and accepted business ADRs define intended behavior;
 backend handlers and DTOs define the available HTTP surface. If they disagree,
 identify the conflict before changing dependent behavior. FE code, mocks and
-plans do not create a backend contract. Excel import was removed on 2026-10-05;
-remaining FE import code is tracked in
+plans do not create a backend contract. Excel roster import was removed on 2026-10-05 and
+restored on 2026-10-06 as the add-only backend endpoint described in
+`PROJECT_RULES.md` section 12. Remaining legacy FE code is tracked in
 [the code follow-up list](docs/maintenance/code-follow-ups.md).
 
 Inspect the owning module, supported callers and reusable UI before editing.

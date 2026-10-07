@@ -32,7 +32,15 @@ async function fill() {
 }
 
 describe("staff login screen", () => {
-  it("restores /me before displaying the form and omits unsupported options", async () => {
+  it("shows login without calling /me for a fresh visitor, even when the backend is offline", async () => {
+    request.mockRejectedValue(new TypeError("Failed to fetch"))
+    renderLogin()
+    expect(await screen.findByRole("button", { name: "Đăng nhập" })).toBeDisabled()
+    expect(request).not.toHaveBeenCalled()
+    expect(replace).not.toHaveBeenCalled()
+  })
+
+  it("displays the form and omits unsupported options", async () => {
     renderLogin()
     expect(await screen.findByRole("button", { name: "Đăng nhập" })).toBeDisabled()
     expect(screen.queryByText("Quên mật khẩu?")).not.toBeInTheDocument()
@@ -63,7 +71,9 @@ describe("staff login screen", () => {
     await user.click(screen.getByRole("button", { name: "Đăng nhập" }))
     await waitFor(() => expect(replace).toHaveBeenCalledWith("/organizations"))
     expect(client.getQueryData(["patients"])).toBeUndefined()
-    expect(localStorage.length).toBe(0)
+    expect(localStorage.getItem("nkc-session-present")).toBe("1")
+    expect(localStorage.getItem("nk_auth_token")).toBeNull()
+    expect(localStorage.getItem("nk_auth_user")).toBeNull()
     await waitFor(() => expect(client.getMutationCache().getAll()).toHaveLength(0))
   })
 
@@ -71,12 +81,14 @@ describe("staff login screen", () => {
     ["staff with roles", staffSession],
     ["staff without roles", { ...staffSession, roleAssignments: [] }],
   ])("redirects an existing %s session to organizations", async (_, session) => {
+    localStorage.setItem("nkc-session-present", "1")
     request.mockResolvedValueOnce(me(session))
     renderLogin()
     await waitFor(() => expect(replace).toHaveBeenCalledWith("/organizations"))
   })
 
   it("keeps a patient session on login with a logout action", async () => {
+    localStorage.setItem("nkc-session-present", "1")
     request.mockResolvedValueOnce(me(patientSession))
     renderLogin()
     expect(await screen.findByRole("button", { name: "Đăng xuất" })).toBeInTheDocument()
@@ -117,6 +129,7 @@ describe("staff login screen", () => {
   })
 
   it("shows retry for a /me outage instead of the login form", async () => {
+    localStorage.setItem("nkc-session-present", "1")
     request.mockResolvedValueOnce(new Response(null, { status: 503 }))
     renderLogin()
     expect(await screen.findByRole("button", { name: "Thử lại" })).toBeInTheDocument()

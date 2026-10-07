@@ -2,7 +2,6 @@ import { expect, test } from "@playwright/test"
 import { mockBackend, ORGANIZATION_ID } from "./support/mock-backend"
 
 const TABS = [
-  { name: "Người khám", param: "participants" },
   { name: "Chi tiết khám", param: "examination" },
   { name: "Báo cáo", param: "report" },
 ]

@@ -166,12 +166,21 @@ export const apiClient = {
     return request<T>(path, { ...options, method: "GET" })
   },
 
+  /**
+   * `headers` carries request-specific headers such as `Idempotency-Key`. A `FormData` body is sent
+   * as multipart without forcing a JSON content type.
+   */
   async post<TRequest, TResponse>(
     path: string,
     body: TRequest,
-    options?: Pick<ApiClientRequestOptions, "signal">
+    options?: Pick<ApiClientRequestOptions, "signal" | "headers">
   ) {
-    return request<TResponse>(path, { signal: options?.signal, method: "POST", body })
+    return request<TResponse>(path, {
+      signal: options?.signal,
+      headers: options?.headers,
+      method: "POST",
+      body,
+    })
   },
 
   async put<TRequest, TResponse>(

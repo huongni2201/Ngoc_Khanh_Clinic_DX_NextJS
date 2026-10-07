@@ -2,7 +2,7 @@
 
 import { useEffect } from "react"
 import { useQueryClient } from "@tanstack/react-query"
-import { clearBusinessData, SESSION_CHANNEL, SESSION_QUERY_KEY } from "../utils/session-cache"
+import { clearBusinessData, SESSION_CHANNEL, SESSION_QUERY_KEY, SESSION_SOURCE } from "../utils/session-cache"
 
 export function AuthSessionSync() {
   const client = useQueryClient()
@@ -14,7 +14,11 @@ export function AuthSessionSync() {
     if (typeof BroadcastChannel === "undefined") return
     const channel = new BroadcastChannel(SESSION_CHANNEL)
     channel.onmessage = async (event: MessageEvent<unknown>) => {
-      if (event.data !== "changed") return
+      const message = event.data
+      if (typeof message !== "object" || message === null ||
+        !("type" in message) || message.type !== "changed" ||
+        !("source" in message) || typeof message.source !== "string" ||
+        message.source === SESSION_SOURCE) return
       await client.cancelQueries()
       await clearBusinessData(client)
       await client.resetQueries({ queryKey: SESSION_QUERY_KEY })

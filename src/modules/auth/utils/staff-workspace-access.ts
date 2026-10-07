@@ -17,3 +17,16 @@ export function hasStaffRole(
     roleCode === undefined || assignment.roleCode === roleCode,
   )
 }
+
+/**
+ * Whether a STAFF session carries a permission code in any role. Display only: it decides which
+ * actions are shown, never what is allowed; the backend checks every request.
+ */
+export function hasStaffPermission(
+  session: UserSession | null | undefined,
+  permission: string,
+): boolean {
+  return session?.principalType === "STAFF" && session.roleAssignments.some((assignment) =>
+    assignment.permissions.includes(permission),
+  )
+}

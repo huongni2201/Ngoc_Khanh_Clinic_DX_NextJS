@@ -7,14 +7,15 @@
 This is a **real production clinic application**.
 
 Corporate health examinations are the primary vertical slice. Supported backend
-HTTP scope is organization list/create/get/update/deactivate, batch list/create/get/update/delete, the active service catalog list (`GET /api/v1/catalog/services`) and authentication.
+HTTP scope is organization list/create/get/update/deactivate, batch list/create/get/update/delete, the batch Participant list, Excel template download and Excel import (`/api/v1/organizations/{organizationId}/health-examination-batches/{batchId}/participants`), the active service catalog list (`GET /api/v1/catalog/services`) and authentication.
 See [the backend inventory](../Ngoc_Khanh_Clinic_DX_Springboot/docs/api/clean-slate-migration.md)
 for current routes. Handler existence does not imply production authorization.
 
 Roster, visit preparation and issued-record history follow
 [accepted backend workflows](../Ngoc_Khanh_Clinic_DX_Springboot/docs/architecture/03-domain-and-workflows.md);
-domain/storage contracts do not imply public endpoints. Excel import was removed
-on 2026-10-05; there is no under-18 eligibility rejection. Legacy frontend
+domain/storage contracts do not imply public endpoints. Excel roster import was
+removed on 2026-10-05 and restored on 2026-10-06 as the add-only, all-or-nothing
+backend endpoint in section 12; there is no under-18 eligibility rejection. Legacy frontend
 integrations are tracked in [code follow-ups](docs/maintenance/code-follow-ups.md).
 
 ---
@@ -264,7 +265,9 @@ Frontend validation improves user experience but is not authoritative. Backend
 validation remains authoritative for required business data, duplicate identity,
 organization scope, batch membership, participant uniqueness, service
 eligibility and persistence constraints. Do not introduce age rejection or
-removed import behavior through frontend validation.
+import rules (row validation, duplicate detection, batch state) through frontend
+validation: the file name and size check in the import dialog is the only
+early check, and the backend decides everything else.
 
 Frontend may validate early for immediate feedback, but it must still handle and
 display backend validation results.
@@ -479,13 +482,39 @@ Later:
 
 ---
 
-## 12. Removed Excel Import
+## 12. Participant Excel Import
 
-Excel roster import is removed from the current product contract (2026-10-05).
-No template/upload/mapping/preview/confirm/cancel endpoint is supported.
-Remaining frontend import code is migration debt, not a P0 feature or a reference
-for new work. See [code follow-ups](docs/maintenance/code-follow-ups.md).
-Historical database records do not restore an application workflow.
+Excel roster import was removed on 2026-10-05 and restored on 2026-10-06 by an
+owner decision with a new backend contract
+(`docs/api/participant-import-and-list.md` in the backend repository). The old
+multi-step template/upload/mapping/preview/confirm/cancel flow does not return.
+
+Contract the frontend relies on:
+
+- `GET .../participants` is the paginated Participant list (1-based `page`,
+  `size` up to 100, `searchKey`, `sortKey`, `sortBy`, status filters). The CCCD is
+  masked (`identificationNumberMasked`); the full number is never available.
+- `GET .../participants/import-template` downloads the `.xlsx` template tied to
+  the batch's current `rowVersion` and examination days.
+- `POST .../participants/imports` is multipart (`file`, `rowVersion`) with an
+  `Idempotency-Key` header. It is synchronous, add-only and all-or-nothing, at
+  most 1000 rows and 5 MiB, for DRAFT/READY batches of an active organization.
+  The backend reports the first error only.
+
+Frontend rules:
+
+- Create a new `Idempotency-Key` for each chosen file and reuse it when the same
+  file is resent after a failure, so a retry never imports twice. Never retry
+  automatically.
+- Show backend row errors in Vietnamese only (`describeParticipantImportError`).
+  The backend text is English and is never rendered.
+- Show the template and import actions only for sessions with
+  `HEALTH_EXAMINATION_PARTICIPANT_IMPORT` and batches in DRAFT/READY; the list
+  needs `HEALTH_EXAMINATION_PARTICIPANT_READ`. This is UX only; the backend
+  checks every request. A session created before the V003 migration must sign in
+  again to receive these permissions.
+- After a successful import, refresh the list; after a stale-version or
+  template error, refresh the batch so the next template matches.
 
 ---
 
@@ -687,7 +716,7 @@ Use Vitest + Testing Library. Use Playwright for critical E2E workflows.
 Test supported organization/batch and authentication contracts, backend errors,
 exact enums and date mapping. Roster, bulk selection, print mapping and visit
 preparation tests apply when the feature is authorized and its contract exists.
-Removed import and age-rejection expectations are not current acceptance criteria.
+Age-rejection expectations are not acceptance criteria. Participant import tests cover the contract in section 12: permissions, batch state, idempotent retry and Vietnamese row errors.
 
 Tests verify behavior through public interfaces, not implementation details.
 
@@ -764,7 +793,7 @@ list/create/detail/update/delete, the service catalog and authentication contrac
 [code follow-ups](docs/maintenance/code-follow-ups.md).
 Roster, examination matrix, report, export, printing and downstream
 clinical workflows require approved backend HTTP contracts before enablement.
-No Excel import implementation is planned under the current baseline.
+Excel import is limited to the Participant roster contract in section 12.
 
 ---
 

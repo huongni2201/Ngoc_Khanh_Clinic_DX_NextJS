@@ -138,6 +138,8 @@ function envelope(route: Route, status: number, data?: unknown, message = "Test 
 }
 
 export async function mockBackend(page: Page): Promise<MockBackend> {
+  // Existing business-flow tests start with a previously authenticated browser.
+  await page.addInitScript(() => localStorage.setItem("nkc-session-present", "1"))
   const state: MockBackend = {
     requests: [],
     unexpected: [],
@@ -202,7 +204,7 @@ export async function mockBackend(page: Page): Promise<MockBackend> {
       return envelope(route, 200, { items, page: 1, size: 10, totalElements: items.length, totalPages: items.length ? 1 : 0 })
     }
     if (path === batchesPath && method === "POST") {
-      expect(request.headers()["x-xsrf-token"]).toBe("masked-test-token")
+      expect(request.headers().origin).toBe("http://localhost:3000")
       const body = request.postDataJSON() as Record<string, unknown>
       if (state.batches.some((batch) => batch.batchCode === body.batchCode)) {
         return envelope(route, 409, undefined, "Batch code already exists")
@@ -224,7 +226,7 @@ export async function mockBackend(page: Page): Promise<MockBackend> {
       const batch = state.batches.find((entry) => entry.id === itemMatch[1])
       if (!batch) return envelope(route, 404, undefined, "Batch not found")
       if (method === "GET") return envelope(route, 200, detail(batch))
-      expect(request.headers()["x-xsrf-token"]).toBe("masked-test-token")
+      expect(request.headers().origin).toBe("http://localhost:3000")
       if (method === "PUT") {
         const body = request.postDataJSON() as Record<string, unknown>
         if (updateConflict || body.rowVersion !== batch.rowVersion) {

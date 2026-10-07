@@ -23,6 +23,8 @@ afterEach(() => vi.unstubAllGlobals())
 describe("AppShell", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    localStorage.clear()
+    localStorage.setItem("nkc-session-present", "1")
     vi.stubGlobal("fetch", vi.fn().mockImplementation(() => Promise.resolve(ok(staffSession))))
   })
 
@@ -52,4 +54,3 @@ describe("AppShell", () => {
     ).toHaveAttribute("href", "#main-content")
   })
 })
-

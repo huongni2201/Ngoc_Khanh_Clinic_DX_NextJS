@@ -13,7 +13,11 @@ import {
   fetchExaminationDetailExportData,
   fetchExaminationSummaryExportData,
 } from "@/modules/health-examinations/api"
-import { fetchHealthExaminationBatchParticipants } from "../api/participants"
+import {
+  fetchHealthExaminationBatchParticipants,
+  fetchParticipantImportTemplate,
+  importHealthExaminationBatchParticipants,
+} from "../api/participants"
 import { healthExaminationKeys } from "../query-keys"
 import {
   downloadFile,
@@ -21,6 +25,7 @@ import {
   generateSummaryVerticalCSV,
   sanitizeFileName,
 } from "../utils/export-excel"
+import { saveBlobAs } from "../utils/download-blob"
 import {
   CreateHealthExaminationBatchRequest,
   DeleteHealthExaminationBatchRequest,
@@ -31,6 +36,8 @@ import {
   HealthExaminationBatchListResponse,
   ParticipantListFilterParams,
   ParticipantListResponse,
+  ImportParticipantsRequest,
+  ParticipantImportResult,
   ExaminationProgressFilterParams,
   ExaminationProgressResponse,
   HealthExaminationBatchReportSummary,
@@ -140,7 +147,8 @@ export function useDeleteHealthExaminationBatch() {
 export function useHealthExaminationBatchParticipants(
   organizationId: string,
   batchId: string,
-  params?: ParticipantListFilterParams
+  params?: ParticipantListFilterParams,
+  options?: { enabled?: boolean }
 ) {
   return useQuery<ParticipantListResponse>({
     queryKey: healthExaminationKeys.participants(
@@ -152,9 +160,41 @@ export function useHealthExaminationBatchParticipants(
       fetchHealthExaminationBatchParticipants(organizationId, batchId, params, signal),
     meta: { requiresAuth: true },
     retry: false,
-    enabled: Boolean(organizationId && batchId),
+    enabled: Boolean(organizationId && batchId) && (options?.enabled ?? true),
     staleTime: 15_000,
     refetchOnWindowFocus: true,
+  })
+}
+
+/** Downloads the Excel template of one batch and offers it as a file. It never retries. */
+export function useDownloadParticipantImportTemplate(organizationId: string, batchId: string) {
+  return useMutation<{ fileName: string }, Error, { batchCode?: string } | void>({
+    mutationFn: async (input) => {
+      const template = await fetchParticipantImportTemplate(organizationId, batchId)
+      const code = sanitizeFileName(input?.batchCode ?? "")
+      const fileName = code ? `mau-nhap-nguoi-kham-${code}.xlsx` : template.fileName
+      saveBlobAs(template.blob, fileName)
+      return { fileName }
+    },
+    retry: false,
+  })
+}
+
+/**
+ * Imports a roster workbook. It never retries on its own: the caller resends with the same
+ * idempotency key, which the backend answers with the stored result instead of importing again.
+ */
+export function useImportHealthExaminationBatchParticipants() {
+  const queryClient = useQueryClient()
+
+  return useMutation<ParticipantImportResult, Error, ImportParticipantsRequest>({
+    mutationFn: (request) => importHealthExaminationBatchParticipants(request),
+    retry: false,
+    onSuccess: (_result, request) => {
+      void queryClient.invalidateQueries({
+        queryKey: healthExaminationKeys.participantsRoot(request.organizationId, request.batchId),
+      })
+    },
   })
 }
 

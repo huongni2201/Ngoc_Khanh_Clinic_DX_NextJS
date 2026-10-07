@@ -23,6 +23,7 @@ Accepted ADRs should not be rewritten to change history. When a decision changes
 | [0005](0005-staff-cookie-session.md) | Staff authentication with backend cookie sessions | Accepted; CSRF exchange superseded by 0007 |
 | [0006](0006-shared-user-login.md) | Shared user login and staff workspace access | Accepted; access rule superseded by 0007 |
 | [0007](0007-session-login-backend-adr-0014.md) | Align login with the backend session-cookie contract | Accepted |
+| [0008](0008-login-session-restoration.md) | Conditional session restoration through backend verification | Accepted |
 
 ## When to Create an ADR
 

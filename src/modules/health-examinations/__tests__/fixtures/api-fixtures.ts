@@ -8,7 +8,6 @@ import {
   UpdateHealthExaminationBatchRequest,
   HealthExaminationBatchFilterParams,
   HealthExaminationBatchListResponse,
-  HealthExaminationParticipant,
   ParticipantExaminationProgress,
   ExaminationProgressFilterParams,
   ExaminationProgressResponse,
@@ -234,7 +233,25 @@ let healthExaminationBatchesStore: HealthExaminationBatch[] = seedBatches.map(to
 
 // Fixture-only profile completeness used to derive matrix notes; not part of the participant model.
 type SeedProfileStatus = "VALID" | "MISSING_IDENTIFICATION_NUMBER" | "MISSING_SIGNATURE"
-type SeedParticipant = HealthExaminationParticipant & { profileStatus: SeedProfileStatus }
+// Legacy roster shape kept only so these fixtures can derive matrix and report rows; it is not the
+// transport or view model of the participant list endpoint.
+interface SeedRosterParticipant {
+  id: string
+  batchId: string
+  participantCode?: string
+  participantType?: string
+  fullName: string
+  dateOfBirth?: string
+  gender?: "Nam" | "Nữ" | "OTHER"
+  identificationNumber?: string
+  phoneNumber?: string
+  organizationUnit?: string
+  jobTitle?: string
+  address?: string
+  batchParticipantStatus?: string
+  note?: string
+}
+type SeedParticipant = SeedRosterParticipant & { profileStatus: SeedProfileStatus }
 
 // Base 10 participant rows matching the reference image
 const referenceParticipants: Omit<SeedParticipant, "batchId" | "participantType">[] = [

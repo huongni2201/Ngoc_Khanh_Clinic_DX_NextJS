@@ -128,30 +128,53 @@ export const healthExaminationBatchPageResponseSchema = z.object({
   totalPages: z.number().int().nonnegative(),
 })
 
-export interface BatchParticipantResponseDto {
-  batchParticipantId: string
-  participantId: string
-  participantCode: string | null
-  departmentName: string | null
-  jobTitle: string | null
-  occupation: string | null
-  fullName: string
-  dateOfBirth: string
-  sex: string
-  identificationNumber: string
-  identificationNumberIssueDate: string | null
-  identificationNumberIssuePlace: string | null
-  ethnicity: string | null
-  subjectType: string | null
-  payerSource: string | null
-  bloodGroup: string | null
-  phone: string | null
-  province: string | null
-  ward: string | null
-  addressDetail: string | null
-  administrativeOccupation: string | null
-  workplaceOrSchool: string | null
-  healthExaminationReason: string | null
-  status: string
-  createdAt: string
-}
+export const PARTICIPANT_SEX_VALUES = ["MALE", "FEMALE", "OTHER", "UNKNOWN"] as const
+export const PARTICIPANT_ROSTER_STATUSES = ["ACTIVE", "CANCELLED"] as const
+export const PARTICIPANT_ATTENDANCE_STATUSES = ["UNCONFIRMED", "ATTENDED", "ABSENT"] as const
+export const PARTICIPANT_RECONCILIATION_STATUSES = ["PENDING", "RECONCILED"] as const
+
+/**
+ * One row of `GET .../participants`. The identification number is masked by the backend; the
+ * complete value is never sent to the list. Unknown enum values fail parsing instead of being
+ * guessed.
+ */
+export const participantSummaryResponseSchema = z.object({
+  id: z.string().min(1),
+  batchId: z.string().min(1),
+  batchDayId: z.string().min(1),
+  examinationDate: z.iso.date(),
+  participantCode: z.string().nullish(),
+  fullName: z.string(),
+  dateOfBirth: z.iso.date(),
+  sex: z.enum(PARTICIPANT_SEX_VALUES),
+  identificationNumberMasked: z.string(),
+  departmentName: z.string(),
+  positionName: z.string(),
+  rosterStatus: z.enum(PARTICIPANT_ROSTER_STATUSES),
+  attendanceStatus: z.enum(PARTICIPANT_ATTENDANCE_STATUSES),
+  reconciliationStatus: z.enum(PARTICIPANT_RECONCILIATION_STATUSES),
+  actualExaminationDate: z.iso.date().nullish(),
+  preparedAt: z.string().nullish(),
+  rowVersion: rowVersionSchema,
+})
+
+export type ParticipantSummaryResponseDto = z.infer<typeof participantSummaryResponseSchema>
+
+export const participantPageResponseSchema = z.object({
+  items: z.array(participantSummaryResponseSchema),
+  page: z.number().int().positive(),
+  size: z.number().int().positive().max(100),
+  totalElements: z.number().int().nonnegative(),
+  totalPages: z.number().int().nonnegative(),
+})
+
+/** Result of `POST .../participants/imports`: identifiers and counts only, never row content. */
+export const participantImportResponseSchema = z.object({
+  importJobId: z.string().min(1),
+  batchId: z.string().min(1),
+  totalRows: z.number().int().nonnegative(),
+  createdCount: z.number().int().nonnegative(),
+  completedAt: z.string().min(1),
+})
+
+export type ParticipantImportResponseDto = z.infer<typeof participantImportResponseSchema>

@@ -13,18 +13,19 @@ const state = vi.hoisted(() => ({
 
 vi.mock("../hooks/use-health-examination-batches", () => ({
   useHealthExaminationBatchParticipants: () => state.result,
+  useDownloadParticipantImportTemplate: () => ({ mutate: () => undefined, isPending: false, isError: false }),
+  useImportHealthExaminationBatchParticipants: () => ({ mutateAsync: () => Promise.reject(new Error("unused")), reset: () => undefined, isPending: false }),
 }))
 
 import { ParticipantsTab } from "../components/participants-tab/participants-tab"
 
-describe("participants tab without roster import", () => {
-  it("shows the empty state with no import, template or Excel action", () => {
-    render(<ParticipantsTab organizationId="org-1" batchId="batch-1" />)
+describe("participants tab without the import permission", () => {
+  it("shows the empty state with no import or template action", () => {
+    render(<ParticipantsTab organizationId="org-1" batchId="batch-1" batch={{ code: "DK001", status: "DRAFT", rowVersion: 0 }} />)
 
     expect(screen.getByText("Chưa có người khám trong đợt khám")).toBeInTheDocument()
     expect(screen.queryByRole("button", { name: /import/i })).not.toBeInTheDocument()
     expect(screen.queryByRole("button", { name: /tải file mẫu/i })).not.toBeInTheDocument()
-    expect(screen.queryByText(/excel/i)).not.toBeInTheDocument()
   })
 
   it("uses Người khám terminology when the list fails to load", () => {
@@ -34,7 +35,7 @@ describe("participants tab without roster import", () => {
       isError: true,
       error: new Error("Đã xảy ra lỗi kết nối API."),
     }
-    render(<ParticipantsTab organizationId="org-1" batchId="batch-1" />)
+    render(<ParticipantsTab organizationId="org-1" batchId="batch-1" batch={{ code: "DK001", status: "DRAFT", rowVersion: 0 }} />)
 
     expect(screen.getByText("Không thể tải danh sách người khám.")).toBeInTheDocument()
     expect(screen.queryByText(/nhân viên/i)).not.toBeInTheDocument()

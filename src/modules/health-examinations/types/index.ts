@@ -93,36 +93,49 @@ export interface HealthExaminationBatchListResponse {
   totalPages: number
 }
 
-export type HealthExaminationParticipantType =
-  | "EMPLOYEE"
-  | "STUDENT"
-  | "STAFF"
-  | "MEMBER"
-  | "OTHER"
+export type ParticipantSex = "MALE" | "FEMALE" | "OTHER" | "UNKNOWN"
+export type ParticipantRosterStatus = "ACTIVE" | "CANCELLED"
+export type ParticipantAttendanceStatus = "UNCONFIRMED" | "ATTENDED" | "ABSENT"
+export type ParticipantReconciliationStatus = "PENDING" | "RECONCILED"
 
+/** A Participant of one batch roster as the list endpoint returns it (dates stay ISO strings). */
 export interface HealthExaminationParticipant {
   id: string
   batchId: string
+  batchDayId: string
+  /** The batch day the Participant is scheduled for (`yyyy-MM-dd`). */
+  examinationDate: string
   participantCode?: string
-  participantType?: string
   fullName: string
-  dateOfBirth?: string
-  gender?: "Nam" | "Nữ" | "OTHER"
-  identificationNumber?: string
-  phoneNumber?: string
-  organizationUnit?: string
-  jobTitle?: string
-  address?: string
-  /** Server-owned status of the participant inside the examination batch. */
-  batchParticipantStatus?: string
-  note?: string
+  dateOfBirth: string
+  sex: ParticipantSex
+  /** Masked by the backend: only the last four characters are readable. */
+  identificationNumberMasked: string
+  departmentName: string
+  positionName: string
+  rosterStatus: ParticipantRosterStatus
+  attendanceStatus: ParticipantAttendanceStatus
+  reconciliationStatus: ParticipantReconciliationStatus
+  actualExaminationDate?: string
+  preparedAt?: string
+  rowVersion: number
 }
+
+export type ParticipantSortKey =
+  | "id"
+  | "fullName"
+  | "participantCode"
+  | "examinationDate"
+  | "createdAt"
 
 export interface ParticipantListFilterParams {
   search?: string
+  rosterStatus?: ParticipantRosterStatus
+  attendanceStatus?: ParticipantAttendanceStatus
+  reconciliationStatus?: ParticipantReconciliationStatus
   page?: number
   pageSize?: number
-  sortKey?: string
+  sortKey?: ParticipantSortKey
   sortBy?: "ASC" | "DESC"
 }
 
@@ -132,6 +145,24 @@ export interface ParticipantListResponse {
   page: number
   pageSize: number
   totalPages: number
+}
+
+export interface ImportParticipantsRequest {
+  organizationId: string
+  batchId: string
+  file: File
+  /** Batch `rowVersion` the template was prepared for; a different version is rejected. */
+  rowVersion: number
+  /** Client-generated UUID; resending the same request with the same key is safe. */
+  idempotencyKey: string
+}
+
+export interface ParticipantImportResult {
+  importJobId: string
+  batchId: string
+  totalRows: number
+  createdCount: number
+  completedAt: string
 }
 
 export type ServiceCompletionStatus =

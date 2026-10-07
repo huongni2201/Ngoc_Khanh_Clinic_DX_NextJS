@@ -1,18 +1,15 @@
 "use client"
 
-import * as React from "react"
-import { useRouter } from "next/navigation"
-import { MoreHorizontal, UserCheck, CalendarPlus } from "@/shared/ui/product-icon"
-import { Checkbox } from "@/components/ui/checkbox"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+import { ChevronDown, ChevronRight } from "@/shared/ui/product-icon"
 import { DataTablePagination } from "@/shared/ui"
-import type { HealthExaminationParticipant } from "../../types"
 import { cn } from "@/lib/utils"
+import type { HealthExaminationParticipant, ParticipantSortKey } from "../../types"
+import {
+  PARTICIPANT_ATTENDANCE_STATUS_LABELS,
+  PARTICIPANT_ROSTER_STATUS_LABELS,
+  PARTICIPANT_SEX_LABELS,
+} from "../../utils/participant-labels"
+import { formatHealthExaminationDate } from "../../utils/format-health-examination-date"
 
 interface ParticipantsTableProps {
   participants: HealthExaminationParticipant[]
@@ -21,25 +18,55 @@ interface ParticipantsTableProps {
   pageSize: number
   totalPages: number
   onPageChange: (page: number) => void
-  selectedIds: string[]
-  onToggleSelect: (id: string) => void
-  onToggleSelectAll: () => void
-  batchId?: string
-  organizationId?: string
+  sortKey: ParticipantSortKey
+  sortBy: "ASC" | "DESC"
+  onSortChange: (sortKey: ParticipantSortKey) => void
 }
 
-function ParticipantStatus({ status }: { status?: string }) {
+function StatusPill({ children, tone = "muted" }: { children: string; tone?: "muted" | "warning" }) {
   return (
-    <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground select-none whitespace-nowrap">
-      {status || "—"}
+    <span
+      className={cn(
+        "inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium select-none whitespace-nowrap",
+        tone === "warning" ? "bg-muted text-foreground" : "bg-muted text-muted-foreground"
+      )}
+    >
+      {children}
     </span>
   )
 }
 
-function formatDate(value?: string) {
-  if (!value) return "—"
-  const [year, month, day] = value.slice(0, 10).split("-")
-  return year && month && day ? `${day}/${month}/${year}` : value
+interface SortableHeaderProps {
+  label: string
+  sortKey: ParticipantSortKey
+  activeKey: ParticipantSortKey
+  direction: "ASC" | "DESC"
+  onSort: (sortKey: ParticipantSortKey) => void
+}
+
+function SortableHeader({ label, sortKey, activeKey, direction, onSort }: SortableHeaderProps) {
+  const active = activeKey === sortKey
+  return (
+    <th
+      className="py-3 px-3 text-left font-semibold"
+      aria-sort={active ? (direction === "ASC" ? "ascending" : "descending") : "none"}
+    >
+      <button
+        type="button"
+        onClick={() => onSort(sortKey)}
+        className="inline-flex items-center gap-1 font-semibold cursor-pointer hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+        aria-label={`Sắp xếp theo ${label}`}
+      >
+        {label}
+        {active &&
+          (direction === "ASC" ? (
+            <ChevronRight className="size-3 -rotate-90" aria-hidden="true" />
+          ) : (
+            <ChevronDown className="size-3" aria-hidden="true" />
+          ))}
+      </button>
+    </th>
+  )
 }
 
 export function ParticipantsTable({
@@ -49,160 +76,87 @@ export function ParticipantsTable({
   pageSize,
   totalPages,
   onPageChange,
-  selectedIds,
-  onToggleSelect,
-  onToggleSelectAll,
-  batchId,
-  organizationId,
+  sortKey,
+  sortBy,
+  onSortChange,
 }: ParticipantsTableProps) {
-  const router = useRouter()
-
-  const isAllSelected =
-    participants.length > 0 &&
-    participants.every((emp) => selectedIds.includes(emp.id))
-
-  const isSomeSelected =
-    participants.some((emp) => selectedIds.includes(emp.id)) && !isAllSelected
+  const sortProps = { activeKey: sortKey, direction: sortBy, onSort: onSortChange }
 
   return (
     <div className="space-y-4">
-      {/* Table Container with Horizontal Scroll */}
       <div className="rounded-lg border border-border bg-card  overflow-hidden">
         <div className="overflow-x-auto scrollbar-thin">
-          <table className="w-full text-xs border-collapse min-w-[1250px]">
+          <table className="w-full text-xs border-collapse min-w-[1100px]">
+            <caption className="sr-only">Danh sách người khám của đợt khám</caption>
             <thead>
               <tr className="bg-table-header-bg border-b border-border text-table-header-fg font-semibold select-none">
-                <th className="py-3 px-3.5 text-center w-10">
-                  <Checkbox
-                    checked={isAllSelected}
-                    indeterminate={isSomeSelected}
-                    onCheckedChange={() => onToggleSelectAll()}
-                    aria-label="Chọn tất cả người khám"
-                  />
-                </th>
-                <th className="py-3 px-3 text-left font-semibold">Mã người khám</th>
-                <th className="py-3 px-3 text-left font-semibold">Họ tên</th>
+                <SortableHeader label="Mã người khám" sortKey="participantCode" {...sortProps} />
+                <SortableHeader label="Họ và tên" sortKey="fullName" {...sortProps} />
                 <th className="py-3 px-3 text-left font-semibold">Ngày sinh</th>
                 <th className="py-3 px-3 text-left font-semibold">Giới tính</th>
                 <th className="py-3 px-3 text-left font-semibold">CCCD</th>
-                <th className="py-3 px-3 text-left font-semibold">Số điện thoại</th>
-                <th className="py-3 px-3 text-left font-semibold">Đơn vị công tác</th>
+                <th className="py-3 px-3 text-left font-semibold">Đơn vị/Phòng ban</th>
                 <th className="py-3 px-3 text-left font-semibold">Chức vụ</th>
-                <th className="py-3 px-3 text-left font-semibold">Địa chỉ</th>
-                <th className="py-3 px-3 text-left font-semibold">Trạng thái</th>
-                <th className="py-3 px-3 text-left font-semibold">Ghi chú</th>
-                <th className="py-3 px-3 text-center font-semibold whitespace-nowrap">
-                  Thao tác
-                </th>
+                <SortableHeader label="Ngày khám" sortKey="examinationDate" {...sortProps} />
+                <th className="py-3 px-3 text-left font-semibold">Danh sách</th>
+                <th className="py-3 px-3 text-left font-semibold">Tiếp nhận</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-table-divider">
               {participants.length === 0 ? (
                 <tr>
-                  <td
-                    colSpan={13}
-                    className="py-10 text-center text-muted-foreground text-xs"
-                  >
+                  <td colSpan={10} className="py-10 text-center text-muted-foreground text-xs">
                     Không tìm thấy người khám phù hợp với bộ lọc tìm kiếm.
                   </td>
                 </tr>
               ) : (
-                participants.map((emp) => {
-                  const isSelected = selectedIds.includes(emp.id)
-
-                  return (
-                    <tr
-                      key={emp.id}
-                      className={cn(
-                        "border-b border-divider transition-colors hover:bg-hover/50",
-                        isSelected && "bg-selected hover:bg-hover/70"
-                      )}
-                    >
-                      <td className="py-2.5 px-3.5 text-center">
-                        <Checkbox
-                          checked={isSelected}
-                          onCheckedChange={() => onToggleSelect(emp.id)}
-                          aria-label={`Chọn người khám ${emp.fullName}`}
-                        />
-                      </td>
-                      <td className="py-2.5 px-3 font-medium text-foreground whitespace-nowrap">
-                        {emp.participantCode}
-                      </td>
-                      <td className="py-2.5 px-3 font-medium text-foreground whitespace-nowrap">
-                        {emp.fullName}
-                      </td>
-                      <td className="py-2.5 px-3 text-secondary-foreground whitespace-nowrap">
-                        {formatDate(emp.dateOfBirth)}
-                      </td>
-                      <td className="py-2.5 px-3 text-secondary-foreground whitespace-nowrap">
-                        {emp.gender}
-                      </td>
-                      <td className="py-2.5 px-3 text-secondary-foreground whitespace-nowrap">
-                        {emp.identificationNumber}
-                      </td>
-                      <td className="py-2.5 px-3 text-secondary-foreground whitespace-nowrap">
-                        {emp.phoneNumber}
-                      </td>
-                      <td className="py-2.5 px-3 text-secondary-foreground whitespace-nowrap">
-                        {emp.organizationUnit}
-                      </td>
-                      <td className="py-2.5 px-3 text-secondary-foreground whitespace-nowrap">
-                        {emp.jobTitle}
-                      </td>
-                      <td className="py-2.5 px-3 text-secondary-foreground whitespace-nowrap">
-                        {emp.address}
-                      </td>
-                      <td className="py-2.5 px-3 whitespace-nowrap">
-                        <ParticipantStatus status={emp.batchParticipantStatus} />
-                      </td>
-                      <td className="py-2.5 px-3 text-muted-foreground whitespace-nowrap">
-                        {emp.note || "—"}
-                      </td>
-                      <td className="py-2.5 px-3 text-center whitespace-nowrap">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger
-                            className="size-7 inline-flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-surface-alt transition-colors cursor-pointer"
-                            aria-label={`Thao tác với người khám ${emp.fullName}`}
-                          >
-                            <MoreHorizontal className="size-3.5" />
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-44 text-xs">
-                            <DropdownMenuItem
-                              disabled
-                              title="API tra cứu check-in chưa được backend cung cấp."
-                              className="gap-2"
-                            >
-                              <UserCheck className="size-3.5" />
-                              <span>Tiếp nhận Lễ tân (chưa khả dụng)</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => {
-                                const query = new URLSearchParams({
-                                  create: "true",
-                                  ...(organizationId ? { organizationId } : {}),
-                                  ...(batchId ? { batchId } : {}),
-                                  participantCode: emp.participantCode || "",
-                                })
-                                router.push(`/appointments?${query.toString()}`)
-                              }}
-                              className="gap-2 cursor-pointer"
-                            >
-                              <CalendarPlus className="size-3.5 text-primary" />
-                              <span>Đặt lịch hẹn</span>
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </td>
-                    </tr>
-                  )
-                })
+                participants.map((participant) => (
+                  <tr
+                    key={participant.id}
+                    className="border-b border-divider transition-colors hover:bg-hover/50"
+                  >
+                    <td className="py-2.5 px-3 font-medium text-foreground whitespace-nowrap">
+                      {participant.participantCode ?? "—"}
+                    </td>
+                    <td className="py-2.5 px-3 font-medium text-foreground whitespace-nowrap">
+                      {participant.fullName}
+                    </td>
+                    <td className="py-2.5 px-3 text-secondary-foreground whitespace-nowrap">
+                      {formatHealthExaminationDate(participant.dateOfBirth)}
+                    </td>
+                    <td className="py-2.5 px-3 text-secondary-foreground whitespace-nowrap">
+                      {PARTICIPANT_SEX_LABELS[participant.sex]}
+                    </td>
+                    <td className="py-2.5 px-3 text-secondary-foreground whitespace-nowrap font-mono">
+                      {participant.identificationNumberMasked}
+                    </td>
+                    <td className="py-2.5 px-3 text-secondary-foreground whitespace-nowrap">
+                      {participant.departmentName}
+                    </td>
+                    <td className="py-2.5 px-3 text-secondary-foreground whitespace-nowrap">
+                      {participant.positionName}
+                    </td>
+                    <td className="py-2.5 px-3 text-secondary-foreground whitespace-nowrap">
+                      {formatHealthExaminationDate(participant.examinationDate)}
+                    </td>
+                    <td className="py-2.5 px-3 whitespace-nowrap">
+                      <StatusPill tone={participant.rosterStatus === "CANCELLED" ? "warning" : "muted"}>
+                        {PARTICIPANT_ROSTER_STATUS_LABELS[participant.rosterStatus]}
+                      </StatusPill>
+                    </td>
+                    <td className="py-2.5 px-3 whitespace-nowrap">
+                      <StatusPill>
+                        {PARTICIPANT_ATTENDANCE_STATUS_LABELS[participant.attendanceStatus]}
+                      </StatusPill>
+                    </td>
+                  </tr>
+                ))
               )}
             </tbody>
           </table>
         </div>
       </div>
 
-      {/* Reusable Pagination */}
       <DataTablePagination
         currentPage={currentPage}
         pageSize={pageSize}
@@ -214,6 +168,3 @@ export function ParticipantsTable({
     </div>
   )
 }
-
-
-

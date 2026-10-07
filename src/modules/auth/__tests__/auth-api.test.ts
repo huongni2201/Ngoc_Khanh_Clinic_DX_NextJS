@@ -76,5 +76,8 @@ describe("auth API contract", () => {
     expect(loginSchema.safeParse({ username: "staff", password: "a".repeat(72) }).success).toBe(true)
     // 19 x ("ậ" 3 bytes + "A" 1 byte) = 76 bytes in only 38 characters.
     expect(loginSchema.safeParse({ username: "staff", password: "ậA".repeat(19) }).success).toBe(false)
+    expect(loginSchema.safeParse({ username: "staff", password: "ắ".repeat(25) }).success).toBe(false)
+    expect(loginSchema.safeParse({ username: "a".repeat(151), password: "a" }).success).toBe(false)
+    expect(loginSchema.safeParse({ username: "staff", password: "ａ".repeat(72) }).success).toBe(true)
   })
 })

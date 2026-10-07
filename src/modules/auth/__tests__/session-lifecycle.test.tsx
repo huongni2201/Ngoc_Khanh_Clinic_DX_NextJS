@@ -7,7 +7,8 @@ import { useUserSession } from "../hooks/use-user-session"
 import { AuthBoundary } from "../components/auth-boundary"
 import { AuthSessionSync } from "../components/auth-session-sync"
 import { replaceSession, SESSION_QUERY_KEY } from "../utils/session-cache"
-import { me as ok, patientSession, staffSession } from "./fixtures"
+import { notifySessionChanged } from "../utils/session-cache"
+import { ok, patientSession, staffSession } from "./fixtures"
 import { QueryProvider } from "@/providers/query-provider"
 import { httpClient } from "@/shared/api/http-client"
 import { apiClient } from "@/shared/api/api-client"
@@ -15,6 +16,8 @@ import { apiClient } from "@/shared/api/api-client"
 const replace = vi.fn()
 vi.mock("next/navigation", () => ({ useRouter: () => ({ replace }) }))
 beforeEach(() => {
+  localStorage.clear()
+  localStorage.setItem("nkc-session-present", "1")
   // Each test owns its browser context; native Node channels must not cross workers.
   vi.stubGlobal("BroadcastChannel", class {
     postMessage() {}
@@ -30,6 +33,62 @@ function setup() {
 }
 
 describe("session lifecycle", () => {
+  it("does not reset its own verified session when broadcasting login to other tabs", async () => {
+    const { client, wrapper } = setup()
+    const channels: { onmessage?: (event: MessageEvent<unknown>) => void }[] = []
+    vi.stubGlobal("BroadcastChannel", class {
+      onmessage?: (event: MessageEvent<unknown>) => void
+      constructor() { channels.push(this) }
+      postMessage(data: unknown) {
+        for (const channel of channels) {
+          if (channel !== this) channel.onmessage?.({ data } as MessageEvent<unknown>)
+        }
+      }
+      close() {}
+    })
+    vi.stubGlobal("fetch", vi.fn().mockImplementation(() => Promise.resolve(ok(staffSession))))
+    render(<AuthSessionSync />, { wrapper })
+    const { result } = renderHook(() => useUserSession(), { wrapper })
+    await waitFor(() => expect(result.current.data?.userId).toBe(staffSession.userId))
+    await act(async () => {
+      await replaceSession(client, staffSession)
+      notifySessionChanged()
+    })
+    expect(result.current.data?.userId).toBe(staffSession.userId)
+    expect(fetch).toHaveBeenCalledTimes(1)
+  })
+
+  it("redirects a fresh visitor without contacting /me or mounting protected data", async () => {
+    localStorage.clear()
+    const { wrapper } = setup()
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("Failed to fetch")))
+    render(<AuthBoundary>{() => <p>Clinical data</p>}</AuthBoundary>, { wrapper })
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/auth/login"))
+    expect(screen.queryByText("Clinical data")).not.toBeInTheDocument()
+    expect(fetch).not.toHaveBeenCalled()
+  })
+
+  it("shares a verified session between mounted consumers without another /me request", async () => {
+    const { wrapper } = setup()
+    vi.stubGlobal("fetch", vi.fn().mockImplementation(() => Promise.resolve(ok(staffSession))))
+    const first = renderHook(() => useUserSession(), { wrapper })
+    await waitFor(() => expect(first.result.current.data?.userId).toBe(staffSession.userId))
+    const second = renderHook(() => useUserSession(), { wrapper })
+    await waitFor(() => expect(second.result.current.data?.userId).toBe(staffSession.userId))
+    expect(fetch).toHaveBeenCalledTimes(1)
+  })
+
+  it("clears an expired session hint and does not call /me again after a 401", async () => {
+    const { wrapper } = setup()
+    vi.stubGlobal("fetch", vi.fn().mockImplementation(() => Promise.resolve(new Response(null, { status: 401 }))))
+    const { result } = renderHook(() => useUserSession(), { wrapper })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(result.current.data).toBeNull()
+    expect(localStorage.getItem("nkc-session-present")).toBeNull()
+    await act(async () => { await result.current.refetch() })
+    expect(fetch).toHaveBeenCalledTimes(1)
+  })
+
   it("preserves a form draft while revalidating an already verified session", async () => {
     const { client, wrapper } = setup()
     let complete!: (response: Response) => void
@@ -94,6 +153,7 @@ describe("session lifecycle", () => {
     expect(result.current.logoutError).toBeTruthy()
     await act(async () => { expect(await result.current.logout()).toBe(true) })
     expect(client.getQueryData(SESSION_QUERY_KEY)).toBeNull()
+    expect(localStorage.getItem("nkc-session-present")).toBeNull()
     expect(client.getQueryData(["patients"])).toBeUndefined()
   })
 
@@ -110,7 +170,7 @@ describe("session lifecycle", () => {
 
   it("removes another user's cache when /me identifies a changed browser session", async () => {
     const { client, wrapper } = setup()
-    client.setQueryData(SESSION_QUERY_KEY, { ...staffSession, userId: "44444444-4444-4444-8444-444444444444" })
+    client.setQueryData(SESSION_QUERY_KEY, { ...staffSession, userId: "44444444-4444-4444-8444-444444444444" }, { updatedAt: Date.now() - 60_000 })
     client.setQueryData(["patients"], ["previous-user"])
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(ok(staffSession)))
     const { result } = renderHook(() => useUserSession(), { wrapper })
@@ -121,7 +181,7 @@ describe("session lifecycle", () => {
 
   it("lets staff without roles into the workspace, as the backend does", async () => {
     const { client, wrapper } = setup()
-    client.setQueryData(SESSION_QUERY_KEY, staffSession)
+    client.setQueryData(SESSION_QUERY_KEY, staffSession, { updatedAt: Date.now() - 60_000 })
     client.setQueryData(["patients"], ["private"])
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(ok({ ...staffSession, roleAssignments: [] })))
     render(<AuthBoundary>{() => <p>Clinical data</p>}</AuthBoundary>, { wrapper })
@@ -151,9 +211,9 @@ describe("session lifecycle", () => {
 
   it("cleans legacy storage and rechecks /me on a cross-tab signal", async () => {
     const { client, wrapper } = setup()
-    const channels: { onmessage?: (event: { data: string }) => Promise<void> }[] = []
+    const channels: { onmessage?: (event: { data: { type: string; source: string } }) => Promise<void> }[] = []
     vi.stubGlobal("BroadcastChannel", class {
-      onmessage?: (event: { data: string }) => Promise<void>
+      onmessage?: (event: { data: { type: string; source: string } }) => Promise<void>
       constructor() { channels.push(this) }
       close() {}
     })
@@ -165,8 +225,18 @@ describe("session lifecycle", () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
     client.setQueryData(["patients"], ["private"])
     expect(localStorage.getItem("nk_auth_token")).toBeNull()
-    await act(async () => { await channels[0].onmessage?.({ data: "changed" }) })
+    await act(async () => { await channels[0].onmessage?.({ data: { type: "changed", source: "another-tab" } }) })
     expect(client.getQueryData(["patients"])).toBeUndefined()
     expect(fetch).toHaveBeenCalledTimes(2)
+    // Another tab signed out: the shared hint is cleared before the change signal.
+    localStorage.removeItem("nkc-session-present")
+    await act(async () => { await channels[0].onmessage?.({ data: { type: "changed", source: "another-tab" } }) })
+    expect(result.current.data).toBeNull()
+    expect(fetch).toHaveBeenCalledTimes(2)
+    // Another tab signed in: restore its identity from the server, never from storage.
+    localStorage.setItem("nkc-session-present", "1")
+    await act(async () => { await channels[0].onmessage?.({ data: { type: "changed", source: "another-tab" } }) })
+    await waitFor(() => expect(result.current.data?.userId).toBe(staffSession.userId))
+    expect(fetch).toHaveBeenCalledTimes(3)
   })
 })

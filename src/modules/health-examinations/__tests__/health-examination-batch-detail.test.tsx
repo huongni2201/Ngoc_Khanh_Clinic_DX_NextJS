@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 import "@testing-library/jest-dom/vitest"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import * as batchApi from "@/modules/health-examinations/api"
-import { ApiClientError } from "@/shared/api/api-client"
+import { ApiClientError, apiClient } from "@/shared/api/api-client"
 import { HealthExaminationBatchDetailPage } from "../pages/health-examination-batch-detail-page"
 import { healthExaminationKeys } from "../query-keys"
 import type { HealthExaminationBatch } from "../types"
@@ -256,9 +256,68 @@ describe("HealthExaminationBatchDetailPage", () => {
     })
   })
 
+  describe("participants tab", () => {
+    it("loads the real Participant list from the backend instead of a placeholder", async () => {
+      nav.search = "tab=participants"
+      vi.spyOn(batchApi, "fetchHealthExaminationBatchById").mockResolvedValue(batch)
+      const get = vi.spyOn(apiClient, "get").mockResolvedValue({
+        result: "OK",
+        code: 200,
+        message: "ok",
+        data: { items: [], page: 1, size: 10, totalElements: 0, totalPages: 0 },
+      })
+      renderPage()
+
+      expect(await screen.findByText("Chưa có người khám trong đợt khám")).toBeInTheDocument()
+      expect(screen.queryByText("Chưa hỗ trợ")).not.toBeInTheDocument()
+      expect(get).toHaveBeenCalledWith(
+        expect.stringContaining("/organizations/org-1/health-examination-batches/batch-1/participants?"),
+        expect.anything()
+      )
+    })
+  })
+
+  describe("participants tab permissions", () => {
+    const session = (permissions: string[]) => ({
+      userId: "u-1", staffId: "s-1", patientId: null, username: "staff", principalType: "STAFF" as const,
+      roleAssignments: [{ roleId: "r-1", roleCode: "CLINIC_MANAGER", permissions }],
+      idleExpiresAt: "2026-10-06T12:00:00Z", absoluteExpiresAt: "2026-10-06T20:00:00Z",
+    })
+    const emptyPage = {
+      result: "OK" as const, code: 200, message: "ok",
+      data: { items: [], page: 1, size: 10, totalElements: 0, totalPages: 0 },
+    }
+
+    it("shows the import actions only when the session carries the import permission", async () => {
+      nav.search = "tab=participants"
+      vi.spyOn(batchApi, "fetchHealthExaminationBatchById").mockResolvedValue(batch)
+      vi.spyOn(apiClient, "get").mockResolvedValue(emptyPage)
+      const { queryClient } = renderPage()
+      queryClient.setQueryData(["auth", "session"], session(["HEALTH_EXAMINATION_PARTICIPANT_READ"]))
+
+      await screen.findByText("Chưa có người khám trong đợt khám")
+      expect(screen.queryByRole("button", { name: "Nhập từ Excel" })).not.toBeInTheDocument()
+
+      queryClient.setQueryData(["auth", "session"], session([
+        "HEALTH_EXAMINATION_PARTICIPANT_READ", "HEALTH_EXAMINATION_PARTICIPANT_IMPORT",
+      ]))
+      expect(await screen.findByRole("button", { name: "Nhập từ Excel" })).toBeInTheDocument()
+    })
+
+    it("does not request the list for a session without the read permission", async () => {
+      nav.search = "tab=participants"
+      vi.spyOn(batchApi, "fetchHealthExaminationBatchById").mockResolvedValue(batch)
+      const get = vi.spyOn(apiClient, "get").mockResolvedValue(emptyPage)
+      const { queryClient } = renderPage()
+      queryClient.setQueryData(["auth", "session"], session(["ORGANIZATION_READ"]))
+
+      expect(await screen.findByText("Không có quyền xem")).toBeInTheDocument()
+      expect(get).not.toHaveBeenCalledWith(expect.stringContaining("/participants"), expect.anything())
+    })
+  })
+
   describe("tabs the backend cannot serve yet", () => {
     it.each([
-      ["Người khám", "participants", "Danh sách người khám"],
       ["Chi tiết khám", "examination", "Chi tiết khám"],
       ["Báo cáo", "report", "Báo cáo đợt khám"],
     ])("%s shows 'Chưa hỗ trợ' and sends no request for it", async (label, tab, feature) => {
@@ -268,7 +327,6 @@ describe("HealthExaminationBatchDetailPage", () => {
       vi.stubGlobal("fetch", fetchMock)
       const matrix = vi.spyOn(batchApi, "fetchHealthExaminationBatchMatrix")
       const report = vi.spyOn(batchApi, "fetchHealthExaminationBatchReport")
-      const participants = vi.spyOn(batchApi, "fetchHealthExaminationBatchParticipants")
       renderPage()
 
       const notice = (await screen.findByText("Chưa hỗ trợ")).parentElement
@@ -277,7 +335,6 @@ describe("HealthExaminationBatchDetailPage", () => {
       expect(fetchMock).not.toHaveBeenCalled()
       expect(matrix).not.toHaveBeenCalled()
       expect(report).not.toHaveBeenCalled()
-      expect(participants).not.toHaveBeenCalled()
       vi.unstubAllGlobals()
     })
 
