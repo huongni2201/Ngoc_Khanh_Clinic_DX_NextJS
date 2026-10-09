@@ -33,6 +33,11 @@ export class ApiClientError extends Error {
   }
 }
 
+/** True when `error` is an ApiClientError carrying exactly this HTTP status. */
+export function isApiErrorStatus(error: unknown, status: number): boolean {
+  return error instanceof ApiClientError && error.status === status
+}
+
 /**
  * Vietnamese text for HTTP failures the backend reports with English messages. The envelope has no
  * business error code, so a 409 cannot be told apart (stale version, duplicate code, rule violation).

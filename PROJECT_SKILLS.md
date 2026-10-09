@@ -12,7 +12,7 @@ ADRs override generic examples. State, reuse and color policies are owned there.
 | Tokens/variants | [tailwind-design-system](.agents/skills/tailwind-design-system/SKILL.md) | Semantic tokens in globals.css. |
 | State/cache ownership | [react-state-management](.agents/skills/react-state-management/SKILL.md) | Follow PROJECT_RULES §6. |
 | HTTP/mutation failures | [error-handling-patterns](.agents/skills/error-handling-patterns/SKILL.md) | Actual backend envelope and shared client. |
-| Tests | [javascript-testing-patterns](.agents/skills/javascript-testing-patterns/SKILL.md), [tdd](.agents/skills/tdd/SKILL.md) for explicit test-first work | Supported contracts; no removed import or age-rejection assumptions. |
+| Tests | [javascript-testing-patterns](.agents/skills/javascript-testing-patterns/SKILL.md), [tdd](.agents/skills/tdd/SKILL.md) for explicit test-first work | Supported contracts, including the single-step import in PROJECT_RULES §12; no legacy preview/confirm/cancel or age-rejection assumptions. |
 | Bug diagnosis | [diagnosing-bugs](.agents/skills/diagnosing-bugs/SKILL.md) | Trace supported callers. |
 | Diff review | [code-review](.agents/skills/code-review/SKILL.md) | Requires a base and originating specification. |
 | Explicit security review/secure defaults | [security-best-practices](.agents/skills/security-best-practices/SKILL.md) | Browser, React and this frontend's Next.js server boundary. |
@@ -24,3 +24,7 @@ For editing agent instructions, use `writing-for-agents` or `skill-creator` only
 if present in the active session catalog. These are not bundled local skills.
 Do not install skills merely to satisfy this table or add backend-oriented
 skill resources to this frontend repository.
+
+For documentation cleanup, use [the documentation index](docs/README.md) to
+locate current sources; remove outdated or superseded documents, then verify
+links, contract claims and scoped diffs under PROJECT_RULES §28.

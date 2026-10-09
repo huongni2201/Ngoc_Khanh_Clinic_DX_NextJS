@@ -13,8 +13,9 @@ Frontend production cho hệ thống quản lý khám sức khỏe của Ngọc 
 
 ## Cài đặt và chạy
 
+Chuẩn bị Node.js và pnpm đúng phiên bản ở mục Công nghệ, sau đó chạy:
+
 ```bash
-corepack enable
 pnpm install
 pnpm dev
 ```
@@ -67,33 +68,48 @@ Backend HTTP contract là nguồn chuẩn. Fixtures chỉ được Vitest nạp 
 
 ## Trạng thái tích hợp
 
-Backend hiện có list/tạo/xem/sửa/ngừng hoạt động organization, list/tạo/xem/sửa/xóa
-batch, list danh mục dịch vụ đang hoạt động (`GET /api/v1/catalog/services`) và auth. Luồng
-Staff đã nối đủ: **Đơn vị → Đợt khám** (danh sách trong tab Đợt khám của đơn vị, tạo, xem, sửa, xóa).
-Đối chiếu [API inventory](../Ngoc_Khanh_Clinic_DX_Springboot/docs/api/clean-slate-migration.md)
-trước tích hợp; handler tồn tại không đồng nghĩa production đã cấp quyền truy cập.
+Đối chiếu ngày 2026-10-09 với [API inventory](../Ngoc_Khanh_Clinic_DX_Springboot/docs/api/clean-slate-migration.md).
+FE đã có các tích hợp sau; quyền truy cập backend vẫn quyết định từng request:
 
-Chưa hỗ trợ (backend chưa có endpoint): danh sách người khám, chi tiết khám (ma trận tiến độ),
-báo cáo và xuất file. Ba tab tương ứng trong trang đợt khám hiển thị "Chưa hỗ trợ" và không gửi
-request nào. Excel import đã bị bỏ khỏi hợp đồng ngày 2026-10-05 và code import FE đã được gỡ
-ngày 2026-10-06 (xem [cleanup inventory](docs/maintenance/frontend-cleanup-inventory.md)).
-Các việc còn lại được ghi tại [code follow-ups](docs/maintenance/code-follow-ups.md).
-Production không dùng fixtures làm fallback.
+- Đăng nhập, khôi phục phiên và đăng xuất bằng session cookie.
+- Đơn vị và đợt khám: danh sách, tạo, xem, sửa; ngừng hoạt động đơn vị và xóa đợt khám.
+- Danh mục dịch vụ, cấu hình ngày khám và giá thỏa thuận của đợt khám.
+- Participant: danh sách, thêm/sửa/hủy/khôi phục, tải mẫu và nhập Excel một bước.
+- Chi tiết khám: danh sách, tổng hợp, xuất Excel và nhập file đối soát dịch vụ.
+- Báo cáo thanh toán: JSON và tải DOCX.
+
+**Còn lệch quyền Participant:** FE vẫn dùng mã quyền cũ và gộp quyền quản lý;
+backend đã tách quyền theo thao tác. Các action/tab có thể bị ẩn với phiên có quyền mới.
+Ngoài ra, Organization DELETE, Batch DELETE và catalog lookup có handler nhưng
+chưa có rule cho phép trong authorization production. Chi tiết và tiêu chí sửa
+ở [code follow-ups](docs/maintenance/code-follow-ups.md).
+
+Visit preparation/check-in Participant → Patient → Encounter, chuyển trạng thái
+đợt khám, in hồ sơ chính thức và các nghiệp vụ lâm sàng/tài chính phía sau chưa có
+HTTP contract. Các workspace chưa được tích hợp hiển thị trạng thái chưa khả dụng.
+Import roster hiện tại được khôi phục ngày 2026-10-06; luồng upload/mapping/preview/confirm/cancel cũ vẫn đã gỡ.
 
 ## Chạy với backend thật (local)
 
-1. Chạy backend với profile `local` (Flyway nạp thêm `db/local`: 2 khoa và 5 dịch vụ mẫu, không có
-   tài khoản nào) cùng Redis; cấp một tài khoản STAFF có role cho môi trường local.
+1. Chạy backend với profile `local`, PostgreSQL và Redis theo
+   [backend operations](../Ngoc_Khanh_Clinic_DX_Springboot/docs/architecture/06-testing-and-operations.md).
+   Dùng schema/migration tương thích và tài khoản STAFF có quyền theo contract của thao tác cần kiểm tra.
 2. Đặt `NEXT_PUBLIC_API_BASE_URL=http://localhost:8080` (xem `.env.example`) rồi `pnpm dev`.
 3. Smoke test trình duyệt thật (bỏ qua nếu thiếu biến môi trường; không commit thông tin đăng nhập):
 
-```bash
-E2E_STAFF_USERNAME=<staff> E2E_STAFF_PASSWORD=<mật khẩu> pnpm test:e2e:backend
+```powershell
+$env:E2E_STAFF_USERNAME = "<staff>"
+$env:E2E_STAFF_PASSWORD = "<mật khẩu>"
+pnpm test:e2e:backend
 ```
 
+Ví dụ trên dùng PowerShell. Chỉ đặt credential trong môi trường local.
 `pnpm test:e2e` chạy các spec Playwright dùng backend giả lập trong trình duyệt
-(`e2e/support/mock-backend.ts`, có trạng thái, 409/404/403) để kiểm tra luồng đợt khám và các tab chưa hỗ trợ.
+(`e2e/support/mock-backend.ts`) cho auth, đợt khám, Participant, đối soát/báo cáo
+và các workspace chưa hỗ trợ. Mock E2E không xác nhận authorization backend thật.
 
 ## Quy ước
+
+Tra cứu [mục lục tài liệu](docs/README.md) cho hướng dẫn hiện hành, ADR và kết quả kiểm chứng.
 
 Đọc [AGENTS.md](AGENTS.md), [PROJECT_RULES.md](PROJECT_RULES.md), ADR liên quan và [kiến trúc frontend](docs/architecture/FRONTEND_ARCHITECTURE.md) trước thay đổi cấu trúc, state hoặc API. Dùng URL cho state có thể chia sẻ, TanStack Query cho server state, React Hook Form cho form state. Không thêm API hoặc trường DTO khi backend contract chưa có.

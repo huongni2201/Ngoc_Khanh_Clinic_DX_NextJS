@@ -14,6 +14,12 @@ vertical slice. Preserve Participant terminology and Vietnamese product copy.
    For visual work, read [the design reference](design-system/ngoc-khanh-clinic/MASTER.md);
    color policy is owned by [PROJECT_RULES §15](PROJECT_RULES.md#15-ui--ux).
 
+For documentation updates, start with [the documentation index](docs/README.md).
+Update current references from source/contracts; remove outdated or superseded
+plans once their lasting decisions and open work are covered by current docs.
+Preserve accepted ADRs and valid verification evidence. Track unresolved
+implementation work in the code follow-up list.
+
 Explicit owner instructions and accepted business ADRs define intended behavior;
 backend handlers and DTOs define the available HTTP surface. If they disagree,
 identify the conflict before changing dependent behavior. FE code, mocks and

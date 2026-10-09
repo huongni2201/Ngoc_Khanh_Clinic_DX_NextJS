@@ -367,7 +367,7 @@ test("adds, cancels and reactivates a Participant on the same row", async ({ pag
     await dialog.getByLabel(/Họ và tên/).fill("Trần Thị B")
     await dialog.getByLabel(/Ngày sinh/).fill("1990-03-14")
     await dialog.getByLabel(/Giới tính/).selectOption("FEMALE")
-    await dialog.getByLabel(/CCCD/).fill("098765432109")
+    await dialog.getByLabel(/^CCCD/).fill("098765432109")
     await dialog.getByLabel(/Đơn vị\/Phòng ban/).fill("Phòng Kế toán")
     await dialog.getByLabel(/Chức vụ/).fill("Kế toán viên")
     await dialog.getByRole("button", { name: "Thêm người khám" }).click()

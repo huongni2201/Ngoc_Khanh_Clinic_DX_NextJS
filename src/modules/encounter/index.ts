@@ -1,0 +1,6 @@
+export type { EncounterStatus, EncounterSummary } from "./types"
+export { fetchPatientEncounters } from "./api"
+export { usePatientEncounters, PATIENT_ENCOUNTERS_KEY } from "./hooks/use-encounter"
+export { EncounterHistoryTable } from "./components/encounter-history-table"
+export type { PatientCheckInRequest, AssignRoomDto } from "./types/encounter-actions"
+export { checkInPatient, assignRoomAndDoctor, startDoctorEncounter } from "./api/encounter-actions"

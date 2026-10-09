@@ -1,20 +1,14 @@
-import * as React from "react"
-import { render, screen } from "@testing-library/react"
+import { screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { initialEncounters, resetReceptionStore } from "@/modules/reception/__tests__/fixtures/api-fixtures"
+import { initialEncounters, resetReceptionStore } from "@/widgets/reception/__tests__/fixtures/api-fixtures"
 import { fetchInvoiceByEncounter, startTransferPayment } from "../api"
 import { resetBillingStore } from "./fixtures/api-fixtures"
 import * as billingApi from "../api"
 import { PaymentDialog } from "../components/payment-dialog"
+import { renderWithClient } from "@/test-utils/render-with-client"
 
 const waitingEncounter = initialEncounters.find((encounter) => encounter.paymentStatus === "PENDING")!
-
-function renderWithClient(ui: React.ReactElement) {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  return render(<QueryClientProvider client={client}>{ui}</QueryClientProvider>)
-}
 
 describe("PaymentDialog", () => {
   beforeEach(() => {

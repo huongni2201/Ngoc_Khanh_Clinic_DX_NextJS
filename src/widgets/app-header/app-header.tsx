@@ -1,6 +1,5 @@
 "use client"
 
-import * as React from "react"
 import { HugeiconsIcon } from "@hugeicons/react"
 import {
   ArrowDown01Icon,
@@ -11,7 +10,7 @@ import {
 } from "@hugeicons/core-free-icons"
 import { Input } from "@/components/ui/input"
 import { useRouter } from "next/navigation"
-import { useLogout } from "@/modules/auth"
+import { useLogout } from "@/modules/accesscontrol"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"

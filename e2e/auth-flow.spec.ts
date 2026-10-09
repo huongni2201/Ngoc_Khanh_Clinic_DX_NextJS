@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test"
-import { staffSession } from "../src/modules/auth/__tests__/fixtures"
+import { staffSession } from "../src/modules/accesscontrol/__tests__/fixtures"
 
 const API = "http://localhost:8080"
 const CORS = { "access-control-allow-origin": "http://localhost:3000", "access-control-allow-credentials": "true" }

@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This document describes how the current frontend is structured. Use ADRs to
+Updated 2026-10-09. This document describes how the current frontend is structured. Use ADRs to
 explain why long-lived decisions were made; use this document to explain how
 the frontend is organized.
 
@@ -18,7 +18,7 @@ Next.js App Router
 Route Composition
   │
   ▼
-Module Page / Feature
+Module Page / Feature or Widget Composition
   ├──────────────► Query / Mutation Hook
   │                       │
   │                       ▼
@@ -51,10 +51,25 @@ src/
 
 ## Dependency Direction
 
+### Backend-aligned contexts
+
+`modules` contains accesscontrol, appointment, billing, catalog, clinical,
+diagnostics, document, encounter, healthexamination, patient and prescription.
+Organization and Batch/Participant features live under
+`healthexamination/organizations` and `healthexamination/batches`. Catalog owns
+service lookup; negotiated batch prices and batch reports stay in healthexamination.
+
+Reception, doctor, patient-workspace, appointment-workspace and encounter-detail
+are widget compositions. The encounter-detail widget owns the combined view
+model; clinical, diagnostics, prescription and document components receive their
+own data slices. Modules never import widgets/app. Internal imports bypass their
+own public barrel; cross-context imports use public exports. See
+[ADR-0009](../adr/0009-backend-aligned-module-ownership.md).
+
 ```text
 app
- ↓
-modules / widgets
+ ├──► widgets ──► modules (public exports)
+ └─────────────► modules (public exports)
  ↓
 shared
  ↓
@@ -79,9 +94,10 @@ Examples: Button, Input, Dialog, Sheet, Select, Table, Tabs, Popover, Calendar, 
 
 ### Shared Application Components
 
-Location: `src/shared/components`
+Location: `src/shared/ui`
 
-Examples: DataTable, EmptyState, ErrorState, PageHeader, ConfirmAction, PermissionState.
+Examples: PageHeader, ScreenLayout, ScreenLoadingSkeleton, SearchField,
+StatusPill, DataTablePagination, MoneyInput and WorklistTabHeader.
 
 These may compose shadcn primitives but remain domain-neutral.
 
@@ -89,8 +105,8 @@ These may compose shadcn primitives but remain domain-neutral.
 
 Location: `src/modules/<domain>/components`
 
-Examples: ParticipantValidationBadge, OrganizationSummary,
-HealthExaminationBatchStatus, PatientMatchPanel.
+Examples: ParticipantsTab, ParticipantFormDialog, HealthExaminationBatchOverview
+and OrganizationHealthExaminationBatchesTab.
 
 These contain business terminology or behavior.
 
@@ -180,41 +196,53 @@ Organization
 ```
 
 `HealthExaminationParticipant` is a batch membership record and is not
-automatically a `Patient`. This is domain direction; roster/check-in HTTP handlers
-are not yet implemented in the current backend.
+automatically a `Patient`. Roster list/manual changes/import have HTTP contracts;
+Participant-to-Patient visit preparation/check-in does not yet have a public handler.
 
 ## Corporate Health Examination Flow
 
-Current backend HTTP operations are organization list/create/get/update/deactivate,
-batch create/list and authentication. See [the API inventory](../../../Ngoc_Khanh_Clinic_DX_Springboot/docs/api/clean-slate-migration.md).
-Excel roster import was removed on 2026-10-05. Roster, print and visit preparation
-are domain/UI directions requiring explicit HTTP contracts. Existing FE callers
-do not make missing endpoints supported. See [code follow-ups](../maintenance/code-follow-ups.md).
+Current mapped operations include authentication, organization/batch configuration,
+Participant list/manual changes/template/import, examination-details reconciliation
+and import/export, and payment-summary JSON/DOCX. See
+[the API inventory](../../../Ngoc_Khanh_Clinic_DX_Springboot/docs/api/clean-slate-migration.md)
+for exact routes and authorization gaps. The single-step roster import was restored
+on 2026-10-06; the former preview/confirm/cancel chain remains removed. Visit
+preparation and official clinical printing need explicit HTTP contracts. The
+Participant action gates still use legacy permissions and need alignment with
+the backend's separate permission codes; mapped Organization/Batch DELETE and
+catalog lookup also have production authorization gaps. Existing
+FE callers do not make missing endpoints supported. See
+[code follow-ups](../maintenance/code-follow-ups.md).
 
-## Route Direction
+## Routes and Planned Print Direction
 
 ```text
-/login
-/health-check
+/auth/login
+/organizations
 /organizations/[organizationId]
 /organizations/[organizationId]/health-examination-batches/[batchId]
-/health-check/print/preview
 ```
 
-Later:
+Existing staff workspace routes (some business integrations remain unavailable):
 
 ```text
 /reception
 /doctor
-/diagnostics
 /billing
+/patients
+/appointments
+/encounters
 ```
+
+`/health-check` and `/health-check/print/preview` are planned print routes;
+they are not current App Router pages. A route or rendered workspace is not
+evidence of a supported backend operation.
 
 ## Architecture Changes
 
 ### User authentication implementation
 
-`modules/auth` owns STAFF/PATIENT login, logout, session schemas, hooks and AuthBoundary.
+`modules/accesscontrol` owns STAFF/PATIENT login, logout, session schemas, hooks and AuthBoundary.
 The flow is component → auth hook → auth API → `shared/api/http-client` → backend
 `accesscontrol` (login, me, logout). The browser sends the HttpOnly session cookie
 with `credentials: "include"`; frontend code never receives or persists the session
@@ -225,9 +253,9 @@ AppShell mounts protected screens and the payment notifier only after a successf
 login or session verification. AppHeader receives real identity display values and
 uses the auth module's public logout hook. The root QueryProvider mounts cross-tab synchronization
 and handles 401 errors from queries explicitly marked `requiresAuth`. Shared
-transport remains independent of the auth module. The legacy participant-roster adapter uses
-the shared API client, includes session cookies and forwards cancellation signals.
-Its backend route is currently absent. Both shared client entry points use the same cookie-aware transport with a
+transport remains independent of accesscontrol. The Participant adapter in
+healthexamination uses the shared API client, includes session cookies and forwards
+cancellation signals. Both shared client entry points use the same cookie-aware transport with a
 15-second timeout. QueryProvider recognizes their HTTP error contracts without
 turning permission failures into logout.
 

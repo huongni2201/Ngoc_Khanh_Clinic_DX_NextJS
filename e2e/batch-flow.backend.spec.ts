@@ -15,7 +15,6 @@ test("organization to batch chain works on the real backend", async ({ page }) =
   const suffix = Date.now().toString(36).toUpperCase()
   const orgName = `Đơn vị đợt khám ${suffix}`
   const taxCode = Date.now().toString().slice(-10)
-  const batchCode = `B-${suffix}`
   const batchName = `Đợt khám ${suffix}`
 
   await page.goto("/auth/login")
@@ -28,7 +27,6 @@ test("organization to batch chain works on the real backend", async ({ page }) =
   const orgDialog = page.getByRole("dialog")
   await orgDialog.getByLabel(/Tên đơn vị/).fill(orgName)
   await orgDialog.getByLabel(/Mã số thuế/).fill(taxCode)
-  await orgDialog.getByLabel(/Điện thoại đơn vị/).fill("0900000001")
   await orgDialog.getByLabel(/Email đơn vị/).fill(`org-${suffix.toLowerCase()}@example.com`)
   await orgDialog.getByLabel(/Người liên hệ/).fill("Người liên hệ E2E")
   await orgDialog.getByLabel(/Điện thoại người liên hệ|^Số điện thoại/).fill("0900000002")
@@ -44,7 +42,7 @@ test("organization to batch chain works on the real backend", async ({ page }) =
   await page.getByRole("button", { name: "Tạo đợt khám" }).first().click()
   const dialog = page.getByRole("dialog")
   await expect(dialog.getByRole("checkbox", { name: "Khám tổng quát" })).toBeVisible()
-  await dialog.getByLabel(/Mã đợt khám/).fill(batchCode)
+  await expect(dialog.getByLabel(/Mã đợt khám/)).toHaveAttribute("readonly", "")
   await dialog.getByLabel(/Tên đợt khám/).fill(batchName)
   await dialog.getByLabel(/^Ngày khám/).fill("2026-12-15")
   await dialog.getByRole("button", { name: "Thêm ngày" }).click()

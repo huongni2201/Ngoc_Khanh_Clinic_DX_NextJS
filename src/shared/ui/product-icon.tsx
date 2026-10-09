@@ -5,12 +5,10 @@ import {
   Alert02Icon,
   AlertCircleIcon,
   ArrowDown01Icon,
-  ArrowLeft01Icon,
   ArrowLeft02Icon,
   ArrowRight01Icon,
   ArrowRight02Icon,
   Building03Icon,
-  Calculator01Icon,
   Calendar03Icon,
   CalendarAdd01Icon,
   CalendarDaysIcon,
@@ -23,7 +21,6 @@ import {
   ClipboardListIcon,
   ClipboardPlusIcon,
   Clock01Icon,
-  ContrastIcon,
   Copy01Icon,
   CreditCardIcon,
   Delete02Icon,
@@ -38,9 +35,7 @@ import {
   FileSpreadsheetIcon,
   FileTextIcon,
   FilterIcon,
-  HandshakeIcon,
   HeadphonesIcon,
-  Home01Icon,
   HourglassIcon,
   InformationCircleIcon,
   LinkSquare02Icon,
@@ -49,13 +44,11 @@ import {
   LockIcon,
   Mail01Icon,
   Money01Icon,
-  MoreHorizontalIcon,
   PencilEdit01Icon,
   PrinterIcon,
   QrCodeIcon,
   RefreshCwIcon,
   RotateCcwIcon,
-  RotateCwIcon,
   ScaleIcon,
   ScanIcon,
   Search01Icon,
@@ -67,15 +60,12 @@ import {
   Upload01Icon,
   UserAdd01Icon,
   UserCheck01Icon,
-  UserCogIcon,
   UserGroupIcon,
   UserIcon,
   UserRemove01Icon,
   ViewIcon,
   ViewOffIcon,
   WindIcon,
-  ZoomInIcon,
-  ZoomOutIcon,
 } from "@hugeicons/core-free-icons"
 import {
   HugeiconsIcon,
@@ -103,21 +93,17 @@ export const ArrowLeft = createProductIcon(ArrowLeft02Icon, "ArrowLeft")
 export const ArrowRight = createProductIcon(ArrowRight02Icon, "ArrowRight")
 export const Banknote = createProductIcon(Money01Icon, "Banknote")
 export const Building2 = createProductIcon(Building03Icon, "Building2")
-export const Calculator = createProductIcon(Calculator01Icon, "Calculator")
 export const Calendar = createProductIcon(Calendar03Icon, "Calendar")
 export const CalendarDays = createProductIcon(CalendarDaysIcon, "CalendarDays")
-export const CalendarIcon = createProductIcon(Calendar03Icon, "CalendarIcon")
 export const CalendarPlus = createProductIcon(CalendarAdd01Icon, "CalendarPlus")
 export const Check = createProductIcon(Tick02Icon, "Check")
 export const CheckCircle2 = createProductIcon(CheckmarkCircle02Icon, "CheckCircle2")
 export const ChevronDown = createProductIcon(ArrowDown01Icon, "ChevronDown")
-export const ChevronLeft = createProductIcon(ArrowLeft01Icon, "ChevronLeft")
 export const ChevronRight = createProductIcon(ArrowRight01Icon, "ChevronRight")
 export const CircleDot = createProductIcon(CircleDotIcon, "CircleDot")
 export const ClipboardList = createProductIcon(ClipboardListIcon, "ClipboardList")
 export const ClipboardPlus = createProductIcon(ClipboardPlusIcon, "ClipboardPlus")
 export const Clock = createProductIcon(Clock01Icon, "Clock")
-export const Contrast = createProductIcon(ContrastIcon, "Contrast")
 export const Copy = createProductIcon(Copy01Icon, "Copy")
 export const CreditCard = createProductIcon(CreditCardIcon, "CreditCard")
 export const DoorOpen = createProductIcon(DoorOpenIcon, "DoorOpen")
@@ -136,8 +122,6 @@ export const Filter = createProductIcon(FilterIcon, "Filter")
 export const FlaskConical = createProductIcon(TestTube01Icon, "FlaskConical")
 export const Headphones = createProductIcon(HeadphonesIcon, "Headphones")
 export const Heart = createProductIcon(FavouriteIcon, "Heart")
-export const HeartHandshake = createProductIcon(HandshakeIcon, "HeartHandshake")
-export const Home = createProductIcon(Home01Icon, "Home")
 export const Hourglass = createProductIcon(HourglassIcon, "Hourglass")
 export const Info = createProductIcon(InformationCircleIcon, "Info")
 export const ListChecks = createProductIcon(CheckListIcon, "ListChecks")
@@ -145,7 +129,6 @@ export const Loader2 = createProductIcon(Loading03Icon, "Loader2")
 export const Lock = createProductIcon(LockIcon, "Lock")
 export const Mail = createProductIcon(Mail01Icon, "Mail")
 export const MapPin = createProductIcon(Location01Icon, "MapPin")
-export const MoreHorizontal = createProductIcon(MoreHorizontalIcon, "MoreHorizontal")
 export const Pencil = createProductIcon(PencilEdit01Icon, "Pencil")
 export const Phone = createProductIcon(Call02Icon, "Phone")
 export const Plus = createProductIcon(Add01Icon, "Plus")
@@ -153,7 +136,6 @@ export const Printer = createProductIcon(PrinterIcon, "Printer")
 export const QrCode = createProductIcon(QrCodeIcon, "QrCode")
 export const RefreshCw = createProductIcon(RefreshCwIcon, "RefreshCw")
 export const RotateCcw = createProductIcon(RotateCcwIcon, "RotateCcw")
-export const RotateCw = createProductIcon(RotateCwIcon, "RotateCw")
 export const Scale = createProductIcon(ScaleIcon, "Scale")
 export const Scan = createProductIcon(ScanIcon, "Scan")
 export const Search = createProductIcon(Search01Icon, "Search")
@@ -164,12 +146,9 @@ export const Trash2 = createProductIcon(Delete02Icon, "Trash2")
 export const Upload = createProductIcon(Upload01Icon, "Upload")
 export const User = createProductIcon(UserIcon, "User")
 export const UserCheck = createProductIcon(UserCheck01Icon, "UserCheck")
-export const UserCog = createProductIcon(UserCogIcon, "UserCog")
 export const UserPlus = createProductIcon(UserAdd01Icon, "UserPlus")
 export const Users = createProductIcon(UserGroupIcon, "Users")
 export const UserX = createProductIcon(UserRemove01Icon, "UserX")
 export const Wind = createProductIcon(WindIcon, "Wind")
 export const X = createProductIcon(Cancel01Icon, "X")
 export const XCircle = createProductIcon(CancelCircleIcon, "XCircle")
-export const ZoomIn = createProductIcon(ZoomInIcon, "ZoomIn")
-export const ZoomOut = createProductIcon(ZoomOutIcon, "ZoomOut")

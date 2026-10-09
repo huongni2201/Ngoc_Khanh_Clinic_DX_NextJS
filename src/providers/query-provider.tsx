@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { QueryCache, QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { AuthSessionSync, replaceSession, notifySessionChanged } from "@/modules/auth"
+import { AuthSessionSync, replaceSession, notifySessionChanged } from "@/modules/accesscontrol"
 import { HttpError } from "@/shared/api/http-client"
 import { ApiClientError } from "@/shared/api/api-client"
 import { ApiUnavailableError } from "@/shared/api/api-unavailable"

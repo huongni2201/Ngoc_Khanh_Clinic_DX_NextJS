@@ -1,10 +1,10 @@
 "use client"
 
 import * as React from "react"
-import { AppSidebar } from "@/widgets/app-sidebar/app-sidebar"
-import { AppHeader, type AppHeaderUser } from "@/widgets/app-header/app-header"
+import { AppSidebar } from "@/widgets/app-sidebar"
+import { AppHeader, type AppHeaderUser } from "@/widgets/app-header"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
-import { AuthBoundary } from "@/modules/auth"
+import { AuthBoundary } from "@/modules/accesscontrol"
 import { PaymentCompletionNotifier } from "@/modules/billing"
 
 export interface AppShellProps {

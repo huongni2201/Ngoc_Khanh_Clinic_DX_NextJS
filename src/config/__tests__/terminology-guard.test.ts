@@ -7,10 +7,10 @@ const labelsFor = (path: string, content: string) =>
 describe("terminology guard", () => {
   it("does not exempt whole modules: health-examinations is scanned like any other", () => {
     expect(
-      labelsFor("src/modules/health-examinations/api/index.ts", "const companyId = organizationId")
+      labelsFor("src/modules/healthexamination/batches/api/index.ts", "const companyId = organizationId")
     ).toEqual(["Company"])
     expect(
-      labelsFor("src/modules/appointments/types/index.ts", 'type Channel = "FRONT_DESK" | "ONLINE"')
+      labelsFor("src/modules/appointment/types/index.ts", 'type Channel = "FRONT_DESK" | "ONLINE"')
     ).toEqual(["FRONT_DESK"])
   })
 
@@ -22,7 +22,7 @@ describe("terminology guard", () => {
       "const { enterpriseId } = params",
       "export function EnterpriseTable() {}",
     ]) {
-      expect(labelsFor("src/modules/organizations/x.ts", code), code).not.toEqual([])
+      expect(labelsFor("src/modules/healthexamination/organizations/x.ts", code), code).not.toEqual([])
     }
   })
 
@@ -34,7 +34,7 @@ describe("terminology guard", () => {
       'principalType: "STAFF" // nhân viên phòng khám',
       'participantCode: "FPT001"',
     ]) {
-      expect(labelsFor("src/modules/organizations/x.ts", code), code).toEqual([])
+      expect(labelsFor("src/modules/healthexamination/organizations/x.ts", code), code).toEqual([])
     }
   })
 
@@ -44,7 +44,7 @@ describe("terminology guard", () => {
       'examinationSiteType: z.enum(["CLINIC", "COMPANY"])',
       'examinationSiteType: "COMPANY"',
     ]) {
-      expect(labelsFor("src/modules/health-examinations/types/x.ts", code), code).toEqual([
+      expect(labelsFor("src/modules/healthexamination/batches/types/x.ts", code), code).toEqual([
         "site type COMPANY",
       ])
     }
@@ -57,7 +57,7 @@ describe("terminology guard", () => {
       "const url = `${base}/employee-imports`",
       "const url = `${base}/employees/import-template`",
     ]) {
-      expect(labelsFor("src/modules/health-examinations/x.ts", code), code).toEqual([
+      expect(labelsFor("src/modules/healthexamination/batches/x.ts", code), code).toEqual([
         "employee-as-participant",
       ])
     }
@@ -71,7 +71,7 @@ describe("terminology guard", () => {
   })
 
   it("reports an overlapping match once", () => {
-    expect(scanFile("src/modules/appointments/x.ts", 'channel = "FRONT_DESK"')).toHaveLength(1)
+    expect(scanFile("src/modules/appointment/x.ts", 'channel = "FRONT_DESK"')).toHaveLength(1)
   })
 
   it("forbids production source from importing tests or fixtures, including type-only imports", () => {
@@ -91,8 +91,8 @@ describe("terminology guard", () => {
   })
 
   it("keeps exceptions narrow: a listed file is only exempt for its listed labels", () => {
-    const path = "src/config/__tests__/medical-terminology.test.ts"
-    expect(labelsFor(path, 'expect("enterprise" in medicalTerms).toBe(false)')).toEqual([])
+    const path = "src/modules/healthexamination/batches/__tests__/health-examination-batch-schema.test.ts"
+    expect(labelsFor(path, 'examinationSiteType: "COMPANY"')).toEqual([])
     expect(labelsFor(path, "const companyId = 1")).toEqual(["Company"])
   })
 })

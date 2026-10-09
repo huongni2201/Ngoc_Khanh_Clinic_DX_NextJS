@@ -1,7 +1,7 @@
 import { Metadata } from "next"
 import { Suspense } from "react"
-import { AppShell } from "@/widgets/app-shell/app-shell"
-import { DoctorWorklistPage } from "@/modules/doctor"
+import { AppShell } from "@/widgets/app-shell"
+import { DoctorWorklistPage } from "@/widgets/doctor"
 import { ScreenLoadingSkeleton } from "@/shared/ui"
 
 export const metadata: Metadata = {

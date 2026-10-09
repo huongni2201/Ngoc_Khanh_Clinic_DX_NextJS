@@ -61,12 +61,7 @@ export const DEPRECATED_RULES = [
 
 export const TERMINOLOGY_EXCEPTIONS = [
   {
-    path: "src/config/__tests__/medical-terminology.test.ts",
-    labels: ["Enterprise"],
-    reason: "Asserts that Enterprise is not a canonical domain term.",
-  },
-  {
-    path: "src/modules/health-examinations/__tests__/health-examination-batch-schema.test.ts",
+    path: "src/modules/healthexamination/batches/__tests__/health-examination-batch-schema.test.ts",
     labels: ["site type COMPANY"],
     reason: "Negative test: the legacy COMPANY site type must be rejected.",
   },
