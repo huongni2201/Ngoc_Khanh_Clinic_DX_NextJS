@@ -1,4 +1,4 @@
-import "@testing-library/jest-dom"
+import "@testing-library/jest-dom/vitest"
 import * as React from "react"
 import { vi } from "vitest"
 
@@ -19,24 +19,38 @@ vi.mock("@hugeicons/react", () => ({
     React.createElement("svg", { "data-testid": "hugeicon", ...props }),
 }))
 
-vi.mock("@/modules/patients/api", async () =>
-  import("@/modules/patients/__tests__/fixtures/api-fixtures")
+vi.mock("@/modules/patient/api", async () =>
+  import("@/modules/patient/__tests__/fixtures/api-fixtures")
 )
-vi.mock("@/modules/reception/api", async () =>
-  import("@/modules/reception/__tests__/fixtures/api-fixtures")
+vi.mock("@/widgets/reception/api", async () =>
+  import("@/widgets/reception/__tests__/fixtures/api-fixtures")
 )
-vi.mock("@/modules/appointments/api", async () =>
-  import("@/modules/appointments/__tests__/fixtures/api-fixtures")
+vi.mock("@/modules/appointment/api", async () =>
+  import("@/modules/appointment/__tests__/fixtures/api-fixtures")
 )
-vi.mock("@/modules/doctor/api", async () =>
-  import("@/modules/doctor/__tests__/fixtures/api-fixtures")
+vi.mock("@/widgets/doctor/api", async () =>
+  import("@/widgets/doctor/__tests__/fixtures/api-fixtures")
 )
 vi.mock("@/modules/billing/api", async () =>
   import("@/modules/billing/__tests__/fixtures/api-fixtures")
 )
-vi.mock("@/modules/encounters/api", async () =>
-  import("@/modules/encounters/__tests__/fixtures/api-fixtures")
+vi.mock("@/modules/encounter/api", async () =>
+  import("@/widgets/encounter-detail/__tests__/fixtures/api-fixtures")
 )
-vi.mock("@/modules/health-examinations/api", async () =>
-  import("@/modules/health-examinations/__tests__/fixtures/api-fixtures")
+vi.mock("@/modules/healthexamination/batches/api", async () =>
+  import("@/modules/healthexamination/batches/__tests__/fixtures/api-fixtures")
 )
+
+vi.mock("@/modules/catalog/api/services", async () =>
+  import("@/modules/catalog/__tests__/fixtures/api-fixtures")
+)
+
+vi.mock("@/widgets/encounter-detail/api", async () =>
+  import("@/widgets/encounter-detail/__tests__/fixtures/api-fixtures")
+)
+
+vi.mock("@/modules/encounter/api/encounter-actions", async () => {
+  const reception = await import("@/widgets/reception/__tests__/fixtures/api-fixtures")
+  const doctor = await import("@/widgets/doctor/__tests__/fixtures/api-fixtures")
+  return { checkInPatient: reception.checkInPatient, assignRoomAndDoctor: reception.assignRoomAndDoctor, startDoctorEncounter: doctor.startDoctorEncounter }
+})

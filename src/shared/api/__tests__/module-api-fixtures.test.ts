@@ -1,18 +1,18 @@
 import { describe, expect, it, vi } from "vitest"
-import type * as AppointmentsApi from "@/modules/appointments/api"
+import type * as AppointmentsApi from "@/modules/appointment/api"
 import type * as BillingApi from "@/modules/billing/api"
-import type * as DoctorApi from "@/modules/doctor/api"
-import type * as EncountersApi from "@/modules/encounters/api"
-import type * as HealthExaminationsApi from "@/modules/health-examinations/api"
-import type * as PatientsApi from "@/modules/patients/api"
-import type * as ReceptionApi from "@/modules/reception/api"
-import * as appointmentFixtures from "@/modules/appointments/__tests__/fixtures/api-fixtures"
+import type * as DoctorApi from "@/widgets/doctor/api"
+import type * as EncountersApi from "@/modules/encounter/api"
+import type * as HealthExaminationsApi from "@/modules/healthexamination/batches/api"
+import type * as PatientsApi from "@/modules/patient/api"
+import type * as ReceptionApi from "@/widgets/reception/api"
+import * as appointmentFixtures from "@/modules/appointment/__tests__/fixtures/api-fixtures"
 import * as billingFixtures from "@/modules/billing/__tests__/fixtures/api-fixtures"
-import * as doctorFixtures from "@/modules/doctor/__tests__/fixtures/api-fixtures"
-import * as encounterFixtures from "@/modules/encounters/__tests__/fixtures/api-fixtures"
-import * as healthExaminationFixtures from "@/modules/health-examinations/__tests__/fixtures/api-fixtures"
-import * as patientFixtures from "@/modules/patients/__tests__/fixtures/api-fixtures"
-import * as receptionFixtures from "@/modules/reception/__tests__/fixtures/api-fixtures"
+import * as doctorFixtures from "@/widgets/doctor/__tests__/fixtures/api-fixtures"
+import * as encounterFixtures from "@/widgets/encounter-detail/__tests__/fixtures/api-fixtures"
+import * as healthExaminationFixtures from "@/modules/healthexamination/batches/__tests__/fixtures/api-fixtures"
+import * as patientFixtures from "@/modules/patient/__tests__/fixtures/api-fixtures"
+import * as receptionFixtures from "@/widgets/reception/__tests__/fixtures/api-fixtures"
 
 /**
  * Production modules own their API signatures; fixtures depend on them, never the
@@ -21,17 +21,17 @@ import * as receptionFixtures from "@/modules/reception/__tests__/fixtures/api-f
  * exporting a production function that tests rely on through the global mock.
  */
 const contracts = [
-  ["appointments", "@/modules/appointments/api", appointmentFixtures satisfies typeof AppointmentsApi],
+  ["appointments", "@/modules/appointment/api", appointmentFixtures satisfies typeof AppointmentsApi],
   ["billing", "@/modules/billing/api", billingFixtures satisfies typeof BillingApi],
-  ["doctor", "@/modules/doctor/api", doctorFixtures satisfies typeof DoctorApi],
-  ["encounters", "@/modules/encounters/api", encounterFixtures satisfies typeof EncountersApi],
+  ["doctor", "@/widgets/doctor/api", doctorFixtures satisfies typeof DoctorApi],
+  ["encounters", "@/modules/encounter/api", encounterFixtures satisfies typeof EncountersApi],
   [
     "health-examinations",
-    "@/modules/health-examinations/api",
+    "@/modules/healthexamination/batches/api",
     healthExaminationFixtures satisfies typeof HealthExaminationsApi,
   ],
-  ["patients", "@/modules/patients/api", patientFixtures satisfies typeof PatientsApi],
-  ["reception", "@/modules/reception/api", receptionFixtures satisfies typeof ReceptionApi],
+  ["patients", "@/modules/patient/api", patientFixtures satisfies typeof PatientsApi],
+  ["reception", "@/widgets/reception/api", receptionFixtures satisfies typeof ReceptionApi],
 ] as const
 
 describe("module API fixtures", () => {

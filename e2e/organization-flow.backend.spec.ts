@@ -25,7 +25,6 @@ test("create, find, edit and deactivate an organization on the real backend", as
   const dialog = page.getByRole("dialog")
   await dialog.getByLabel(/Tên đơn vị/).fill(name)
   await dialog.getByLabel(/Mã số thuế/).fill(taxCode)
-  await dialog.getByLabel(/Điện thoại đơn vị/).fill("0900000001")
   await dialog.getByLabel(/Email đơn vị/).fill(`org-${suffix.toLowerCase()}@example.com`)
   await dialog.getByLabel(/Người liên hệ/).fill("Người liên hệ E2E")
   await dialog.getByLabel(/Điện thoại người liên hệ|^Số điện thoại/).fill("0900000002")

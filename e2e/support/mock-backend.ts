@@ -192,6 +192,9 @@ export async function mockBackend(page: Page): Promise<MockBackend> {
     if (path === "/api/v1/catalog/services") {
       return envelope(route, 200, { items: CATALOG, page: 1, size: 100, totalElements: CATALOG.length, totalPages: 1 })
     }
+    if (path === "/api/v1/organizations" && method === "GET") {
+      return envelope(route, 200, { items: [organization()], page: 1, size: 10, totalElements: 1, totalPages: 1 })
+    }
     if (path === `/api/v1/organizations/${ORGANIZATION_ID}` && method === "GET") return envelope(route, 200, organization())
 
     const batchesPath = `/api/v1/organizations/${ORGANIZATION_ID}/health-examination-batches`
@@ -206,11 +209,10 @@ export async function mockBackend(page: Page): Promise<MockBackend> {
     if (path === batchesPath && method === "POST") {
       expect(request.headers().origin).toBe("http://localhost:3000")
       const body = request.postDataJSON() as Record<string, unknown>
-      if (state.batches.some((batch) => batch.batchCode === body.batchCode)) {
-        return envelope(route, 409, undefined, "Batch code already exists")
-      }
+      // The backend generates the code (KSK-<year>-<running number>) and never accepts one.
+      expect(body).not.toHaveProperty("batchCode")
       const batch = state.seedBatch({
-        batchCode: String(body.batchCode),
+        batchCode: `KSK-2026-${String(sequence + 1).padStart(3, "0")}`,
         batchName: String(body.batchName),
         dates: body.examinationDates as string[],
         siteType: String(body.examinationSiteType),

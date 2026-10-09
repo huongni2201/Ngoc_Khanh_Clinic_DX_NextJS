@@ -1,7 +1,7 @@
 import { Metadata } from "next"
 import { Suspense } from "react"
-import { AppShell } from "@/widgets/app-shell/app-shell"
-import { OrganizationDetailPage } from "@/modules/organizations"
+import { AppShell } from "@/widgets/app-shell"
+import { OrganizationDetailPage } from "@/modules/healthexamination"
 import { ScreenLoadingSkeleton } from "@/shared/ui"
 
 interface OrganizationDetailPageProps {

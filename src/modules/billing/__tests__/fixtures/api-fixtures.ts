@@ -3,8 +3,8 @@ import {
   fetchReceptionWorklist,
   fetchReceptionInvoices,
   processPayment as processReceptionPayment,
-} from "@/modules/reception/__tests__/fixtures/api-fixtures"
-import type { FixtureReceptionInvoice as ReceptionInvoice } from "@/modules/reception/__tests__/fixtures/api-fixtures"
+} from "@/widgets/reception/__tests__/fixtures/api-fixtures"
+import type { FixtureReceptionInvoice as ReceptionInvoice } from "@/widgets/reception/__tests__/fixtures/api-fixtures"
 import type {
   BillableEncounter,
   ConfirmTransferPaymentDto,

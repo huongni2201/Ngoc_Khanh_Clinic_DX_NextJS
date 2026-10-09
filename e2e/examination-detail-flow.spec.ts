@@ -277,7 +277,7 @@ test("a session without either permission sees neither tab and requests nothing 
   await expect(page.getByRole("heading", { name: batch.batchName })).toBeVisible()
   await expect(page.getByRole("button", { name: "Chi tiết khám" })).toHaveCount(0)
   await expect(page.getByRole("button", { name: "Báo cáo" })).toHaveCount(0)
-  await page.waitForTimeout(500)
+  await page.waitForLoadState("networkidle")
   expect(examination.requests).toEqual([])
   expect(backend.unexpected).toEqual([])
 })

@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { ok, staffSession } from "@/modules/auth/__tests__/fixtures"
+import { ok, staffSession } from "@/modules/accesscontrol/__tests__/fixtures"
 import { AppShell } from "../app-shell/app-shell"
 
 vi.mock("next/navigation", () => ({

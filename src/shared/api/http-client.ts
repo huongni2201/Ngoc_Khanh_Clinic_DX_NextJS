@@ -10,7 +10,7 @@ export class HttpError extends Error {
   }
 }
 
-export function apiUrl(path: string): string {
+function apiUrl(path: string): string {
   const base = process.env.NEXT_PUBLIC_API_BASE_URL ||
     (process.env.NODE_ENV !== "production" ? "http://localhost:8080" : "")
   if (!base) throw new HttpError("CONFIGURATION", "Chưa cấu hình kết nối máy chủ.")

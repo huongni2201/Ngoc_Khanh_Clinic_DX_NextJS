@@ -1,62 +1,30 @@
 # Frontend code follow-ups
 
-Recorded 2026-10-05, updated 2026-10-06 after the frontend cleanup. The original
-documentation/skill/hygiene repair did not change runtime source, package
-dependencies or CSS. This list tracks the remaining implementation work; it does not restore removed features or invent backend endpoints.
+Updated 2026-10-09 against the current checkout and backend contracts. This list
+owns remaining implementation work. Current integrations are described in the
+frontend architecture; documentation updates do not imply a runtime fix.
 [The backend inventory](../../../Ngoc_Khanh_Clinic_DX_Springboot/docs/api/clean-slate-migration.md)
 owns HTTP availability.
 
 | Priority | Evidence | Required follow-up and acceptance evidence |
 |---|---|---|
-| Medium | Examination matrix, report and export callers (`OrganizationExaminationDetailTab`, `OrganizationReportsTab`, `utils/export-excel.ts`) are kept as roadmap code but are not mounted; the batch detail page shows "Chưa hỗ trợ" for those tabs and sends no request. | When the backend publishes those contracts, rebuild each caller on the real DTOs (legacy components still use the old fixture shapes), mount the tab and add tests/E2E. Until then do not add mock success. |
+| High | [Participant permission constants](../../src/modules/healthexamination/batches/utils/participant-permissions.ts) still use `HEALTH_EXAMINATION_PARTICIPANT_READ/IMPORT/MANAGE`. The [current list/import contract](../../../Ngoc_Khanh_Clinic_DX_Springboot/docs/api/participant-import-and-list.md#permissions) and [manual contract](../../../Ngoc_Khanh_Clinic_DX_Springboot/docs/api/participant-manual-crud.md#permission) supersede those grants. Template/import share one FE gate; manual actions share another. | Align list/detail with `PARTICIPANT_VIEW`, template with `PARTICIPANT_TEMPLATE_DOWNLOAD`, import with `PARTICIPANT_IMPORT`, and create/update/cancel/reactivate with `PARTICIPANT_CREATE/UPDATE/REMOVE/REACTIVATE` respectively. Test sessions granted each permission separately, permission-denied states and a real-backend STAFF session; keep backend authorization authoritative. Signing in again alone does not fix legacy FE constants. |
+| High (backend dependency) | Organization DELETE, Batch DELETE and catalog lookup have handlers but no explicit production permission rules, according to the backend inventory. | Resolve backend authorization policy before declaring these operations production-ready; verify actual STAFF requests after the backend change. Local TEST bypass and browser mock E2E do not prove production access. |
+| Medium | Legacy progress/report components and unavailable adapters remain as roadmap code. The published examination-details/import/export and payment-summary contracts are integrated by the batch feature. | Keep the supported integrations separate from legacy fixture shapes; visit preparation and clinical/official print features need explicit HTTP contracts. |
 | Medium | The appointment dialog (`create-appointment-dialog.tsx`) used to link a Participant to a Patient by full CCCD. The Participant list now returns only a masked CCCD, so the dialog asks the user to choose the patient record instead. | When the backend exposes a Participant-to-Patient link (or a server-side lookup), restore automatic linking through it; never request or store the full CCCD in the list. |
 | Low | Participant list is a local-state table (search, two status filters, sort, paging). The reconciliation status filter and the `batchDayId`/CCCD filters of the backend are not exposed in the UI. | Add them when a workflow needs them. |
 | Medium | The batch form selects dates with a native date input plus an "add day" list, and the catalog picker reads only the first page (size 100) of `GET /api/v1/catalog/services`. | Replace with a calendar multi-select if UX needs it; add catalog search/paging if the catalog exceeds 100 active services. |
-| Low | `pnpm build` could not be verified on Linux: the `@hugeicons/core-free-icons` barrel references `Grid2x2*Icon.js` while the package ships `Grid2X2*Icon.js`, so webpack fails on case-sensitive file systems (the same import exists on `main`). Next dev/Playwright and Vitest are unaffected. | Verify `pnpm build` on Windows/macOS (case-insensitive) or import icons from direct paths; track upstream fix. |
+| Low | Earlier Linux verification reported a case mismatch in the `@hugeicons/core-free-icons` barrel (`Grid2x2*Icon.js` versus `Grid2X2*Icon.js`). The [2026-10-09 report](backend-aligned-modules-verification.md#checks-actually-run) records a passing Windows build, under toolchain patches below the pinned baseline. | Verify the exact pinned Node/pnpm toolchain and a case-sensitive build before claiming portability. The Windows result does not close the Linux finding. |
 
-## Resolved on 2026-10-06 (FE ↔ BE integration)
+## Current integration and verification
 
-- Batch transport now matches the backend (`DRAFT|READY|FINALIZED|CLOSED`, `days`, `examinationDates`,
-  `rowVersion`, `services[{serviceId, negotiatedPrice}]`); batch list/detail/create/update/delete and the
-  service catalog call real endpoints with Zod parsing. Unknown statuses fail parsing.
-- API error messages are Vietnamese per HTTP status; 409 keeps the form and offers an explicit reload
-  (never an automatic resend); mutations never retry.
-- Playwright: mock-backend specs (`e2e/batch-flow.spec.ts`, `e2e/unsupported-routes.spec.ts`) and
-  real-backend smoke specs (`e2e/organization-flow.backend.spec.ts`, `e2e/batch-flow.backend.spec.ts`).
-
-## Resolved on 2026-10-06
-
-Details and evidence per finding are in
-[the cleanup inventory](frontend-cleanup-inventory.md#kết-quả-triển-khai-2026-10-06).
-
-- Legacy roster import chain (API, hooks, dialog, template/upload/mapping/preview/confirm/cancel
-  callers, import-preview types and fixtures) removed. No age-eligibility rejection remains.
-  On 2026-10-06 a new, single-step Participant import and list were added for the new backend
-  endpoints (`PROJECT_RULES.md` section 12); none of the removed code was reused.
-- `cn` evaluated and kept: it matched clsx + tailwind-merge on 28 conflict cases.
-  `shadcn` moved to devDependencies; `lucide-react` removed after the six billing callers
-  moved to the Hugeicons adapter; lockfile updated.
-- `axios` removed. It had no import in `src/`, `scripts/`, any root config file, `.env.example`
-  or `docs` (only a guardrail example in ADR 0004); `src/shared/api/http-client.ts` uses
-  `fetch`. `pnpm remove axios --lockfile-only` also dropped its transitive packages
-  (`follow-redirects`, `form-data`, `https-proxy-agent`, `proxy-from-env` and others) from the lockfile.
-- Colour contrast fixed in [globals.css](../../src/app/globals.css) for text pairs in light and dark
-  (muted, status, info, destructive, primary/brand/sidebar foregrounds) plus the form `--input`
-  border (3:1), `text-destructive-foreground` now maps to a real token, and low-opacity text
-  (`text-primary/80`, `text-muted-foreground/30|40`, `text-destructive/90`) replaced by full-strength
-  tokens. Guarded by `src/config/__tests__/color-contrast.test.ts`. Not done: inspecting hover/focus
-  states in a real browser.
+- Corporate integration: real batch CRUD/catalog transport, exact `DRAFT|READY|FINALIZED|CLOSED` parsing, Vietnamese errors and explicit 409 reload. Current Participant/manual/import, examination-details and payment-report integrations are described in [frontend architecture](../architecture/FRONTEND_ARCHITECTURE.md#corporate-health-examination-flow).
+- [Module verification, 2026-10-09](backend-aligned-modules-verification.md): backend-aligned contexts, workflow widgets, Windows build and mock E2E evidence. Real-backend E2E was not run; legacy Participant permission gates remain an open item above.
 
 ## Verification for the implementation phase
 
 Run configured lint, typecheck, tests and build; run real browser/backend checks
 for affected auth/cookie/CSRF flows and Playwright for critical UI paths.
-Doc/link checks alone prove no runtime fix. Backend profile/actor and collaborator
-placement work is tracked in
-[backend code follow-ups](../../../Ngoc_Khanh_Clinic_DX_Springboot/docs/maintenance/code-follow-ups.md).
-
-## Hygiene applied separately
-
-Ignore pnpm cache, auth-test.log and superpowers state. Stop tracking the cache/log
-while preserving local copies. Git attributes prefer LF with Windows script
-exceptions; repository-wide renormalization is a separate change.
+Doc/link checks alone prove no runtime fix. Backend authorization and go-live
+dependencies are tracked in
+[backend open items](../../../Ngoc_Khanh_Clinic_DX_Springboot/docs/architecture/07-open-items.md).

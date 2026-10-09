@@ -7,20 +7,18 @@ import {
   fetchPaymentCounters,
   fetchPayments,
   processCashPayment,
-  recordTransferConfirmation,
   startTransferPayment,
 } from "../api"
 import type {
   BillableEncounter,
-  ConfirmTransferPaymentDto,
   PaymentListParams,
   ProcessCashPaymentDto,
   StartTransferPaymentDto,
 } from "../types"
 
-export const BILLING_PAYMENTS_KEY = ["billing", "payments"] as const
-export const BILLING_COUNTERS_KEY = ["billing", "counters"] as const
-export const billingInvoiceKey = (encounterId: string) => ["billing", "invoice", encounterId] as const
+const BILLING_PAYMENTS_KEY = ["billing", "payments"] as const
+const BILLING_COUNTERS_KEY = ["billing", "counters"] as const
+const billingInvoiceKey = (encounterId: string) => ["billing", "invoice", encounterId] as const
 
 export function usePayments(params: PaymentListParams = {}) {
   const queryClient = useQueryClient()
@@ -103,14 +101,6 @@ export function useProcessCashPayment() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (dto: ProcessCashPaymentDto) => processCashPayment(dto),
-    onSuccess: (invoice) => invalidateBilling(queryClient, invoice.encounterId),
-  })
-}
-
-export function useRecordTransferConfirmation() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (dto: ConfirmTransferPaymentDto) => recordTransferConfirmation(dto),
     onSuccess: (invoice) => invalidateBilling(queryClient, invoice.encounterId),
   })
 }

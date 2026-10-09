@@ -24,6 +24,12 @@ Accepted ADRs should not be rewritten to change history. When a decision changes
 | [0006](0006-shared-user-login.md) | Shared user login and staff workspace access | Accepted; access rule superseded by 0007 |
 | [0007](0007-session-login-backend-adr-0014.md) | Align login with the backend session-cookie contract | Accepted |
 | [0008](0008-login-session-restoration.md) | Conditional session restoration through backend verification | Accepted |
+| [0009](0009-backend-aligned-module-ownership.md) | Backend context ownership and workflow composition in widgets | Accepted; extends 0001 |
+
+For current paths and ownership, use [frontend architecture](../architecture/FRONTEND_ARCHITECTURE.md)
+and ADR-0009. Earlier examples may retain former module names. The current
+single-step Participant import follows [PROJECT_RULES §12](../../PROJECT_RULES.md#12-participant-excel-import);
+old import examples do not restore the preview/confirm/cancel workflow.
 
 ## When to Create an ADR
 

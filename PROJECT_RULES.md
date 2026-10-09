@@ -7,7 +7,10 @@
 This is a **real production clinic application**.
 
 Corporate health examinations are the primary vertical slice. Supported backend
-HTTP scope is organization list/create/get/update/deactivate, batch list/create/get/update/delete, the batch Participant list, Excel template download and Excel import (`/api/v1/organizations/{organizationId}/health-examination-batches/{batchId}/participants`), the active service catalog list (`GET /api/v1/catalog/services`) and authentication.
+HTTP scope is authentication, organization list/create/get/update/deactivate,
+batch list/create/get/update/delete, Participant list/manual changes/template/import,
+examination-details list/summary/import/export, payment-summary JSON/DOCX and
+the active service catalog list (`GET /api/v1/catalog/services`).
 See [the backend inventory](../Ngoc_Khanh_Clinic_DX_Springboot/docs/api/clean-slate-migration.md)
 for current routes. Handler existence does not imply production authorization.
 
@@ -85,15 +88,19 @@ Contains domain/business feature code.
 Current module directories:
 
 ```text
-auth/
-organizations/
-health-examinations/
-appointments/
+accesscontrol/
+appointment/
 billing/
-doctor/
-patients/
-encounters/
-reception/
+catalog/
+clinical/
+diagnostics/
+document/
+encounter/
+healthexamination/
+  organizations/
+  batches/
+patient/
+prescription/
 ```
 
 A module may contain only what it needs:
@@ -112,6 +119,12 @@ index.ts
 
 Do not create empty folder trees speculatively.
 
+Module names and ownership follow backend contexts. Reception, doctor,
+patient/appointment workspaces and encounter detail composition belong in
+`widgets`; domain modules do not import widgets or app. Catalog lookup belongs
+in `catalog`; batch negotiated prices and payment reports belong in
+`healthexamination`. See [ADR-0009](docs/adr/0009-backend-aligned-module-ownership.md).
+
 ### `src/shared`
 
 Contains application-level reusable frontend code not owned by one business module.
@@ -120,13 +133,7 @@ Examples:
 
 ```text
 shared/api/
-shared/components/data-table/
-shared/components/empty-state/
-shared/components/error-state/
-shared/components/page-header/
-shared/hooks/
-shared/config/
-shared/types/
+shared/ui/         domain-neutral UI (PageHeader, SearchField, StatusPill, pagination)
 ```
 
 Do not place domain entities or domain rules in `shared`.
@@ -218,7 +225,7 @@ Each module should expose its public contract through `index.ts`.
 Preferred:
 
 ```ts
-import { OrganizationListPage, type Organization } from '@/modules/organizations'
+import { OrganizationListPage, type Organization } from '@/modules/healthexamination'
 ```
 
 Avoid deep cross-module imports and circular dependencies.
@@ -354,9 +361,12 @@ GET /api/v1/organizations/{organizationId}
 ```
 
 Organization list/deactivate (`DELETE` with `rowVersion`), batch list/create/get/update/delete
-and the active service catalog list exist. The participant list, examination matrix, report and
-export endpoints do not exist in the current backend, so those tabs show "Chưa hỗ trợ" and send no request. Check [the API inventory](../Ngoc_Khanh_Clinic_DX_Springboot/docs/api/clean-slate-migration.md)
-before enabling an integration. Path renames require a backend contract change.
+and the active service catalog list exist. Participant list/manual changes/import,
+examination-details reconciliation/import/export and payment-summary JSON/DOCX
+also have mapped contracts. Legacy progress/report adapters without matching
+contracts remain unavailable. Check [the API inventory](../Ngoc_Khanh_Clinic_DX_Springboot/docs/api/clean-slate-migration.md)
+before enabling an integration; mapped routes still require production
+authorization. Path renames require a backend contract change.
 
 ### Backend Enum and Lifecycle Status Rule
 
@@ -461,24 +471,29 @@ Encounter
 
 ## 11. Corporate-First Routing
 
-Primary routes should evolve around:
+Current corporate routes:
 
 ```text
-/login
-/health-check
+/auth/login
+/organizations
 /organizations/[organizationId]
 /organizations/[organizationId]/health-examination-batches/[batchId]
-/health-check/print/preview
 ```
 
-Later:
+Other existing workspace routes include the following; route existence does not
+imply an available business HTTP contract:
 
 ```text
 /reception
 /doctor
-/diagnostics
 /billing
+/patients
+/appointments
+/encounters
 ```
+
+`/health-check` and `/health-check/print/preview` remain planned print directions,
+not implemented routes. See sections 13–14 before enabling printing.
 
 ---
 
@@ -486,14 +501,16 @@ Later:
 
 Excel roster import was removed on 2026-10-05 and restored on 2026-10-06 by an
 owner decision with a new backend contract
-(`docs/api/participant-import-and-list.md` in the backend repository). The old
+([Participant import and list](../Ngoc_Khanh_Clinic_DX_Springboot/docs/api/participant-import-and-list.md)). The old
 multi-step template/upload/mapping/preview/confirm/cancel flow does not return.
 
 Contract the frontend relies on:
 
 - `GET .../participants` is the paginated Participant list (1-based `page`,
   `size` up to 100, `searchKey`, `sortKey`, `sortBy`, status filters). The CCCD is
-  masked (`identificationNumberMasked`); the full number is never available.
+  masked (`identificationNumberMasked`); the list never returns the full number.
+  The separate Participant detail contract returns the full CCCD under its
+  endpoint permission; keep it out of list state and logs.
 - `GET .../participants/import-template` downloads the `.xlsx` template tied to
   the batch's current `rowVersion` and examination days.
 - `POST .../participants/imports` is multipart (`file`, `rowVersion`) with an
@@ -508,11 +525,13 @@ Frontend rules:
   automatically.
 - Show backend row errors in Vietnamese only (`describeParticipantImportError`).
   The backend text is English and is never rendered.
-- Show the template and import actions only for sessions with
-  `HEALTH_EXAMINATION_PARTICIPANT_IMPORT` and batches in DRAFT/READY; the list
-  needs `HEALTH_EXAMINATION_PARTICIPANT_READ`. This is UX only; the backend
-  checks every request. A session created before the V003 migration must sign in
-  again to receive these permissions.
+- Follow the backend's separate permissions: `PARTICIPANT_VIEW` for the list,
+  `PARTICIPANT_TEMPLATE_DOWNLOAD` for the template and `PARTICIPANT_IMPORT`
+  for import. Import actions require DRAFT/READY; the backend enforces active
+  organization and batch rules on every request. Permissions are a login
+  snapshot, so sign in again after a permission migration. Frontend gating is
+  UX only. The remaining legacy FE permission checks are tracked in
+  [code follow-ups](docs/maintenance/code-follow-ups.md).
 - After a successful import, refresh the list; after a stale-version or
   template error, refresh the batch so the next template matches.
 
@@ -520,7 +539,7 @@ Frontend rules:
 
 ## 13. Health Check Print
 
-Use one shared Mẫu số 03 implementation for individual health check, enterprise bulk print and reprint.
+Use one shared Mẫu số 03 implementation for individual health check, organization bulk print and reprint.
 
 ```text
 Source Data
@@ -791,9 +810,11 @@ For UI work also verify reuse search, loading/empty/error states, accessibility 
 Integrate supported organization list/create/detail/update/deactivate, batch
 list/create/detail/update/delete, the service catalog and authentication contracts first. Track mismatched callers in
 [code follow-ups](docs/maintenance/code-follow-ups.md).
-Roster, examination matrix, report, export, printing and downstream
-clinical workflows require approved backend HTTP contracts before enablement.
-Excel import is limited to the Participant roster contract in section 12.
+Participant roster/manual changes/import, examination-details/import/export and
+payment-summary reports use their published backend contracts. Visit preparation,
+official record printing and downstream clinical workflows still require explicit
+HTTP contracts before enablement. The Participant roster import in section 12 is
+separate from the supported examination-details reconciliation import.
 
 ---
 

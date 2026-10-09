@@ -26,3 +26,5 @@ export { StatusPill } from "./status-pill"
 export type { StatusPillProps, StatusTone } from "./status-pill"
 
 export * from "./product-icon"
+
+export { WorklistTabHeader } from "./worklist-tab-header"

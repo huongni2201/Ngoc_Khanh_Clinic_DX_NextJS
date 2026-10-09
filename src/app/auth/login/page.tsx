@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import { LoginPage } from "@/modules/auth"
+import { LoginPage } from "@/modules/accesscontrol"
 
 export const metadata: Metadata = {
   title: "Đăng nhập — Ngọc Khánh Clinic",

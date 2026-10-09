@@ -229,4 +229,25 @@
   html {
     @apply font-sans;
   }
+
+  /*
+   * Tailwind v4's preflight no longer gives buttons a pointer cursor, so every control
+   * rendered by shadcn/Base UI (button, tab, menu item, checkbox, radio, calendar day…)
+   * would show the default arrow. Anything the user can press says so here, once.
+   * Disabled controls are excluded; utilities (e.g. `cursor-not-allowed`) still win.
+   */
+  button:not(:disabled):not([aria-disabled="true"]):not([data-disabled]),
+  summary,
+  select:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]):not([data-disabled]),
+  [role="tab"]:not([aria-disabled="true"]):not([data-disabled]),
+  [role="menuitem"]:not([aria-disabled="true"]):not([data-disabled]),
+  [role="menuitemcheckbox"]:not([aria-disabled="true"]):not([data-disabled]),
+  [role="menuitemradio"]:not([aria-disabled="true"]):not([data-disabled]),
+  [role="option"]:not([aria-disabled="true"]):not([data-disabled]),
+  [role="checkbox"]:not([aria-disabled="true"]):not([data-disabled]),
+  [role="radio"]:not([aria-disabled="true"]):not([data-disabled]),
+  [role="switch"]:not([aria-disabled="true"]):not([data-disabled]) {
+    cursor: pointer;
+  }
 }

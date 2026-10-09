@@ -1,3 +1,4 @@
+import type * as React from "react"
 import { Search } from "./product-icon"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
@@ -5,6 +6,7 @@ import { cn } from "@/lib/utils"
 export interface SearchFieldProps {
   value: string
   onChange: (value: string) => void
+  onKeyDown?: React.KeyboardEventHandler<HTMLInputElement>
   placeholder: string
   /** Accessible name; falls back to the placeholder. */
   label?: string
@@ -16,6 +18,7 @@ export interface SearchFieldProps {
 export function SearchField({
   value,
   onChange,
+  onKeyDown,
   placeholder,
   label,
   maxLength,
@@ -31,6 +34,8 @@ export function SearchField({
         value={value}
         maxLength={maxLength}
         onChange={(event) => onChange(event.target.value)}
+        onKeyDown={onKeyDown}
+        autoComplete="off"
         placeholder={placeholder}
         aria-label={label ?? placeholder}
         className="h-9 bg-card pl-9 text-sm"
