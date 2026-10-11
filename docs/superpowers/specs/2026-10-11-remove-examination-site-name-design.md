@@ -1,6 +1,6 @@
 # Remove the examination-site name field
 
-**Status:** Proposed for review  
+**Status:** Approved by owner on 2026-10-11  
 **Date:** 2026-10-11
 
 ## Owner request
