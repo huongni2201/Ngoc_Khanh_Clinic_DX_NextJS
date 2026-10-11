@@ -26,7 +26,7 @@ Keep `examinationSiteType` (`CLINIC` or `ORGANIZATION_SITE`) and `examinationSit
 
 ## Database migration and data effect
 
-The column is defined in `V001__create_schema.sql`. Do not rewrite that migration because it may already be applied. Add a forward migration, provisionally `V008__drop_health_exam_batch_site_name.sql`, that drops `public.health_examination_batches.examination_site_name` from databases using the current V001–V003 baseline. The migration permanently removes values stored in that column. The latest schema and all runtime queries must work without it.
+The column is defined in `V001__create_schema.sql`. Do not rewrite that migration because it may already be applied. Add a forward migration, provisionally `V008__drop_health_exam_batch_site_name.sql`, that drops `public.health_examination_batches.examination_site_name` from databases using the current V001–V003 baseline. This removes the column and values from the SQL schema. PostgreSQL may retain dropped-column bytes on disk until rows are rewritten; this migration is not a secure-erasure procedure. The latest schema and all runtime queries must work without the column.
 
 The backend deployment policy says databases with older V004–V007 migration histories require a separately reviewed conversion. This change must not be deployed directly against those historical databases without that conversion. Production migration execution remains an explicit deployment step; this implementation prepares the migration but does not apply it to a live database.
 
