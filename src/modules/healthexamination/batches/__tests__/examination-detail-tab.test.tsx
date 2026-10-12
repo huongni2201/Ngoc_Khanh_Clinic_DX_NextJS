@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { ApiClientError, apiClient } from "@/shared/api/api-client"
 import { ExaminationDetailTab } from "../components/examination-detail-tab/examination-detail-tab"
+import { Toaster } from "@/shared/ui/toaster"
 import { ExaminationMatrixTable } from "../components/examination-detail-tab/examination-matrix-table"
 import type { ExaminationDetailRow, HealthExaminationBatchService } from "../types"
 
@@ -72,6 +73,7 @@ function renderTab(props: Partial<React.ComponentProps<typeof ExaminationDetailT
         canImport
         {...props}
       />
+      <Toaster />
     </QueryClientProvider>
   )
   return { ...view, queryClient }
@@ -114,6 +116,30 @@ describe("ExaminationMatrixTable", () => {
     expect(screen.getByText("Đã đối soát")).toBeInTheDocument()
     expect(screen.queryByText("Ghi chú")).not.toBeInTheDocument()
     expect(screen.queryByText("********8901")).not.toBeInTheDocument()
+  })
+
+  it("shows the update button and the row click only when editing is wired", async () => {
+    const onEditRow = vi.fn()
+    const user = userEvent.setup()
+    const props = {
+      services,
+      items: [row],
+      totalItems: 1,
+      currentPage: 1,
+      pageSize: 10,
+      totalPages: 1,
+      onPageChange: vi.fn(),
+    }
+    const { rerender } = render(<ExaminationMatrixTable {...props} />)
+    expect(screen.queryByRole("button", { name: /Cập nhật chi tiết khám của/ })).not.toBeInTheDocument()
+
+    rerender(<ExaminationMatrixTable {...props} onEditRow={onEditRow} />)
+    await user.click(screen.getByRole("button", { name: "Cập nhật chi tiết khám của Nguyễn Văn A" }))
+    expect(onEditRow).toHaveBeenCalledTimes(1)
+    expect(onEditRow).toHaveBeenCalledWith(row)
+
+    await user.click(screen.getByText("Kỹ thuật"))
+    expect(onEditRow).toHaveBeenCalledTimes(2)
   })
 
   it("tells an empty roster apart from an empty filter result", () => {
@@ -190,6 +216,33 @@ describe("ExaminationDetailTab", () => {
     )
   })
 
+  it("tells the user with a toast that the export finished", async () => {
+    mockGet([backendRow(1)])
+    vi.spyOn(apiClient, "getBlob").mockResolvedValue({
+      blob: new Blob(["xlsx"]),
+      filename: "chi-tiet-kham-DK001.xlsx",
+    })
+    const user = userEvent.setup()
+    renderTab()
+    await screen.findByText("Người khám 1")
+
+    await user.click(screen.getByRole("button", { name: "Xuất Excel" }))
+
+    expect(await screen.findByText("Đã xuất file chi tiết khám.")).toBeInTheDocument()
+  })
+
+  it("tells the user with a toast when the export fails", async () => {
+    mockGet([backendRow(1)])
+    vi.spyOn(apiClient, "getBlob").mockRejectedValue(new Error("Bạn không có quyền xuất file."))
+    const user = userEvent.setup()
+    renderTab()
+    await screen.findByText("Người khám 1")
+
+    await user.click(screen.getByRole("button", { name: "Xuất Excel" }))
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Bạn không có quyền xuất file.")
+  })
+
   it("shows the import only with the reconcile permission and while the batch accepts changes", async () => {
     mockGet([backendRow(1)])
     const { rerender, queryClient } = renderTab({ canImport: false })
@@ -210,6 +263,91 @@ describe("ExaminationDetailTab", () => {
       </QueryClientProvider>
     )
     await waitFor(() => expect(screen.queryByRole("button", { name: "Nhập Excel" })).not.toBeInTheDocument())
+  })
+
+  it("downloads the pre-filled template from the toolbar with the template permission", async () => {
+    mockGet([backendRow(1)])
+    const blob = new Blob(["xlsx"])
+    const getBlob = vi
+      .spyOn(apiClient, "getBlob")
+      .mockResolvedValue({ blob, filename: "mau-nhap-chi-tiet-kham-DK001.xlsx" })
+    const user = userEvent.setup()
+    renderTab({ canDownloadTemplate: true })
+    await screen.findByText("Người khám 1")
+
+    await user.click(screen.getByRole("button", { name: "Tải file mẫu" }))
+
+    await waitFor(() =>
+      expect(download.saveBlobAs).toHaveBeenCalledWith(blob, "mau-nhap-chi-tiet-kham-DK001.xlsx")
+    )
+    expect(getBlob).toHaveBeenCalledWith(
+      "/api/v1/organizations/org-1/health-examination-batches/batch-1/examination-details/import-template",
+      { signal: undefined }
+    )
+  })
+
+  it("hides the template without its permission", async () => {
+    mockGet([backendRow(1)])
+    renderTab({ canDownloadTemplate: false })
+    await screen.findByText("Người khám 1")
+    expect(screen.queryByRole("button", { name: "Tải file mẫu" })).not.toBeInTheDocument()
+  })
+
+  it("falls back to the export inside the import dialog when the user cannot download the template", async () => {
+    mockGet([backendRow(1)])
+    const getBlob = vi
+      .spyOn(apiClient, "getBlob")
+      .mockResolvedValue({ blob: new Blob(["xlsx"]), filename: "chi-tiet-kham-DK001.xlsx" })
+    const user = userEvent.setup()
+    renderTab({ canDownloadTemplate: false })
+    await screen.findByText("Người khám 1")
+
+    await user.click(screen.getByRole("button", { name: "Nhập Excel" }))
+    await user.click(await screen.findByRole("button", { name: "Tải file mẫu" }))
+
+    await waitFor(() => expect(getBlob).toHaveBeenCalledTimes(1))
+    expect(String(getBlob.mock.calls[0][0])).toMatch(/\/examination-details\/export$/)
+  })
+
+  it("offers the manual entry only with the record permission and while the batch accepts changes", async () => {
+    mockGet([backendRow(1)])
+    const user = userEvent.setup()
+    const { rerender, queryClient } = renderTab()
+    await screen.findByText("Người khám 1")
+    expect(screen.queryByRole("button", { name: /Cập nhật chi tiết khám của/ })).not.toBeInTheDocument()
+
+    rerender(
+      <QueryClientProvider client={queryClient}>
+        <ExaminationDetailTab organizationId="org-1" batch={{ id: "batch-1", status: "READY", services }} canRecord />
+      </QueryClientProvider>
+    )
+    await user.click(await screen.findByRole("button", { name: "Cập nhật chi tiết khám của Người khám 1" }))
+    expect(await screen.findByRole("radio", { name: "Đã đến" })).toBeInTheDocument()
+
+    rerender(
+      <QueryClientProvider client={queryClient}>
+        <ExaminationDetailTab organizationId="org-1" batch={{ id: "batch-1", status: "FINALIZED", services }} canRecord />
+      </QueryClientProvider>
+    )
+    await waitFor(() =>
+      expect(screen.queryByRole("button", { name: /Cập nhật chi tiết khám của/ })).not.toBeInTheDocument()
+    )
+  })
+
+  it("opens the Sheet on a row click, saves and shows the stored row in the matrix", async () => {
+    mockGet([backendRow(1), backendRow(2)])
+    vi.spyOn(apiClient, "put").mockResolvedValue(
+      envelope(backendRow(1, { attendanceStatus: "ATTENDED", actualExaminationDate: "2026-10-20", performedBatchServiceIds: ["s1"], rowVersion: 1 }))
+    )
+    const user = userEvent.setup()
+    renderTab({ canRecord: true, batch: { id: "batch-1", status: "READY", services, startDate: "2026-10-01" } })
+    await user.click(await screen.findByText("Người khám 1"))
+
+    await user.click(await screen.findByRole("checkbox", { name: "Khám nội" }))
+    await user.click(screen.getByRole("button", { name: "Lưu & người tiếp theo" }))
+
+    await waitFor(() => expect(screen.getAllByText("Người khám 2").length).toBeGreaterThan(1))
+    expect(screen.getAllByText("X")).toHaveLength(1)
   })
 
   it("requests nothing and explains the missing permission", () => {

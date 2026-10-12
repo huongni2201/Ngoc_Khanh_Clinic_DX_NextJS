@@ -42,7 +42,6 @@ function mapBatch(
       .map((day) => ({ id: day.id, examinationDate: day.examinationDate }))
       .sort((left, right) => left.examinationDate.localeCompare(right.examinationDate)),
     examinationSiteType: batch.examinationSiteType,
-    examinationSiteName: batch.examinationSiteName,
     examinationSiteAddress: batch.examinationSiteAddress,
     createdBy: batch.createdBy,
     services: [...batch.services]
@@ -55,6 +54,7 @@ function mapBatch(
         referencePrice: service.referencePriceSnapshot,
         negotiatedPrice: service.negotiatedPrice,
         displayOrder: service.displayOrder,
+        active: service.active,
       })),
   }
 }
@@ -66,7 +66,6 @@ function toConfigurationBody(
     batchName: request.batchName,
     examinationDates: [...request.examinationDates].sort(),
     examinationSiteType: request.examinationSiteType,
-    examinationSiteName: request.examinationSiteName,
     examinationSiteAddress: request.examinationSiteAddress,
     services: request.services.map((service) => ({
       serviceId: service.serviceId,

@@ -621,6 +621,18 @@ Modal  → short focused action
 Page   → complex multi-step task
 ```
 
+Toast messages (`toast` from `@/shared/ui/toaster`; `<Toaster />` is mounted once in the root layout):
+
+- Use `toast.success` for the result of an action that has no visible place of its own: saved,
+  cancelled, exported, or a dialog that just closed. Keep the message short and in Vietnamese.
+- Use `toast.error` or `toast.warning` for failures with no inline place: list quick actions,
+  exports, or a dialog that closed because of a conflict or a missing permission.
+- Errors that belong to a form field or to an open dialog stay inline next to what the user must
+  fix. Do not repeat them as a toast.
+- A toast disappears. Never make it the only place for information the user must keep (counts,
+  row-level import errors).
+- Reuse an `id` for a message that can repeat so it updates instead of stacking.
+
 ---
 
 ## 16. Tables

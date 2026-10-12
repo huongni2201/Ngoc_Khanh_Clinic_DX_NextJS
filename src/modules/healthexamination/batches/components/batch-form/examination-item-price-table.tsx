@@ -13,6 +13,7 @@ import type {
   HealthExaminationBatchFormValues,
   ValidatedHealthExaminationBatchFormValues,
 } from "../../schemas/health-examination-batch.schema"
+import { BatchFormStepHeader } from "./batch-form-step-header"
 import { ExaminationItemRow } from "./examination-item-row"
 
 interface ExaminationItemPriceTableProps {
@@ -99,25 +100,23 @@ export function ExaminationItemPriceTable({
   const servicesError = errors.services?.message || rootErrorMessage
 
   return (
-    <div className="space-y-3">
-      {/* Section 2 Header */}
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
-        <div className="flex items-center gap-2.5">
-          <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold select-none">
-            2
+    <section
+      aria-labelledby="batch-form-services-heading"
+      className="space-y-4 border-t border-border pb-6 pt-6"
+    >
+      <BatchFormStepHeader
+        step={2}
+        headingId="batch-form-services-heading"
+        title="Chọn hạng mục & giá"
+        description={
+          <span className="flex items-center gap-1.5">
+            <Info className="size-3.5 shrink-0 text-primary" aria-hidden="true" />
+            Giá thỏa thuận mặc định bằng giá tham chiếu của danh mục.
           </span>
-          <h3 className="text-base font-bold text-foreground">
-            Chọn hạng mục & giá
-          </h3>
-        </div>
+        }
+      />
 
-        <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <Info className="size-3.5 shrink-0 text-primary" aria-hidden="true" />
-          Giá thỏa thuận mặc định bằng giá tham chiếu của danh mục.
-        </p>
-      </div>
-
-      {/* Search + selection summary */}
+      {/* Search and live selection count */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <SearchField
           value={query}
@@ -127,10 +126,7 @@ export function ExaminationItemPriceTable({
           label="Tìm hạng mục khám"
           className="sm:max-w-xs"
         />
-        <p
-          aria-live="polite"
-          className="text-xs text-muted-foreground tabular-nums"
-        >
+        <p aria-live="polite" className="text-xs tabular-nums text-muted-foreground">
           Đã chọn{" "}
           <span className="font-semibold text-foreground">{selectedCount}</span>
           /{fields.length} hạng mục
@@ -138,22 +134,21 @@ export function ExaminationItemPriceTable({
         </p>
       </div>
 
-      {/* Table Container */}
-      <div className="rounded-lg border border-border/80 overflow-hidden bg-card">
-        <div className="max-h-[min(24rem,45vh)] overflow-auto overscroll-contain">
-          <table className="w-full text-xs sm:text-sm border-collapse">
-            <thead className="sticky top-0 z-10 bg-muted shadow-[0_1px_0_0_var(--color-border)]">
-              <tr className="text-foreground/80 font-semibold text-xs">
-                <th scope="col" className="py-2.5 px-4 text-center w-14 font-semibold">
+      <div className="overflow-hidden rounded-lg border border-border bg-card">
+        <div className="max-h-[min(22rem,45vh)] overflow-auto overscroll-contain">
+          <table className="w-full border-collapse text-sm">
+            <thead className="sticky top-0 z-10 bg-surface-alt">
+              <tr className="border-b border-border text-xs font-medium text-muted-foreground">
+                <th scope="col" className="w-11 px-1 py-2.5 text-center font-medium sm:w-12 sm:px-3">
                   Chọn
                 </th>
-                <th scope="col" className="py-2.5 px-4 text-left font-semibold">
+                <th scope="col" className="px-2 py-2.5 text-left font-medium sm:px-3">
                   Hạng mục
                 </th>
-                <th scope="col" className="py-2.5 px-4 text-right font-semibold w-36">
+                <th scope="col" className="hidden w-32 px-3 py-2.5 text-right font-medium sm:table-cell">
                   Giá tham chiếu
                 </th>
-                <th scope="col" className="py-2.5 px-4 text-left font-semibold w-48 sm:w-56">
+                <th scope="col" className="w-32 px-2 py-2.5 text-left font-medium sm:w-52 sm:px-3">
                   Giá thỏa thuận
                 </th>
               </tr>
@@ -161,26 +156,20 @@ export function ExaminationItemPriceTable({
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td
-                    colSpan={4}
-                    className="py-8 text-center text-xs text-muted-foreground"
-                  >
+                  <td colSpan={4} className="py-10 text-center text-sm text-muted-foreground">
                     Đang tải danh mục hạng mục khám…
                   </td>
                 </tr>
               ) : fields.length === 0 ? (
                 <tr>
-                  <td
-                    colSpan={4}
-                    className="py-8 text-center text-xs text-muted-foreground"
-                  >
+                  <td colSpan={4} className="py-10 text-center text-sm text-muted-foreground">
                     Không có hạng mục khám nào.
                   </td>
                 </tr>
               ) : visibleIndexes.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="py-8 text-center">
-                    <p className="text-xs text-muted-foreground">
+                  <td colSpan={4} className="px-4 py-10 text-center">
+                    <p className="text-sm text-muted-foreground">
                       Không tìm thấy hạng mục nào khớp với “{query.trim()}”.
                     </p>
                     <Button
@@ -243,11 +232,10 @@ export function ExaminationItemPriceTable({
 
       {/* Validation message if no services are selected */}
       {servicesError && typeof servicesError === "string" && (
-        <p className="text-xs text-destructive font-medium pt-0.5">
+        <p role="alert" className="text-xs font-medium text-destructive">
           {servicesError}
         </p>
       )}
-    </div>
+    </section>
   )
 }
-

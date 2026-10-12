@@ -4,6 +4,7 @@ import * as React from "react"
 import { Download, Upload, UserPlus } from "@/shared/ui/product-icon"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
+import { toast } from "@/shared/ui/toaster"
 import {
   useDownloadParticipantImportTemplate,
   useHealthExaminationBatchParticipants,
@@ -27,7 +28,12 @@ import { ParticipantsTable } from "./participants-table"
 import { ParticipantsToolbar } from "./participants-toolbar"
 import { ReactivateParticipantDialog } from "./reactivate-participant-dialog"
 
-const PAGE_SIZE = 10
+const DEFAULT_PAGE_SIZE = 10
+
+/** A dialog closed without doing what was asked (no permission, changed by someone else). */
+const warn = (message: string) => {
+  toast.warning(message)
+}
 
 interface ParticipantsTabProps {
   batchId: string
@@ -62,6 +68,7 @@ export function ParticipantsTab({
     ParticipantAttendanceStatus | undefined
   >()
   const [page, setPage] = React.useState(1)
+  const [pageSize, setPageSize] = React.useState(DEFAULT_PAGE_SIZE)
   const [sortKey, setSortKey] = React.useState<ParticipantSortKey>("id")
   const [sortBy, setSortBy] = React.useState<"ASC" | "DESC">("ASC")
   const [isImportOpen, setIsImportOpen] = React.useState(false)
@@ -69,12 +76,11 @@ export function ParticipantsTab({
   const [editing, setEditing] = React.useState<HealthExaminationParticipant | null>(null)
   const [cancelling, setCancelling] = React.useState<HealthExaminationParticipant | null>(null)
   const [reactivating, setReactivating] = React.useState<HealthExaminationParticipant | null>(null)
-  const [notice, setNotice] = React.useState<string | null>(null)
 
   const { data, isLoading, isError, error, refetch } = useHealthExaminationBatchParticipants(
     organizationId,
     batchId,
-    { search, rosterStatus, attendanceStatus, page, pageSize: PAGE_SIZE, sortKey, sortBy },
+    { search, rosterStatus, attendanceStatus, page, pageSize, sortKey, sortBy },
     { enabled: canRead }
   )
   const templateDownload = useDownloadParticipantImportTemplate(organizationId, batchId)
@@ -102,8 +108,22 @@ export function ParticipantsTab({
     setPage(1)
   }
 
+  const handlePageSizeChange = (size: number) => {
+    setPageSize(size)
+    setPage(1)
+  }
+
   const handleDownloadTemplate = () =>
-    templateDownload.mutate({ batchCode: batch.code })
+    templateDownload.mutate(
+      { batchCode: batch.code },
+      {
+        onError: () =>
+          toast.error("Không thể tải file mẫu. Vui lòng thử lại.", {
+            id: "participant-template-download-failed",
+            action: { label: "Thử lại", onClick: handleDownloadTemplate },
+          }),
+      }
+    )
 
   const actions =
     importAllowed || changeAllowed ? (
@@ -112,10 +132,7 @@ export function ParticipantsTab({
           <Button
             type="button"
             size="sm"
-            onClick={() => {
-              setNotice(null)
-              setIsCreateOpen(true)
-            }}
+            onClick={() => setIsCreateOpen(true)}
           >
             <UserPlus className="mr-1.5 size-3.5" />
             Thêm người khám
@@ -165,18 +182,6 @@ export function ParticipantsTab({
         />
       )}
 
-      {notice && (
-        <p role="status" className="text-xs text-muted-foreground">
-          {notice}
-        </p>
-      )}
-
-      {templateDownload.isError && (
-        <p role="alert" className="text-xs text-destructive">
-          Không thể tải file mẫu. Vui lòng thử lại.
-        </p>
-      )}
-
       {isLoading ? (
         <div className="space-y-3">
           <Skeleton className="h-96 w-full rounded-lg" />
@@ -215,29 +220,17 @@ export function ParticipantsTab({
           participants={participants}
           totalItems={total}
           currentPage={page}
-          pageSize={PAGE_SIZE}
+          pageSize={pageSize}
           totalPages={totalPages}
           onPageChange={setPage}
+          onPageSizeChange={handlePageSizeChange}
           sortKey={sortKey}
           sortBy={sortBy}
           onSortChange={handleSortChange}
           canManage={changeAllowed}
-          onEdit={(participant) => {
-            setNotice(null)
-            setEditing(participant)
-          }}
-          onCancel={(participant) => {
-            setNotice(null)
-            setCancelling(participant)
-          }}
-          onReactivate={
-            changeAllowed
-              ? (participant) => {
-                  setNotice(null)
-                  setReactivating(participant)
-                }
-              : undefined
-          }
+          onEdit={setEditing}
+          onCancel={setCancelling}
+          onReactivate={changeAllowed ? setReactivating : undefined}
         />
       )}
 
@@ -250,10 +243,9 @@ export function ParticipantsTab({
             organizationId={organizationId}
             batchId={batchId}
             days={days}
-            onSaved={() => setNotice("Đã thêm người khám vào danh sách.")}
-            onNotice={setNotice}
+            onSaved={() => toast.success("Đã thêm người khám vào danh sách.")}
+            onNotice={warn}
             onReactivateCandidate={(participant) => {
-              setNotice(null)
               setIsCreateOpen(false)
               setReactivating(participant)
             }}
@@ -268,8 +260,8 @@ export function ParticipantsTab({
             batchId={batchId}
             days={days}
             participantId={editing?.id}
-            onSaved={() => setNotice("Đã cập nhật thông tin người khám.")}
-            onNotice={setNotice}
+            onSaved={() => toast.success("Đã cập nhật thông tin người khám.")}
+            onNotice={warn}
           />
           <CancelParticipantDialog
             open={cancelling !== null}
@@ -280,9 +272,9 @@ export function ParticipantsTab({
             batchId={batchId}
             participant={cancelling}
             onCancelled={(participant) =>
-              setNotice(`Đã hủy người khám ${participant.fullName}.`)
+              toast.success(`Đã hủy người khám ${participant.fullName}.`)
             }
-            onNotice={setNotice}
+            onNotice={warn}
           />
           <ReactivateParticipantDialog
             open={reactivating !== null}
@@ -294,9 +286,9 @@ export function ParticipantsTab({
             participant={reactivating}
             days={days}
             onReactivated={(participant) =>
-              setNotice(`Đã khôi phục người khám ${participant.fullName}.`)
+              toast.success(`Đã khôi phục người khám ${participant.fullName}.`)
             }
-            onNotice={setNotice}
+            onNotice={warn}
           />
         </>
       )}
@@ -310,6 +302,9 @@ export function ParticipantsTab({
           rowVersion={batch.rowVersion}
           onDownloadTemplate={handleDownloadTemplate}
           isDownloadingTemplate={templateDownload.isPending}
+          onImported={(imported) =>
+            toast.success(`Đã thêm ${imported.createdCount} người khám vào đợt khám.`)
+          }
         />
       )}
     </div>

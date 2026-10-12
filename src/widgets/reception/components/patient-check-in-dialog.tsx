@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { toast } from "@/shared/ui/toaster"
 import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { AlertCircle, Loader2 } from "@/shared/ui/product-icon"
@@ -157,6 +158,7 @@ export function PatientCheckInDialog({
         printAfterReception: data.printAfterReception,
       })
 
+      toast.success(`Đã tiếp nhận bệnh nhân ${selectedPatient.fullName}.`)
       onOpenChange(false)
       reset()
       if (onSuccess) {

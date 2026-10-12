@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog"
 import { ApiClientError } from "@/shared/api/api-client"
 import { ScreenLayout, ScreenLoadingSkeleton } from "@/shared/ui"
+import { toast } from "@/shared/ui/toaster"
 import {
   useDeactivateOrganization,
   useOrganization,
@@ -52,6 +53,7 @@ export function OrganizationDetailPage({
     if (!organization) return
     try {
       await deactivateMutation.mutateAsync(organization.rowVersion)
+      toast.success(`Đã ngừng hoạt động đơn vị ${organization.name}.`)
       setIsDeactivateOpen(false)
       router.push("/organizations")
     } catch {

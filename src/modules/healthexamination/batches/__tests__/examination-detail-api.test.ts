@@ -5,11 +5,15 @@ import {
   buildExaminationDetailExportUrl,
   buildExaminationDetailImportUrl,
   buildExaminationDetailListUrl,
+  buildExaminationDetailRecordUrl,
+  buildExaminationDetailTemplateUrl,
   buildExaminationSummaryUrl,
   downloadExaminationDetailExport,
+  downloadExaminationDetailTemplate,
   fetchExaminationDetails,
   fetchExaminationSummary,
   importExaminationDetails,
+  recordExaminationDetail,
 } from "../api/examination-details"
 
 const BASE = "/api/v1/organizations/org-1/health-examination-batches/batch-1/examination-details"
@@ -66,6 +70,12 @@ describe("examination detail URLs", () => {
     expect(buildExaminationDetailExportUrl("org-1", "batch-1")).toBe(`${BASE}/export`)
     expect(buildExaminationDetailImportUrl("org-1", "batch-1")).toBe(`${BASE}/imports`)
     expect(buildExaminationDetailImportUrl("a/b", "c d")).toContain("organizations/a%2Fb/")
+  })
+
+  it("builds the template and the single-Participant URLs and encodes identifiers", () => {
+    expect(buildExaminationDetailTemplateUrl("org-1", "batch-1")).toBe(`${BASE}/import-template`)
+    expect(buildExaminationDetailRecordUrl("org-1", "batch-1", "p-1")).toBe(`${BASE}/p-1`)
+    expect(buildExaminationDetailRecordUrl("org-1", "batch-1", "a/b")).toBe(`${BASE}/a%2Fb`)
   })
 })
 
@@ -216,5 +226,86 @@ describe("importExaminationDetails", () => {
     await expect(
       importExaminationDetails({ organizationId: "org-1", batchId: "batch-1", file, idempotencyKey: "k" })
     ).rejects.toMatchObject({ status: 409 })
+  })
+})
+
+describe("downloadExaminationDetailTemplate", () => {
+  it("requests the import template and uses the file name the backend sent", async () => {
+    const blob = new Blob(["xlsx"])
+    const getBlob = vi
+      .spyOn(apiClient, "getBlob")
+      .mockResolvedValue({ blob, filename: "mau-nhap-chi-tiet-kham-DK001.xlsx" })
+
+    const file = await downloadExaminationDetailTemplate("org-1", "batch-1")
+
+    expect(getBlob).toHaveBeenCalledWith(`${BASE}/import-template`, { signal: undefined })
+    expect(file).toEqual({ blob, fileName: "mau-nhap-chi-tiet-kham-DK001.xlsx" })
+  })
+
+  it("falls back to a default file name", async () => {
+    vi.spyOn(apiClient, "getBlob").mockResolvedValue({ blob: new Blob(["x"]) })
+    await expect(downloadExaminationDetailTemplate("org-1", "batch-1")).resolves.toMatchObject({
+      fileName: "mau-nhap-chi-tiet-kham.xlsx",
+    })
+  })
+})
+
+describe("recordExaminationDetail", () => {
+  const envelope = (data: unknown) => ({ result: "OK" as const, code: 200, message: "ok", data })
+
+  it("puts the attended entry with the row version and maps the stored row", async () => {
+    const put = vi.spyOn(apiClient, "put").mockResolvedValue(envelope(backendRow))
+
+    const row = await recordExaminationDetail({
+      organizationId: "org-1",
+      batchId: "batch-1",
+      participantId: "p-1",
+      attendanceStatus: "ATTENDED",
+      actualExaminationDate: "2026-10-20",
+      performedBatchServiceIds: ["s1", "s2"],
+      rowVersion: 2,
+    })
+
+    expect(put).toHaveBeenCalledWith(`${BASE}/p-1`, {
+      attendanceStatus: "ATTENDED",
+      actualExaminationDate: "2026-10-20",
+      performedBatchServiceIds: ["s1", "s2"],
+      rowVersion: 2,
+    })
+    expect(row).toMatchObject({ id: "p-1", rowVersion: 3, performedBatchServiceIds: ["s1", "s2"] })
+  })
+
+  it("never sends a date for an absent Participant", async () => {
+    const put = vi.spyOn(apiClient, "put").mockResolvedValue(envelope(backendRow))
+
+    await recordExaminationDetail({
+      organizationId: "org-1",
+      batchId: "batch-1",
+      participantId: "p-1",
+      attendanceStatus: "ABSENT",
+      actualExaminationDate: "2026-10-20",
+      performedBatchServiceIds: [],
+      rowVersion: 2,
+    })
+
+    expect(put.mock.calls[0][1]).toMatchObject({ attendanceStatus: "ABSENT", actualExaminationDate: undefined })
+  })
+
+  it("fails when the envelope has no data and propagates a backend rejection unchanged", async () => {
+    const request = {
+      organizationId: "org-1",
+      batchId: "batch-1",
+      participantId: "p-1",
+      attendanceStatus: "ATTENDED" as const,
+      actualExaminationDate: "2026-10-20",
+      performedBatchServiceIds: ["s1"],
+      rowVersion: 2,
+    }
+    vi.spyOn(apiClient, "put").mockResolvedValueOnce({ result: "OK", code: 200, message: "", data: undefined })
+    await expect(recordExaminationDetail(request)).rejects.toThrow()
+
+    const rejection = new ApiClientError("generic", 409, 409, "Participant is cancelled")
+    vi.spyOn(apiClient, "put").mockRejectedValueOnce(rejection)
+    await expect(recordExaminationDetail(request)).rejects.toBe(rejection)
   })
 })

@@ -29,7 +29,6 @@ export function HealthExaminationBatchOverview({ batch }: { batch: HealthExamina
             layout="inline"
             items={[
               { label: "Loại địa điểm", value: EXAMINATION_SITE_TYPE_LABELS[batch.examinationSiteType] },
-              { label: "Tên địa điểm", value: batch.examinationSiteName },
               { label: "Địa chỉ", value: batch.examinationSiteAddress },
             ]}
           />

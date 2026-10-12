@@ -15,6 +15,8 @@ export interface HealthExaminationBatchService {
   referencePrice: number
   negotiatedPrice: number
   displayOrder: number
+  /** False once the service is no longer offered: it cannot be newly marked as performed. */
+  active?: boolean
 }
 
 export interface HealthExaminationBatchSummary {
@@ -42,7 +44,6 @@ export interface HealthExaminationBatch extends HealthExaminationBatchSummary {
   /** The batch days with their identifiers, ascending by date; a Participant is scheduled on one. */
   examinationDays?: HealthExaminationBatchDay[]
   examinationSiteType: ExaminationSiteType
-  examinationSiteName: string
   examinationSiteAddress: string | null
   createdBy: string
   services: HealthExaminationBatchService[]
@@ -62,7 +63,6 @@ export interface CreateHealthExaminationBatchRequest {
   batchName: string
   examinationDates: string[]
   examinationSiteType: ExaminationSiteType
-  examinationSiteName: string
   examinationSiteAddress: string
   services: HealthExaminationBatchServiceInput[]
 }
@@ -376,6 +376,22 @@ export interface ImportExaminationDetailsRequest {
   file: File
   /** One key per chosen file, reused while the same file is resent. */
   idempotencyKey: string
+}
+
+/** What can be recorded by hand for one Participant: attended with services, or absent. */
+export type RecordableAttendanceStatus = "ATTENDED" | "ABSENT"
+
+export interface RecordExaminationDetailRequest {
+  organizationId: string
+  batchId: string
+  participantId: string
+  attendanceStatus: RecordableAttendanceStatus
+  /** Required when attended, omitted when absent. */
+  actualExaminationDate?: string
+  /** At least one when attended, empty when absent. */
+  performedBatchServiceIds: string[]
+  /** The row version the form was opened with. */
+  rowVersion: number
 }
 
 export interface ExaminationDetailImportResult {

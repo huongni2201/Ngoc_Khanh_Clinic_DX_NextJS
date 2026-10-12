@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { toast } from "@/shared/ui/toaster"
 import { useRouter, useSearchParams, usePathname } from "next/navigation"
 import { AlertCircle, RefreshCw } from "@/shared/ui/product-icon"
 import { Button } from "@/components/ui/button"
@@ -195,8 +196,13 @@ export function AppointmentsPage() {
   }
 
   const handleConfirmArrived = async (apt: Appointment) => {
-    await confirmArrivedMutation.mutateAsync(apt.id)
-    refetch()
+    try {
+      await confirmArrivedMutation.mutateAsync(apt.id)
+      toast.success("Đã xác nhận bệnh nhân đến khám.")
+      refetch()
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Không thể xác nhận bệnh nhân đến khám.")
+    }
   }
 
   const handleCheckInAppointment = (apt: Appointment) => {
@@ -207,11 +213,16 @@ export function AppointmentsPage() {
   }
 
   const handleCancelAppointment = async (apt: Appointment) => {
-    await cancelMutation.mutateAsync({
-      id: apt.id,
-      reason: "Hủy từ danh sách thao tác nhanh",
-    })
-    refetch()
+    try {
+      await cancelMutation.mutateAsync({
+        id: apt.id,
+        reason: "Hủy từ danh sách thao tác nhanh",
+      })
+      toast.success("Đã hủy lịch hẹn.")
+      refetch()
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Không thể hủy lịch hẹn.")
+    }
   }
 
   const handlePatientSelected = (patient: Patient) => {

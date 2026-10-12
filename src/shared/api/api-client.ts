@@ -7,6 +7,16 @@ export interface ApiResponse<T> {
   data?: T
 }
 
+/** One field the backend rejected, from `data` of a failed request (HTTP 400). */
+export interface ApiFieldError {
+  /** JSON path of the rejected value, for example `services[0].negotiatedPrice`. */
+  field: string
+  /** Failed constraint, for example `NotBlank`. Stable identifiers, safe to switch on. */
+  code?: string
+  /** English technical detail for developers. Never render it. */
+  message?: string
+}
+
 export interface BlobResponse {
   blob: Blob
   filename?: string
@@ -23,13 +33,22 @@ export class ApiClientError extends Error {
   readonly code?: number
   /** Raw backend text. For debugging only: it is English and must not be rendered. */
   readonly serverMessage?: string
+  /** Fields the backend rejected (HTTP 400). Empty when the failure does not name fields. */
+  readonly fieldErrors: ApiFieldError[]
 
-  constructor(message: string, status: number, code?: number, serverMessage?: string) {
+  constructor(
+    message: string,
+    status: number,
+    code?: number,
+    serverMessage?: string,
+    fieldErrors: ApiFieldError[] = []
+  ) {
     super(message)
     this.name = "ApiClientError"
     this.status = status
     this.code = code
     this.serverMessage = serverMessage
+    this.fieldErrors = fieldErrors
   }
 }
 
@@ -52,12 +71,27 @@ function statusMessage(status: number): string | undefined {
   return undefined
 }
 
-function responseError(response: Response, payload: ApiResponse<unknown> | undefined, fallback: string) {
+function isApiFieldError(value: unknown): value is ApiFieldError {
+  if (typeof value !== "object" || value === null) return false
+  return typeof (value as Record<string, unknown>).field === "string"
+}
+
+function fieldErrorsOf(payload: ApiResponse<unknown> | undefined): ApiFieldError[] {
+  const data = payload?.data
+  return Array.isArray(data) ? data.filter(isApiFieldError) : []
+}
+
+function responseError(
+  response: Response,
+  payload: ApiResponse<unknown> | undefined,
+  fallback: string
+) {
   return new ApiClientError(
     statusMessage(response.status) ?? payload?.message ?? fallback,
     response.status,
     payload?.code,
-    payload?.message
+    payload?.message,
+    fieldErrorsOf(payload)
   )
 }
 

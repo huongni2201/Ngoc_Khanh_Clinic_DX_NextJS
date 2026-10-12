@@ -3,10 +3,16 @@
 import { Building2, Calendar, ListChecks } from "@/shared/ui/product-icon"
 import { Card, CardContent } from "@/components/ui/card"
 import { HealthExaminationBatch } from "../types"
+import { EXAMINATION_SITE_TYPE_LABELS } from "../utils/batch-labels"
 import { formatHealthExaminationDate } from "../utils/format-health-examination-date"
 
 interface HealthExaminationBatchSummaryStripProps {
   batch: HealthExaminationBatch
+}
+
+function formatSite(batch: HealthExaminationBatch) {
+  if (batch.examinationSiteType === "CLINIC") return EXAMINATION_SITE_TYPE_LABELS.CLINIC
+  return batch.examinationSiteAddress || EXAMINATION_SITE_TYPE_LABELS.ORGANIZATION_SITE
 }
 
 function formatDateRange(batch: HealthExaminationBatch) {
@@ -22,7 +28,7 @@ export function HealthExaminationBatchSummaryStrip({
   batch,
 }: HealthExaminationBatchSummaryStripProps) {
   const items = [
-    { icon: Building2, label: "Địa điểm khám", value: batch.examinationSiteName },
+    { icon: Building2, label: "Địa điểm khám", value: formatSite(batch) },
     { icon: Calendar, label: "Thời gian", value: formatDateRange(batch) },
     { icon: ListChecks, label: "Dịch vụ", value: `${batch.services.length} hạng mục` },
   ]

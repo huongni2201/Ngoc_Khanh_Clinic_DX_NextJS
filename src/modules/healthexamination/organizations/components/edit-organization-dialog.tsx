@@ -12,6 +12,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
+import { toast } from "@/shared/ui/toaster"
 import { OrganizationTextField } from "./organization-text-field"
 import { ApiClientError } from "@/shared/api/api-client"
 import { OrganizationDetail } from "../types"
@@ -121,6 +122,7 @@ export function EditOrganizationDialog({
         address: values.address,
         rowVersion: baseVersion,
       })
+      toast.success("Đã cập nhật thông tin đơn vị.")
       onOpenChange(false)
     } catch {
       // The mutation error is rendered in the dialog.

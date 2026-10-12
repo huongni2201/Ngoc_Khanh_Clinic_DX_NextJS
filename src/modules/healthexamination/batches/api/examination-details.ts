@@ -8,9 +8,11 @@ import type {
   ExaminationStatusFilter,
   ExaminationSummary,
   ImportExaminationDetailsRequest,
+  RecordExaminationDetailRequest,
 } from "../types"
 import {
   examinationDetailImportResponseSchema,
+  examinationDetailRowResponseSchema,
   examinationDetailPageResponseSchema,
   examinationSummaryResponseSchema,
   type ExaminationDetailRowResponseDto,
@@ -18,6 +20,7 @@ import {
 
 export const EXAMINATION_DETAIL_IMPORT_MAX_BYTES = 5 * 1024 * 1024
 export const EXAMINATION_DETAIL_EXPORT_FALLBACK_FILE_NAME = "chi-tiet-kham.xlsx"
+export const EXAMINATION_DETAIL_TEMPLATE_FALLBACK_FILE_NAME = "mau-nhap-chi-tiet-kham.xlsx"
 
 /**
  * A screen status is two backend filters: the backend has no combined status and the frontend must
@@ -69,6 +72,18 @@ export function buildExaminationSummaryUrl(organizationId: string, batchId: stri
 
 export function buildExaminationDetailExportUrl(organizationId: string, batchId: string) {
   return `${detailsEndpoint(organizationId, batchId)}/export`
+}
+
+export function buildExaminationDetailTemplateUrl(organizationId: string, batchId: string) {
+  return `${detailsEndpoint(organizationId, batchId)}/import-template`
+}
+
+export function buildExaminationDetailRecordUrl(
+  organizationId: string,
+  batchId: string,
+  participantId: string
+) {
+  return `${detailsEndpoint(organizationId, batchId)}/${encodeURIComponent(participantId)}`
 }
 
 export function buildExaminationDetailImportUrl(organizationId: string, batchId: string) {
@@ -145,6 +160,47 @@ export async function downloadExaminationDetailExport(
     { signal }
   )
   return { blob, fileName: filename?.trim() || EXAMINATION_DETAIL_EXPORT_FALLBACK_FILE_NAME }
+}
+
+/**
+ * The import template: the same workbook as the export, pre-filled with the roster and the
+ * services already recorded (a blank cell means "not examined", so an empty file would erase
+ * data). It has its own permission so a role that may import can fetch it.
+ */
+export async function downloadExaminationDetailTemplate(
+  organizationId: string,
+  batchId: string,
+  signal?: AbortSignal
+): Promise<DownloadedFile> {
+  const { blob, filename } = await apiClient.getBlob(
+    buildExaminationDetailTemplateUrl(organizationId, batchId),
+    { signal }
+  )
+  return { blob, fileName: filename?.trim() || EXAMINATION_DETAIL_TEMPLATE_FALLBACK_FILE_NAME }
+}
+
+/**
+ * Records attendance and performed services of one Participant. The backend answers with the row
+ * as stored afterwards, so the screen can replace it without refetching the page.
+ */
+export async function recordExaminationDetail(
+  request: RecordExaminationDetailRequest
+): Promise<ExaminationDetailRow> {
+  const response = await apiClient.put<unknown, unknown>(
+    buildExaminationDetailRecordUrl(request.organizationId, request.batchId, request.participantId),
+    {
+      attendanceStatus: request.attendanceStatus,
+      actualExaminationDate:
+        request.attendanceStatus === "ATTENDED" ? request.actualExaminationDate : undefined,
+      performedBatchServiceIds: request.performedBatchServiceIds,
+      rowVersion: request.rowVersion,
+    }
+  )
+  if (!response.data) {
+    throw new Error(response.message || "Phản hồi cập nhật chi tiết khám không có dữ liệu.")
+  }
+
+  return mapRow(examinationDetailRowResponseSchema.parse(response.data))
 }
 
 /**

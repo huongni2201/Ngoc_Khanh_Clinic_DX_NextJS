@@ -26,7 +26,6 @@ interface StoredBatch {
   batchName: string
   dates: string[]
   siteType: string
-  siteName: string
   siteAddress: string
   status: "DRAFT" | "READY"
   rowVersion: number
@@ -99,7 +98,6 @@ function detail(batch: StoredBatch) {
     startDate: sorted[0] ?? null,
     endDate: sorted.at(-1) ?? null,
     examinationSiteType: batch.siteType,
-    examinationSiteName: batch.siteName,
     examinationSiteAddress: batch.siteAddress,
     status: batch.status,
     createdBy: "22222222-2222-4222-8222-222222222222",
@@ -169,7 +167,6 @@ export async function mockBackend(page: Page): Promise<MockBackend> {
       batchName: `Đợt khám có sẵn ${sequence}`,
       dates: ["2026-10-20"],
       siteType: "CLINIC",
-      siteName: "Phòng khám Ngọc Khánh",
       siteAddress: "1 Đường A",
       status: "DRAFT",
       rowVersion: 0,
@@ -216,7 +213,6 @@ export async function mockBackend(page: Page): Promise<MockBackend> {
         batchName: String(body.batchName),
         dates: body.examinationDates as string[],
         siteType: String(body.examinationSiteType),
-        siteName: String(body.examinationSiteName),
         siteAddress: String(body.examinationSiteAddress),
         services: body.services as StoredBatch["services"],
       })
@@ -242,7 +238,6 @@ export async function mockBackend(page: Page): Promise<MockBackend> {
           batchName: String(body.batchName),
           dates: body.examinationDates as string[],
           siteType: String(body.examinationSiteType),
-          siteName: String(body.examinationSiteName),
           siteAddress: String(body.examinationSiteAddress),
           services: body.services as StoredBatch["services"],
           rowVersion: batch.rowVersion + 1,

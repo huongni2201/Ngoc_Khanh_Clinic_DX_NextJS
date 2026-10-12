@@ -1,6 +1,7 @@
 "use client"
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { toast } from "@/shared/ui/toaster"
 import { fetchHealthExaminationBatchesByOrganization, fetchHealthExaminationBatchById, createHealthExaminationBatch, updateHealthExaminationBatch, deleteHealthExaminationBatch, fetchHealthExaminationBatchMatrix, fetchHealthExaminationBatchReport, fetchExaminationDetailExportData, fetchExaminationSummaryExportData } from "../api"
 import {
   cancelParticipant,
@@ -298,6 +299,7 @@ export function useExportExamDetail() {
     mutationFn: async ({ batchId }) => {
       await fetchExaminationDetailExportData(batchId)
     },
+    onError: (error) => toast.error(error.message || "Không thể xuất báo cáo."),
   })
 }
 
@@ -306,5 +308,6 @@ export function useExportExamSummary() {
     mutationFn: async ({ batchId }) => {
       await fetchExaminationSummaryExportData(batchId)
     },
+    onError: (error) => toast.error(error.message || "Không thể xuất báo cáo."),
   })
 }

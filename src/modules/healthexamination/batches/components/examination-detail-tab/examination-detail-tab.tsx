@@ -1,19 +1,22 @@
 "use client"
 
 import * as React from "react"
-import { AlertCircle, Download, RefreshCw, Upload } from "@/shared/ui/product-icon"
+import { AlertCircle, Download, FileSpreadsheet, RefreshCw, Upload } from "@/shared/ui/product-icon"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
+  useDownloadExaminationDetailTemplate,
   useExaminationDetails,
   useExaminationSummary,
   useExportExaminationDetails,
 } from "../../hooks/use-examination-details"
 import type {
+  ExaminationDetailRow,
   ExaminationStatusFilter,
   HealthExaminationBatchService,
 } from "../../types"
-import { isExaminationImportAllowed } from "../../utils/examination-detail-labels"
+import { isExaminationEditAllowed } from "../../utils/examination-detail-labels"
+import { ExaminationDetailEntrySheet } from "./examination-detail-entry-sheet"
 import { ExaminationDetailImportDialog } from "./examination-detail-import-dialog"
 import { ExaminationDetailToolbar } from "./examination-detail-toolbar"
 import { ExaminationMatrixTable } from "./examination-matrix-table"
@@ -21,6 +24,7 @@ import { ExaminationSummaryStrip } from "./examination-summary-strip"
 
 const PAGE_SIZE = 10
 const SEARCH_DEBOUNCE_MS = 300
+const HIGHLIGHT_MS = 1500
 
 interface ExaminationDetailTabProps {
   organizationId: string
@@ -29,11 +33,17 @@ interface ExaminationDetailTabProps {
     status: string
     /** The matrix columns, in display order. */
     services: HealthExaminationBatchService[]
+    /** First examination day: the lower limit of the actual date in the manual entry. */
+    startDate?: string
   }
   /** UX only: the backend decides. When false nothing is requested. */
   canRead?: boolean
   /** UX only: the backend decides. Shows the import when true and the batch accepts changes. */
   canImport?: boolean
+  /** UX only: shows "Tải file mẫu" when true and the batch accepts changes. */
+  canDownloadTemplate?: boolean
+  /** UX only: shows the per-row manual entry when true and the batch accepts changes. */
+  canRecord?: boolean
 }
 
 export function ExaminationDetailTab({
@@ -41,12 +51,16 @@ export function ExaminationDetailTab({
   batch,
   canRead = true,
   canImport = false,
+  canDownloadTemplate = false,
+  canRecord = false,
 }: ExaminationDetailTabProps) {
   const [search, setSearch] = React.useState("")
   const [debouncedSearch, setDebouncedSearch] = React.useState("")
   const [statusFilter, setStatusFilter] = React.useState<ExaminationStatusFilter | undefined>()
   const [page, setPage] = React.useState(1)
   const [isImportOpen, setIsImportOpen] = React.useState(false)
+  const [editingRowId, setEditingRowId] = React.useState<string | null>(null)
+  const [highlightedRowId, setHighlightedRowId] = React.useState<string | null>(null)
 
   React.useEffect(() => {
     const timer = setTimeout(() => {
@@ -65,11 +79,40 @@ export function ExaminationDetailTab({
   const summary = useExaminationSummary(organizationId, batch.id, { enabled: canRead })
   const exportDetails = useExportExaminationDetails(organizationId, batch.id)
 
-  const importAllowed = canImport && isExaminationImportAllowed(batch.status)
-  const items = details.data?.data ?? []
+  const downloadTemplate = useDownloadExaminationDetailTemplate(organizationId, batch.id)
+
+  const changesAllowed = isExaminationEditAllowed(batch.status)
+  const importAllowed = canImport && changesAllowed
+  const templateAllowed = importAllowed && canDownloadTemplate
+  const editAllowed = canRecord && changesAllowed
+  const items = React.useMemo(() => details.data?.data ?? [], [details.data])
   const filtered = Boolean(debouncedSearch.trim() || statusFilter)
+  const editingIndex = editingRowId ? items.findIndex((item) => item.id === editingRowId) : -1
+  const editingRow = editingIndex >= 0 ? items[editingIndex] : null
+  const nextRow = editingIndex >= 0 ? (items[editingIndex + 1] ?? null) : null
+
+  React.useEffect(() => {
+    if (!highlightedRowId) return
+    const timer = setTimeout(() => setHighlightedRowId(null), HIGHLIGHT_MS)
+    return () => clearTimeout(timer)
+  }, [highlightedRowId])
 
   const handleExport = () => exportDetails.mutate()
+  const handleDownloadTemplate = () => downloadTemplate.mutate()
+  // Without the template permission the import dialog falls back to the export, which carries the
+  // same content.
+  const dialogDownload = templateAllowed ? handleDownloadTemplate : handleExport
+  const dialogDownloading = templateAllowed
+    ? downloadTemplate.isPending
+    : exportDetails.isPending
+
+  const handleSaved = (saved: ExaminationDetailRow) => {
+    setHighlightedRowId(saved.id)
+  }
+  const handleSaveAndNext = (saved: ExaminationDetailRow) => {
+    setHighlightedRowId(saved.id)
+    setEditingRowId(nextRow?.id ?? null)
+  }
 
   const actions = (
     <>
@@ -83,6 +126,18 @@ export function ExaminationDetailTab({
         <Download className="mr-1.5 size-3.5" />
         {exportDetails.isPending ? "Đang xuất..." : "Xuất Excel"}
       </Button>
+      {templateAllowed && (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={handleDownloadTemplate}
+          disabled={downloadTemplate.isPending}
+        >
+          <FileSpreadsheet className="mr-1.5 size-3.5" />
+          {downloadTemplate.isPending ? "Đang tải..." : "Tải file mẫu"}
+        </Button>
+      )}
       {importAllowed && (
         <Button type="button" size="sm" onClick={() => setIsImportOpen(true)}>
           <Upload className="mr-1.5 size-3.5" />
@@ -116,9 +171,11 @@ export function ExaminationDetailTab({
         actions={actions}
       />
 
-      {exportDetails.isError && (
+      {downloadTemplate.isError && (
         <p role="alert" className="text-xs text-destructive">
-          {exportDetails.error.message || "Không thể xuất file Excel."}
+          {downloadTemplate.error instanceof Error && downloadTemplate.error.message
+            ? downloadTemplate.error.message
+            : "Không thể tải file mẫu. Vui lòng thử lại."}
         </p>
       )}
 
@@ -157,6 +214,25 @@ export function ExaminationDetailTab({
           totalPages={details.data?.totalPages || 1}
           onPageChange={setPage}
           filtered={filtered}
+          onEditRow={editAllowed ? (row) => setEditingRowId(row.id) : undefined}
+          highlightedRowId={highlightedRowId}
+        />
+      )}
+
+      {editAllowed && (
+        <ExaminationDetailEntrySheet
+          open={editingRow !== null}
+          onOpenChange={(next) => {
+            if (!next) setEditingRowId(null)
+          }}
+          organizationId={organizationId}
+          batchId={batch.id}
+          startDate={batch.startDate}
+          services={batch.services}
+          row={editingRow}
+          onSaved={handleSaved}
+          onSaveAndNext={nextRow ? handleSaveAndNext : undefined}
+          onReload={() => details.refetch()}
         />
       )}
 
@@ -166,8 +242,8 @@ export function ExaminationDetailTab({
           onOpenChange={setIsImportOpen}
           organizationId={organizationId}
           batchId={batch.id}
-          onExport={handleExport}
-          isExporting={exportDetails.isPending}
+          onDownloadTemplate={dialogDownload}
+          isDownloadingTemplate={dialogDownloading}
         />
       )}
     </div>

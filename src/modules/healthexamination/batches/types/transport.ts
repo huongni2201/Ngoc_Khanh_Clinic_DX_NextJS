@@ -67,7 +67,6 @@ export const healthExaminationBatchDetailResponseSchema = z.object({
   startDate: optionalDateSchema,
   endDate: optionalDateSchema,
   examinationSiteType: z.enum(["CLINIC", "ORGANIZATION_SITE"]),
-  examinationSiteName: z.string(),
   examinationSiteAddress: z.string().nullable(),
   status: batchStatusSchema,
   createdBy: z.string().min(1),
@@ -90,7 +89,6 @@ export interface HealthExaminationBatchCreateRequestDto {
   batchName: string
   examinationDates: string[]
   examinationSiteType: ExaminationSiteType
-  examinationSiteName: string
   examinationSiteAddress: string
   services: HealthExaminationBatchServiceRequestDto[]
 }

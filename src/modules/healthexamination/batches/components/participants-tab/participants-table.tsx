@@ -20,6 +20,8 @@ interface ParticipantsTableProps {
   pageSize: number
   totalPages: number
   onPageChange: (page: number) => void
+  /** Lets the user choose how many rows a page shows. */
+  onPageSizeChange?: (pageSize: number) => void
   sortKey: ParticipantSortKey
   sortBy: "ASC" | "DESC"
   onSortChange: (sortKey: ParticipantSortKey) => void
@@ -153,6 +155,7 @@ export function ParticipantsTable({
   pageSize,
   totalPages,
   onPageChange,
+  onPageSizeChange,
   sortKey,
   sortBy,
   onSortChange,
@@ -256,6 +259,7 @@ export function ParticipantsTable({
         totalItems={totalItems}
         totalPages={totalPages}
         onPageChange={onPageChange}
+        onPageSizeChange={onPageSizeChange}
         entityName="người khám"
       />
     </div>

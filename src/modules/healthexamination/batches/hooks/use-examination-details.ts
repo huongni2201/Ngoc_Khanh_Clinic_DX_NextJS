@@ -1,11 +1,14 @@
 "use client"
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { toast } from "@/shared/ui/toaster"
 import {
   downloadExaminationDetailExport,
+  downloadExaminationDetailTemplate,
   fetchExaminationDetails,
   fetchExaminationSummary,
   importExaminationDetails,
+  recordExaminationDetail,
 } from "../api/examination-details"
 import { downloadPaymentSummaryDocx, fetchPaymentSummaryReport } from "../api/reports"
 import { healthExaminationKeys } from "../query-keys"
@@ -14,9 +17,11 @@ import type {
   ExaminationDetailImportResult,
   ExaminationDetailListFilterParams,
   ExaminationDetailListResponse,
+  ExaminationDetailRow,
   ExaminationSummary,
   ImportExaminationDetailsRequest,
   PaymentSummaryReport,
+  RecordExaminationDetailRequest,
 } from "../types"
 import { saveBlobAs } from "../utils/download-blob"
 
@@ -66,6 +71,54 @@ export function useExportExaminationDetails(organizationId: string, batchId: str
       return file
     },
     retry: false,
+    onSuccess: (file) => toast.success("Đã xuất file chi tiết khám.", { description: file.fileName }),
+    onError: (error) => toast.error(error.message || "Không thể xuất file Excel."),
+  })
+}
+
+/** Downloads the pre-filled import template and offers it as a file. It never retries. */
+export function useDownloadExaminationDetailTemplate(organizationId: string, batchId: string) {
+  return useMutation<DownloadedFile, Error, void>({
+    mutationFn: async () => {
+      const file = await downloadExaminationDetailTemplate(organizationId, batchId)
+      saveBlobAs(file.blob, file.fileName)
+      return file
+    },
+    retry: false,
+  })
+}
+
+/**
+ * Records one Participant by hand. It never retries on its own: a resend after a lost response is
+ * safe because the backend answers a request that equals the stored state with the stored row. On
+ * success the returned row replaces the cached one on every cached page (the screen updates at
+ * once), and the counters, the payment report and the roster are refreshed.
+ */
+export function useRecordExaminationDetail() {
+  const queryClient = useQueryClient()
+
+  return useMutation<ExaminationDetailRow, Error, RecordExaminationDetailRequest>({
+    mutationFn: (request) => recordExaminationDetail(request),
+    retry: false,
+    onSuccess: (row, request) => {
+      const { organizationId, batchId } = request
+      queryClient.setQueriesData<ExaminationDetailListResponse>(
+        { queryKey: [...healthExaminationKeys.examinationDetailsRoot(organizationId, batchId), "list"] },
+        (cached) =>
+          cached
+            ? { ...cached, data: cached.data.map((item) => (item.id === row.id ? row : item)) }
+            : cached
+      )
+      void queryClient.invalidateQueries({
+        queryKey: healthExaminationKeys.examinationSummary(organizationId, batchId),
+      })
+      void queryClient.invalidateQueries({
+        queryKey: healthExaminationKeys.paymentReport(organizationId, batchId),
+      })
+      void queryClient.invalidateQueries({
+        queryKey: healthExaminationKeys.participantsRoot(organizationId, batchId),
+      })
+    },
   })
 }
 
@@ -120,5 +173,7 @@ export function useExportPaymentSummaryDocx(organizationId: string, batchId: str
       return file
     },
     retry: false,
+    onSuccess: (file) => toast.success("Đã xuất báo cáo Word.", { description: file.fileName }),
+    onError: (error) => toast.error(error.message || "Không thể xuất báo cáo Word."),
   })
 }

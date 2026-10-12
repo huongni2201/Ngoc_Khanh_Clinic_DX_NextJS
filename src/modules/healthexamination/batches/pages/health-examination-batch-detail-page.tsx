@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { hasStaffPermission, useCachedUserSession } from "@/modules/accesscontrol"
 import { isApiErrorStatus } from "@/shared/api/api-client"
 import { PageHeader, ScreenLayout, ScreenLoadingSkeleton, StatusPill } from "@/shared/ui"
+import { toast } from "@/shared/ui/toaster"
 import {
   useDeleteHealthExaminationBatch,
   useHealthExaminationBatchDetail,
@@ -35,6 +36,8 @@ import {
   EXAMINATION_REPORT_READ_PERMISSION,
   EXAMINATION_SERVICE_READ_PERMISSION,
   EXAMINATION_SERVICE_RECONCILE_PERMISSION,
+  EXAMINATION_SERVICE_RECORD_PERMISSION,
+  EXAMINATION_SERVICE_TEMPLATE_DOWNLOAD_PERMISSION,
   PARTICIPANT_IMPORT_PERMISSION,
   PARTICIPANT_MANAGE_PERMISSION,
   PARTICIPANT_READ_PERMISSION,
@@ -77,6 +80,14 @@ export function HealthExaminationBatchDetailPage({
   const canReconcileExamination = hasStaffPermission(
     currentUser,
     EXAMINATION_SERVICE_RECONCILE_PERMISSION
+  )
+  const canDownloadExaminationTemplate = hasStaffPermission(
+    currentUser,
+    EXAMINATION_SERVICE_TEMPLATE_DOWNLOAD_PERMISSION
+  )
+  const canRecordExamination = hasStaffPermission(
+    currentUser,
+    EXAMINATION_SERVICE_RECORD_PERMISSION
   )
   const canReadReport = currentUser
     ? hasStaffPermission(currentUser, EXAMINATION_REPORT_READ_PERMISSION)
@@ -130,6 +141,7 @@ export function HealthExaminationBatchDetailPage({
         batchId: batch.id,
         rowVersion: batch.rowVersion,
       })
+      toast.success(`Đã xóa đợt khám ${batch.code}.`)
       setIsDeleteOpen(false)
       setIsDeleted(true)
       router.push(batchesHref)
@@ -234,9 +246,16 @@ export function HealthExaminationBatchDetailPage({
         ) : activeTab === "examination" ? (
           <ExaminationDetailTab
             organizationId={organizationId}
-            batch={{ id: batch.id, status: batch.status, services: batch.services }}
+            batch={{
+              id: batch.id,
+              status: batch.status,
+              services: batch.services,
+              startDate: batch.examinationDates[0],
+            }}
             canRead={canReadExamination}
             canImport={canReconcileExamination}
+            canDownloadTemplate={canDownloadExaminationTemplate}
+            canRecord={canRecordExamination}
           />
         ) : (
           <ReportTab

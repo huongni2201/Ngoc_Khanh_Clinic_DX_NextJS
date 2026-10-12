@@ -25,6 +25,9 @@ export type { SearchFieldProps } from "./search-field"
 export { StatusPill } from "./status-pill"
 export type { StatusPillProps, StatusTone } from "./status-pill"
 
+export { Toaster, toast } from "./toaster"
+export type { ToastOptions } from "./toaster"
+
 export * from "./product-icon"
 
 export { WorklistTabHeader } from "./worklist-tab-header"

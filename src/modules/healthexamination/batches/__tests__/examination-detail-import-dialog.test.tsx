@@ -24,7 +24,7 @@ function renderDialog() {
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   })
   const invalidate = vi.spyOn(queryClient, "invalidateQueries")
-  const onExport = vi.fn()
+  const onDownloadTemplate = vi.fn()
   const onOpenChange = vi.fn()
   render(
     <QueryClientProvider client={queryClient}>
@@ -33,12 +33,12 @@ function renderDialog() {
         onOpenChange={onOpenChange}
         organizationId="org-1"
         batchId="batch-1"
-        onExport={onExport}
-        isExporting={false}
+        onDownloadTemplate={onDownloadTemplate}
+        isDownloadingTemplate={false}
       />
     </QueryClientProvider>
   )
-  return { invalidate, onExport, onOpenChange }
+  return { invalidate, onDownloadTemplate, onOpenChange }
 }
 
 const workbook = (name = "chi-tiet-kham.xlsx") =>
@@ -56,12 +56,23 @@ beforeEach(() => {
 afterEach(() => vi.restoreAllMocks())
 
 describe("ExaminationDetailImportDialog", () => {
+  it("splits the flow in two steps and downloads the template from step 1", async () => {
+    const user = userEvent.setup()
+    const { onDownloadTemplate } = renderDialog()
+
+    expect(screen.getByText("Bước 1. Tải file mẫu")).toBeInTheDocument()
+    expect(screen.getByText(/Xoá X trong file sẽ bỏ ghi nhận hạng mục đó/)).toBeInTheDocument()
+    await user.click(screen.getByRole("button", { name: "Tải file mẫu" }))
+
+    expect(onDownloadTemplate).toHaveBeenCalledTimes(1)
+  })
+
   it("rejects a file that is not .xlsx without sending anything", async () => {
     const post = vi.spyOn(apiClient, "post")
     const user = userEvent.setup({ applyAccept: false })
     renderDialog()
 
-    await user.upload(screen.getByLabelText(/Tệp Excel/), new File(["a,b"], "du-lieu.csv"))
+    await user.upload(screen.getByLabelText(/Bước 2/), new File(["a,b"], "du-lieu.csv"))
 
     expect(screen.getByRole("alert")).toHaveTextContent("Chỉ chấp nhận tệp Excel định dạng .xlsx.")
     expect(screen.getByRole("button", { name: "Nhập chi tiết khám" })).toBeDisabled()
@@ -75,7 +86,7 @@ describe("ExaminationDetailImportDialog", () => {
     const user = userEvent.setup()
     const { invalidate } = renderDialog()
 
-    await user.upload(screen.getByLabelText(/Tệp Excel/), workbook())
+    await user.upload(screen.getByLabelText(/Bước 2/), workbook())
     await user.click(screen.getByRole("button", { name: "Nhập chi tiết khám" }))
 
     expect(await screen.findByRole("status")).toHaveTextContent(
@@ -96,16 +107,16 @@ describe("ExaminationDetailImportDialog", () => {
     const user = userEvent.setup()
     renderDialog()
 
-    await user.upload(screen.getByLabelText(/Tệp Excel/), workbook())
+    await user.upload(screen.getByLabelText(/Bước 2/), workbook())
     await user.click(screen.getByRole("button", { name: "Nhập chi tiết khám" }))
 
     expect(await screen.findByText(/Dòng 7: cột “Xét nghiệm máu” chỉ nhận chữ X/)).toBeInTheDocument()
     expect(screen.getByText("Chưa có thay đổi nào được ghi vào đợt khám.")).toBeInTheDocument()
     expect(screen.queryByText(/accepts only/)).not.toBeInTheDocument()
-    expect(screen.queryByRole("button", { name: "Xuất lại file" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Tải lại file mẫu" })).not.toBeInTheDocument()
   })
 
-  it("offers exporting again when a Participant changed after the export", async () => {
+  it("offers downloading the template again when a Participant changed after the export", async () => {
     vi.spyOn(apiClient, "post").mockRejectedValue(
       new ApiClientError(
         "generic",
@@ -115,14 +126,14 @@ describe("ExaminationDetailImportDialog", () => {
       )
     )
     const user = userEvent.setup()
-    const { onExport } = renderDialog()
+    const { onDownloadTemplate } = renderDialog()
 
-    await user.upload(screen.getByLabelText(/Tệp Excel/), workbook())
+    await user.upload(screen.getByLabelText(/Bước 2/), workbook())
     await user.click(screen.getByRole("button", { name: "Nhập chi tiết khám" }))
 
     expect(await screen.findByText(/Dòng 9: người khám đã được thay đổi sau khi xuất file/)).toBeInTheDocument()
-    await user.click(screen.getByRole("button", { name: "Xuất lại file" }))
-    expect(onExport).toHaveBeenCalledTimes(1)
+    await user.click(screen.getByRole("button", { name: "Tải lại file mẫu" }))
+    expect(onDownloadTemplate).toHaveBeenCalledTimes(1)
   })
 
   it("retries a lost connection with the same key and uses a new key for a new file", async () => {
@@ -133,14 +144,14 @@ describe("ExaminationDetailImportDialog", () => {
     const user = userEvent.setup()
     renderDialog()
 
-    await user.upload(screen.getByLabelText(/Tệp Excel/), workbook())
+    await user.upload(screen.getByLabelText(/Bước 2/), workbook())
     await user.click(screen.getByRole("button", { name: "Nhập chi tiết khám" }))
     await user.click(await screen.findByRole("button", { name: "Thử lại" }))
     await waitFor(() => expect(post).toHaveBeenCalledTimes(2))
     expect(post.mock.calls[0][2]).toEqual({ headers: { "Idempotency-Key": KEY_A } })
     expect(post.mock.calls[1][2]).toEqual({ headers: { "Idempotency-Key": KEY_A } })
 
-    await user.upload(screen.getByLabelText(/Tệp Excel/), workbook("khac.xlsx"))
+    await user.upload(screen.getByLabelText(/Bước 2/), workbook("khac.xlsx"))
     await user.click(screen.getByRole("button", { name: "Nhập chi tiết khám" }))
     await waitFor(() => expect(post).toHaveBeenCalledTimes(3))
     expect(post.mock.calls[2][2]).toEqual({ headers: { "Idempotency-Key": KEY_B } })

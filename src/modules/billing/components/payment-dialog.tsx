@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { toast } from "@/shared/ui/toaster"
 import { AlertCircle, Banknote, CheckCircle2, Clock, Copy, Loader2, QrCode } from "@/shared/ui/product-icon"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
@@ -72,6 +73,7 @@ export function PaymentDialog({ open, onOpenChange, encounter, onPaid }: Payment
     try {
       setMutationError(null)
       await cashMutation.mutateAsync({ encounterId: encounter.id })
+      toast.success("Đã xác nhận thu tiền mặt.")
     } catch (caught) {
       setMutationError(caught instanceof Error ? caught.message : "Không thể xác nhận thanh toán")
     }

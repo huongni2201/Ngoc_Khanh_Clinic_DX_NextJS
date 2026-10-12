@@ -33,7 +33,6 @@ function toBatch(seed: SeedBatch): HealthExaminationBatch {
     rowVersion: 0,
     examinationDates: seed.startDate ? [seed.startDate] : [],
     examinationSiteType: "CLINIC",
-    examinationSiteName: "Phòng khám Ngọc Khánh",
     examinationSiteAddress: "1 Đường A, Hà Nội",
     createdBy: "staff-1",
     services: seed.services.map((service, index) => ({
@@ -503,7 +502,6 @@ export async function createHealthExaminationBatch(request: CreateHealthExaminat
     rowVersion: 0,
     examinationDates: dates,
     examinationSiteType: request.examinationSiteType,
-    examinationSiteName: request.examinationSiteName,
     examinationSiteAddress: request.examinationSiteAddress,
     createdBy: "staff-1",
     services: buildServices(id, request.services),
@@ -537,7 +535,6 @@ export async function updateHealthExaminationBatch(
     endDate: dates[dates.length - 1] ?? null,
     examinationDates: dates,
     examinationSiteType: request.examinationSiteType,
-    examinationSiteName: request.examinationSiteName,
     examinationSiteAddress: request.examinationSiteAddress,
     services: buildServices(current.id, request.services),
     rowVersion: current.rowVersion + 1,

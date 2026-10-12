@@ -29,7 +29,6 @@ const batch: HealthExaminationBatch = {
   rowVersion: 4,
   examinationDates: ["2026-10-01", "2026-10-03"],
   examinationSiteType: "ORGANIZATION_SITE",
-  examinationSiteName: "Trụ sở FPT",
   examinationSiteAddress: "Hà Nội",
   createdBy: "staff-1",
   services: [
@@ -70,7 +69,7 @@ describe("HealthExaminationBatchDetailPage", () => {
     expect(get.mock.calls[0].slice(0, 2)).toEqual(["org-1", "batch-1"])
     expect(screen.getByText("Nháp")).toBeInTheDocument()
     expect(screen.getByText("Tại đơn vị")).toBeInTheDocument()
-    expect(screen.getAllByText("Trụ sở FPT").length).toBeGreaterThan(0)
+    expect(screen.getAllByText("Hà Nội").length).toBeGreaterThan(0)
     const dates = within(screen.getByRole("list", { name: "Ngày khám" }))
     expect(dates.getByText("01/10/2026")).toBeInTheDocument()
     expect(dates.getByText("03/10/2026")).toBeInTheDocument()
@@ -194,9 +193,7 @@ describe("HealthExaminationBatchDetailPage", () => {
       ).toBeChecked()
       const name = within(dialog).getByLabelText(/Tên đợt khám/)
       await waitFor(() => expect(name).toHaveValue("Khám định kỳ 2026"))
-      const code = within(dialog).getByLabelText(/Mã đợt khám/)
-      expect(code).toHaveAttribute("readonly")
-      expect(code).toHaveValue("DK001")
+      expect(within(dialog).queryByLabelText(/Mã đợt khám/)).not.toBeInTheDocument()
       expect(within(dialog).getByRole("textbox", { name: "Giá thỏa thuận cho Khám nội tổng quát" })).toHaveValue("90.000 đ")
 
       await user.clear(name)

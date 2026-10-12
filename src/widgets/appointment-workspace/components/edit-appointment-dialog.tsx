@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { toast } from "@/shared/ui/toaster"
 import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Edit, AlertCircle, Loader2, Trash2 } from "@/shared/ui/product-icon"
@@ -119,6 +120,7 @@ export function EditAppointmentDialog({
         notes: data.notes || undefined,
       })
 
+      toast.success("Đã cập nhật lịch hẹn.")
       onOpenChange(false)
       if (onSuccess) onSuccess()
     } catch (err) {
@@ -134,6 +136,7 @@ export function EditAppointmentDialog({
         reason: "Lễ tân hủy theo yêu cầu của bệnh nhân",
       })
 
+      toast.success("Đã hủy lịch hẹn.")
       setIsConfirmingCancel(false)
       onOpenChange(false)
       if (onSuccess) onSuccess()

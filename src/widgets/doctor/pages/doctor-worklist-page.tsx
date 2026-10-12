@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { toast } from "@/shared/ui/toaster"
 import { useRouter } from "next/navigation"
 import { PageHeader, ScreenLayout } from "@/shared/ui"
 import { Button } from "@/components/ui/button"
@@ -104,24 +105,31 @@ export function DoctorWorklistPage() {
     setCurrentPage(1)
   }
 
+  // Starting is the only step that can fail before the doctor opens the encounter.
+  const startEncounter = async (encounterId: string) => {
+    try {
+      await startEncounterMutation.mutateAsync(encounterId)
+      return true
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Không thể bắt đầu lượt khám.")
+      return false
+    }
+  }
+
   // Header Contextual Action: "Tiếp tục lượt đang khám" hoặc "Khám bệnh nhân tiếp theo"
   const handleNextAction = async () => {
     if (!nextAction || nextAction.actionType === "NONE" || !nextAction.encounter) {
       return
     }
     const encounter = nextAction.encounter
-    if (nextAction.actionType === "NEXT") {
-      await startEncounterMutation.mutateAsync(encounter.id)
-    }
+    if (nextAction.actionType === "NEXT" && !(await startEncounter(encounter.id))) return
     const tabParam = encounter.status === "WAITING_DIAGNOSTIC_RESULTS" ? "?tab=lab" : ""
     router.push(`/patients/${encounter.patientId}/encounters/${encounter.id}${tabParam}`)
   }
 
   // Row Action Handlers: Navigate straight to Encounter Detail Workspace
   const handleOpenEncounter = async (encounter: DoctorEncounter) => {
-    if (encounter.status === "WAITING_EXAM") {
-      await startEncounterMutation.mutateAsync(encounter.id)
-    }
+    if (encounter.status === "WAITING_EXAM" && !(await startEncounter(encounter.id))) return
     const tabParam = encounter.status === "WAITING_DIAGNOSTIC_RESULTS" ? "?tab=lab" : ""
     router.push(`/patients/${encounter.patientId}/encounters/${encounter.id}${tabParam}`)
   }

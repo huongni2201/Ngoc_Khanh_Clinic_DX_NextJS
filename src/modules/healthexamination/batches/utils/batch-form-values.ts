@@ -54,7 +54,6 @@ export function buildFormValues(
     batchName: batch?.name ?? "",
     examinationDates: batch ? [...batch.examinationDates] : [],
     examinationSiteType: batch?.examinationSiteType ?? "",
-    examinationSiteName: batch?.examinationSiteName ?? "",
     examinationSiteAddress: batch ? (batch.examinationSiteAddress ?? "") : (defaultAddress ?? ""),
     services: buildServiceRows(catalog, batch),
   }
