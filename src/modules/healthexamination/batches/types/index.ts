@@ -79,6 +79,13 @@ export interface DeleteHealthExaminationBatchRequest {
   rowVersion: number
 }
 
+/** Starts a draft batch (DRAFT to READY); its configuration is fixed from then on. */
+export interface StartHealthExaminationBatchRequest {
+  organizationId: string
+  batchId: string
+  rowVersion: number
+}
+
 export interface HealthExaminationBatchFilterParams {
   search?: string
   page?: number
@@ -137,6 +144,8 @@ export interface ParticipantListFilterParams {
   rosterStatus?: ParticipantRosterStatus
   attendanceStatus?: ParticipantAttendanceStatus
   reconciliationStatus?: ParticipantReconciliationStatus
+  /** Only Participants scheduled on this batch day. */
+  batchDayId?: string
   page?: number
   pageSize?: number
   sortKey?: ParticipantSortKey
@@ -433,4 +442,29 @@ export interface PaymentSummaryReport {
 export interface DownloadedFile {
   blob: Blob
   fileName: string
+}
+
+/** A Participant chosen for printing, with what the print dialogs show about them. */
+export interface ExaminationFormPrintEntry {
+  id: string
+  participantCode?: string
+  fullName: string
+  departmentName: string
+}
+
+/** Order of the forms in a bulk print job. The backend prints in the order it receives. */
+export type ExaminationFormPrintOrder = "CODE" | "DEPARTMENT"
+
+export interface CreateExaminationFormPrintJobRequest {
+  organizationId: string
+  batchId: string
+  /** In print order, without duplicates; at most 1000. */
+  participantIds: string[]
+  /** Reused when the same body is resent after a failure, so a retry never queues twice. */
+  idempotencyKey: string
+}
+
+/** The print job the backend queued; follow it with the document render job endpoints. */
+export interface ExaminationFormPrintJob {
+  jobId: string
 }

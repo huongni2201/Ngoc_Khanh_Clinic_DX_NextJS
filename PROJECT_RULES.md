@@ -8,8 +8,9 @@ This is a **real production clinic application**.
 
 Corporate health examinations are the primary vertical slice. Supported backend
 HTTP scope is authentication, organization list/create/get/update/deactivate,
-batch list/create/get/update/delete, Participant list/manual changes/template/import,
-examination-details list/summary/import/export, payment-summary JSON/DOCX and
+batch list/create/get/update/delete/start (DRAFT to READY), Participant list/manual changes/template/import,
+examination-details list/summary/import/export, payment-summary JSON/DOCX,
+blank examination form printing (one PDF and background print jobs, section 13) and
 the active service catalog list (`GET /api/v1/catalog/services`).
 See [the backend inventory](../Ngoc_Khanh_Clinic_DX_Springboot/docs/api/clean-slate-migration.md)
 for current routes. Handler existence does not imply production authorization.
@@ -492,8 +493,8 @@ imply an available business HTTP contract:
 /encounters
 ```
 
-`/health-check` and `/health-check/print/preview` remain planned print directions,
-not implemented routes. See sections 13–14 before enabling printing.
+There are no print routes: examination forms are printed from the Participants tab
+of a batch (section 13). The former `/health-check` print routes are not planned.
 
 ---
 
@@ -537,40 +538,46 @@ Frontend rules:
 
 ---
 
-## 13. Health Check Print
+## 13. Examination Form Printing
 
-Use one shared Mẫu số 03 implementation for individual health check, organization bulk print and reprint.
+[ADR-0010](docs/adr/0010-backend-rendered-examination-form-printing.md) supersedes
+the former React Mẫu 03 print model. Contracts:
+[one form](../Ngoc_Khanh_Clinic_DX_Springboot/docs/api/examination-form-print.md) and
+[print jobs](../Ngoc_Khanh_Clinic_DX_Springboot/docs/api/examination-form-print-jobs.md).
 
 ```text
-Source Data
-↓
-Mapper
-↓
-HealthCheckPrintModel
-↓
-Mẫu 03 Components
-↓
-Print Preview
-↓
-Browser Print
+Participants tab (READY / FINALIZED batch)
+├── row "In phiếu"  → GET …/examination-form → PDF dialog → browser PDF viewer prints
+└── selection       → POST …/examination-form-print-jobs (Idempotency-Key)
+                      → poll GET /document-render-jobs/{id} → download PDF parts
 ```
 
-Never fabricate or prefill clinical findings from assumptions.
-
----
+- The backend fills the clinic's `.docx` template and returns PDF. The frontend
+  never lays out, prefills or reflows a form, and never prefills clinical findings.
+- Document-template editing/upload/publish screens are excluded by
+  [backend ADR-0018](../Ngoc_Khanh_Clinic_DX_Springboot/docs/adr/0018-it-managed-document-templates.md).
+  Business/clinical staff approve content; IT validates and releases new versions.
+  Staff use the supported PDF preview/download/print actions. Excel roster and
+  reconciliation download/import workflows retain their existing contracts.
+- Paper size belongs to the template (current starter: A3 landscape, 2 pages per
+  person). Tell staff the paper and 100% scale; never "fit to page".
+- Gate by `PARTICIPANT_EXAMINATION_FORM_PRINT` (one form) and
+  `PARTICIPANT_EXAMINATION_FORM_BULK_PRINT` + `DOCUMENT_RENDER_JOB_READ` +
+  `DOCUMENT_RENDER_JOB_DOWNLOAD` (bulk), and by batch status. UX only.
+- Keep PDF bytes out of persistent state: single forms are dropped when the dialog
+  closes; job parts are downloaded on demand. Log ids and counts only.
 
 ## 14. Print Workflow
 
 Requirements:
 
 ```text
-A4
-deterministic page breaks
-no dashboard chrome in print
-preview before bulk print
-visible batch count
-reprint support
-clear per-participant errors
+paper and scale guidance from the template, not hard-coded A4
+one Idempotency-Key per job body, reused on manual retry
+visible count, order and progress before and during a job
+per-part download (≤ 200 forms each) and reprint by creating a new job
+skipped Participants listed by name with a Vietnamese reason
+no dashboard chrome: the PDF viewer prints, not the app page
 ```
 
 ---
@@ -822,10 +829,10 @@ For UI work also verify reuse search, loading/empty/error states, accessibility 
 Integrate supported organization list/create/detail/update/deactivate, batch
 list/create/detail/update/delete, the service catalog and authentication contracts first. Track mismatched callers in
 [code follow-ups](docs/maintenance/code-follow-ups.md).
-Participant roster/manual changes/import, examination-details/import/export and
-payment-summary reports use their published backend contracts. Visit preparation,
-official record printing and downstream clinical workflows still require explicit
-HTTP contracts before enablement. The Participant roster import in section 12 is
+Participant roster/manual changes/import, examination-details/import/export,
+payment-summary reports and blank examination form printing use their published
+backend contracts. Visit preparation, official (concluded) record printing and
+downstream clinical workflows still require explicit HTTP contracts before enablement. The Participant roster import in section 12 is
 separate from the supported examination-details reconciliation import.
 
 ---

@@ -26,6 +26,11 @@ export interface ApiClientRequestOptions
   extends Omit<RequestInit, "body" | "headers"> {
   body?: unknown
   headers?: HeadersInit
+  /**
+   * Longer limit for a slow request, such as a PDF the backend renders on demand or a large file.
+   * Defaults to the shared 15 seconds.
+   */
+  timeoutMs?: number
 }
 
 export class ApiClientError extends Error {
@@ -148,11 +153,12 @@ async function readJson(response: Response): Promise<unknown> {
 async function fetchApiResponse<T>(
   path: string,
   options: RequestInit,
-  readResponse: (response: Response) => Promise<T>
+  readResponse: (response: Response) => Promise<T>,
+  timeoutMs?: number
 ): Promise<T> {
   const url = buildUrl(path)
   try {
-    return await withHttpResponse(url, options, readResponse)
+    return await withHttpResponse(url, options, readResponse, timeoutMs)
   } catch (error) {
     if (error instanceof HttpError) {
       throw new ApiClientError(error.message, error.status ?? 0)
@@ -161,7 +167,8 @@ async function fetchApiResponse<T>(
   }
 }
 
-async function request<T>(path: string, options: ApiClientRequestOptions = {}) {
+async function request<T>(path: string, requestOptions: ApiClientRequestOptions = {}) {
+  const { timeoutMs, ...options } = requestOptions
   const headers = new Headers(options.headers)
   headers.set("Accept", "application/json")
 
@@ -197,7 +204,7 @@ async function request<T>(path: string, options: ApiClientRequestOptions = {}) {
     }
 
     return payload as ApiResponse<T>
-  })
+  }, timeoutMs)
 }
 
 export const apiClient = {
@@ -235,7 +242,7 @@ export const apiClient = {
   },
 
   async getBlob(path: string, options?: ApiClientRequestOptions): Promise<BlobResponse> {
-    const { body, ...requestOptions } = options ?? {}
+    const { body, timeoutMs, ...requestOptions } = options ?? {}
     void body
     const headers = new Headers(options?.headers)
     headers.set("Accept", "application/octet-stream")
@@ -257,7 +264,8 @@ export const apiClient = {
         }
 
         return { blob: await response.blob(), filename: getFilename(response) }
-      }
+      },
+      timeoutMs
     )
   },
 }

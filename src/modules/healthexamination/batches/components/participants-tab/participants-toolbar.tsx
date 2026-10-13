@@ -10,7 +10,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import type { ParticipantAttendanceStatus, ParticipantRosterStatus } from "../../types"
+import type {
+  HealthExaminationBatchDay,
+  ParticipantAttendanceStatus,
+  ParticipantRosterStatus,
+} from "../../types"
+import { formatHealthExaminationDate } from "../../utils/format-health-examination-date"
 import {
   PARTICIPANT_ATTENDANCE_STATUS_LABELS,
   PARTICIPANT_ROSTER_STATUS_LABELS,
@@ -29,6 +34,10 @@ interface ParticipantsToolbarProps {
   onRosterStatusChange: (value: ParticipantRosterStatus | undefined) => void
   attendanceStatus?: ParticipantAttendanceStatus
   onAttendanceStatusChange: (value: ParticipantAttendanceStatus | undefined) => void
+  /** Examination days of the batch; the day filter is shown when there is more than one. */
+  days?: HealthExaminationBatchDay[]
+  batchDayId?: string
+  onBatchDayIdChange?: (value: string | undefined) => void
   /** Template and import actions; omitted when the account or the batch cannot import. */
   actions?: ReactNode
 }
@@ -40,8 +49,14 @@ export function ParticipantsToolbar({
   onRosterStatusChange,
   attendanceStatus,
   onAttendanceStatusChange,
+  days = [],
+  batchDayId,
+  onBatchDayIdChange,
   actions,
 }: ParticipantsToolbarProps) {
+  const dayItems: Record<string, string> = { [ALL]: "Tất cả ngày khám" }
+  for (const day of days) dayItems[day.id] = formatHealthExaminationDate(day.examinationDate)
+
   return (
     <div className="flex flex-wrap items-center gap-3">
       <div className="relative flex-1 min-w-52 max-w-md">
@@ -98,6 +113,27 @@ export function ParticipantsToolbar({
           ))}
         </SelectContent>
       </Select>
+
+      {onBatchDayIdChange && days.length > 1 && (
+        <Select
+          items={dayItems}
+          value={batchDayId ?? ALL}
+          onValueChange={(value) =>
+            onBatchDayIdChange(value && value !== ALL ? value : undefined)
+          }
+        >
+          <SelectTrigger aria-label="Lọc theo ngày khám" className="h-9 text-xs bg-card">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {Object.entries(dayItems).map(([value, label]) => (
+              <SelectItem key={value} value={value}>
+                {label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
 
       {actions && <div className="ml-auto flex flex-wrap items-center gap-2">{actions}</div>}
     </div>

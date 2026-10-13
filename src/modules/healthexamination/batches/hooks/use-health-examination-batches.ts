@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "@/shared/ui/toaster"
-import { fetchHealthExaminationBatchesByOrganization, fetchHealthExaminationBatchById, createHealthExaminationBatch, updateHealthExaminationBatch, deleteHealthExaminationBatch, fetchHealthExaminationBatchMatrix, fetchHealthExaminationBatchReport, fetchExaminationDetailExportData, fetchExaminationSummaryExportData } from "../api"
+import { fetchHealthExaminationBatchesByOrganization, fetchHealthExaminationBatchById, createHealthExaminationBatch, updateHealthExaminationBatch, deleteHealthExaminationBatch, startHealthExaminationBatch, fetchHealthExaminationBatchMatrix, fetchHealthExaminationBatchReport, fetchExaminationDetailExportData, fetchExaminationSummaryExportData } from "../api"
 import {
   cancelParticipant,
   createParticipant,
@@ -16,7 +16,7 @@ import {
 import { healthExaminationKeys } from "../query-keys"
 import { saveBlobAs } from "../utils/download-blob"
 import { sanitizeFileName } from "../utils/file-name"
-import { CreateHealthExaminationBatchRequest, DeleteHealthExaminationBatchRequest, UpdateHealthExaminationBatchRequest, HealthExaminationBatchFilterParams, HealthExaminationBatch, HealthExaminationBatchListResponse, ParticipantListFilterParams, ParticipantListResponse, ParticipantDetail, CreateParticipantRequest, UpdateParticipantRequest, CancelParticipantRequest, ReactivateParticipantRequest, HealthExaminationParticipant, ImportParticipantsRequest, ParticipantImportResult, ExaminationProgressFilterParams, ExaminationProgressResponse, HealthExaminationBatchReportSummary } from "../types"
+import { CreateHealthExaminationBatchRequest, DeleteHealthExaminationBatchRequest, StartHealthExaminationBatchRequest, UpdateHealthExaminationBatchRequest, HealthExaminationBatchFilterParams, HealthExaminationBatch, HealthExaminationBatchListResponse, ParticipantListFilterParams, ParticipantListResponse, ParticipantDetail, CreateParticipantRequest, UpdateParticipantRequest, CancelParticipantRequest, ReactivateParticipantRequest, HealthExaminationParticipant, ImportParticipantsRequest, ParticipantImportResult, ExaminationProgressFilterParams, ExaminationProgressResponse, HealthExaminationBatchReportSummary } from "../types"
 
 export function useOrganizationHealthExaminationBatches(
   organizationId: string,
@@ -81,6 +81,25 @@ export function useUpdateHealthExaminationBatch() {
 
   return useMutation<HealthExaminationBatch, Error, UpdateHealthExaminationBatchRequest>({
     mutationFn: (request) => updateHealthExaminationBatch(request),
+    retry: false,
+    onSuccess: (batch, request) => {
+      queryClient.setQueryData(
+        healthExaminationKeys.batch(request.organizationId, request.batchId),
+        batch
+      )
+      void queryClient.invalidateQueries({
+        queryKey: [...healthExaminationKeys.batches(request.organizationId), "list"],
+      })
+    },
+  })
+}
+
+/** Starts a draft batch. It never retries; a 409 is shown with a reload action instead. */
+export function useStartHealthExaminationBatch() {
+  const queryClient = useQueryClient()
+
+  return useMutation<HealthExaminationBatch, Error, StartHealthExaminationBatchRequest>({
+    mutationFn: (request) => startHealthExaminationBatch(request),
     retry: false,
     onSuccess: (batch, request) => {
       queryClient.setQueryData(

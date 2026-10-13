@@ -98,6 +98,11 @@ export interface HealthExaminationBatchUpdateRequestDto
   rowVersion: number
 }
 
+/** Body of `POST …/health-examination-batches/{batchId}/start`. */
+export interface HealthExaminationBatchStartRequestDto {
+  rowVersion: number
+}
+
 export const healthExaminationBatchPageResponseSchema = z.object({
   items: z.array(healthExaminationBatchSummaryResponseSchema),
   page: z.number().int().positive(),
@@ -296,3 +301,16 @@ export const paymentSummaryReportResponseSchema = z.object({
 })
 
 export type PaymentSummaryReportResponseDto = z.infer<typeof paymentSummaryReportResponseSchema>
+
+/** Body of `POST .../participants/examination-form-print-jobs`. */
+export interface ExaminationFormPrintJobRequestDto {
+  participantIds: string[]
+}
+
+export const examinationFormPrintJobResponseSchema = z.object({
+  jobId: z.string().min(1),
+})
+
+export type ExaminationFormPrintJobResponseDto = z.infer<
+  typeof examinationFormPrintJobResponseSchema
+>

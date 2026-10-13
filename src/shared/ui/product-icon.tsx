@@ -45,6 +45,7 @@ import {
   Mail01Icon,
   Money01Icon,
   PencilEdit01Icon,
+  PlayCircleIcon,
   PrinterIcon,
   QrCodeIcon,
   RefreshCwIcon,
@@ -132,6 +133,7 @@ export const MapPin = createProductIcon(Location01Icon, "MapPin")
 export const Pencil = createProductIcon(PencilEdit01Icon, "Pencil")
 export const Phone = createProductIcon(Call02Icon, "Phone")
 export const Plus = createProductIcon(Add01Icon, "Plus")
+export const PlayCircle = createProductIcon(PlayCircleIcon, "PlayCircle")
 export const Printer = createProductIcon(PrinterIcon, "Printer")
 export const QrCode = createProductIcon(QrCodeIcon, "QrCode")
 export const RefreshCw = createProductIcon(RefreshCwIcon, "RefreshCw")

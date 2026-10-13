@@ -1,6 +1,6 @@
 # Mục lục tài liệu frontend
 
-Cập nhật 2026-10-09. Tài liệu hiện hành mô tả trạng thái source và contract;
+Cập nhật 2026-10-13. Tài liệu hiện hành mô tả trạng thái source và contract;
 ADR ghi quyết định; báo cáo kiểm tra ghi kết quả và giới hạn theo thời điểm.
 
 ## Tài liệu hiện hành
@@ -26,6 +26,8 @@ authorization production; đối chiếu các khoảng trống quyền trong inv
 - [Participant list/template/import](../../Ngoc_Khanh_Clinic_DX_Springboot/docs/api/participant-import-and-list.md).
 - [Participant manual changes](../../Ngoc_Khanh_Clinic_DX_Springboot/docs/api/participant-manual-crud.md).
 - [Examination details và payment report](../../Ngoc_Khanh_Clinic_DX_Springboot/docs/api/examination-details-and-report.md).
+- [In phiếu khám một người](../../Ngoc_Khanh_Clinic_DX_Springboot/docs/api/examination-form-print.md)
+  và [lệnh in hàng loạt](../../Ngoc_Khanh_Clinic_DX_Springboot/docs/api/examination-form-print-jobs.md).
 
 Các liên kết này cần checkout backend ở thư mục cùng cấp.
 

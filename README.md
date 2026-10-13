@@ -68,7 +68,7 @@ Backend HTTP contract là nguồn chuẩn. Fixtures chỉ được Vitest nạp 
 
 ## Trạng thái tích hợp
 
-Đối chiếu ngày 2026-10-09 với [API inventory](../Ngoc_Khanh_Clinic_DX_Springboot/docs/api/clean-slate-migration.md).
+Đối chiếu ngày 2026-10-13 với [API inventory](../Ngoc_Khanh_Clinic_DX_Springboot/docs/api/clean-slate-migration.md).
 FE đã có các tích hợp sau; quyền truy cập backend vẫn quyết định từng request:
 
 - Đăng nhập, khôi phục phiên và đăng xuất bằng session cookie.
@@ -77,6 +77,8 @@ FE đã có các tích hợp sau; quyền truy cập backend vẫn quyết đị
 - Participant: danh sách, thêm/sửa/hủy/khôi phục, tải mẫu và nhập Excel một bước.
 - Chi tiết khám: danh sách, tổng hợp, xuất Excel và nhập file đối soát dịch vụ.
 - Báo cáo thanh toán: JSON và tải DOCX.
+- Bắt đầu đợt khám (Nháp → Sẵn sàng) và in phiếu khám: từng người (PDF) hoặc hàng loạt
+  bằng lệnh in chạy nền, chọn theo bộ lọc/ngày khám ([ADR-0010](docs/adr/0010-backend-rendered-examination-form-printing.md)).
 
 **Còn lệch quyền Participant:** FE vẫn dùng mã quyền cũ và gộp quyền quản lý;
 backend đã tách quyền theo thao tác. Các action/tab có thể bị ẩn với phiên có quyền mới.
@@ -84,8 +86,8 @@ Ngoài ra, Organization DELETE, Batch DELETE và catalog lookup có handler như
 chưa có rule cho phép trong authorization production. Chi tiết và tiêu chí sửa
 ở [code follow-ups](docs/maintenance/code-follow-ups.md).
 
-Visit preparation/check-in Participant → Patient → Encounter, chuyển trạng thái
-đợt khám, in hồ sơ chính thức và các nghiệp vụ lâm sàng/tài chính phía sau chưa có
+Visit preparation/check-in Participant → Patient → Encounter, hoàn tất/đóng
+đợt khám, in hồ sơ chính thức (đã có kết luận) và các nghiệp vụ lâm sàng/tài chính phía sau chưa có
 HTTP contract. Các workspace chưa được tích hợp hiển thị trạng thái chưa khả dụng.
 Import roster hiện tại được khôi phục ngày 2026-10-06; luồng upload/mapping/preview/confirm/cancel cũ vẫn đã gỡ.
 

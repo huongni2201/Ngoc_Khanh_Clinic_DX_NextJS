@@ -203,7 +203,9 @@ Participant-to-Patient visit preparation/check-in does not yet have a public han
 
 Current mapped operations include authentication, organization/batch configuration,
 Participant list/manual changes/template/import, examination-details reconciliation
-and import/export, and payment-summary JSON/DOCX. See
+and import/export, payment-summary JSON/DOCX, and blank examination form printing
+(one PDF per Participant and background print jobs, see
+[ADR-0010](../adr/0010-backend-rendered-examination-form-printing.md)). See
 [the API inventory](../../../Ngoc_Khanh_Clinic_DX_Springboot/docs/api/clean-slate-migration.md)
 for exact routes and authorization gaps. The single-step roster import was restored
 on 2026-10-06; the former preview/confirm/cancel chain remains removed. Visit
@@ -214,7 +216,7 @@ catalog lookup also have production authorization gaps. Existing
 FE callers do not make missing endpoints supported. See
 [code follow-ups](../maintenance/code-follow-ups.md).
 
-## Routes and Planned Print Direction
+## Routes and Printing
 
 ```text
 /auth/login
@@ -234,9 +236,17 @@ Existing staff workspace routes (some business integrations remain unavailable):
 /encounters
 ```
 
-`/health-check` and `/health-check/print/preview` are planned print routes;
-they are not current App Router pages. A route or rendered workspace is not
+There are no print routes. Examination forms are printed as backend PDFs from the
+Participants tab ([ADR-0010](../adr/0010-backend-rendered-examination-form-printing.md));
+`modules/document` owns the render-job API and polling, `healthexamination` the
+selection and dialogs. A route or rendered workspace is not
 evidence of a supported backend operation.
+
+Document-template editing/upload/publish screens are excluded from product scope
+by [backend ADR-0018](../../../Ngoc_Khanh_Clinic_DX_Springboot/docs/adr/0018-it-managed-document-templates.md).
+Business/clinical staff approve content and IT releases validated template versions.
+This supersedes only the future template-maintenance screens mentioned in ADR-0010;
+PDF preview/printing and Excel download/import workflows remain supported.
 
 ## Architecture Changes
 
