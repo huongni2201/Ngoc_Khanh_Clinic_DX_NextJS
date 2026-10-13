@@ -9,8 +9,9 @@ This is a **real production clinic application**.
 Corporate health examinations are the primary vertical slice. Supported backend
 HTTP scope is authentication, organization list/create/get/update/deactivate,
 batch list/create/get/update/delete, Participant list/manual changes/template/import,
-examination-details list/summary/import/export, payment-summary JSON/DOCX and
-the active service catalog list (`GET /api/v1/catalog/services`).
+examination-details list/summary/import/export, payment-summary JSON/DOCX,
+the active service catalog list (`GET /api/v1/catalog/services`) and user account
+creation (UC-005, `/api/v1/user-accounts`).
 See [the backend inventory](../Ngoc_Khanh_Clinic_DX_Springboot/docs/api/clean-slate-migration.md)
 for current routes. Handler existence does not imply production authorization.
 
@@ -478,6 +479,7 @@ Current corporate routes:
 /organizations
 /organizations/[organizationId]
 /organizations/[organizationId]/health-examination-batches/[batchId]
+/user-accounts/new          (administration, USER_ACCOUNT_CREATE)
 ```
 
 Other existing workspace routes include the following; route existence does not

@@ -1,5 +1,5 @@
 import * as React from "react"
-import { render, screen, waitFor } from "@testing-library/react"
+import { screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { DoctorWorklistPage } from "../pages/doctor-worklist-page"
@@ -38,7 +38,7 @@ describe("Danh sách lượt khám của bác sĩ", () => {
   })
 
   it("renders the application shell elements with the supplied staff identity and highlights Lượt khám in sidebar", () => {
-    render(<AppSidebar />)
+    renderWithClient(<AppSidebar />)
 
     // Check brand header
     expect(screen.getByText("Ngọc Khánh Clinic")).toBeInTheDocument()

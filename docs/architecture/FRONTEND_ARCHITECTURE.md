@@ -221,6 +221,7 @@ FE callers do not make missing endpoints supported. See
 /organizations
 /organizations/[organizationId]
 /organizations/[organizationId]/health-examination-batches/[batchId]
+/user-accounts/new
 ```
 
 Existing staff workspace routes (some business integrations remain unavailable):
@@ -239,6 +240,21 @@ they are not current App Router pages. A route or rendered workspace is not
 evidence of a supported backend operation.
 
 ## Architecture Changes
+
+### User account creation (UC-005)
+
+`modules/accesscontrol/user-accounts` owns `/user-accounts/new`: an Administrator
+links a new STAFF or PATIENT account to an existing active profile without an
+account. It calls the four routes of
+[the user account contract](../../../Ngoc_Khanh_Clinic_DX_Springboot/docs/api/user-accounts.md)
+(create, owner candidates, username availability, assignable roles). The page and
+the sidebar "Quản trị" group are shown only with `USER_ACCOUNT_CREATE`; the
+backend still checks each route. There is no password complexity policy; the
+password is required and the "Tạo ngẫu nhiên" button fills a random one. The
+create mutation is never retried and is reset after it settles, and the result
+screen never shows the password. 409 messages are matched exactly to Vietnamese
+text (`describeCreateUserAccountError`). `smsDelivered` reflects the backend eSMS answer;
+when it is false the result shows the "SMS not sent" warning.
 
 ### User authentication implementation
 

@@ -12,6 +12,11 @@ export interface SearchFieldProps {
   label?: string
   maxLength?: number
   className?: string
+  /** For a visible `<label htmlFor>`; the accessible name still comes from `label`. */
+  id?: string
+  /** Ids of hint or error text, for `aria-describedby`. */
+  describedBy?: string
+  invalid?: boolean
 }
 
 /** The single search box used on list toolbars: icon, 36px height, controlled value. */
@@ -23,6 +28,9 @@ export function SearchField({
   label,
   maxLength,
   className,
+  id,
+  describedBy,
+  invalid,
 }: SearchFieldProps) {
   return (
     <div className={cn("relative w-full sm:max-w-sm", className)}>
@@ -31,6 +39,7 @@ export function SearchField({
         className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
       />
       <Input
+        id={id}
         value={value}
         maxLength={maxLength}
         onChange={(event) => onChange(event.target.value)}
@@ -38,6 +47,8 @@ export function SearchField({
         autoComplete="off"
         placeholder={placeholder}
         aria-label={label ?? placeholder}
+        aria-describedby={describedBy}
+        aria-invalid={invalid || undefined}
         className="h-9 bg-card pl-9 text-sm"
       />
     </div>

@@ -52,5 +52,26 @@ describe("AppShell", () => {
     expect(
       screen.getByRole("link", { name: "Bỏ qua đến nội dung chính" })
     ).toHaveAttribute("href", "#main-content")
+    expect(screen.queryByRole("link", { name: "Tài khoản người dùng" })).not.toBeInTheDocument()
+  })
+
+  it("shows the administration group only with the create account permission", async () => {
+    const administrator = {
+      ...staffSession,
+      roleAssignments: [{ ...staffSession.roleAssignments[0], permissions: ["USER_ACCOUNT_CREATE"] }],
+    }
+    vi.stubGlobal("fetch", vi.fn().mockImplementation(() => Promise.resolve(ok(administrator))))
+    render(
+      <QueryClientProvider client={new QueryClient()}><AppShell>
+        <p>Nội dung</p>
+      </AppShell></QueryClientProvider>
+    )
+
+    await screen.findByText("staff.test")
+    expect(screen.getByRole("group", { name: "Quản trị" })).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "Tài khoản người dùng" })).toHaveAttribute(
+      "href",
+      "/user-accounts/new"
+    )
   })
 })
