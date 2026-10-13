@@ -56,7 +56,7 @@ async function mockUserAccounts(page: Page, permissions: string[]): Promise<User
         { roleId: "0199aaaa-0000-7000-8000-000000000102", code: "NURSE", name: "Nurse", description: "" },
       ])
     }
-    if (url.pathname === "/api/v1/user-accounts/owner-candidates") {
+    if (url.pathname === "/api/v1/user-accounts/eligible-owners") {
       return envelope(route, 200, {
         items: [
           {

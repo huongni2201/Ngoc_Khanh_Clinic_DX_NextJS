@@ -3,14 +3,14 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Lock, Plus, StatusPill } from "@/shared/ui"
-import type { AccountOwnerCandidate, AccountType, AssignableRole } from "../types"
+import type { EligibleOwner, AccountType, AssignableRole } from "../types"
 import { ACCOUNT_TYPE_COPY, selectsRoles } from "../utils/account-type"
 import { formatMobileNumber } from "../utils/format"
 import { PATIENT_ROLE_CODE, roleLabel } from "../utils/role-labels"
 
 interface AccountSummaryCardProps {
   accountType: AccountType
-  owner: AccountOwnerCandidate | null
+  owner: EligibleOwner | null
   username: string
   roles: AssignableRole[]
   isSubmitting: boolean

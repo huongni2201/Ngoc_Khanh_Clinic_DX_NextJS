@@ -7,14 +7,14 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { AlertTriangle, Check, InfoList, Plus, StatusPill } from "@/shared/ui"
-import type { AccountOwnerCandidate, CreatedUserAccount } from "../types"
+import type { EligibleOwner, CreatedUserAccount } from "../types"
 import { ACCOUNT_TYPE_COPY } from "../utils/account-type"
 import { formatMobileNumber } from "../utils/format"
 import { roleLabel } from "../utils/role-labels"
 
 interface AccountCreatedResultProps {
   account: CreatedUserAccount
-  owner: AccountOwnerCandidate
+  owner: EligibleOwner
   /** Display names of the granted role codes, from the assignable role list. */
   roleNames: Record<string, string>
   onCreateAnother: () => void

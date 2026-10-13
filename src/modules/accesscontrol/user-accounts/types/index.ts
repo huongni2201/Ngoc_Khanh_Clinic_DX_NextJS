@@ -3,7 +3,7 @@ import type { ACCOUNT_TYPES, CreateUserAccountResponseDto } from "./transport"
 export type AccountType = (typeof ACCOUNT_TYPES)[number]
 
 /** Active staff member or patient without an account, offered as the owner of a new account. */
-export interface AccountOwnerCandidate {
+export interface EligibleOwner {
   ownerId: string
   ownerCode: string
   fullName: string
@@ -16,8 +16,8 @@ export interface AccountOwnerCandidate {
   smsPhoneNumber?: string
 }
 
-export interface AccountOwnerCandidateList {
-  items: AccountOwnerCandidate[]
+export interface EligibleOwnerList {
+  items: EligibleOwner[]
   /** More profiles may match; the keyword should be refined. */
   limited: boolean
 }

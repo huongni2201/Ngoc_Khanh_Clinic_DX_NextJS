@@ -1,7 +1,7 @@
 export { UserAccountCreatePage } from "./pages/user-account-create-page"
 export { USER_ACCOUNT_CREATE_PERMISSION } from "./utils/permissions"
 export type {
-  AccountOwnerCandidate,
+  EligibleOwner,
   AccountType,
   AssignableRole,
   CreatedUserAccount,

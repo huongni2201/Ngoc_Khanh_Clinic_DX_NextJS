@@ -79,7 +79,7 @@ export function describeCreateUserAccountError(error: unknown): CreateUserAccoun
         message: "Không tìm thấy hồ sơ chủ tài khoản. Vui lòng tìm lại.",
       }
     case 409: {
-      const rule = CONFLICT_RULES.find((candidate) => candidate.text === error.serverMessage)
+      const rule = CONFLICT_RULES.find((entry) => entry.text === error.serverMessage)
       if (rule) return { kind: rule.kind, message: rule.message }
       return {
         kind: "unknown",

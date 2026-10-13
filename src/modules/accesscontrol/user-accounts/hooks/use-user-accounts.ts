@@ -5,7 +5,7 @@ import {
   checkUsernameAvailability,
   createUserAccount,
   fetchAssignableRoles,
-  searchAccountOwnerCandidates,
+  searchEligibleOwners,
 } from "../api/user-accounts-api"
 import { userAccountKeys } from "../query-keys"
 import type { AccountType, CreateUserAccountInput } from "../types"
@@ -21,10 +21,10 @@ export function useAssignableRoles(enabled = true) {
 }
 
 /** Runs only for a submitted keyword (Search button or Enter), never while typing. */
-export function useAccountOwnerCandidates(accountType: AccountType, keyword: string | null) {
+export function useEligibleOwners(accountType: AccountType, keyword: string | null) {
   return useQuery({
-    queryKey: userAccountKeys.ownerCandidates(accountType, keyword ?? ""),
-    queryFn: ({ signal }) => searchAccountOwnerCandidates(accountType, keyword ?? "", signal),
+    queryKey: userAccountKeys.eligibleOwners(accountType, keyword ?? ""),
+    queryFn: ({ signal }) => searchEligibleOwners(accountType, keyword ?? "", signal),
     meta: { requiresAuth: true },
     retry: false,
     enabled: keyword !== null,

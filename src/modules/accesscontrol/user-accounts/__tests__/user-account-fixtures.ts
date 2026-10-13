@@ -13,7 +13,7 @@ export const ROLES = [
   { roleId: NURSE_ROLE_ID, code: "NURSE", name: "Nurse", description: null },
 ]
 
-export const STAFF_CANDIDATES = [
+export const ELIGIBLE_STAFF_OWNERS = [
   {
     ownerId: STAFF_OWNER_ID,
     ownerCode: "NV-0071",
@@ -36,7 +36,7 @@ export const STAFF_CANDIDATES = [
   },
 ]
 
-export const PATIENT_CANDIDATES = [
+export const ELIGIBLE_PATIENT_OWNERS = [
   {
     ownerId: PATIENT_OWNER_ID,
     ownerCode: "BN-000123",
@@ -95,9 +95,9 @@ export function mockUserAccountFetch(options: UserAccountFetchOptions = {}) {
     if (path === "/api/v1/user-accounts/assignable-roles") {
       return json({ result: "OK", code: 200, data: ROLES })
     }
-    if (path === "/api/v1/user-accounts/owner-candidates") {
+    if (path === "/api/v1/user-accounts/eligible-owners") {
       const items =
-        url.searchParams.get("accountType") === "PATIENT" ? PATIENT_CANDIDATES : STAFF_CANDIDATES
+        url.searchParams.get("accountType") === "PATIENT" ? ELIGIBLE_PATIENT_OWNERS : ELIGIBLE_STAFF_OWNERS
       return json({ result: "OK", code: 200, data: { items, limited: false } })
     }
     if (path === "/api/v1/user-accounts/username-availability") {

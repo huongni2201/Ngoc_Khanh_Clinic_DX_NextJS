@@ -3,7 +3,7 @@ import {
   checkUsernameAvailability,
   createUserAccount,
   fetchAssignableRoles,
-  searchAccountOwnerCandidates,
+  searchEligibleOwners,
 } from "../api/user-accounts-api"
 import {
   GP_ROLE_ID,
@@ -25,13 +25,13 @@ describe("user accounts API", () => {
     expect(roles[1].description).toBeUndefined()
   })
 
-  it("searches owner candidates by account type and keyword", async () => {
+  it("searches eligible owners by account type and keyword", async () => {
     const fetchMock = mockUserAccountFetch()
 
-    const result = await searchAccountOwnerCandidates("PATIENT", "Lê Thị")
+    const result = await searchEligibleOwners("PATIENT", "Lê Thị")
 
     const url = new URL(String(fetchMock.mock.calls[0][0]))
-    expect(url.pathname).toBe("/api/v1/user-accounts/owner-candidates")
+    expect(url.pathname).toBe("/api/v1/user-accounts/eligible-owners")
     expect(url.searchParams.get("accountType")).toBe("PATIENT")
     expect(url.searchParams.get("keyword")).toBe("Lê Thị")
     expect(result.limited).toBe(false)

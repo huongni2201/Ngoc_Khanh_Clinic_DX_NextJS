@@ -27,12 +27,12 @@ import {
   StatusPill,
   type InfoListItem,
 } from "@/shared/ui"
-import { useAccountOwnerCandidates } from "../hooks/use-user-accounts"
+import { useEligibleOwners } from "../hooks/use-user-accounts"
 import {
   OWNER_KEYWORD_MAX_LENGTH,
   OWNER_KEYWORD_MIN_LENGTH,
 } from "../schemas/create-user-account.schema"
-import type { AccountOwnerCandidate, AccountType } from "../types"
+import type { EligibleOwner, AccountType } from "../types"
 import { ACCOUNT_TYPES } from "../types/transport"
 import { ACCOUNT_TYPE_COPY, isAccountType } from "../utils/account-type"
 import { formatLocalDate, initials } from "../utils/format"
@@ -43,14 +43,14 @@ const ACCOUNT_TYPE_ICONS: Record<AccountType, typeof UserIcon> = {
   PATIENT: UserIcon,
 }
 
-interface CandidateColumn {
+interface OwnerColumn {
   header: string
-  value: (owner: AccountOwnerCandidate) => string | undefined
+  value: (owner: EligibleOwner) => string | undefined
   mono?: boolean
 }
 
 /** Result columns after the code and name, per account type (SRS III.1.2.2 [3]). */
-const DETAIL_COLUMNS: Record<AccountType, CandidateColumn[]> = {
+const DETAIL_COLUMNS: Record<AccountType, OwnerColumn[]> = {
   STAFF: [
     { header: "Khoa / phòng", value: (owner) => owner.departmentName },
     { header: "Số điện thoại", value: (owner) => owner.phone, mono: true },
@@ -63,7 +63,7 @@ const DETAIL_COLUMNS: Record<AccountType, CandidateColumn[]> = {
 }
 
 /** Read-only profile fields of the selected owner (SRS III.1.2.2 [4]). */
-const PROFILE_FIELDS: Record<AccountType, (owner: AccountOwnerCandidate) => InfoListItem[]> = {
+const PROFILE_FIELDS: Record<AccountType, (owner: EligibleOwner) => InfoListItem[]> = {
   STAFF: (owner) => [
     { label: "Số điện thoại", value: owner.phone, mono: true },
     { label: "Email", value: owner.email },
@@ -77,8 +77,8 @@ const PROFILE_FIELDS: Record<AccountType, (owner: AccountOwnerCandidate) => Info
 interface AccountOwnerSectionProps {
   accountType: AccountType
   onAccountTypeChange: (accountType: AccountType) => void
-  selectedOwner: AccountOwnerCandidate | null
-  onSelectOwner: (owner: AccountOwnerCandidate) => void
+  selectedOwner: EligibleOwner | null
+  onSelectOwner: (owner: EligibleOwner) => void
   /** Validation message of the owner field. */
   ownerError?: string
 }
@@ -94,7 +94,7 @@ export function AccountOwnerSection({
   const [keyword, setKeyword] = useState("")
   const [submittedKeyword, setSubmittedKeyword] = useState<string | null>(null)
   const [keywordError, setKeywordError] = useState<string | null>(null)
-  const candidates = useAccountOwnerCandidates(accountType, submittedKeyword)
+  const eligibleOwners = useEligibleOwners(accountType, submittedKeyword)
   const copy = ACCOUNT_TYPE_COPY[accountType]
 
   const changeAccountType = (value: unknown) => {
@@ -112,12 +112,12 @@ export function AccountOwnerSection({
       return
     }
     setKeywordError(null)
-    if (text === submittedKeyword) void candidates.refetch()
+    if (text === submittedKeyword) void eligibleOwners.refetch()
     else setSubmittedKeyword(text)
   }
 
   const selectById = (ownerId: unknown) => {
-    const owner = candidates.data?.items.find((item) => item.ownerId === ownerId)
+    const owner = eligibleOwners.data?.items.find((item) => item.ownerId === ownerId)
     if (owner) onSelectOwner(owner)
   }
 
@@ -214,13 +214,13 @@ export function AccountOwnerSection({
       </div>
 
       {submittedKeyword !== null ? (
-        <CandidateResults
+        <EligibleOwnerResults
           idPrefix={id}
           accountType={accountType}
-          isLoading={candidates.isFetching && !candidates.data}
-          error={candidates.error}
-          items={candidates.data?.items}
-          limited={candidates.data?.limited ?? false}
+          isLoading={eligibleOwners.isFetching && !eligibleOwners.data}
+          error={eligibleOwners.error}
+          items={eligibleOwners.data?.items}
+          limited={eligibleOwners.data?.limited ?? false}
           selectedOwnerId={selectedOwner?.ownerId}
           onSelect={selectById}
         />
@@ -231,7 +231,7 @@ export function AccountOwnerSection({
   )
 }
 
-function CandidateResults({
+function EligibleOwnerResults({
   idPrefix,
   accountType,
   isLoading,
@@ -245,7 +245,7 @@ function CandidateResults({
   accountType: AccountType
   isLoading: boolean
   error: Error | null
-  items: AccountOwnerCandidate[] | undefined
+  items: EligibleOwner[] | undefined
   limited: boolean
   selectedOwnerId: string | undefined
   onSelect: (ownerId: unknown) => void
@@ -303,7 +303,7 @@ function CandidateResults({
           <TableBody>
             {items.map((item) => {
               const selected = item.ownerId === selectedOwnerId
-              const nameId = `${idPrefix}-candidate-${item.ownerId}`
+              const nameId = `${idPrefix}-owner-${item.ownerId}`
               return (
                 <TableRow
                   key={item.ownerId}
@@ -354,7 +354,7 @@ function SelectedOwnerPanel({
   owner,
   accountType,
 }: {
-  owner: AccountOwnerCandidate
+  owner: EligibleOwner
   accountType: AccountType
 }) {
   const copy = ACCOUNT_TYPE_COPY[accountType]

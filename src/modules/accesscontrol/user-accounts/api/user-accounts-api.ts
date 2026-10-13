@@ -1,14 +1,14 @@
 import { apiClient } from "@/shared/api/api-client"
 import { selectsRoles } from "../utils/account-type"
 import {
-  accountOwnerCandidateListSchema,
+  eligibleOwnerListSchema,
   assignableRoleListSchema,
   createUserAccountResponseSchema,
   usernameAvailabilitySchema,
   type CreateUserAccountRequestDto,
 } from "../types/transport"
 import type {
-  AccountOwnerCandidateList,
+  EligibleOwnerList,
   AccountType,
   AssignableRole,
   CreatedUserAccount,
@@ -37,17 +37,17 @@ export async function fetchAssignableRoles(signal?: AbortSignal): Promise<Assign
   }))
 }
 
-export async function searchAccountOwnerCandidates(
+export async function searchEligibleOwners(
   accountType: AccountType,
   keyword: string,
   signal?: AbortSignal
-): Promise<AccountOwnerCandidateList> {
+): Promise<EligibleOwnerList> {
   const query = new URLSearchParams({ accountType, keyword })
   const response = await apiClient.get<unknown>(
-    `${USER_ACCOUNTS_ENDPOINT}/owner-candidates?${query.toString()}`,
+    `${USER_ACCOUNTS_ENDPOINT}/eligible-owners?${query.toString()}`,
     { signal }
   )
-  const list = accountOwnerCandidateListSchema.parse(
+  const list = eligibleOwnerListSchema.parse(
     requireData(response.data, "Phản hồi tìm hồ sơ chủ tài khoản không có dữ liệu.")
   )
   return {

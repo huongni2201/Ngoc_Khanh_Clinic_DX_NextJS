@@ -16,7 +16,7 @@ import {
   isWellFormedUsername,
   type CreateUserAccountFormValues,
 } from "../schemas/create-user-account.schema"
-import type { AccountOwnerCandidate } from "../types"
+import type { EligibleOwner } from "../types"
 import { formatMobileNumber } from "../utils/format"
 import { RequiredMark } from "./required-mark"
 
@@ -28,7 +28,7 @@ interface SignInCredentialsSectionProps {
   /** Current username value, for the availability check. */
   username: string
   onGeneratePassword: () => void
-  selectedOwner: AccountOwnerCandidate | null
+  selectedOwner: EligibleOwner | null
 }
 
 export function SignInCredentialsSection({
@@ -43,8 +43,8 @@ export function SignInCredentialsSection({
   const [checkedUsername, setCheckedUsername] = useState<string | null>(null)
 
   useEffect(() => {
-    const candidate = isWellFormedUsername(username) ? username : null
-    const timer = window.setTimeout(() => setCheckedUsername(candidate), AVAILABILITY_DEBOUNCE_MS)
+    const checkable = isWellFormedUsername(username) ? username : null
+    const timer = window.setTimeout(() => setCheckedUsername(checkable), AVAILABILITY_DEBOUNCE_MS)
     return () => window.clearTimeout(timer)
   }, [username])
 

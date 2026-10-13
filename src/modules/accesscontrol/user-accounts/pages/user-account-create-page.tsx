@@ -22,7 +22,7 @@ import {
   EMPTY_CREATE_USER_ACCOUNT_VALUES,
   type CreateUserAccountFormValues,
 } from "../schemas/create-user-account.schema"
-import type { AccountOwnerCandidate, AccountType, CreatedUserAccount } from "../types"
+import type { EligibleOwner, AccountType, CreatedUserAccount } from "../types"
 import { selectsRoles } from "../utils/account-type"
 import { USER_ACCOUNT_CREATE_PERMISSION } from "../utils/permissions"
 import { generateTemporaryPassword } from "../utils/temporary-password"
@@ -33,7 +33,7 @@ const PAGE_DESCRIPTION =
 
 interface CreatedAccount {
   account: CreatedUserAccount
-  owner: AccountOwnerCandidate
+  owner: EligibleOwner
   roleNames: Record<string, string>
 }
 
@@ -89,7 +89,7 @@ function CreateUserAccountForm({ onCreated }: { onCreated: (created: CreatedAcco
   const router = useRouter()
   const queryClient = useQueryClient()
   const createAccount = useCreateUserAccount()
-  const [selectedOwner, setSelectedOwner] = useState<AccountOwnerCandidate | null>(null)
+  const [selectedOwner, setSelectedOwner] = useState<EligibleOwner | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
 
   const {
@@ -121,7 +121,7 @@ function CreateUserAccountForm({ onCreated }: { onCreated: (created: CreatedAcco
     setFormError(null)
   }
 
-  const selectOwner = (owner: AccountOwnerCandidate) => {
+  const selectOwner = (owner: EligibleOwner) => {
     setSelectedOwner(owner)
     setValue("ownerId", owner.ownerId, { shouldValidate: isSubmitted })
   }
@@ -159,10 +159,10 @@ function CreateUserAccountForm({ onCreated }: { onCreated: (created: CreatedAcco
           setSelectedOwner(null)
           setValue("ownerId", "")
           setError("ownerId", { message: failure.message })
-          void queryClient.invalidateQueries({ queryKey: userAccountKeys.ownerCandidateSearches() })
+          void queryClient.invalidateQueries({ queryKey: userAccountKeys.eligibleOwnerSearches() })
           break
         case "owner-without-mobile":
-          void queryClient.invalidateQueries({ queryKey: userAccountKeys.ownerCandidateSearches() })
+          void queryClient.invalidateQueries({ queryKey: userAccountKeys.eligibleOwnerSearches() })
           break
         case "role-not-assignable":
           setError("roleIds", { message: failure.message })

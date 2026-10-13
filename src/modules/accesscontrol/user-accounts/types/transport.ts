@@ -27,7 +27,7 @@ export interface CreateUserAccountRequestDto {
   roleIds: string[]
 }
 
-const accountOwnerCandidateSchema = z.object({
+const eligibleOwnerSchema = z.object({
   ownerId: z.uuid(),
   ownerCode: z.string(),
   fullName: z.string(),
@@ -38,12 +38,12 @@ const accountOwnerCandidateSchema = z.object({
   smsPhoneNumber: z.string().nullish(),
 })
 
-export const accountOwnerCandidateListSchema = z.object({
-  items: z.array(accountOwnerCandidateSchema),
+export const eligibleOwnerListSchema = z.object({
+  items: z.array(eligibleOwnerSchema),
   limited: z.boolean(),
 })
 
-export type AccountOwnerCandidateDto = z.infer<typeof accountOwnerCandidateSchema>
+export type EligibleOwnerDto = z.infer<typeof eligibleOwnerSchema>
 
 export const usernameAvailabilitySchema = z.object({ available: z.boolean() })
 

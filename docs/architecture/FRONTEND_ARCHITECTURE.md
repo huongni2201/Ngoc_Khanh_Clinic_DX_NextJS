@@ -247,7 +247,7 @@ evidence of a supported backend operation.
 links a new STAFF or PATIENT account to an existing active profile without an
 account. It calls the four routes of
 [the user account contract](../../../Ngoc_Khanh_Clinic_DX_Springboot/docs/api/user-accounts.md)
-(create, owner candidates, username availability, assignable roles). The page and
+(create, eligible owners, username availability, assignable roles). The page and
 the sidebar "Quản trị" group are shown only with `USER_ACCOUNT_CREATE`; the
 backend still checks each route. There is no password complexity policy; the
 password is required and the "Tạo ngẫu nhiên" button fills a random one. The
