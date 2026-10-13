@@ -1,8 +1,9 @@
 "use client"
 
-import { ChevronDown, ChevronRight } from "@/shared/ui/product-icon"
+import { ChevronDown, ChevronRight, Printer } from "@/shared/ui/product-icon"
 import { DataTablePagination } from "@/shared/ui"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import { cn } from "@/lib/utils"
 import type { HealthExaminationParticipant, ParticipantSortKey } from "../../types"
 import {
@@ -20,6 +21,8 @@ interface ParticipantsTableProps {
   pageSize: number
   totalPages: number
   onPageChange: (page: number) => void
+  /** Lets the user choose how many rows a page shows. */
+  onPageSizeChange?: (pageSize: number) => void
   sortKey: ParticipantSortKey
   sortBy: "ASC" | "DESC"
   onSortChange: (sortKey: ParticipantSortKey) => void
@@ -28,6 +31,16 @@ interface ParticipantsTableProps {
   onEdit?: (participant: HealthExaminationParticipant) => void
   onCancel?: (participant: HealthExaminationParticipant) => void
   onReactivate?: (participant: HealthExaminationParticipant) => void
+  /** Shows "In phiếu" on active rows. UX only: the backend decides. */
+  onPrint?: (participant: HealthExaminationParticipant) => void
+  /**
+   * Shows a selection column for bulk printing. Cancelled rows cannot be selected. The selection
+   * itself is owned by the caller so it survives paging.
+   */
+  selection?: {
+    isSelected: (participantId: string) => boolean
+    onChange: (participants: HealthExaminationParticipant[], selected: boolean) => void
+  }
 }
 
 function StatusPill({ children, tone = "muted" }: { children: string; tone?: "muted" | "warning" }) {
@@ -78,20 +91,24 @@ function SortableHeader({ label, sortKey, activeKey, direction, onSort }: Sortab
 
 interface ParticipantRowActionsProps {
   participant: HealthExaminationParticipant
+  canManage: boolean
   onEdit?: (participant: HealthExaminationParticipant) => void
   onCancel?: (participant: HealthExaminationParticipant) => void
   onReactivate?: (participant: HealthExaminationParticipant) => void
+  onPrint?: (participant: HealthExaminationParticipant) => void
 }
 
 /**
- * Edit and cancel for one row. A cancelled Participant can only be reactivated; the backend still
- * decides.
+ * Print, edit and cancel for one row. A cancelled Participant can only be reactivated; the backend
+ * still decides.
  */
 function ParticipantRowActions({
   participant,
+  canManage,
   onEdit,
   onCancel,
   onReactivate,
+  onPrint,
 }: ParticipantRowActionsProps) {
   if (participant.rosterStatus === "CANCELLED") {
     if (!onReactivate) return <span className="text-muted-foreground">—</span>
@@ -108,11 +125,28 @@ function ParticipantRowActions({
       </Button>
     )
   }
+  const printButton = onPrint ? (
+    <Button
+      type="button"
+      variant="outline"
+      size="sm"
+      className="h-7 px-2.5 text-xs"
+      aria-label={`In phiếu khám của ${participant.fullName}`}
+      onClick={() => onPrint(participant)}
+    >
+      <Printer aria-hidden="true" className="size-3.5" />
+      In phiếu
+    </Button>
+  ) : null
+  if (!canManage) {
+    return printButton ?? <span className="text-muted-foreground">—</span>
+  }
   const blockReason = getParticipantCancelBlockReason(participant)
   const reasonId = `cancel-block-${participant.id}`
 
   return (
     <div className="flex items-center gap-1.5">
+      {printButton}
       <Button
         type="button"
         variant="outline"
@@ -153,6 +187,7 @@ export function ParticipantsTable({
   pageSize,
   totalPages,
   onPageChange,
+  onPageSizeChange,
   sortKey,
   sortBy,
   onSortChange,
@@ -160,9 +195,17 @@ export function ParticipantsTable({
   onEdit,
   onCancel,
   onReactivate,
+  onPrint,
+  selection,
 }: ParticipantsTableProps) {
-  const columnCount = canManage ? 11 : 10
+  const showActions = canManage || Boolean(onPrint)
+  const columnCount = 10 + (showActions ? 1 : 0) + (selection ? 1 : 0)
   const sortProps = { activeKey: sortKey, direction: sortBy, onSort: onSortChange }
+  const selectable = participants.filter((participant) => participant.rosterStatus === "ACTIVE")
+  const selectedOnPage = selection
+    ? selectable.filter((participant) => selection.isSelected(participant.id)).length
+    : 0
+  const allOnPageSelected = selectable.length > 0 && selectedOnPage === selectable.length
 
   return (
     <div className="space-y-4">
@@ -172,6 +215,17 @@ export function ParticipantsTable({
             <caption className="sr-only">Danh sách người khám của đợt khám</caption>
             <thead>
               <tr className="bg-table-header-bg border-b border-border text-table-header-fg font-semibold select-none">
+                {selection && (
+                  <th className="w-10 py-3 pl-3 pr-1 text-left">
+                    <Checkbox
+                      aria-label="Chọn tất cả người khám đang trong danh sách trên trang này"
+                      checked={allOnPageSelected}
+                      indeterminate={selectedOnPage > 0 && !allOnPageSelected}
+                      disabled={selectable.length === 0}
+                      onCheckedChange={(checked) => selection.onChange(selectable, checked)}
+                    />
+                  </th>
+                )}
                 <SortableHeader label="Mã người khám" sortKey="participantCode" {...sortProps} />
                 <SortableHeader label="Họ và tên" sortKey="fullName" {...sortProps} />
                 <th className="py-3 px-3 text-left font-semibold">Ngày sinh</th>
@@ -182,7 +236,7 @@ export function ParticipantsTable({
                 <SortableHeader label="Ngày khám" sortKey="examinationDate" {...sortProps} />
                 <th className="py-3 px-3 text-left font-semibold">Danh sách</th>
                 <th className="py-3 px-3 text-left font-semibold">Tiếp nhận</th>
-                {canManage && <th className="py-3 px-3 text-left font-semibold">Thao tác</th>}
+                {showActions && <th className="py-3 px-3 text-left font-semibold">Thao tác</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-table-divider">
@@ -197,7 +251,18 @@ export function ParticipantsTable({
                   <tr
                     key={participant.id}
                     className="border-b border-divider transition-colors hover:bg-hover/50"
+                    aria-selected={selection ? selection.isSelected(participant.id) : undefined}
                   >
+                    {selection && (
+                      <td className="w-10 py-2.5 pl-3 pr-1">
+                        <Checkbox
+                          aria-label={`Chọn ${participant.fullName}`}
+                          checked={selection.isSelected(participant.id)}
+                          disabled={participant.rosterStatus !== "ACTIVE"}
+                          onCheckedChange={(checked) => selection.onChange([participant], checked)}
+                        />
+                      </td>
+                    )}
                     <td className="py-2.5 px-3 font-medium text-foreground whitespace-nowrap">
                       {participant.participantCode ?? "—"}
                     </td>
@@ -232,13 +297,15 @@ export function ParticipantsTable({
                         {PARTICIPANT_ATTENDANCE_STATUS_LABELS[participant.attendanceStatus]}
                       </StatusPill>
                     </td>
-                    {canManage && (
+                    {showActions && (
                       <td className="py-2.5 px-3 whitespace-nowrap">
                         <ParticipantRowActions
                           participant={participant}
+                          canManage={canManage}
                           onEdit={onEdit}
                           onCancel={onCancel}
                           onReactivate={onReactivate}
+                          onPrint={onPrint}
                         />
                       </td>
                     )}
@@ -256,6 +323,7 @@ export function ParticipantsTable({
         totalItems={totalItems}
         totalPages={totalPages}
         onPageChange={onPageChange}
+        onPageSizeChange={onPageSizeChange}
         entityName="người khám"
       />
     </div>

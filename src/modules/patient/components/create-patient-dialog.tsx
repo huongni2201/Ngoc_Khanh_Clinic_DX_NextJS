@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { toast } from "@/shared/ui/toaster"
 import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { AlertCircle, Loader2 } from "@/shared/ui/product-icon"
@@ -86,6 +87,7 @@ export function CreatePatientDialog({
         address: data.address || undefined,
       })
 
+      toast.success(`Đã tạo hồ sơ bệnh nhân ${patient.fullName}.`)
       onOpenChange(false)
       if (onSuccess) {
         onSuccess(patient)

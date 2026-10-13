@@ -38,7 +38,10 @@ export function isServicePerformed(row: Pick<ExaminationDetailRow, "performedBat
   return row.performedBatchServiceIds.includes(batchServiceId)
 }
 
-/** Batch states in which the backend accepts an examination detail import. */
-export function isExaminationImportAllowed(batchStatus: string) {
+/** Batch states in which the backend accepts an examination detail import or manual entry. */
+export function isExaminationEditAllowed(batchStatus: string) {
   return batchStatus === "DRAFT" || batchStatus === "READY"
 }
+
+/** Same rule as {@link isExaminationEditAllowed}; kept so existing imports keep working. */
+export const isExaminationImportAllowed = isExaminationEditAllowed

@@ -154,8 +154,8 @@ test("imports a roster from Excel and refreshes the Participant list", async ({ 
   })
   await dialog.getByRole("button", { name: "Nhập danh sách" }).click()
 
-  await expect(dialog.getByText(/Đã thêm 2 người khám/)).toBeVisible()
-  await dialog.locator("form").getByRole("button", { name: "Đóng" }).click()
+  await expect(dialog).toBeHidden()
+  await expect(page.getByText("Đã thêm 2 người khám vào đợt khám.")).toBeVisible()
   await expect(page.getByText("Người khám 1")).toBeVisible()
   await expect(page.getByText("Người khám 2")).toBeVisible()
   await expect(page.getByText("********8901").first()).toBeVisible()

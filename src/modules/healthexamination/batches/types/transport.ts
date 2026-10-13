@@ -67,7 +67,6 @@ export const healthExaminationBatchDetailResponseSchema = z.object({
   startDate: optionalDateSchema,
   endDate: optionalDateSchema,
   examinationSiteType: z.enum(["CLINIC", "ORGANIZATION_SITE"]),
-  examinationSiteName: z.string(),
   examinationSiteAddress: z.string().nullable(),
   status: batchStatusSchema,
   createdBy: z.string().min(1),
@@ -90,13 +89,17 @@ export interface HealthExaminationBatchCreateRequestDto {
   batchName: string
   examinationDates: string[]
   examinationSiteType: ExaminationSiteType
-  examinationSiteName: string
   examinationSiteAddress: string
   services: HealthExaminationBatchServiceRequestDto[]
 }
 
 export interface HealthExaminationBatchUpdateRequestDto
   extends HealthExaminationBatchCreateRequestDto {
+  rowVersion: number
+}
+
+/** Body of `POST …/health-examination-batches/{batchId}/start`. */
+export interface HealthExaminationBatchStartRequestDto {
   rowVersion: number
 }
 
@@ -298,3 +301,16 @@ export const paymentSummaryReportResponseSchema = z.object({
 })
 
 export type PaymentSummaryReportResponseDto = z.infer<typeof paymentSummaryReportResponseSchema>
+
+/** Body of `POST .../participants/examination-form-print-jobs`. */
+export interface ExaminationFormPrintJobRequestDto {
+  participantIds: string[]
+}
+
+export const examinationFormPrintJobResponseSchema = z.object({
+  jobId: z.string().min(1),
+})
+
+export type ExaminationFormPrintJobResponseDto = z.infer<
+  typeof examinationFormPrintJobResponseSchema
+>

@@ -12,6 +12,8 @@ const CORS = {
 const PERMISSIONS = {
   read: "HEALTH_EXAMINATION_SERVICE_READ",
   reconcile: "HEALTH_EXAMINATION_SERVICE_RECONCILE",
+  template: "HEALTH_EXAMINATION_SERVICE_TEMPLATE_DOWNLOAD",
+  record: "HEALTH_EXAMINATION_SERVICE_RECORD",
   report: "HEALTH_EXAMINATION_REPORT_READ",
 }
 
@@ -22,6 +24,8 @@ interface ExaminationMock {
   /** Every request path (with query) the examination and report endpoints received. */
   requests: string[]
   imports: { key: string | undefined; contentType: string | undefined }[]
+  /** Bodies of the manual entries (PUT of one Participant). */
+  records: { participantId: string; body: Record<string, unknown> }[]
   failNextImport: (status: number, message: string) => void
 }
 
@@ -30,10 +34,11 @@ interface ExaminationMock {
  * endpoints only. The first row has one performed service; an import marks both rows reconciled.
  */
 async function mockExamination(page: Page, batchId: string, permissions: string[]) {
-  const mock: ExaminationMock = { requests: [], imports: [], failNextImport: () => undefined }
+  const mock: ExaminationMock = { requests: [], imports: [], records: [], failNextImport: () => undefined }
   const base = `/api/v1/organizations/${ORGANIZATION_ID}/health-examination-batches/${batchId}`
   const serviceId = `${batchId}-s0`
   let reconciled = false
+  const recorded = new Map<string, Record<string, unknown>>()
   let failure: { status: number; message: string } | null = null
   mock.failNextImport = (status, message) => { failure = { status, message } }
 
@@ -57,6 +62,7 @@ async function mockExamination(page: Page, batchId: string, permissions: string[
     reconciliationStatus: reconciled ? "RECONCILED" : "PENDING",
     performedBatchServiceIds: reconciled || index === 1 ? [serviceId] : [],
     rowVersion: reconciled ? 1 : 0,
+    ...recorded.get(`0199dddd-0000-7000-8000-${String(index).padStart(12, "0")}`),
   })
 
   await page.route(`${API}/api/**`, async (route) => {
@@ -108,6 +114,31 @@ async function mockExamination(page: Page, batchId: string, permissions: string[
         },
         body: Buffer.from("PK-fake-xlsx"),
       })
+    }
+    if (path === `${base}/examination-details/import-template`) {
+      return route.fulfill({
+        status: 200,
+        headers: {
+          ...CORS,
+          "Content-Type": XLSX,
+          "Content-Disposition": 'attachment; filename="mau-nhap-chi-tiet-kham-SEED-1.xlsx"',
+        },
+        body: Buffer.from("PK-fake-xlsx"),
+      })
+    }
+    const recordMatch = path.match(/\/examination-details\/([0-9a-f-]{36})$/)
+    if (recordMatch && request.method() === "PUT") {
+      const body = request.postDataJSON() as Record<string, unknown>
+      mock.records.push({ participantId: recordMatch[1], body })
+      const stored = {
+        attendanceStatus: body.attendanceStatus,
+        actualExaminationDate: body.actualExaminationDate ?? null,
+        performedBatchServiceIds: body.performedBatchServiceIds,
+        rowVersion: Number(body.rowVersion) + 1,
+      }
+      recorded.set(recordMatch[1], stored)
+      const index = Number(recordMatch[1].slice(-12))
+      return envelope(route, 200, row(index))
     }
     if (path === `${base}/examination-details/imports` && request.method() === "POST") {
       mock.imports.push({
@@ -185,7 +216,7 @@ const batchUrl = (batchId: string, tab: string) =>
 async function chooseWorkbook(page: Page) {
   await page.getByRole("button", { name: "Nhập Excel" }).click()
   const dialog = page.getByRole("dialog")
-  await dialog.getByLabel(/Tệp Excel/).setInputFiles({
+  await dialog.getByLabel(/Bước 2/).setInputFiles({
     name: "chi-tiet-kham.xlsx",
     mimeType: XLSX,
     buffer: Buffer.from("PK-fake-xlsx"),
@@ -234,7 +265,7 @@ test("shows a Vietnamese message when a Participant changed after the export", a
 
   await expect(dialog.getByText(/Dòng 9: người khám đã được thay đổi sau khi xuất file/)).toBeVisible()
   await expect(dialog.getByText("Chưa có thay đổi nào được ghi vào đợt khám.")).toBeVisible()
-  await expect(dialog.getByRole("button", { name: "Xuất lại file" })).toBeVisible()
+  await expect(dialog.getByRole("button", { name: "Tải lại file mẫu" })).toBeVisible()
   await expect(dialog.getByText(/participant was changed/)).toHaveCount(0)
 })
 
@@ -279,5 +310,37 @@ test("a session without either permission sees neither tab and requests nothing 
   await expect(page.getByRole("button", { name: "Báo cáo" })).toHaveCount(0)
   await page.waitForLoadState("networkidle")
   expect(examination.requests).toEqual([])
+  expect(backend.unexpected).toEqual([])
+})
+
+test("downloads the template and records one Participant by hand", async ({ page }) => {
+  const backend = await mockBackend(page)
+  // The batch has already started, so today is a valid actual date.
+  const batch = backend.seedBatch({ dates: ["2026-01-05"] })
+  const examination = await mockExamination(page, batch.id, [
+    PERMISSIONS.read,
+    PERMISSIONS.reconcile,
+    PERMISSIONS.template,
+    PERMISSIONS.record,
+  ])
+  await page.goto(batchUrl(batch.id, "examination"))
+  await expect(page.getByText("Người khám 2")).toBeVisible()
+
+  const download = page.waitForEvent("download")
+  await page.getByRole("button", { name: "Tải file mẫu" }).click()
+  expect((await download).suggestedFilename()).toBe("mau-nhap-chi-tiet-kham-SEED-1.xlsx")
+
+  await page.getByRole("button", { name: "Cập nhật chi tiết khám của Người khám 2" }).click()
+  const sheet = page.getByRole("dialog", { name: "Cập nhật chi tiết khám" })
+  await sheet.getByRole("checkbox", { name: "Khám tổng quát" }).click()
+  await sheet.getByRole("button", { name: "Lưu", exact: true }).click()
+
+  await expect(page.getByTitle("Đã khám")).toHaveCount(2)
+  expect(examination.records).toHaveLength(1)
+  expect(examination.records[0].body).toMatchObject({
+    attendanceStatus: "ATTENDED",
+    performedBatchServiceIds: [`${batch.id}-s0`],
+    rowVersion: 0,
+  })
   expect(backend.unexpected).toEqual([])
 })

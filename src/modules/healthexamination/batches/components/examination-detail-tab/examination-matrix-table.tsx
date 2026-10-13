@@ -1,6 +1,8 @@
 "use client"
 
 import { DataTablePagination } from "@/shared/ui"
+import { Pencil } from "@/shared/ui/product-icon"
+import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import type { ExaminationDetailRow, HealthExaminationBatchService } from "../../types"
 import { MISSING_SERVICE_NAME } from "../../utils/batch-form-values"
@@ -22,6 +24,10 @@ interface ExaminationMatrixTableProps {
   onPageChange: (page: number) => void
   /** True when a filter or search is active, which only changes the empty message. */
   filtered?: boolean
+  /** Opens the manual entry for a row. When absent the table is read-only. */
+  onEditRow?: (row: ExaminationDetailRow) => void
+  /** The row just saved; briefly highlighted. */
+  highlightedRowId?: string | null
 }
 
 const STATUS_TONES = {
@@ -40,6 +46,8 @@ export function ExaminationMatrixTable({
   totalPages,
   onPageChange,
   filtered = false,
+  onEditRow,
+  highlightedRowId = null,
 }: ExaminationMatrixTableProps) {
   return (
     <div className="space-y-4">
@@ -67,13 +75,18 @@ export function ExaminationMatrixTable({
                   </th>
                 ))}
                 <th className="min-w-[150px] px-3.5 py-3 text-left font-semibold">Trạng thái</th>
+                {onEditRow && (
+                  <th className="sticky right-0 w-24 bg-table-header-bg px-3 py-3 text-center font-semibold">
+                    <span className="sr-only">Thao tác</span>
+                  </th>
+                )}
               </tr>
             </thead>
             <tbody className="divide-y divide-table-divider">
               {items.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={5 + services.length}
+                    colSpan={(onEditRow ? 6 : 5) + services.length}
                     className="py-10 text-center text-xs text-muted-foreground"
                   >
                     {filtered
@@ -85,7 +98,24 @@ export function ExaminationMatrixTable({
                 items.map((row) => (
                   <tr
                     key={row.id}
-                    className="group border-b border-divider transition-colors hover:bg-hover/50"
+                    tabIndex={onEditRow ? 0 : undefined}
+                    onClick={onEditRow ? () => onEditRow(row) : undefined}
+                    onKeyDown={
+                      onEditRow
+                        ? (event) => {
+                            if (event.target !== event.currentTarget) return
+                            if (event.key === "Enter" || event.key === " ") {
+                              event.preventDefault()
+                              onEditRow(row)
+                            }
+                          }
+                        : undefined
+                    }
+                    className={cn(
+                      "group border-b border-divider transition-colors hover:bg-hover/50",
+                      onEditRow && "cursor-pointer focus-visible:bg-hover/50 focus-visible:outline-none",
+                      highlightedRowId === row.id && "bg-status-completed-bg/60"
+                    )}
                   >
                     <td className="whitespace-nowrap px-3.5 py-2.5 font-medium text-foreground">
                       {row.participantCode ?? "—"}
@@ -124,6 +154,23 @@ export function ExaminationMatrixTable({
                         {getExaminationStatusLabel(row)}
                       </span>
                     </td>
+                    {onEditRow && (
+                      <td className="sticky right-0 bg-card px-3 py-2 text-center group-hover:bg-hover">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="xs"
+                          aria-label={`Cập nhật chi tiết khám của ${row.fullName}`}
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            onEditRow(row)
+                          }}
+                        >
+                          <Pencil />
+                          Cập nhật
+                        </Button>
+                      </td>
+                    )}
                   </tr>
                 ))
               )}

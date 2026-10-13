@@ -1,6 +1,7 @@
 "use client"
 
-import { Controller, type UseFormReturn } from "react-hook-form"
+import { Controller, useWatch, type UseFormReturn } from "react-hook-form"
+import { ChevronDown } from "@/shared/ui/product-icon"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
@@ -8,6 +9,7 @@ import {
   type HealthExaminationBatchFormValues,
   type ValidatedHealthExaminationBatchFormValues,
 } from "../../schemas/health-examination-batch.schema"
+import { BatchFormStepHeader } from "./batch-form-step-header"
 import { ExaminationDatesField } from "./examination-dates-field"
 
 interface HealthExaminationBatchBasicInfoSectionProps {
@@ -16,48 +18,36 @@ interface HealthExaminationBatchBasicInfoSectionProps {
     unknown,
     ValidatedHealthExaminationBatchFormValues
   >
-  /**
-   * The code the system generated. It is only shown, never typed: the backend generates it on
-   * create and keeps it for the life of the batch. Absent while a new batch is being created.
-   */
-  batchCode?: string
 }
+
+const LABEL_CLASS = "text-sm font-medium text-foreground"
+const ERROR_CLASS = "text-xs font-medium text-destructive"
+const SELECT_CLASS =
+  "h-9 w-full min-w-0 appearance-none rounded-md border border-input bg-background py-1.5 pl-3 pr-9 text-sm text-foreground outline-none transition-colors focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-2 aria-invalid:ring-destructive/20 dark:bg-input/20"
 
 export function HealthExaminationBatchBasicInfoSection({
   form,
-  batchCode,
 }: HealthExaminationBatchBasicInfoSectionProps) {
   const {
     register,
     control,
     formState: { errors },
   } = form
+  const examinationSiteType = useWatch({ control, name: "examinationSiteType" })
+  const needsSiteAddress = examinationSiteType === "ORGANIZATION_SITE"
 
   return (
-    <div className="space-y-4">
-      <h3 className="text-base font-bold text-foreground">Thông tin đợt khám</h3>
+    <section aria-labelledby="batch-form-info-heading" className="space-y-5 pb-6 pt-6">
+      <BatchFormStepHeader
+        step={1}
+        headingId="batch-form-info-heading"
+        title="Thông tin đợt khám"
+        description="Tên, ngày và địa điểm tổ chức của đợt."
+      />
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <div className="space-y-1.5">
-          <Label htmlFor="batch-code">Mã đợt khám</Label>
-          <Input
-            id="batch-code"
-            value={batchCode ?? ""}
-            placeholder="Hệ thống tự sinh"
-            readOnly
-            aria-readonly
-            aria-describedby="batch-code-hint"
-            className="cursor-default bg-muted/60 font-mono text-foreground"
-          />
-          <p id="batch-code-hint" className="text-[11px] text-muted-foreground">
-            {batchCode
-              ? "Mã do hệ thống tự sinh, không thể thay đổi."
-              : "Mã được hệ thống tự sinh khi tạo đợt khám."}
-          </p>
-        </div>
-
-        <div className="space-y-1.5">
-          <Label htmlFor="batch-name">
+      <div className="grid grid-cols-1 gap-x-5 gap-y-5 sm:grid-cols-2">
+        <div className="space-y-2 sm:col-span-2">
+          <Label htmlFor="batch-name" className={LABEL_CLASS}>
             Tên đợt khám <span className="text-destructive">*</span>
           </Label>
           <Input
@@ -67,7 +57,7 @@ export function HealthExaminationBatchBasicInfoSection({
             {...register("batchName")}
           />
           {errors.batchName && (
-            <p className="text-xs text-destructive" role="alert">
+            <p className={ERROR_CLASS} role="alert">
               {errors.batchName.message}
             </p>
           )}
@@ -85,68 +75,60 @@ export function HealthExaminationBatchBasicInfoSection({
           )}
         />
 
-        <div className="space-y-1.5">
-          <Label htmlFor="examination-site-type">
+        <div className="space-y-2">
+          <Label htmlFor="examination-site-type" className={LABEL_CLASS}>
             Loại địa điểm <span className="text-destructive">*</span>
           </Label>
           <Controller
             name="examinationSiteType"
             control={control}
             render={({ field }) => (
-              <select
-                id="examination-site-type"
-                ref={field.ref}
-                value={field.value}
-                onBlur={field.onBlur}
-                onChange={field.onChange}
-                aria-invalid={Boolean(errors.examinationSiteType)}
-                className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground"
-              >
-                <option value="">Chọn loại địa điểm</option>
-                <option value="CLINIC">Tại phòng khám</option>
-                <option value="ORGANIZATION_SITE">Tại đơn vị</option>
-              </select>
+              <div className="relative">
+                <select
+                  id="examination-site-type"
+                  ref={field.ref}
+                  value={field.value}
+                  onBlur={field.onBlur}
+                  onChange={field.onChange}
+                  aria-invalid={Boolean(errors.examinationSiteType)}
+                  className={SELECT_CLASS}
+                >
+                  <option value="">Chọn loại địa điểm</option>
+                  <option value="CLINIC">Tại phòng khám</option>
+                  <option value="ORGANIZATION_SITE">Tại đơn vị</option>
+                </select>
+                <ChevronDown
+                  aria-hidden="true"
+                  className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+                />
+              </div>
             )}
           />
           {errors.examinationSiteType && (
-            <p className="text-xs text-destructive" role="alert">
+            <p className={ERROR_CLASS} role="alert">
               {errors.examinationSiteType.message}
             </p>
           )}
         </div>
 
-        <div className="space-y-1.5">
-          <Label htmlFor="examination-site-name">
-            Tên địa điểm <span className="text-destructive">*</span>
-          </Label>
-          <Input
-            id="examination-site-name"
-            aria-invalid={Boolean(errors.examinationSiteName)}
-            {...register("examinationSiteName")}
-          />
-          {errors.examinationSiteName && (
-            <p className="text-xs text-destructive" role="alert">
-              {errors.examinationSiteName.message}
-            </p>
-          )}
-        </div>
-
-        <div className="space-y-1.5 md:col-span-2">
-          <Label htmlFor="examination-site-address">
-            Địa chỉ địa điểm khám <span className="text-destructive">*</span>
-          </Label>
-          <Input
-            id="examination-site-address"
-            aria-invalid={Boolean(errors.examinationSiteAddress)}
-            {...register("examinationSiteAddress")}
-          />
-          {errors.examinationSiteAddress && (
-            <p className="text-xs text-destructive" role="alert">
-              {errors.examinationSiteAddress.message}
-            </p>
-          )}
-        </div>
+        {needsSiteAddress && (
+          <div className="space-y-2">
+            <Label htmlFor="examination-site-address" className={LABEL_CLASS}>
+              Địa chỉ địa điểm khám <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              id="examination-site-address"
+              aria-invalid={Boolean(errors.examinationSiteAddress)}
+              {...register("examinationSiteAddress")}
+            />
+            {errors.examinationSiteAddress && (
+              <p className={ERROR_CLASS} role="alert">
+                {errors.examinationSiteAddress.message}
+              </p>
+            )}
+          </div>
+        )}
       </div>
-    </div>
+    </section>
   )
 }

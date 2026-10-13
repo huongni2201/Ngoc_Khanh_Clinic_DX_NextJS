@@ -29,13 +29,13 @@ interface ExaminationDetailImportDialogProps {
   onOpenChange: (open: boolean) => void
   organizationId: string
   batchId: string
-  /** Downloads the current workbook; offered when the chosen file is out of date. */
-  onExport: () => void
-  isExporting: boolean
+  /** Downloads the pre-filled template; also offered when the chosen file is out of date. */
+  onDownloadTemplate: () => void
+  isDownloadingTemplate: boolean
 }
 
 /**
- * Uploads the exported examination detail workbook. The import is all-or-nothing: a rejected file
+ * Uploads the filled-in examination detail template. The import is all-or-nothing: a rejected file
  * changes nobody. A new Idempotency-Key is created for each chosen file and reused while the same
  * file is resent, so a retry after a dropped connection never writes twice.
  */
@@ -44,8 +44,8 @@ export function ExaminationDetailImportDialog({
   onOpenChange,
   organizationId,
   batchId,
-  onExport,
-  isExporting,
+  onDownloadTemplate,
+  isDownloadingTemplate,
 }: ExaminationDetailImportDialogProps) {
   const importMutation = useImportExaminationDetails()
   const [file, setFile] = React.useState<File | null>(null)
@@ -115,32 +115,38 @@ export function ExaminationDetailImportDialog({
         <DialogHeader>
           <DialogTitle>Nhập chi tiết khám từ Excel</DialogTitle>
           <DialogDescription>
-            Xuất file chi tiết khám, đánh dấu X vào các hạng mục đã khám rồi tải lên. Người khám có
-            X được ghi nhận là đã đến. Ô trống nghĩa là chưa khám hạng mục đó. Người khám không có
-            trong file được giữ nguyên. Hệ thống nhập toàn bộ hoặc không nhập dòng nào.
+            Tải file mẫu, đánh dấu X vào các hạng mục đã khám rồi tải lên. Người khám có X được ghi
+            nhận là đã đến. Người khám không có trong file được giữ nguyên. Hệ thống nhập toàn bộ
+            hoặc không nhập dòng nào.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-          <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-muted/40 p-3 text-xs">
-            <span className="text-muted-foreground">
-              File gắn với danh sách và các hạng mục hiện tại. Xuất lại nếu danh sách người khám hoặc
-              đợt khám vừa thay đổi.
-            </span>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={onExport}
-              disabled={isExporting || pending}
-            >
-              {isExporting ? "Đang xuất..." : "Xuất file Excel"}
-            </Button>
+          <div className="space-y-2 rounded-lg border border-border bg-muted/40 p-3 text-xs">
+            <p className="font-medium text-foreground">Bước 1. Tải file mẫu</p>
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-muted-foreground">
+                File mẫu đã điền sẵn danh sách người khám và các dấu X hiện tại. Tải lại nếu danh
+                sách người khám, đợt khám hoặc chi tiết khám vừa thay đổi.
+              </span>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={onDownloadTemplate}
+                disabled={isDownloadingTemplate || pending}
+              >
+                {isDownloadingTemplate ? "Đang tải..." : "Tải file mẫu"}
+              </Button>
+            </div>
+            <p className="text-muted-foreground">
+              Ô để trống nghĩa là chưa khám. Xoá X trong file sẽ bỏ ghi nhận hạng mục đó.
+            </p>
           </div>
 
           <div className="space-y-1.5">
             <Label htmlFor="examination-detail-import-file" className="text-xs font-medium">
-              Tệp Excel (.xlsx, tối đa 5 MB)
+              Bước 2. Chọn file đã điền (.xlsx, tối đa 5 MB)
             </Label>
             <Input
               key={inputKey}
@@ -178,15 +184,15 @@ export function ExaminationDetailImportDialog({
                 <p className="mt-1 text-xs">Chưa có thay đổi nào được ghi vào đợt khám.</p>
                 {failure.needsNewExport && (
                   <div className="mt-2 flex items-center gap-2">
-                    <p className="text-xs">Hãy xuất lại file mới nhất rồi nhập lại.</p>
+                    <p className="text-xs">Hãy tải lại file mẫu mới nhất rồi nhập lại.</p>
                     <Button
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={onExport}
-                      disabled={isExporting}
+                      onClick={onDownloadTemplate}
+                      disabled={isDownloadingTemplate}
                     >
-                      {isExporting ? "Đang xuất..." : "Xuất lại file"}
+                      {isDownloadingTemplate ? "Đang tải..." : "Tải lại file mẫu"}
                     </Button>
                   </div>
                 )}

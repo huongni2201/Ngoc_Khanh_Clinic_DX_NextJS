@@ -25,6 +25,13 @@ Accepted ADRs should not be rewritten to change history. When a decision changes
 | [0007](0007-session-login-backend-adr-0014.md) | Align login with the backend session-cookie contract | Accepted |
 | [0008](0008-login-session-restoration.md) | Conditional session restoration through backend verification | Accepted |
 | [0009](0009-backend-aligned-module-ownership.md) | Backend context ownership and workflow composition in widgets | Accepted; extends 0001 |
+| [0010](0010-backend-rendered-examination-form-printing.md) | Backend-rendered examination form printing (PDF, print jobs) | Accepted; supersedes former PROJECT_RULES §13–14 |
+
+The future template upload/publish screens mentioned in ADR-0010 are superseded
+by accepted [backend ADR-0018](../../../Ngoc_Khanh_Clinic_DX_Springboot/docs/adr/0018-it-managed-document-templates.md)
+(2026-10-13): IT maintains templates following business/clinical content approval;
+the product exposes preview/download/print workflows. ADR-0010's rendering and
+print-job decisions remain in force.
 
 For current paths and ownership, use [frontend architecture](../architecture/FRONTEND_ARCHITECTURE.md)
 and ADR-0009. Earlier examples may retain former module names. The current

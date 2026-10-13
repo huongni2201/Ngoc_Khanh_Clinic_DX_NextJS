@@ -3,11 +3,12 @@
 import * as React from "react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useQueryClient } from "@tanstack/react-query"
-import { Edit, Info, Trash2 } from "@/shared/ui/product-icon"
+import { Edit, Info, PlayCircle, Trash2 } from "@/shared/ui/product-icon"
 import { Button } from "@/components/ui/button"
 import { hasStaffPermission, useCachedUserSession } from "@/modules/accesscontrol"
 import { isApiErrorStatus } from "@/shared/api/api-client"
 import { PageHeader, ScreenLayout, ScreenLoadingSkeleton, StatusPill } from "@/shared/ui"
+import { toast } from "@/shared/ui/toaster"
 import {
   useDeleteHealthExaminationBatch,
   useHealthExaminationBatchDetail,
@@ -22,6 +23,7 @@ import {
 import { HealthExaminationBatchOverview } from "../components/health-examination-batch-overview"
 import { HealthExaminationBatchDetailError } from "../components/health-examination-batch-detail-error"
 import { DeleteHealthExaminationBatchDialog } from "../components/delete-health-examination-batch-dialog"
+import { StartHealthExaminationBatchDialog } from "../components/start-health-examination-batch-dialog"
 import { healthExaminationKeys } from "../query-keys"
 import { ExaminationDetailTab } from "../components/examination-detail-tab/examination-detail-tab"
 import { ParticipantsTab } from "../components/participants-tab/participants-tab"
@@ -32,9 +34,16 @@ import {
   getHealthExaminationBatchStatusLabel,
 } from "../utils/batch-status"
 import {
+  BATCH_START_PERMISSION,
+  DOCUMENT_RENDER_JOB_DOWNLOAD_PERMISSION,
+  DOCUMENT_RENDER_JOB_READ_PERMISSION,
+  EXAMINATION_FORM_BULK_PRINT_PERMISSION,
+  EXAMINATION_FORM_PRINT_PERMISSION,
   EXAMINATION_REPORT_READ_PERMISSION,
   EXAMINATION_SERVICE_READ_PERMISSION,
   EXAMINATION_SERVICE_RECONCILE_PERMISSION,
+  EXAMINATION_SERVICE_RECORD_PERMISSION,
+  EXAMINATION_SERVICE_TEMPLATE_DOWNLOAD_PERMISSION,
   PARTICIPANT_IMPORT_PERMISSION,
   PARTICIPANT_MANAGE_PERMISSION,
   PARTICIPANT_READ_PERMISSION,
@@ -70,6 +79,13 @@ export function HealthExaminationBatchDetailPage({
     : true
   const canImportParticipants = hasStaffPermission(currentUser, PARTICIPANT_IMPORT_PERMISSION)
   const canManageParticipants = hasStaffPermission(currentUser, PARTICIPANT_MANAGE_PERMISSION)
+  const canStartBatch = hasStaffPermission(currentUser, BATCH_START_PERMISSION)
+  const canPrintExaminationForm = hasStaffPermission(currentUser, EXAMINATION_FORM_PRINT_PERMISSION)
+  // A bulk job is only useful when the account can also follow it and download its files.
+  const canBulkPrintExaminationForms =
+    hasStaffPermission(currentUser, EXAMINATION_FORM_BULK_PRINT_PERMISSION) &&
+    hasStaffPermission(currentUser, DOCUMENT_RENDER_JOB_READ_PERMISSION) &&
+    hasStaffPermission(currentUser, DOCUMENT_RENDER_JOB_DOWNLOAD_PERMISSION)
   // An unknown session still tries to read; a known session without the permission loses the tab.
   const canReadExamination = currentUser
     ? hasStaffPermission(currentUser, EXAMINATION_SERVICE_READ_PERMISSION)
@@ -77,6 +93,14 @@ export function HealthExaminationBatchDetailPage({
   const canReconcileExamination = hasStaffPermission(
     currentUser,
     EXAMINATION_SERVICE_RECONCILE_PERMISSION
+  )
+  const canDownloadExaminationTemplate = hasStaffPermission(
+    currentUser,
+    EXAMINATION_SERVICE_TEMPLATE_DOWNLOAD_PERMISSION
+  )
+  const canRecordExamination = hasStaffPermission(
+    currentUser,
+    EXAMINATION_SERVICE_RECORD_PERMISSION
   )
   const canReadReport = currentUser
     ? hasStaffPermission(currentUser, EXAMINATION_REPORT_READ_PERMISSION)
@@ -96,6 +120,7 @@ export function HealthExaminationBatchDetailPage({
   const reloadMutation = useReloadHealthExaminationBatch(organizationId, batchId)
   const [isEditOpen, setIsEditOpen] = React.useState(false)
   const [isDeleteOpen, setIsDeleteOpen] = React.useState(false)
+  const [isStartOpen, setIsStartOpen] = React.useState(false)
   const isDeleteConflict = isApiErrorStatus(deleteMutation.error, 409)
 
   React.useEffect(() => {
@@ -130,6 +155,7 @@ export function HealthExaminationBatchDetailPage({
         batchId: batch.id,
         rowVersion: batch.rowVersion,
       })
+      toast.success(`Đã xóa đợt khám ${batch.code}.`)
       setIsDeleteOpen(false)
       setIsDeleted(true)
       router.push(batchesHref)
@@ -186,6 +212,12 @@ export function HealthExaminationBatchDetailPage({
         actions={
           editable ? (
             <>
+              {canStartBatch && (
+                <Button type="button" onClick={() => setIsStartOpen(true)}>
+                  <PlayCircle className="size-4" />
+                  Bắt đầu đợt khám
+                </Button>
+              )}
               <Button type="button" variant="outline" onClick={() => setIsEditOpen(true)}>
                 <Edit className="size-4" />
                 Chỉnh sửa
@@ -230,13 +262,22 @@ export function HealthExaminationBatchDetailPage({
             canRead={canReadParticipants}
             canImport={canImportParticipants}
             canManage={canManageParticipants}
+            canPrintForm={canPrintExaminationForm}
+            canBulkPrintForms={canBulkPrintExaminationForms}
           />
         ) : activeTab === "examination" ? (
           <ExaminationDetailTab
             organizationId={organizationId}
-            batch={{ id: batch.id, status: batch.status, services: batch.services }}
+            batch={{
+              id: batch.id,
+              status: batch.status,
+              services: batch.services,
+              startDate: batch.examinationDates[0],
+            }}
             canRead={canReadExamination}
             canImport={canReconcileExamination}
+            canDownloadTemplate={canDownloadExaminationTemplate}
+            canRecord={canRecordExamination}
           />
         ) : (
           <ReportTab
@@ -253,6 +294,18 @@ export function HealthExaminationBatchDetailPage({
           onOpenChange={setIsEditOpen}
           organizationId={organizationId}
           batch={batch}
+        />
+      )}
+
+      {editable && canStartBatch && (
+        <StartHealthExaminationBatchDialog
+          open={isStartOpen}
+          onOpenChange={setIsStartOpen}
+          organizationId={organizationId}
+          batch={batch}
+          onStarted={(started) =>
+            toast.success(`Đã bắt đầu đợt khám ${started.code}. Có thể in phiếu khám.`)
+          }
         />
       )}
 

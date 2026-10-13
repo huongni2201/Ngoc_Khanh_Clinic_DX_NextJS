@@ -4,6 +4,8 @@ import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { ApiClientError, apiClient } from "@/shared/api/api-client"
+import { Toaster } from "@/shared/ui/toaster"
+import { findDialog, queryDialog } from "./support/app-dialog"
 import { ParticipantsTab } from "../components/participants-tab/participants-tab"
 
 const download = vi.hoisted(() => ({ saveBlobAs: vi.fn() }))
@@ -62,6 +64,7 @@ function renderTab(props: Partial<React.ComponentProps<typeof ParticipantsTab>> 
         batch={{ code: "DK 001", status: "DRAFT", rowVersion: 4 }}
         {...props}
       />
+      <Toaster />
     </QueryClientProvider>
   )
   return { ...view, queryClient }
@@ -197,7 +200,9 @@ describe("ParticipantsTab actions", () => {
 
     await user.click(screen.getByRole("button", { name: "Tải file mẫu" }))
 
-    expect(await screen.findByText("Không thể tải file mẫu. Vui lòng thử lại.")).toBeInTheDocument()
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Không thể tải file mẫu. Vui lòng thử lại."
+    )
   })
 })
 
@@ -208,7 +213,7 @@ describe("Participant import dialog", () => {
     const user = userEvent.setup()
     await screen.findByText("Người khám 1")
     await user.click(screen.getByRole("button", { name: "Nhập từ Excel" }))
-    const dialog = await screen.findByRole("dialog")
+    const dialog = await findDialog()
     return { user, dialog }
   }
 
@@ -233,7 +238,8 @@ describe("Participant import dialog", () => {
     await user.upload(within(dialog).getByLabelText(/Tệp Excel/), xlsx())
     await user.click(within(dialog).getByRole("button", { name: "Nhập danh sách" }))
 
-    expect(await within(dialog).findByText(/Đã thêm 3 người khám/)).toBeInTheDocument()
+    await waitFor(() => expect(queryDialog()).not.toBeInTheDocument())
+    expect(await screen.findByText("Đã thêm 3 người khám vào đợt khám.")).toBeInTheDocument()
     expect(post).toHaveBeenCalledTimes(1)
     expect(post.mock.calls[0][2]).toEqual({ headers: { "Idempotency-Key": KEY_A } })
     expect((post.mock.calls[0][1] as FormData).get("rowVersion")).toBe("4")
@@ -280,7 +286,8 @@ describe("Participant import dialog", () => {
     await user.click(within(dialog).getByRole("button", { name: "Nhập danh sách" }))
     await user.click(await within(dialog).findByRole("button", { name: "Thử lại" }))
 
-    await within(dialog).findByText(/Đã thêm 1 người khám/)
+    await waitFor(() => expect(queryDialog()).not.toBeInTheDocument())
+    expect(await screen.findByText("Đã thêm 1 người khám vào đợt khám.")).toBeInTheDocument()
     expect(post.mock.calls.map((call) => (call[2] as { headers: Record<string, string> }).headers["Idempotency-Key"])).toEqual([KEY_A, KEY_A])
   })
 
@@ -317,5 +324,26 @@ describe("Participant import dialog", () => {
     expect(await within(dialog).findByText("Chỉ chấp nhận tệp Excel định dạng .xlsx.")).toBeInTheDocument()
     expect(within(dialog).getByRole("button", { name: "Nhập danh sách" })).toBeDisabled()
     expect(post).not.toHaveBeenCalled()
+  })
+})
+
+describe("Participant page size", () => {
+  it("sends the chosen size and starts again at page 1", async () => {
+    const get = vi.spyOn(apiClient, "get").mockResolvedValue(page([item(1)], 25))
+    const user = userEvent.setup()
+    renderTab()
+    await screen.findByText("Người khám 1")
+
+    await user.click(screen.getByRole("button", { name: "Trang 2" }))
+    await waitFor(() =>
+      expect(get).toHaveBeenLastCalledWith(expect.stringContaining("page=2"), expect.anything())
+    )
+
+    await user.click(await screen.findByRole("combobox", { name: "Số dòng mỗi trang" }))
+    await user.click(await screen.findByRole("option", { name: "50" }))
+
+    await waitFor(() =>
+      expect(get).toHaveBeenLastCalledWith(expect.stringMatching(/page=1&size=50&/), expect.anything())
+    )
   })
 })

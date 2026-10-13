@@ -132,3 +132,42 @@ describe("DataTablePagination (shadcn/ui Composition)", () => {
   })
 })
 
+describe("DataTablePagination page size", () => {
+  it("hides the page-size selector unless a handler is given", () => {
+    render(
+      <DataTablePagination
+        currentPage={1}
+        pageSize={10}
+        totalItems={35}
+        totalPages={4}
+        onPageChange={vi.fn()}
+      />
+    )
+
+    expect(screen.queryByRole("combobox", { name: "Số dòng mỗi trang" })).not.toBeInTheDocument()
+  })
+
+  it("offers 10, 20, 50 and 100 and reports the chosen size", async () => {
+    const user = userEvent.setup()
+    const handleSizeChange = vi.fn()
+    render(
+      <DataTablePagination
+        currentPage={1}
+        pageSize={10}
+        totalItems={35}
+        totalPages={4}
+        onPageChange={vi.fn()}
+        onPageSizeChange={handleSizeChange}
+      />
+    )
+
+    expect(screen.getByRole("combobox", { name: "Số dòng mỗi trang" })).toHaveTextContent("10")
+    await user.click(screen.getByRole("combobox", { name: "Số dòng mỗi trang" }))
+
+    const options = await screen.findAllByRole("option")
+    expect(options.map((option) => option.textContent)).toEqual(["10", "20", "50", "100"])
+
+    await user.click(screen.getByRole("option", { name: "100" }))
+    expect(handleSizeChange).toHaveBeenCalledWith(100)
+  })
+})

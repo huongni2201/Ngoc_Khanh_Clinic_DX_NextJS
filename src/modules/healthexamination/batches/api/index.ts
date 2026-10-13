@@ -1,7 +1,7 @@
 import { unavailableApi } from "@/shared/api/api-unavailable"
 import { apiClient } from "@/shared/api/api-client"
-import type { CreateHealthExaminationBatchRequest, DeleteHealthExaminationBatchRequest, ExaminationProgressFilterParams, ExaminationProgressResponse, HealthExaminationBatch, HealthExaminationBatchFilterParams, HealthExaminationBatchListResponse, HealthExaminationBatchSummary, HealthExaminationBatchReportSummary, UpdateHealthExaminationBatchRequest } from "../types"
-import { healthExaminationBatchDetailResponseSchema, healthExaminationBatchPageResponseSchema, type HealthExaminationBatchCreateRequestDto, type HealthExaminationBatchDetailResponseDto, type HealthExaminationBatchSummaryResponseDto, type HealthExaminationBatchUpdateRequestDto } from "../types/transport"
+import type { CreateHealthExaminationBatchRequest, DeleteHealthExaminationBatchRequest, StartHealthExaminationBatchRequest, ExaminationProgressFilterParams, ExaminationProgressResponse, HealthExaminationBatch, HealthExaminationBatchFilterParams, HealthExaminationBatchListResponse, HealthExaminationBatchSummary, HealthExaminationBatchReportSummary, UpdateHealthExaminationBatchRequest } from "../types"
+import { healthExaminationBatchDetailResponseSchema, healthExaminationBatchPageResponseSchema, type HealthExaminationBatchCreateRequestDto, type HealthExaminationBatchDetailResponseDto, type HealthExaminationBatchStartRequestDto, type HealthExaminationBatchSummaryResponseDto, type HealthExaminationBatchUpdateRequestDto } from "../types/transport"
 import { normalizeBatchFilterParams } from "../utils/batch-list-params"
 
 const ORGANIZATIONS_ENDPOINT = "/api/v1/organizations"
@@ -42,7 +42,6 @@ function mapBatch(
       .map((day) => ({ id: day.id, examinationDate: day.examinationDate }))
       .sort((left, right) => left.examinationDate.localeCompare(right.examinationDate)),
     examinationSiteType: batch.examinationSiteType,
-    examinationSiteName: batch.examinationSiteName,
     examinationSiteAddress: batch.examinationSiteAddress,
     createdBy: batch.createdBy,
     services: [...batch.services]
@@ -55,6 +54,7 @@ function mapBatch(
         referencePrice: service.referencePriceSnapshot,
         negotiatedPrice: service.negotiatedPrice,
         displayOrder: service.displayOrder,
+        active: service.active,
       })),
   }
 }
@@ -66,7 +66,6 @@ function toConfigurationBody(
     batchName: request.batchName,
     examinationDates: [...request.examinationDates].sort(),
     examinationSiteType: request.examinationSiteType,
-    examinationSiteName: request.examinationSiteName,
     examinationSiteAddress: request.examinationSiteAddress,
     services: request.services.map((service) => ({
       serviceId: service.serviceId,
@@ -164,6 +163,30 @@ export async function deleteHealthExaminationBatch(
   )
 }
 
+export function buildHealthExaminationBatchStartUrl(organizationId: string, batchId: string) {
+  return `${batchItemEndpoint(organizationId, batchId)}/start`
+}
+
+/**
+ * Starts a draft batch: DRAFT becomes READY. From then on the configuration (days, services,
+ * prices) cannot change and the batch cannot be deleted; Participants can still be changed and
+ * examination forms can be printed. A stale `rowVersion` or a batch that is no longer a draft is a
+ * 409.
+ */
+export async function startHealthExaminationBatch(
+  request: StartHealthExaminationBatchRequest
+): Promise<HealthExaminationBatch> {
+  const response = await apiClient.post<HealthExaminationBatchStartRequestDto, unknown>(
+    buildHealthExaminationBatchStartUrl(request.organizationId, request.batchId),
+    { rowVersion: request.rowVersion }
+  )
+  if (!response.data) {
+    throw new Error(response.message || "Phản hồi bắt đầu đợt khám không có dữ liệu.")
+  }
+
+  return mapBatch(healthExaminationBatchDetailResponseSchema.parse(response.data))
+}
+
 export function fetchHealthExaminationBatchMatrix(
   batchId: string,
   params?: ExaminationProgressFilterParams
@@ -193,3 +216,4 @@ export function fetchExaminationSummaryExportData(batchId: string): Promise<unkn
 export * from "./participants"
 export * from "./examination-details"
 export * from "./reports"
+export * from "./examination-forms"

@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useQueryClient } from "@tanstack/react-query"
-import { AlertCircle, CheckCircle2, Loader2, Upload } from "@/shared/ui/product-icon"
+import { AlertCircle, Loader2, Upload } from "@/shared/ui/product-icon"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import {
@@ -35,12 +35,14 @@ interface ParticipantImportDialogProps {
   rowVersion: number
   onDownloadTemplate: () => void
   isDownloadingTemplate: boolean
+  /** Called with the result of a successful import just before the dialog closes. */
+  onImported?: (result: ParticipantImportResult) => void
 }
 
 /**
  * Uploads a roster workbook. The import is all-or-nothing, so a rejected file adds nobody. A new
  * Idempotency-Key is created for each chosen file and reused while the same file is resent, so a
- * retry after a dropped connection never imports twice.
+ * retry after a dropped connection never imports twice. A successful import closes the dialog.
  */
 export function ParticipantImportDialog({
   open,
@@ -50,6 +52,7 @@ export function ParticipantImportDialog({
   rowVersion,
   onDownloadTemplate,
   isDownloadingTemplate,
+  onImported,
 }: ParticipantImportDialogProps) {
   const queryClient = useQueryClient()
   const importMutation = useImportHealthExaminationBatchParticipants()
@@ -57,7 +60,6 @@ export function ParticipantImportDialog({
   const [idempotencyKey, setIdempotencyKey] = React.useState<string | null>(null)
   const [fileError, setFileError] = React.useState<string | null>(null)
   const [failure, setFailure] = React.useState<ParticipantImportFailure | null>(null)
-  const [result, setResult] = React.useState<ParticipantImportResult | null>(null)
   const [inputKey, setInputKey] = React.useState(0)
   const pending = importMutation.isPending
 
@@ -66,7 +68,6 @@ export function ParticipantImportDialog({
     setIdempotencyKey(null)
     setFileError(null)
     setFailure(null)
-    setResult(null)
     setInputKey((value) => value + 1)
     importMutation.reset()
   }, [importMutation])
@@ -80,7 +81,6 @@ export function ParticipantImportDialog({
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selected = event.target.files?.[0] ?? null
     setFailure(null)
-    setResult(null)
     importMutation.reset()
     if (!selected) {
       setFile(null)
@@ -106,10 +106,9 @@ export function ParticipantImportDialog({
         rowVersion,
         idempotencyKey,
       })
-      setResult(imported)
-      setFile(null)
-      setIdempotencyKey(null)
-      setInputKey((value) => value + 1)
+      reset()
+      onImported?.(imported)
+      onOpenChange(false)
     } catch (error) {
       const described = describeParticipantImportError(error)
       setFailure(described)
@@ -190,22 +189,9 @@ export function ParticipantImportDialog({
             </Alert>
           )}
 
-          {result && (
-            <Alert>
-              <CheckCircle2 />
-              <AlertTitle>Nhập danh sách thành công</AlertTitle>
-              <AlertDescription>
-                <p role="status">
-                  Đã thêm {result.createdCount} người khám vào đợt khám (tổng {result.totalRows}{" "}
-                  dòng).
-                </p>
-              </AlertDescription>
-            </Alert>
-          )}
-
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => handleOpenChange(false)} disabled={pending}>
-              {result ? "Đóng" : "Hủy"}
+              Hủy
             </Button>
             <Button type="submit" disabled={!file || pending}>
               {pending ? (

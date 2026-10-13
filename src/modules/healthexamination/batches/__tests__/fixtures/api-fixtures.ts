@@ -1,10 +1,11 @@
 import { clinicalServiceCatalog } from "@/modules/catalog/__tests__/fixtures/api-fixtures"
 import { ApiClientError } from "@/shared/api/api-client"
-import { HealthExaminationBatch, HealthExaminationBatchStatus, CreateHealthExaminationBatchRequest, DeleteHealthExaminationBatchRequest, UpdateHealthExaminationBatchRequest, HealthExaminationBatchFilterParams, HealthExaminationBatchListResponse, ParticipantExaminationProgress, ExaminationProgressFilterParams, ExaminationProgressResponse, HealthExaminationBatchReportSummary, HealthExaminationServiceSummary, ServiceCompletionStatus } from "../../types"
+import { HealthExaminationBatch, HealthExaminationBatchStatus, CreateHealthExaminationBatchRequest, DeleteHealthExaminationBatchRequest, StartHealthExaminationBatchRequest, UpdateHealthExaminationBatchRequest, HealthExaminationBatchFilterParams, HealthExaminationBatchListResponse, ParticipantExaminationProgress, ExaminationProgressFilterParams, ExaminationProgressResponse, HealthExaminationBatchReportSummary, HealthExaminationServiceSummary, ServiceCompletionStatus } from "../../types"
 
 export * from "../../api/participants"
 export * from "../../api/examination-details"
 export * from "../../api/reports"
+export * from "../../api/examination-forms"
 
 interface SeedBatch {
   id: string
@@ -33,7 +34,6 @@ function toBatch(seed: SeedBatch): HealthExaminationBatch {
     rowVersion: 0,
     examinationDates: seed.startDate ? [seed.startDate] : [],
     examinationSiteType: "CLINIC",
-    examinationSiteName: "Phòng khám Ngọc Khánh",
     examinationSiteAddress: "1 Đường A, Hà Nội",
     createdBy: "staff-1",
     services: seed.services.map((service, index) => ({
@@ -503,7 +503,6 @@ export async function createHealthExaminationBatch(request: CreateHealthExaminat
     rowVersion: 0,
     examinationDates: dates,
     examinationSiteType: request.examinationSiteType,
-    examinationSiteName: request.examinationSiteName,
     examinationSiteAddress: request.examinationSiteAddress,
     createdBy: "staff-1",
     services: buildServices(id, request.services),
@@ -537,7 +536,6 @@ export async function updateHealthExaminationBatch(
     endDate: dates[dates.length - 1] ?? null,
     examinationDates: dates,
     examinationSiteType: request.examinationSiteType,
-    examinationSiteName: request.examinationSiteName,
     examinationSiteAddress: request.examinationSiteAddress,
     services: buildServices(current.id, request.services),
     rowVersion: current.rowVersion + 1,
@@ -563,6 +561,35 @@ export async function deleteHealthExaminationBatch(
     throw new ApiClientError("Dữ liệu đã thay đổi hoặc không thỏa quy tắc nghiệp vụ. Vui lòng tải lại.", 409)
   }
   healthExaminationBatchesStore = healthExaminationBatchesStore.filter((batch) => batch.id !== current.id)
+}
+
+export function buildHealthExaminationBatchStartUrl(organizationId: string, batchId: string) {
+  return `/api/v1/organizations/${encodeURIComponent(organizationId)}/health-examination-batches/${encodeURIComponent(batchId)}/start`
+}
+
+export async function startHealthExaminationBatch(
+  request: StartHealthExaminationBatchRequest
+): Promise<HealthExaminationBatch> {
+  await new Promise((resolve) => setTimeout(resolve, 50))
+  const current = healthExaminationBatchesStore.find(
+    (batch) => batch.id === request.batchId && batch.organizationId === request.organizationId
+  )
+  if (!current) {
+    throw new ApiClientError("Không tìm thấy hoặc đã bị xóa/ngừng hoạt động.", 404)
+  }
+  if (current.rowVersion !== request.rowVersion || current.status !== "DRAFT") {
+    throw new ApiClientError("Dữ liệu đã thay đổi hoặc không thỏa quy tắc nghiệp vụ. Vui lòng tải lại.", 409)
+  }
+  const started: HealthExaminationBatch = {
+    ...current,
+    status: "READY",
+    rowVersion: current.rowVersion + 1,
+    updatedAt: new Date().toISOString(),
+  }
+  healthExaminationBatchesStore = healthExaminationBatchesStore.map((batch) =>
+    batch.id === started.id ? started : batch
+  )
+  return { ...started }
 }
 
 // ----------------------------------------------------

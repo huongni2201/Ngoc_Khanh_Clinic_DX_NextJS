@@ -4,6 +4,8 @@ import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { ApiClientError, apiClient } from "@/shared/api/api-client"
+import { Toaster } from "@/shared/ui/toaster"
+import { findDialog, getDialog, queryDialog } from "./support/app-dialog"
 import { ParticipantsTab } from "../components/participants-tab/participants-tab"
 
 const BASE = "/api/v1/organizations/org-1/health-examination-batches/batch-1/participants"
@@ -77,6 +79,7 @@ function renderTab(props: Partial<React.ComponentProps<typeof ParticipantsTab>> 
         canManage
         {...props}
       />
+      <Toaster />
     </QueryClientProvider>
   )
 }
@@ -158,7 +161,7 @@ describe("adding a Participant", () => {
     renderTab()
     const user = userEvent.setup()
     await user.click(await screen.findByRole("button", { name: "Thêm người khám" }))
-    const dialog = await screen.findByRole("dialog")
+    const dialog = await findDialog()
 
     await user.click(within(dialog).getByRole("button", { name: "Thêm người khám" }))
 
@@ -176,7 +179,7 @@ describe("adding a Participant", () => {
     renderTab()
     const user = userEvent.setup()
     await user.click(await screen.findByRole("button", { name: "Thêm người khám" }))
-    const dialog = await screen.findByRole("dialog")
+    const dialog = await findDialog()
 
     await fillValidForm(dialog, user)
     await user.click(within(dialog).getByRole("button", { name: "Thêm người khám" }))
@@ -196,8 +199,8 @@ describe("adding a Participant", () => {
       note: null,
     })
     expect(post.mock.calls[0][1]).not.toHaveProperty("participantCode")
-    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument())
-    expect(screen.getByRole("status")).toHaveTextContent("Đã thêm người khám vào danh sách.")
+    await waitFor(() => expect(queryDialog()).not.toBeInTheDocument())
+    expect(await screen.findByText("Đã thêm người khám vào danh sách.")).toBeInTheDocument()
   })
 
   it("shows a duplicate CCCD on the CCCD field and keeps the dialog open", async () => {
@@ -208,13 +211,13 @@ describe("adding a Participant", () => {
     renderTab()
     const user = userEvent.setup()
     await user.click(await screen.findByRole("button", { name: "Thêm người khám" }))
-    const dialog = await screen.findByRole("dialog")
+    const dialog = await findDialog()
 
     await fillValidForm(dialog, user)
     await user.click(within(dialog).getByRole("button", { name: "Thêm người khám" }))
 
     expect(await within(dialog).findByText(/CCCD này đã có trong đợt khám/)).toBeInTheDocument()
-    expect(screen.getByRole("dialog")).toBeInTheDocument()
+    expect(getDialog()).toBeInTheDocument()
   })
 })
 
@@ -227,7 +230,7 @@ describe("editing a Participant", () => {
     renderTab()
     const user = userEvent.setup()
     await user.click(await screen.findByRole("button", { name: "Sửa người khám Người khám 1" }))
-    const dialog = await screen.findByRole("dialog")
+    const dialog = await findDialog()
 
     const cccd = await within(dialog).findByDisplayValue("012345678901")
     expect(cccd).toBeEnabled()
@@ -245,8 +248,8 @@ describe("editing a Participant", () => {
       identificationNumber: "012345678901",
       rowVersion: 9,
     })
-    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument())
-    expect(screen.getByRole("status")).toHaveTextContent("Đã cập nhật thông tin người khám.")
+    await waitFor(() => expect(queryDialog()).not.toBeInTheDocument())
+    expect(await screen.findByText("Đã cập nhật thông tin người khám.")).toBeInTheDocument()
   })
 
   it("locks the CCCD once the Participant is linked to a patient", async () => {
@@ -254,7 +257,7 @@ describe("editing a Participant", () => {
     renderTab()
     const user = userEvent.setup()
     await user.click(await screen.findByRole("button", { name: "Sửa người khám Người khám 1" }))
-    const dialog = await screen.findByRole("dialog")
+    const dialog = await findDialog()
 
     const cccd = await within(dialog).findByDisplayValue("012345678901")
     expect(cccd).toBeDisabled()
@@ -269,7 +272,7 @@ describe("editing a Participant", () => {
     renderTab()
     const user = userEvent.setup()
     await user.click(await screen.findByRole("button", { name: "Sửa người khám Người khám 1" }))
-    const dialog = await screen.findByRole("dialog")
+    const dialog = await findDialog()
     await within(dialog).findByDisplayValue("012345678901")
     const detailCalls = () => get.mock.calls.filter(([path]) => /p-1$/.test(path as string)).length
     const before = detailCalls()
@@ -278,7 +281,7 @@ describe("editing a Participant", () => {
 
     expect(await within(dialog).findByText(/Dữ liệu đã thay đổi/)).toBeInTheDocument()
     await waitFor(() => expect(detailCalls()).toBeGreaterThan(before))
-    expect(screen.getByRole("dialog")).toBeInTheDocument()
+    expect(getDialog()).toBeInTheDocument()
   })
 
   it("closes with a notice when the detail is forbidden", async () => {
@@ -290,8 +293,8 @@ describe("editing a Participant", () => {
     const user = userEvent.setup()
     await user.click(await screen.findByRole("button", { name: "Sửa người khám Người khám 1" }))
 
-    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument())
-    expect(screen.getByRole("status")).toHaveTextContent(/không có quyền xem đầy đủ/)
+    await waitFor(() => expect(queryDialog()).not.toBeInTheDocument())
+    expect(await screen.findByText(/không có quyền xem đầy đủ/)).toBeInTheDocument()
   })
 })
 
@@ -302,14 +305,14 @@ describe("cancelling a Participant", () => {
     renderTab()
     const user = userEvent.setup()
     await user.click(await screen.findByRole("button", { name: "Hủy người khám Người khám 1" }))
-    const dialog = await screen.findByRole("dialog")
+    const dialog = await findDialog()
 
     expect(within(dialog).getByText(/không phải xóa/)).toBeInTheDocument()
     await user.click(within(dialog).getByRole("button", { name: "Hủy người khám" }))
 
     await waitFor(() => expect(del).toHaveBeenCalledWith(`${BASE}/p-1?rowVersion=6`))
-    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument())
-    expect(screen.getByRole("status")).toHaveTextContent("Đã hủy người khám Người khám 1.")
+    await waitFor(() => expect(queryDialog()).not.toBeInTheDocument())
+    expect(await screen.findByText("Đã hủy người khám Người khám 1.")).toBeInTheDocument()
   })
 
   it("does nothing when the user keeps the Participant", async () => {
@@ -318,11 +321,11 @@ describe("cancelling a Participant", () => {
     renderTab()
     const user = userEvent.setup()
     await user.click(await screen.findByRole("button", { name: "Hủy người khám Người khám 1" }))
-    const dialog = await screen.findByRole("dialog")
+    const dialog = await findDialog()
 
     await user.click(within(dialog).getByRole("button", { name: "Giữ lại" }))
 
-    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument())
+    await waitFor(() => expect(queryDialog()).not.toBeInTheDocument())
     expect(del).not.toHaveBeenCalled()
   })
 
@@ -339,12 +342,12 @@ describe("cancelling a Participant", () => {
     renderTab()
     const user = userEvent.setup()
     await user.click(await screen.findByRole("button", { name: "Hủy người khám Người khám 1" }))
-    const dialog = await screen.findByRole("dialog")
+    const dialog = await findDialog()
 
     await user.click(within(dialog).getByRole("button", { name: "Hủy người khám" }))
 
     expect(await within(dialog).findByText(/Không thể hủy người khám đã được chuẩn bị/)).toBeInTheDocument()
-    expect(screen.getByRole("dialog")).toBeInTheDocument()
+    expect(getDialog()).toBeInTheDocument()
   })
 })
 
@@ -394,7 +397,7 @@ describe("reactivating a Participant", () => {
     renderTab()
     const user = userEvent.setup()
     await user.click(await screen.findByRole("button", { name: "Khôi phục người khám Người khám 1" }))
-    const dialog = await screen.findByRole("dialog")
+    const dialog = await findDialog()
 
     expect(within(dialog).getByText(/Đang trong danh sách\); thông tin cũ được giữ nguyên/)).toBeInTheDocument()
     expect(within(dialog).getByLabelText("Ngày khám")).toHaveValue("day-2")
@@ -403,8 +406,8 @@ describe("reactivating a Participant", () => {
     await waitFor(() => expect(post).toHaveBeenCalledTimes(1))
     expect(post.mock.calls[0][0]).toBe(`${BASE}/p-1/reactivate`)
     expect(post.mock.calls[0][1]).toEqual({ rowVersion: 6, batchDayId: "day-2" })
-    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument())
-    expect(screen.getByRole("status")).toHaveTextContent("Đã khôi phục người khám Người khám 1.")
+    await waitFor(() => expect(queryDialog()).not.toBeInTheDocument())
+    expect(await screen.findByText("Đã khôi phục người khám Người khám 1.")).toBeInTheDocument()
   })
 
   it("sends the day the user picks instead", async () => {
@@ -413,7 +416,7 @@ describe("reactivating a Participant", () => {
     renderTab()
     const user = userEvent.setup()
     await user.click(await screen.findByRole("button", { name: "Khôi phục người khám Người khám 1" }))
-    const dialog = await screen.findByRole("dialog")
+    const dialog = await findDialog()
 
     await user.selectOptions(within(dialog).getByLabelText("Ngày khám"), "day-2")
     await user.click(within(dialog).getByRole("button", { name: "Khôi phục người khám" }))
@@ -428,11 +431,11 @@ describe("reactivating a Participant", () => {
     renderTab()
     const user = userEvent.setup()
     await user.click(await screen.findByRole("button", { name: "Khôi phục người khám Người khám 1" }))
-    const dialog = await screen.findByRole("dialog")
+    const dialog = await findDialog()
 
     await user.click(within(dialog).getByRole("button", { name: "Để sau" }))
 
-    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument())
+    await waitFor(() => expect(queryDialog()).not.toBeInTheDocument())
     expect(post).not.toHaveBeenCalled()
   })
 
@@ -444,13 +447,13 @@ describe("reactivating a Participant", () => {
     renderTab()
     const user = userEvent.setup()
     await user.click(await screen.findByRole("button", { name: "Khôi phục người khám Người khám 1" }))
-    const dialog = await screen.findByRole("dialog")
+    const dialog = await findDialog()
     const listCallsBefore = get.mock.calls.length
 
     await user.click(within(dialog).getByRole("button", { name: "Khôi phục người khám" }))
 
-    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument())
-    expect(screen.getByRole("status")).toHaveTextContent(/Dữ liệu người khám đã thay đổi/)
+    await waitFor(() => expect(queryDialog()).not.toBeInTheDocument())
+    expect(await screen.findByText(/Dữ liệu người khám đã thay đổi/)).toBeInTheDocument()
     await waitFor(() => expect(get.mock.calls.length).toBeGreaterThan(listCallsBefore))
   })
 
@@ -462,13 +465,13 @@ describe("reactivating a Participant", () => {
     renderTab()
     const user = userEvent.setup()
     await user.click(await screen.findByRole("button", { name: "Khôi phục người khám Người khám 1" }))
-    const dialog = await screen.findByRole("dialog")
+    const dialog = await findDialog()
     const listCallsBefore = get.mock.calls.length
 
     await user.click(within(dialog).getByRole("button", { name: "Khôi phục người khám" }))
 
-    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument())
-    expect(screen.getByRole("status")).toHaveTextContent(/không còn ở trạng thái Đã hủy/)
+    await waitFor(() => expect(queryDialog()).not.toBeInTheDocument())
+    expect(await screen.findByText(/không còn ở trạng thái Đã hủy/)).toBeInTheDocument()
     await waitFor(() => expect(get.mock.calls.length).toBeGreaterThan(listCallsBefore))
   })
 
@@ -478,12 +481,12 @@ describe("reactivating a Participant", () => {
     renderTab()
     const user = userEvent.setup()
     await user.click(await screen.findByRole("button", { name: "Khôi phục người khám Người khám 1" }))
-    const dialog = await screen.findByRole("dialog")
+    const dialog = await findDialog()
 
     await user.click(within(dialog).getByRole("button", { name: "Khôi phục người khám" }))
 
-    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument())
-    expect(screen.getByRole("status")).toHaveTextContent("Bạn không có quyền khôi phục người khám.")
+    await waitFor(() => expect(queryDialog()).not.toBeInTheDocument())
+    expect(await screen.findByText("Bạn không có quyền khôi phục người khám.")).toBeInTheDocument()
   })
 
   it("keeps the dialog open and explains a batch that no longer accepts changes", async () => {
@@ -494,19 +497,19 @@ describe("reactivating a Participant", () => {
     renderTab()
     const user = userEvent.setup()
     await user.click(await screen.findByRole("button", { name: "Khôi phục người khám Người khám 1" }))
-    const dialog = await screen.findByRole("dialog")
+    const dialog = await findDialog()
 
     await user.click(within(dialog).getByRole("button", { name: "Khôi phục người khám" }))
 
     expect(await within(dialog).findByText(/không còn nhận thay đổi người khám/)).toBeInTheDocument()
-    expect(screen.getByRole("dialog")).toBeInTheDocument()
+    expect(getDialog()).toBeInTheDocument()
   })
 })
 
 describe("adding a CCCD that belongs to a cancelled Participant", () => {
   async function submitDuplicate(user: ReturnType<typeof userEvent.setup>) {
     await user.click(await screen.findByRole("button", { name: "Thêm người khám" }))
-    const dialog = await screen.findByRole("dialog")
+    const dialog = await findDialog()
     await user.type(within(dialog).getByLabelText(/Họ và tên/), "Trần Thị B")
     await user.type(within(dialog).getByLabelText(/Ngày sinh/), "1992-05-06")
     await user.selectOptions(within(dialog).getByLabelText(/Giới tính/), "FEMALE")
@@ -558,7 +561,7 @@ describe("adding a CCCD that belongs to a cancelled Participant", () => {
     await user.click(within(dialog).getByRole("button", { name: "Khôi phục người khám này" }))
 
     await waitFor(() => expect(screen.queryByLabelText(/^Họ và tên/)).not.toBeInTheDocument())
-    const reactivate = await screen.findByRole("dialog")
+    const reactivate = await findDialog()
     expect(within(reactivate).getByText("Lê Văn Cũ")).toBeInTheDocument()
     await user.click(within(reactivate).getByRole("button", { name: "Khôi phục người khám" }))
     await waitFor(() => expect(post).toHaveBeenCalledWith(`${BASE}/p-7/reactivate`, {
@@ -612,7 +615,7 @@ describe("the cancel dialog wording", () => {
     renderTab()
     const user = userEvent.setup()
     await user.click(await screen.findByRole("button", { name: "Hủy người khám Người khám 1" }))
-    const dialog = await screen.findByRole("dialog")
+    const dialog = await findDialog()
 
     expect(
       within(dialog).getByText(

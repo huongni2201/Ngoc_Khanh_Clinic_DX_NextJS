@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { toast } from "@/shared/ui/toaster"
 import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { AlertCircle, Loader2, Info } from "@/shared/ui/product-icon"
@@ -102,6 +103,7 @@ export function EditPatientDialog({
         email: values.email || undefined,
         address: values.address || undefined,
       })
+      toast.success("Đã cập nhật thông tin bệnh nhân.")
       onOpenChange(false)
       onSuccess?.(updated)
     } catch (err: unknown) {

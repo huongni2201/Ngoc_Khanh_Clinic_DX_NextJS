@@ -42,12 +42,11 @@ test("organization to batch chain works on the real backend", async ({ page }) =
   await page.getByRole("button", { name: "Tạo đợt khám" }).first().click()
   const dialog = page.getByRole("dialog")
   await expect(dialog.getByRole("checkbox", { name: "Khám tổng quát" })).toBeVisible()
-  await expect(dialog.getByLabel(/Mã đợt khám/)).toHaveAttribute("readonly", "")
+  await expect(dialog.getByLabel(/Mã đợt khám/)).toHaveCount(0)
   await dialog.getByLabel(/Tên đợt khám/).fill(batchName)
   await dialog.getByLabel(/^Ngày khám/).fill("2026-12-15")
   await dialog.getByRole("button", { name: "Thêm ngày" }).click()
   await dialog.getByLabel(/Loại địa điểm/).selectOption("CLINIC")
-  await dialog.getByLabel(/Tên địa điểm/).fill("Phòng khám Ngọc Khánh")
   await dialog.getByRole("checkbox", { name: "Khám tổng quát" }).check()
   await dialog.getByRole("button", { name: "Tạo đợt khám" }).click()
 

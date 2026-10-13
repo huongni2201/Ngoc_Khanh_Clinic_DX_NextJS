@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { toast } from "@/shared/ui/toaster"
 import { AlertCircle, Loader2, CheckCircle2 } from "@/shared/ui/product-icon"
 import {
   Dialog,
@@ -66,6 +67,7 @@ export function AssignRoomDialog({
         physicianId: room.physicianId,
       })
 
+      toast.success("Đã phân phòng khám.")
       onOpenChange(false)
       if (onSuccess) {
         onSuccess(updated)

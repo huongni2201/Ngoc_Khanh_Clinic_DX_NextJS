@@ -15,6 +15,8 @@ export interface HealthExaminationBatchService {
   referencePrice: number
   negotiatedPrice: number
   displayOrder: number
+  /** False once the service is no longer offered: it cannot be newly marked as performed. */
+  active?: boolean
 }
 
 export interface HealthExaminationBatchSummary {
@@ -42,7 +44,6 @@ export interface HealthExaminationBatch extends HealthExaminationBatchSummary {
   /** The batch days with their identifiers, ascending by date; a Participant is scheduled on one. */
   examinationDays?: HealthExaminationBatchDay[]
   examinationSiteType: ExaminationSiteType
-  examinationSiteName: string
   examinationSiteAddress: string | null
   createdBy: string
   services: HealthExaminationBatchService[]
@@ -62,7 +63,6 @@ export interface CreateHealthExaminationBatchRequest {
   batchName: string
   examinationDates: string[]
   examinationSiteType: ExaminationSiteType
-  examinationSiteName: string
   examinationSiteAddress: string
   services: HealthExaminationBatchServiceInput[]
 }
@@ -74,6 +74,13 @@ export interface UpdateHealthExaminationBatchRequest
 }
 
 export interface DeleteHealthExaminationBatchRequest {
+  organizationId: string
+  batchId: string
+  rowVersion: number
+}
+
+/** Starts a draft batch (DRAFT to READY); its configuration is fixed from then on. */
+export interface StartHealthExaminationBatchRequest {
   organizationId: string
   batchId: string
   rowVersion: number
@@ -137,6 +144,8 @@ export interface ParticipantListFilterParams {
   rosterStatus?: ParticipantRosterStatus
   attendanceStatus?: ParticipantAttendanceStatus
   reconciliationStatus?: ParticipantReconciliationStatus
+  /** Only Participants scheduled on this batch day. */
+  batchDayId?: string
   page?: number
   pageSize?: number
   sortKey?: ParticipantSortKey
@@ -378,6 +387,22 @@ export interface ImportExaminationDetailsRequest {
   idempotencyKey: string
 }
 
+/** What can be recorded by hand for one Participant: attended with services, or absent. */
+export type RecordableAttendanceStatus = "ATTENDED" | "ABSENT"
+
+export interface RecordExaminationDetailRequest {
+  organizationId: string
+  batchId: string
+  participantId: string
+  attendanceStatus: RecordableAttendanceStatus
+  /** Required when attended, omitted when absent. */
+  actualExaminationDate?: string
+  /** At least one when attended, empty when absent. */
+  performedBatchServiceIds: string[]
+  /** The row version the form was opened with. */
+  rowVersion: number
+}
+
 export interface ExaminationDetailImportResult {
   importJobId: string
   batchId: string
@@ -417,4 +442,29 @@ export interface PaymentSummaryReport {
 export interface DownloadedFile {
   blob: Blob
   fileName: string
+}
+
+/** A Participant chosen for printing, with what the print dialogs show about them. */
+export interface ExaminationFormPrintEntry {
+  id: string
+  participantCode?: string
+  fullName: string
+  departmentName: string
+}
+
+/** Order of the forms in a bulk print job. The backend prints in the order it receives. */
+export type ExaminationFormPrintOrder = "CODE" | "DEPARTMENT"
+
+export interface CreateExaminationFormPrintJobRequest {
+  organizationId: string
+  batchId: string
+  /** In print order, without duplicates; at most 1000. */
+  participantIds: string[]
+  /** Reused when the same body is resent after a failure, so a retry never queues twice. */
+  idempotencyKey: string
+}
+
+/** The print job the backend queued; follow it with the document render job endpoints. */
+export interface ExaminationFormPrintJob {
+  jobId: string
 }

@@ -48,6 +48,7 @@ export function buildParticipantListUrl(
   if (params.rosterStatus) query.set("rosterStatus", params.rosterStatus)
   if (params.attendanceStatus) query.set("attendanceStatus", params.attendanceStatus)
   if (params.reconciliationStatus) query.set("reconciliationStatus", params.reconciliationStatus)
+  if (params.batchDayId) query.set("batchDayId", params.batchDayId)
 
   return `${participantsEndpoint(organizationId, batchId)}?${query.toString()}`
 }

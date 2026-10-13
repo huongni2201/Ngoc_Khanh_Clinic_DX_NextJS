@@ -10,6 +10,13 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination"
 import { cn } from "@/lib/utils"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 export interface DataTablePaginationProps {
   currentPage: number
@@ -20,6 +27,47 @@ export interface DataTablePaginationProps {
   entityName?: string
   className?: string
   showSinglePageNavigation?: boolean
+  /** Shows a page-size selector when provided. Tables that do not offer one omit it. */
+  onPageSizeChange?: (pageSize: number) => void
+  /** Choices for the page-size selector. */
+  pageSizeOptions?: readonly number[]
+}
+
+const DEFAULT_PAGE_SIZE_OPTIONS = [10, 20, 50, 100] as const
+
+interface PageSizeSelectProps {
+  value: number
+  options: readonly number[]
+  onChange: (pageSize: number) => void
+}
+
+/** Lets the user choose how many rows a page shows. */
+function PageSizeSelect({ value, options, onChange }: PageSizeSelectProps) {
+  const items = Object.fromEntries(options.map((size) => [String(size), String(size)]))
+
+  return (
+    <div className="flex items-center gap-2 select-none">
+      <span>Số dòng mỗi trang</span>
+      <Select
+        items={items}
+        value={String(value)}
+        onValueChange={(next) => {
+          if (next) onChange(Number(next))
+        }}
+      >
+        <SelectTrigger size="sm" aria-label="Số dòng mỗi trang" className="bg-card text-xs">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {options.map((size) => (
+            <SelectItem key={size} value={String(size)}>
+              {size}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  )
 }
 
 /**
@@ -36,6 +84,8 @@ export function DataTablePagination({
   entityName = "bản ghi",
   className,
   showSinglePageNavigation = false,
+  onPageSizeChange,
+  pageSizeOptions = DEFAULT_PAGE_SIZE_OPTIONS,
 }: DataTablePaginationProps) {
   const startItem = totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1
   const endItem = Math.min(currentPage * pageSize, totalItems)
@@ -83,17 +133,22 @@ export function DataTablePagination({
         className
       )}
     >
-      {/* Summary info on the left */}
-      <div className="text-muted-foreground select-none">
-        {totalItems === 0 ? (
-          "Không có dữ liệu"
-        ) : (
-          <>
-            Hiển thị <span className="font-semibold text-foreground">{startItem}</span> -{" "}
-            <span className="font-semibold text-foreground">{endItem}</span> của{" "}
-            <span className="font-semibold text-foreground">{totalItems}</span> {entityName}
-          </>
+      {/* Page size and summary on the left */}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-muted-foreground">
+        {onPageSizeChange && (
+          <PageSizeSelect value={pageSize} options={pageSizeOptions} onChange={onPageSizeChange} />
         )}
+        <div className="select-none">
+          {totalItems === 0 ? (
+            "Không có dữ liệu"
+          ) : (
+            <>
+              Hiển thị <span className="font-semibold text-foreground">{startItem}</span> -{" "}
+              <span className="font-semibold text-foreground">{endItem}</span> của{" "}
+              <span className="font-semibold text-foreground">{totalItems}</span> {entityName}
+            </>
+          )}
+        </div>
       </div>
 
       {/* Page navigation on the right using shadcn/ui Pagination */}

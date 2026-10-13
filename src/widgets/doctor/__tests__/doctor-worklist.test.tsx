@@ -7,6 +7,21 @@ import { resetMockDoctorEncounters } from "./fixtures/api-fixtures"
 import { AppSidebar } from "@/widgets/app-sidebar/app-sidebar"
 import { AppHeader } from "@/widgets/app-header/app-header"
 import { renderWithClient } from "@/test-utils/render-with-client"
+import { Toaster } from "@/shared/ui/toaster"
+
+const startFailure = vi.hoisted(() => ({ error: null as Error | null }))
+vi.mock("@/modules/encounter/api/encounter-actions", async () => {
+  const doctor = await import("./fixtures/api-fixtures")
+  const reception = await import("@/widgets/reception/__tests__/fixtures/api-fixtures")
+  return {
+    checkInPatient: reception.checkInPatient,
+    assignRoomAndDoctor: reception.assignRoomAndDoctor,
+    startDoctorEncounter: async (id: string) => {
+      if (startFailure.error) throw startFailure.error
+      return doctor.startDoctorEncounter(id)
+    },
+  }
+})
 
 // Mock next/navigation
 const mockPush = vi.fn()
@@ -33,6 +48,7 @@ vi.mock("next/image", () => ({
 describe("Danh sách lượt khám của bác sĩ", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    startFailure.error = null
     resetMockDoctorEncounters()
     mockPathname.mockReturnValue("/doctor")
   })
@@ -232,6 +248,23 @@ describe("Danh sách lượt khám của bác sĩ", () => {
     await user.click(startBtn)
 
     expect(mockPush).toHaveBeenCalledWith("/patients/pat-001/encounters/enc-001")
+  })
+
+  it("tells the doctor with a toast when the examination cannot be started and stays on the worklist", async () => {
+    startFailure.error = new Error("Lượt khám đã được bác sĩ khác tiếp nhận.")
+    const user = userEvent.setup()
+    renderWithClient(
+      <>
+        <DoctorWorklistPage />
+        <Toaster />
+      </>
+    )
+    await screen.findByText("Trần Thị Hương")
+
+    await user.click(screen.getAllByRole("button", { name: "Bắt đầu khám" })[0])
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Lượt khám đã được bác sĩ khác tiếp nhận.")
+    expect(mockPush).not.toHaveBeenCalled()
   })
 
   it("opens DoctorAdvancedFilterDialog when clicking 'Bộ lọc nâng cao' with clean business options", async () => {

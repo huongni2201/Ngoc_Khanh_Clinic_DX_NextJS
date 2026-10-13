@@ -5,7 +5,6 @@ const validBatch = {
   batchName: "Khám sức khỏe định kỳ",
   examinationDates: ["2026-09-15", "2026-09-16"],
   examinationSiteType: "ORGANIZATION_SITE",
-  examinationSiteName: "Đơn vị",
   examinationSiteAddress: "1 Đường A",
   services: [
     {

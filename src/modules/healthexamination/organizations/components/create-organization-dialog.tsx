@@ -11,6 +11,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
+import { toast } from "@/shared/ui/toaster"
 import { OrganizationTextField } from "./organization-text-field"
 import {
   createOrganizationSchema,
@@ -65,6 +66,7 @@ export function CreateOrganizationDialog({
         contactPhone: values.contactPhone,
         contactEmail: values.contactEmail,
       })
+      toast.success(`Đã tạo đơn vị ${values.name}.`)
       reset()
       onOpenChange(false)
       onCreated?.(created.id)

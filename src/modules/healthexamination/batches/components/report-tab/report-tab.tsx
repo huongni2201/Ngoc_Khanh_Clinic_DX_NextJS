@@ -33,7 +33,6 @@ export function ReportTab({ organizationId, batchId, canExportDetails = false }:
     isExportingWord: exportWord.isPending,
     isExportingDetails: exportDetails.isPending,
   }
-  const exportError = exportWord.error ?? exportDetails.error
 
   if (isError) {
     return (
@@ -105,11 +104,6 @@ export function ReportTab({ organizationId, batchId, canExportDetails = false }:
         {data.provisional && (
           <p role="status" className="text-xs text-status-warning">
             Số liệu tạm tính: đợt khám chưa chốt nên số người khám và thành tiền có thể còn thay đổi.
-          </p>
-        )}
-        {exportError && (
-          <p role="alert" className="text-xs text-destructive">
-            {exportError.message || "Không thể xuất file."}
           </p>
         )}
         <ExaminationSummaryTable items={data.items} totalAmount={data.totalAmount} />

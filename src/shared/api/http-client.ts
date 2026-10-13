@@ -32,17 +32,21 @@ export function errorMessage(error: unknown): string {
   }
 }
 
+/** Default time a request may take before it is aborted. */
+export const DEFAULT_REQUEST_TIMEOUT_MS = 15_000
+
 export async function withHttpResponse<T>(
   url: string,
   options: RequestInit,
   readResponse: (response: Response) => Promise<T>,
+  timeoutMs: number = DEFAULT_REQUEST_TIMEOUT_MS,
 ): Promise<T> {
   const controller = new AbortController()
   let timedOut = false
   const abort = () => controller.abort(options.signal?.reason)
   if (options.signal?.aborted) abort()
   options.signal?.addEventListener("abort", abort, { once: true })
-  const timeout = setTimeout(() => { timedOut = true; controller.abort() }, 15_000)
+  const timeout = setTimeout(() => { timedOut = true; controller.abort() }, timeoutMs)
   const transportFailure = (error: unknown): never => {
     if (options.signal?.aborted) throw error
     throw new HttpError(timedOut ? "TIMEOUT" : "NETWORK_ERROR",

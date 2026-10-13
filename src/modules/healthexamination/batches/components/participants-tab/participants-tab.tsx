@@ -1,14 +1,17 @@
 "use client"
 
 import * as React from "react"
-import { Download, Upload, UserPlus } from "@/shared/ui/product-icon"
+import { Download, Info, Upload, UserPlus } from "@/shared/ui/product-icon"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
+import { toast } from "@/shared/ui/toaster"
 import {
   useDownloadParticipantImportTemplate,
   useHealthExaminationBatchParticipants,
 } from "../../hooks/use-health-examination-batches"
+import { useSelectPrintableParticipants } from "../../hooks/use-examination-forms"
 import type {
+  ExaminationFormPrintEntry,
   HealthExaminationBatchDay,
   HealthExaminationParticipant,
   ParticipantAttendanceStatus,
@@ -19,15 +22,32 @@ import {
   isParticipantChangeAllowed,
   isParticipantImportAllowed,
 } from "../../utils/participant-labels"
+import {
+  EXAMINATION_FORM_PRINT_BLOCKED_NOTE,
+  isExaminationFormPrintAllowed,
+  toExaminationFormPrintEntry,
+} from "../../utils/examination-form-print"
 import { CancelParticipantDialog } from "./cancel-participant-dialog"
 import { EmptyParticipantsState } from "./empty-participants-state"
+import { ExaminationFormPreviewDialog } from "./examination-form-preview-dialog"
+import {
+  ExaminationFormPrintJobDialog,
+  type ExaminationFormPrintJobDialogMode,
+  type TrackedExaminationFormPrintJob,
+} from "./examination-form-print-job-dialog"
+import { ParticipantPrintSelectionBar } from "./participant-print-selection-bar"
 import { ParticipantFormDialog } from "./participant-form-dialog"
 import { ParticipantImportDialog } from "./participant-import-dialog"
 import { ParticipantsTable } from "./participants-table"
 import { ParticipantsToolbar } from "./participants-toolbar"
 import { ReactivateParticipantDialog } from "./reactivate-participant-dialog"
 
-const PAGE_SIZE = 10
+const DEFAULT_PAGE_SIZE = 10
+
+/** A dialog closed without doing what was asked (no permission, changed by someone else). */
+const warn = (message: string) => {
+  toast.warning(message)
+}
 
 interface ParticipantsTabProps {
   batchId: string
@@ -46,6 +66,10 @@ interface ParticipantsTabProps {
   canImport?: boolean
   /** UX only: the backend decides. Shows add, edit, cancel and reactivate when true and the batch allows it. */
   canManage?: boolean
+  /** UX only: the backend decides. Shows "In phiếu" on each active row of a READY/FINALIZED batch. */
+  canPrintForm?: boolean
+  /** UX only: the backend decides. Shows row selection and the bulk print job. */
+  canBulkPrintForms?: boolean
 }
 
 export function ParticipantsTab({
@@ -55,6 +79,8 @@ export function ParticipantsTab({
   canRead = true,
   canImport = false,
   canManage = false,
+  canPrintForm = false,
+  canBulkPrintForms = false,
 }: ParticipantsTabProps) {
   const [search, setSearch] = React.useState("")
   const [rosterStatus, setRosterStatus] = React.useState<ParticipantRosterStatus | undefined>()
@@ -62,6 +88,7 @@ export function ParticipantsTab({
     ParticipantAttendanceStatus | undefined
   >()
   const [page, setPage] = React.useState(1)
+  const [pageSize, setPageSize] = React.useState(DEFAULT_PAGE_SIZE)
   const [sortKey, setSortKey] = React.useState<ParticipantSortKey>("id")
   const [sortBy, setSortBy] = React.useState<"ASC" | "DESC">("ASC")
   const [isImportOpen, setIsImportOpen] = React.useState(false)
@@ -69,20 +96,34 @@ export function ParticipantsTab({
   const [editing, setEditing] = React.useState<HealthExaminationParticipant | null>(null)
   const [cancelling, setCancelling] = React.useState<HealthExaminationParticipant | null>(null)
   const [reactivating, setReactivating] = React.useState<HealthExaminationParticipant | null>(null)
-  const [notice, setNotice] = React.useState<string | null>(null)
+  const [batchDayId, setBatchDayId] = React.useState<string | undefined>()
+  // Kept across pages and sorting; cleared when the filter changes, so it never hides rows.
+  const [selection, setSelection] = React.useState<ReadonlyMap<string, ExaminationFormPrintEntry>>(
+    () => new Map()
+  )
+  const [previewing, setPreviewing] = React.useState<ExaminationFormPrintEntry | null>(null)
+  const [printJobMode, setPrintJobMode] = React.useState<ExaminationFormPrintJobDialogMode | null>(
+    null
+  )
+  const [isPrintJobOpen, setIsPrintJobOpen] = React.useState(false)
+  const [trackedJob, setTrackedJob] = React.useState<TrackedExaminationFormPrintJob | null>(null)
 
   const { data, isLoading, isError, error, refetch } = useHealthExaminationBatchParticipants(
     organizationId,
     batchId,
-    { search, rosterStatus, attendanceStatus, page, pageSize: PAGE_SIZE, sortKey, sortBy },
+    { search, rosterStatus, attendanceStatus, batchDayId, page, pageSize, sortKey, sortBy },
     { enabled: canRead }
   )
   const templateDownload = useDownloadParticipantImportTemplate(organizationId, batchId)
+  const selectPrintable = useSelectPrintableParticipants(organizationId, batchId)
 
   const importAllowed = canImport && isParticipantImportAllowed(batch.status)
   const changeAllowed = canManage && isParticipantChangeAllowed(batch.status)
   const days = batch.days ?? []
-  const hasFilter = Boolean(search.trim() || rosterStatus || attendanceStatus)
+  const printAllowed = isExaminationFormPrintAllowed(batch.status)
+  const singlePrintAllowed = canPrintForm && printAllowed
+  const bulkPrintAllowed = canBulkPrintForms && printAllowed
+  const hasFilter = Boolean(search.trim() || rosterStatus || attendanceStatus || batchDayId)
   const participants = data?.data ?? []
   const total = data?.total ?? 0
   const totalPages = data?.totalPages || 1
@@ -91,6 +132,66 @@ export function ParticipantsTab({
   const resetPage = <T,>(set: (value: T) => void) => (value: T) => {
     set(value)
     setPage(1)
+    setSelection(new Map())
+  }
+
+  const handleSelectionChange = (
+    changed: HealthExaminationParticipant[],
+    selected: boolean
+  ) => {
+    setSelection((current) => {
+      const next = new Map(current)
+      for (const participant of changed) {
+        if (selected && participant.rosterStatus === "ACTIVE") {
+          next.set(participant.id, toExaminationFormPrintEntry(participant))
+        } else {
+          next.delete(participant.id)
+        }
+      }
+      return next
+    })
+  }
+
+  const handleSelectAllMatching = () => {
+    if (rosterStatus === "CANCELLED") {
+      toast.warning("Người đã hủy khỏi danh sách không in được phiếu khám.")
+      return
+    }
+    selectPrintable.mutate(
+      { search, attendanceStatus, batchDayId, sortKey, sortBy },
+      {
+        onSuccess: (result) => {
+          if (result.tooMany) {
+            toast.warning(
+              `Có ${result.total.toLocaleString("vi-VN")} người khớp bộ lọc, vượt giới hạn 1.000 người mỗi lệnh in. Hãy lọc theo ngày khám hoặc tìm theo đơn vị/phòng ban.`,
+              { id: "participant-print-select-too-many" }
+            )
+            return
+          }
+          setSelection(new Map(result.entries.map((entry) => [entry.id, entry])))
+          if (result.entries.length === 0) {
+            toast.warning("Không có người khám đang trong danh sách khớp bộ lọc.", {
+              id: "participant-print-select-empty",
+            })
+          }
+        },
+        onError: () =>
+          toast.error("Không thể tải danh sách người khám để chọn. Vui lòng thử lại.", {
+            id: "participant-print-select-failed",
+          }),
+      }
+    )
+  }
+
+  const openPrintJob = (mode: ExaminationFormPrintJobDialogMode) => {
+    setPrintJobMode(mode)
+    setIsPrintJobOpen(true)
+  }
+
+  const handlePrintJobCreated = (job: TrackedExaminationFormPrintJob) => {
+    setTrackedJob(job)
+    setSelection(new Map())
+    setPrintJobMode({ kind: "track", job })
   }
 
   const handleSortChange = (key: ParticipantSortKey) => {
@@ -102,8 +203,22 @@ export function ParticipantsTab({
     setPage(1)
   }
 
+  const handlePageSizeChange = (size: number) => {
+    setPageSize(size)
+    setPage(1)
+  }
+
   const handleDownloadTemplate = () =>
-    templateDownload.mutate({ batchCode: batch.code })
+    templateDownload.mutate(
+      { batchCode: batch.code },
+      {
+        onError: () =>
+          toast.error("Không thể tải file mẫu. Vui lòng thử lại.", {
+            id: "participant-template-download-failed",
+            action: { label: "Thử lại", onClick: handleDownloadTemplate },
+          }),
+      }
+    )
 
   const actions =
     importAllowed || changeAllowed ? (
@@ -112,10 +227,7 @@ export function ParticipantsTab({
           <Button
             type="button"
             size="sm"
-            onClick={() => {
-              setNotice(null)
-              setIsCreateOpen(true)
-            }}
+            onClick={() => setIsCreateOpen(true)}
           >
             <UserPlus className="mr-1.5 size-3.5" />
             Thêm người khám
@@ -161,20 +273,30 @@ export function ParticipantsTab({
           onRosterStatusChange={resetPage(setRosterStatus)}
           attendanceStatus={attendanceStatus}
           onAttendanceStatusChange={resetPage(setAttendanceStatus)}
+          days={days}
+          batchDayId={batchDayId}
+          onBatchDayIdChange={resetPage(setBatchDayId)}
           actions={actions}
         />
       )}
 
-      {notice && (
-        <p role="status" className="text-xs text-muted-foreground">
-          {notice}
+      {!isEmpty && (canPrintForm || canBulkPrintForms) && !printAllowed && (
+        <p className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Info aria-hidden="true" className="size-3.5 shrink-0" />
+          {EXAMINATION_FORM_PRINT_BLOCKED_NOTE}
         </p>
       )}
 
-      {templateDownload.isError && (
-        <p role="alert" className="text-xs text-destructive">
-          Không thể tải file mẫu. Vui lòng thử lại.
-        </p>
+      {!isEmpty && !isLoading && !isError && bulkPrintAllowed && (
+        <ParticipantPrintSelectionBar
+          selectedCount={selection.size}
+          onSelectAllMatching={handleSelectAllMatching}
+          isSelectingAll={selectPrintable.isPending}
+          onClear={() => setSelection(new Map())}
+          onPrint={() => openPrintJob({ kind: "create", entries: [...selection.values()] })}
+          trackedJobId={trackedJob?.jobId}
+          onOpenTrackedJob={() => trackedJob && openPrintJob({ kind: "track", job: trackedJob })}
+        />
       )}
 
       {isLoading ? (
@@ -215,29 +337,54 @@ export function ParticipantsTab({
           participants={participants}
           totalItems={total}
           currentPage={page}
-          pageSize={PAGE_SIZE}
+          pageSize={pageSize}
           totalPages={totalPages}
           onPageChange={setPage}
+          onPageSizeChange={handlePageSizeChange}
           sortKey={sortKey}
           sortBy={sortBy}
           onSortChange={handleSortChange}
           canManage={changeAllowed}
-          onEdit={(participant) => {
-            setNotice(null)
-            setEditing(participant)
-          }}
-          onCancel={(participant) => {
-            setNotice(null)
-            setCancelling(participant)
-          }}
-          onReactivate={
-            changeAllowed
-              ? (participant) => {
-                  setNotice(null)
-                  setReactivating(participant)
+          onEdit={setEditing}
+          onCancel={setCancelling}
+          onReactivate={changeAllowed ? setReactivating : undefined}
+          onPrint={
+            singlePrintAllowed
+              ? (participant) => setPreviewing(toExaminationFormPrintEntry(participant))
+              : undefined
+          }
+          selection={
+            bulkPrintAllowed
+              ? {
+                  isSelected: (participantId) => selection.has(participantId),
+                  onChange: handleSelectionChange,
                 }
               : undefined
           }
+        />
+      )}
+
+      {singlePrintAllowed && (
+        <ExaminationFormPreviewDialog
+          open={previewing !== null}
+          onOpenChange={(open) => {
+            if (!open) setPreviewing(null)
+          }}
+          organizationId={organizationId}
+          batchId={batchId}
+          participant={previewing}
+        />
+      )}
+
+      {bulkPrintAllowed && (
+        <ExaminationFormPrintJobDialog
+          open={isPrintJobOpen}
+          onOpenChange={setIsPrintJobOpen}
+          organizationId={organizationId}
+          batchId={batchId}
+          mode={printJobMode}
+          onJobCreated={handlePrintJobCreated}
+          onRecreate={(entries) => setPrintJobMode({ kind: "create", entries })}
         />
       )}
 
@@ -250,10 +397,9 @@ export function ParticipantsTab({
             organizationId={organizationId}
             batchId={batchId}
             days={days}
-            onSaved={() => setNotice("Đã thêm người khám vào danh sách.")}
-            onNotice={setNotice}
+            onSaved={() => toast.success("Đã thêm người khám vào danh sách.")}
+            onNotice={warn}
             onReactivateCandidate={(participant) => {
-              setNotice(null)
               setIsCreateOpen(false)
               setReactivating(participant)
             }}
@@ -268,8 +414,8 @@ export function ParticipantsTab({
             batchId={batchId}
             days={days}
             participantId={editing?.id}
-            onSaved={() => setNotice("Đã cập nhật thông tin người khám.")}
-            onNotice={setNotice}
+            onSaved={() => toast.success("Đã cập nhật thông tin người khám.")}
+            onNotice={warn}
           />
           <CancelParticipantDialog
             open={cancelling !== null}
@@ -280,9 +426,9 @@ export function ParticipantsTab({
             batchId={batchId}
             participant={cancelling}
             onCancelled={(participant) =>
-              setNotice(`Đã hủy người khám ${participant.fullName}.`)
+              toast.success(`Đã hủy người khám ${participant.fullName}.`)
             }
-            onNotice={setNotice}
+            onNotice={warn}
           />
           <ReactivateParticipantDialog
             open={reactivating !== null}
@@ -294,9 +440,9 @@ export function ParticipantsTab({
             participant={reactivating}
             days={days}
             onReactivated={(participant) =>
-              setNotice(`Đã khôi phục người khám ${participant.fullName}.`)
+              toast.success(`Đã khôi phục người khám ${participant.fullName}.`)
             }
-            onNotice={setNotice}
+            onNotice={warn}
           />
         </>
       )}
@@ -310,6 +456,9 @@ export function ParticipantsTab({
           rowVersion={batch.rowVersion}
           onDownloadTemplate={handleDownloadTemplate}
           isDownloadingTemplate={templateDownload.isPending}
+          onImported={(imported) =>
+            toast.success(`Đã thêm ${imported.createdCount} người khám vào đợt khám.`)
+          }
         />
       )}
     </div>

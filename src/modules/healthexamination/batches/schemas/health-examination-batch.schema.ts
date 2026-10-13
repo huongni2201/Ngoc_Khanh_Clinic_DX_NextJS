@@ -39,14 +39,18 @@ export const healthExaminationBatchFormSchema = z
       .array(z.iso.date({ error: "Ngày phải có định dạng yyyy-MM-dd" }))
       .min(1, { message: "Vui lòng chọn ít nhất một ngày khám." }),
     examinationSiteType: examinationSiteTypeSchema,
-    examinationSiteName: z.string().trim().min(1, { message: "Tên địa điểm khám là bắt buộc" }),
-    examinationSiteAddress: z
-      .string()
-      .trim()
-      .min(1, { message: "Địa chỉ địa điểm khám là bắt buộc" }),
+    examinationSiteAddress: z.string().trim(),
     services: z.array(healthExaminationBatchItemFormSchema),
   })
   .superRefine((data, context) => {
+    if (data.examinationSiteType === "ORGANIZATION_SITE" && !data.examinationSiteAddress) {
+      context.addIssue({
+        code: "custom",
+        message: "Địa chỉ địa điểm khám là bắt buộc",
+        path: ["examinationSiteAddress"],
+      })
+    }
+
     if (new Set(data.examinationDates).size !== data.examinationDates.length) {
       context.addIssue({
         code: "custom",

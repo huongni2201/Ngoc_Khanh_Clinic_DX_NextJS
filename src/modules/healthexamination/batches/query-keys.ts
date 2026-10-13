@@ -30,6 +30,13 @@ export const healthExaminationKeys = {
       "detail",
       participantId,
     ] as const,
+  /** The PDF of one Participant's blank form; never kept after the preview closes. */
+  examinationForm: (organizationId: string, batchId: string, participantId: string) =>
+    [
+      ...healthExaminationKeys.participantsRoot(organizationId, batchId),
+      "examination-form",
+      participantId,
+    ] as const,
   participants: (
     organizationId: string,
     batchId: string,
