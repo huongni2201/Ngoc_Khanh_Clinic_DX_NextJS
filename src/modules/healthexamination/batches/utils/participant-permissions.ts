@@ -1,6 +1,9 @@
-/** Backend permission codes (migrations V003, V004). Used only to decide which actions are shown. */
-export const PARTICIPANT_READ_PERMISSION = "HEALTH_EXAMINATION_PARTICIPANT_READ"
-export const PARTICIPANT_IMPORT_PERMISSION = "HEALTH_EXAMINATION_PARTICIPANT_IMPORT"
+/** Backend permission code for reading batch participants. */
+export const PARTICIPANT_READ_PERMISSION = "PARTICIPANT_VIEW"
+export const PARTICIPANT_TEMPLATE_DOWNLOAD_PERMISSION = "PARTICIPANT_TEMPLATE_DOWNLOAD"
+export const PARTICIPANT_IMPORT_PERMISSION = "PARTICIPANT_IMPORT"
+export const PARTICIPANT_CREATE_PERMISSION = "PARTICIPANT_CREATE"
+/** Legacy grouped gate for editing, cancelling and reactivating Participants. */
 export const PARTICIPANT_MANAGE_PERMISSION = "HEALTH_EXAMINATION_PARTICIPANT_MANAGE"
 /** Backend permission codes of the examination detail and payment report routes (migration V005). */
 export const EXAMINATION_SERVICE_READ_PERMISSION = "HEALTH_EXAMINATION_SERVICE_READ"

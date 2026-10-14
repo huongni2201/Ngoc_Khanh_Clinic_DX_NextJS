@@ -17,6 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { PAGE_SIZE_OPTIONS } from "./page-size"
 
 export interface DataTablePaginationProps {
   currentPage: number
@@ -29,11 +30,9 @@ export interface DataTablePaginationProps {
   showSinglePageNavigation?: boolean
   /** Shows a page-size selector when provided. Tables that do not offer one omit it. */
   onPageSizeChange?: (pageSize: number) => void
-  /** Choices for the page-size selector. */
+  /** Choices for the page-size selector. Defaults to the sizes every list shares. */
   pageSizeOptions?: readonly number[]
 }
-
-const DEFAULT_PAGE_SIZE_OPTIONS = [10, 20, 50, 100] as const
 
 interface PageSizeSelectProps {
   value: number
@@ -85,7 +84,7 @@ export function DataTablePagination({
   className,
   showSinglePageNavigation = false,
   onPageSizeChange,
-  pageSizeOptions = DEFAULT_PAGE_SIZE_OPTIONS,
+  pageSizeOptions = PAGE_SIZE_OPTIONS,
 }: DataTablePaginationProps) {
   const startItem = totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1
   const endItem = Math.min(currentPage * pageSize, totalItems)
@@ -136,7 +135,15 @@ export function DataTablePagination({
       {/* Page size and summary on the left */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-muted-foreground">
         {onPageSizeChange && (
-          <PageSizeSelect value={pageSize} options={pageSizeOptions} onChange={onPageSizeChange} />
+          <PageSizeSelect
+            value={pageSize}
+            options={
+              pageSizeOptions.includes(pageSize)
+                ? pageSizeOptions
+                : [...pageSizeOptions, pageSize].sort((a, b) => a - b)
+            }
+            onChange={onPageSizeChange}
+          />
         )}
         <div className="select-none">
           {totalItems === 0 ? (

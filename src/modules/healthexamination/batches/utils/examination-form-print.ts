@@ -1,7 +1,9 @@
 import { ApiClientError } from "@/shared/api/api-client"
 import type {
+  ExaminationFormDayPrintOrder,
   ExaminationFormPrintEntry,
   ExaminationFormPrintOrder,
+  HealthExaminationBatchDay,
   HealthExaminationParticipant,
 } from "../types"
 
@@ -16,6 +18,45 @@ export const EXAMINATION_FORM_PRINT_BLOCKED_NOTE =
 export const EXAMINATION_FORM_PRINT_ORDER_LABELS: Record<ExaminationFormPrintOrder, string> = {
   CODE: "Theo mã người khám",
   DEPARTMENT: "Theo đơn vị/phòng ban, rồi mã người khám",
+}
+
+export const EXAMINATION_FORM_DAY_PRINT_ORDER_LABELS: Record<ExaminationFormDayPrintOrder, string> = {
+  DEPARTMENT: "Theo đơn vị/phòng ban, rồi thứ tự trong file danh sách",
+  CODE: "Theo mã người khám",
+  IMPORT_ORDER: "Theo thứ tự trong file danh sách",
+}
+
+/** Forms per merged PDF (`nkc.document.jobs.part-size`). */
+export const EXAMINATION_FORM_PRINT_PART_SIZE = 200
+
+/** How many PDF files a job of `count` forms is split into. */
+export function countExaminationFormPrintParts(count: number): number {
+  return count <= 0 ? 0 : Math.ceil(count / EXAMINATION_FORM_PRINT_PART_SIZE)
+}
+
+/** Today as `yyyy-MM-dd` in the browser's time zone. */
+export function localIsoDate(date: Date = new Date()): string {
+  const month = String(date.getMonth() + 1).padStart(2, "0")
+  const day = String(date.getDate()).padStart(2, "0")
+  return `${date.getFullYear()}-${month}-${day}`
+}
+
+/**
+ * The day to preselect for a day print: the day the list is filtered to, else today, else the next
+ * day still ahead, else the last day of the batch. `today` is `yyyy-MM-dd`.
+ */
+export function pickDefaultPrintDay(
+  days: readonly HealthExaminationBatchDay[],
+  today: string,
+  filterDayId?: string
+): HealthExaminationBatchDay | undefined {
+  if (days.length === 0) return undefined
+  const sorted = [...days].sort((left, right) => left.examinationDate.localeCompare(right.examinationDate))
+  return (
+    sorted.find((day) => day.id === filterDayId) ??
+    sorted.find((day) => day.examinationDate >= today) ??
+    sorted[sorted.length - 1]
+  )
 }
 
 export function toExaminationFormPrintEntry(
@@ -86,9 +127,9 @@ export function describeCreatePrintJobError(error: unknown): string {
       return "Danh sách in không hợp lệ (trống, trùng người hoặc quá 1.000 người)."
     }
     if (error.status === 403) return "Tài khoản của bạn chưa được cấp quyền in phiếu khám hàng loạt."
-    if (error.status === 404) return "Không tìm thấy đợt khám. Tải lại trang rồi thử lại."
+    if (error.status === 404) return "Không tìm thấy đợt khám hoặc ngày khám. Tải lại trang rồi thử lại."
     if (error.status === 409) {
-      return "Chưa tạo được lệnh in: đợt khám không còn ở trạng thái cho phép in, hoặc bạn đang có 3 lệnh in chưa xong. Đợi lệnh trước hoàn tất rồi thử lại."
+      return "Chưa tạo được lệnh in: đợt khám không còn ở trạng thái cho phép in, ngày khám không còn ai cần in, danh sách của ngày vừa thay đổi so với lần gửi trước, hoặc bạn đang có 3 lệnh in chưa xong. Kiểm tra lại rồi thử lại."
     }
     if (error.status === 503) {
       return "Máy chủ chưa sẵn sàng lưu file in. Liên hệ quản trị hệ thống."

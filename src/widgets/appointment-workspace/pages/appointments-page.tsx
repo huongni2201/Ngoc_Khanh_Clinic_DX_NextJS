@@ -9,7 +9,7 @@ import { PageHeader, ScreenLayout } from "@/shared/ui"
 import { AppointmentHeaderActions } from "@/modules/appointment"
 import { AppointmentCountersStrip } from "@/modules/appointment"
 import { AppointmentTable } from "@/modules/appointment"
-import { DataTablePagination } from "@/shared/ui"
+import { DEFAULT_PAGE_SIZE, DataTablePagination, parsePageSize } from "@/shared/ui"
 import { CreateAppointmentDialog } from "../components/create-appointment-dialog"
 import { EditAppointmentDialog } from "../components/edit-appointment-dialog"
 import { AppointmentDetailDialog } from "@/modules/appointment"
@@ -56,7 +56,7 @@ export function AppointmentsPage() {
     (organizationIdParam ? "ORGANIZATION_HEALTH_EXAMINATION" : "ALL")
   const rawPage = Number(searchParams?.get("page") ?? "1")
   const page = Number.isSafeInteger(rawPage) && rawPage > 0 ? rawPage : 1
-  const pageSize = 10
+  const pageSize = parsePageSize(searchParams?.get("size"))
   const [debouncedSearchTerm, setDebouncedSearchTerm] = React.useState(searchTerm)
 
   React.useEffect(() => {
@@ -72,6 +72,7 @@ export function AppointmentsPage() {
       examType?: string
       careProgram?: string
       page?: number
+      pageSize?: number
     }) => {
       const current = new URLSearchParams(
         Array.from(searchParams?.entries() || [])
@@ -124,6 +125,12 @@ export function AppointmentsPage() {
 
       if (newParams.page !== undefined) {
         current.set("page", newParams.page.toString())
+      }
+
+      if (newParams.pageSize !== undefined) {
+        if (newParams.pageSize === DEFAULT_PAGE_SIZE) current.delete("size")
+        else current.set("size", newParams.pageSize.toString())
+        current.set("page", "1")
       }
 
       const searchStr = current.toString()
@@ -336,6 +343,7 @@ export function AppointmentsPage() {
             totalItems={totalCount}
             totalPages={totalPages}
             onPageChange={(newPage) => updateUrlParams({ page: newPage })}
+            onPageSizeChange={(size) => updateUrlParams({ pageSize: size })}
             entityName="lịch hẹn"
           />
         </div>

@@ -19,10 +19,10 @@ import { isExaminationEditAllowed } from "../../utils/examination-detail-labels"
 import { ExaminationDetailEntrySheet } from "./examination-detail-entry-sheet"
 import { ExaminationDetailImportDialog } from "./examination-detail-import-dialog"
 import { ExaminationDetailToolbar } from "./examination-detail-toolbar"
+import { DEFAULT_PAGE_SIZE } from "@/shared/ui"
 import { ExaminationMatrixTable } from "./examination-matrix-table"
 import { ExaminationSummaryStrip } from "./examination-summary-strip"
 
-const PAGE_SIZE = 10
 const SEARCH_DEBOUNCE_MS = 300
 const HIGHLIGHT_MS = 1500
 
@@ -58,6 +58,7 @@ export function ExaminationDetailTab({
   const [debouncedSearch, setDebouncedSearch] = React.useState("")
   const [statusFilter, setStatusFilter] = React.useState<ExaminationStatusFilter | undefined>()
   const [page, setPage] = React.useState(1)
+  const [pageSize, setPageSize] = React.useState<number>(DEFAULT_PAGE_SIZE)
   const [isImportOpen, setIsImportOpen] = React.useState(false)
   const [editingRowId, setEditingRowId] = React.useState<string | null>(null)
   const [highlightedRowId, setHighlightedRowId] = React.useState<string | null>(null)
@@ -73,7 +74,7 @@ export function ExaminationDetailTab({
   const details = useExaminationDetails(
     organizationId,
     batch.id,
-    { search: debouncedSearch, statusFilter, page, pageSize: PAGE_SIZE },
+    { search: debouncedSearch, statusFilter, page, pageSize },
     { enabled: canRead }
   )
   const summary = useExaminationSummary(organizationId, batch.id, { enabled: canRead })
@@ -210,9 +211,13 @@ export function ExaminationDetailTab({
           items={items}
           totalItems={details.data?.total ?? 0}
           currentPage={page}
-          pageSize={PAGE_SIZE}
+          pageSize={pageSize}
           totalPages={details.data?.totalPages || 1}
           onPageChange={setPage}
+          onPageSizeChange={(size) => {
+            setPageSize(size)
+            setPage(1)
+          }}
           filtered={filtered}
           onEditRow={editAllowed ? (row) => setEditingRowId(row.id) : undefined}
           highlightedRowId={highlightedRowId}

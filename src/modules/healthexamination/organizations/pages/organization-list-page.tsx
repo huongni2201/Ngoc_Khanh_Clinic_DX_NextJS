@@ -6,7 +6,7 @@ import { AlertCircle, RefreshCw } from "@/shared/ui/product-icon"
 import { Button } from "@/components/ui/button"
 import { OrganizationPageHeader } from "../components/organization-page-header"
 import { OrganizationTable } from "../components/organization-table"
-import { DataTablePagination, ScreenLayout } from "@/shared/ui"
+import { DataTablePagination, ScreenLayout, parsePageSize, DEFAULT_PAGE_SIZE } from "@/shared/ui"
 import { CreateOrganizationDialog } from "../components/create-organization-dialog"
 import { useOrganizations } from "../hooks/use-organizations"
 
@@ -19,13 +19,14 @@ export function OrganizationListPage() {
   const search = searchParams?.get("q")?.trim() || ""
   const pageParam = Number(searchParams?.get("page"))
   const page = Number.isSafeInteger(pageParam) && pageParam > 0 ? pageParam : 1
+  const pageSize = parsePageSize(searchParams?.get("size"))
 
   // Dialog state
   const [isCreateOpen, setIsCreateOpen] = React.useState(false)
 
   // Sync state to URL params
   const updateUrlParams = React.useCallback(
-    (newParams: { q?: string; page?: number }) => {
+    (newParams: { q?: string; page?: number; pageSize?: number }) => {
       const current = new URLSearchParams(
         Array.from(searchParams?.entries() || [])
       )
@@ -43,6 +44,12 @@ export function OrganizationListPage() {
         current.set("page", newParams.page.toString())
       }
 
+      if (newParams.pageSize !== undefined) {
+        if (newParams.pageSize === DEFAULT_PAGE_SIZE) current.delete("size")
+        else current.set("size", newParams.pageSize.toString())
+        current.set("page", "1")
+      }
+
       const searchStr = current.toString()
       const query = searchStr ? `?${searchStr}` : ""
       router.replace(`${pathname}${query}`)
@@ -54,7 +61,7 @@ export function OrganizationListPage() {
   const { data, isLoading, isError, error, refetch } = useOrganizations({
     search,
     page,
-    pageSize: 10,
+    pageSize,
   })
 
   return (
@@ -98,10 +105,11 @@ export function OrganizationListPage() {
         <div className="pt-1 mt-1">
           <DataTablePagination
             currentPage={data?.page || 1}
-            pageSize={data?.pageSize || 10}
+            pageSize={data?.pageSize || pageSize}
             totalItems={data?.total || 0}
             totalPages={data?.totalPages || 1}
             onPageChange={(newPage) => updateUrlParams({ page: newPage })}
+            onPageSizeChange={(size) => updateUrlParams({ pageSize: size })}
             entityName="đơn vị"
           />
         </div>

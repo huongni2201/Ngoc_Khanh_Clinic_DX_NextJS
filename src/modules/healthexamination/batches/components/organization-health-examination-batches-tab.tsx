@@ -4,7 +4,7 @@ import * as React from "react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { AlertCircle, RefreshCw } from "@/shared/ui/product-icon"
 import { Button } from "@/components/ui/button"
-import { DataTablePagination } from "@/shared/ui"
+import { DataTablePagination, parsePageSize } from "@/shared/ui"
 import { useOrganizationHealthExaminationBatches } from "../hooks/use-health-examination-batches"
 import { BATCH_DEFAULT_PAGE_SIZE, BATCH_MAX_SEARCH_LENGTH } from "../utils/batch-list-params"
 import { HealthExaminationBatchTable } from "./batch-list/health-examination-batch-table"
@@ -19,6 +19,7 @@ interface OrganizationHealthExaminationBatchesTabProps {
 
 const SEARCH_PARAM = "bq"
 const PAGE_PARAM = "bpage"
+const PAGE_SIZE_PARAM = "bsize"
 const SEARCH_DEBOUNCE_MS = 300
 
 export function OrganizationHealthExaminationBatchesTab({
@@ -33,12 +34,13 @@ export function OrganizationHealthExaminationBatchesTab({
   const search = (searchParams?.get(SEARCH_PARAM) ?? "").trim().slice(0, BATCH_MAX_SEARCH_LENGTH)
   const pageValue = Number(searchParams?.get(PAGE_PARAM))
   const page = Number.isSafeInteger(pageValue) && pageValue > 0 ? pageValue : 1
+  const pageSize = parsePageSize(searchParams?.get(PAGE_SIZE_PARAM), BATCH_DEFAULT_PAGE_SIZE)
 
   const [searchInput, setSearchInput] = React.useState(search)
   const [isCreateOpen, setIsCreateOpen] = React.useState(false)
 
   const updateParams = React.useCallback(
-    (changes: { search?: string; page?: number }) => {
+    (changes: { search?: string; page?: number; pageSize?: number }) => {
       const params = new URLSearchParams(searchParams?.toString() ?? "")
       if (changes.search !== undefined) {
         if (changes.search.trim()) params.set(SEARCH_PARAM, changes.search.trim())
@@ -48,6 +50,12 @@ export function OrganizationHealthExaminationBatchesTab({
       if (changes.page !== undefined) {
         if (changes.page > 1) params.set(PAGE_PARAM, String(changes.page))
         else params.delete(PAGE_PARAM)
+      }
+      if (changes.pageSize !== undefined) {
+        if (changes.pageSize !== BATCH_DEFAULT_PAGE_SIZE) {
+          params.set(PAGE_SIZE_PARAM, String(changes.pageSize))
+        } else params.delete(PAGE_SIZE_PARAM)
+        params.delete(PAGE_PARAM)
       }
       const query = params.toString()
       router.replace(`${pathname}${query ? `?${query}` : ""}`, { scroll: false })
@@ -67,7 +75,7 @@ export function OrganizationHealthExaminationBatchesTab({
     {
       search,
       page,
-      pageSize: BATCH_DEFAULT_PAGE_SIZE,
+      pageSize,
       sortKey: "createdAt",
       sortBy: "DESC",
     }
@@ -112,6 +120,7 @@ export function OrganizationHealthExaminationBatchesTab({
               totalPages={data.totalPages}
               entityName="đợt khám"
               onPageChange={(next) => updateParams({ page: next })}
+              onPageSizeChange={(size) => updateParams({ pageSize: size })}
             />
           )}
         </>

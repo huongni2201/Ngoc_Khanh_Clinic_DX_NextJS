@@ -97,6 +97,22 @@ describe("ParticipantsTab list", () => {
     expect(get).not.toHaveBeenCalled()
   })
 
+  it("keeps search and filters available when the roster is empty", async () => {
+    vi.spyOn(apiClient, "get").mockResolvedValue(page([]))
+    renderTab()
+
+    expect(await screen.findByText("Chưa có người khám trong đợt khám")).toBeInTheDocument()
+    expect(
+      screen.getByRole("searchbox", { name: "Tìm người khám trong đợt khám" })
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole("combobox", { name: "Lọc theo trạng thái danh sách" })
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole("combobox", { name: "Lọc theo trạng thái tiếp nhận" })
+    ).toBeInTheDocument()
+  })
+
   it("renders rows with the masked CCCD and Vietnamese labels, never the raw enum", async () => {
     vi.spyOn(apiClient, "get").mockResolvedValue(page([item(1)]))
     renderTab()
@@ -164,7 +180,11 @@ describe("ParticipantsTab actions", () => {
     "hides template and import for a %s batch even with the permission",
     async (status) => {
       vi.spyOn(apiClient, "get").mockResolvedValue(page([item(1)]))
-      renderTab({ canImport: true, batch: { code: "DK", status, rowVersion: 1 } })
+      renderTab({
+        canImport: true,
+        canDownloadTemplate: true,
+        batch: { code: "DK", status, rowVersion: 1 },
+      })
 
       await screen.findByText("Người khám 1")
       expect(screen.queryByRole("button", { name: /nhập từ excel/i })).not.toBeInTheDocument()
@@ -176,7 +196,7 @@ describe("ParticipantsTab actions", () => {
     vi.spyOn(apiClient, "get").mockResolvedValue(page([item(1)]))
     const blob = new Blob(["x"])
     const getBlob = vi.spyOn(apiClient, "getBlob").mockResolvedValue({ blob, filename: undefined })
-    renderTab({ canImport: true })
+    renderTab({ canImport: true, canDownloadTemplate: true })
     const user = userEvent.setup()
     await screen.findByText("Người khám 1")
 
@@ -194,7 +214,7 @@ describe("ParticipantsTab actions", () => {
   it("tells the user when the template cannot be downloaded", async () => {
     vi.spyOn(apiClient, "get").mockResolvedValue(page([item(1)]))
     vi.spyOn(apiClient, "getBlob").mockRejectedValue(new ApiClientError("x", 500))
-    renderTab({ canImport: true })
+    renderTab({ canImport: true, canDownloadTemplate: true })
     const user = userEvent.setup()
     await screen.findByText("Người khám 1")
 
@@ -233,6 +253,7 @@ describe("Participant import dialog", () => {
     })
     renderTab({ canImport: true })
     const { user, dialog } = await openDialog()
+    expect(within(dialog).queryByRole("button", { name: "Tải file mẫu" })).not.toBeInTheDocument()
     const listCalls = get.mock.calls.length
 
     await user.upload(within(dialog).getByLabelText(/Tệp Excel/), xlsx())

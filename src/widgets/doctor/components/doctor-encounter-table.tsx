@@ -72,6 +72,7 @@ interface DoctorEncounterTableProps {
   pageSize: number
   totalPages: number
   onPageChange: (page: number) => void
+  onPageSizeChange?: (pageSize: number) => void
   isLoading?: boolean
   sortDirection: "asc" | "desc"
   onToggleSort: () => void
@@ -87,6 +88,7 @@ export function DoctorEncounterTable({
   pageSize,
   totalPages,
   onPageChange,
+  onPageSizeChange,
   isLoading,
   sortDirection,
   onToggleSort,
@@ -325,6 +327,7 @@ export function DoctorEncounterTable({
             totalItems={totalItems}
             totalPages={totalPages}
             onPageChange={onPageChange}
+            onPageSizeChange={onPageSizeChange}
             entityName="lượt khám"
             showSinglePageNavigation={true}
           />

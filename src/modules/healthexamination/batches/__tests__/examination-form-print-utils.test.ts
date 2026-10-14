@@ -1,11 +1,14 @@
 import { describe, expect, it } from "vitest"
 import { ApiClientError } from "@/shared/api/api-client"
 import {
+  countExaminationFormPrintParts,
   describeCreatePrintJobError,
   describeExaminationFormError,
   detectPdfPaper,
   isExaminationFormPrintAllowed,
+  localIsoDate,
   orderExaminationFormPrintEntries,
+  pickDefaultPrintDay,
 } from "../utils/examination-form-print"
 
 const entries = [
@@ -56,5 +59,35 @@ describe("examination form printing rules", () => {
     expect(await detectPdfPaper(pdf("0 0 595.3 841.9"))).toBe("A4 dọc")
     expect(await detectPdfPaper(pdf("0 0 226.77 566.93"))).toBe("80 × 200 mm")
     expect(await detectPdfPaper(new Blob(["%PDF-1.7 compressed"]))).toBeNull()
+  })
+
+  describe("printing an examination day", () => {
+    const days = [
+      { id: "d3", examinationDate: "2026-10-22" },
+      { id: "d1", examinationDate: "2026-10-20" },
+      { id: "d2", examinationDate: "2026-10-21" },
+    ]
+
+    it("preselects the filtered day, else today, else the next day, else the last day", () => {
+      expect(pickDefaultPrintDay(days, "2026-10-21", "d3")?.id).toBe("d3")
+      expect(pickDefaultPrintDay(days, "2026-10-21")?.id).toBe("d2")
+      expect(pickDefaultPrintDay(days, "2026-10-01")?.id).toBe("d1")
+      expect(pickDefaultPrintDay(days, "2026-11-01")?.id).toBe("d3")
+      expect(pickDefaultPrintDay(days, "2026-10-21", "missing")?.id).toBe("d2")
+      expect(pickDefaultPrintDay([], "2026-10-21")).toBeUndefined()
+    })
+
+    it("splits a job into parts of 200 forms", () => {
+      expect(countExaminationFormPrintParts(0)).toBe(0)
+      expect(countExaminationFormPrintParts(1)).toBe(1)
+      expect(countExaminationFormPrintParts(200)).toBe(1)
+      expect(countExaminationFormPrintParts(201)).toBe(2)
+      expect(countExaminationFormPrintParts(1000)).toBe(5)
+    })
+
+    it("formats the local date as yyyy-MM-dd", () => {
+      expect(localIsoDate(new Date(2026, 0, 5))).toBe("2026-01-05")
+      expect(localIsoDate(new Date(2026, 11, 31))).toBe("2026-12-31")
+    })
   })
 })

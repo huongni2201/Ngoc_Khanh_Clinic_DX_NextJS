@@ -43,10 +43,11 @@ const batch: HealthExaminationBatch = {
   ],
 }
 
-function renderPage() {
+function renderPage(initialSession?: unknown) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   })
+  if (initialSession !== undefined) queryClient.setQueryData(["auth", "session"], initialSession)
   const view = render(
     <QueryClientProvider client={queryClient}>
       <HealthExaminationBatchDetailPage organizationId="org-1" batchId="batch-1" />
@@ -285,28 +286,58 @@ describe("HealthExaminationBatchDetailPage", () => {
       data: { items: [], page: 1, size: 10, totalElements: 0, totalPages: 0 },
     }
 
-    it("shows the import actions only when the session carries the import permission", async () => {
+    it("shows participant actions for their matching backend permissions", async () => {
       nav.search = "tab=participants"
       vi.spyOn(batchApi, "fetchHealthExaminationBatchById").mockResolvedValue(batch)
-      vi.spyOn(apiClient, "get").mockResolvedValue(emptyPage)
-      const { queryClient } = renderPage()
-      queryClient.setQueryData(["auth", "session"], session(["HEALTH_EXAMINATION_PARTICIPANT_READ"]))
+      const get = vi.spyOn(apiClient, "get").mockResolvedValue(emptyPage)
+      const { queryClient } = renderPage(session(["PARTICIPANT_VIEW"]))
 
       await screen.findByText("Chưa có người khám trong đợt khám")
+      expect(get).toHaveBeenCalledWith(expect.stringContaining("/participants?"), expect.anything())
+      expect(
+        screen.getByRole("searchbox", { name: "Tìm người khám trong đợt khám" })
+      ).toBeInTheDocument()
+      expect(
+        screen.getByRole("combobox", { name: "Lọc theo trạng thái danh sách" })
+      ).toBeInTheDocument()
+      expect(
+        screen.getByRole("combobox", { name: "Lọc theo trạng thái tiếp nhận" })
+      ).toBeInTheDocument()
+      expect(screen.queryByRole("button", { name: "Nhập từ Excel" })).not.toBeInTheDocument()
+      expect(screen.queryByRole("button", { name: "Tải file mẫu" })).not.toBeInTheDocument()
+      expect(screen.queryByRole("button", { name: "Thêm người khám" })).not.toBeInTheDocument()
+
+      queryClient.setQueryData(
+        ["auth", "session"],
+        session(["PARTICIPANT_VIEW", "PARTICIPANT_IMPORT"])
+      )
+      expect(await screen.findByRole("button", { name: "Nhập từ Excel" })).toBeInTheDocument()
+      expect(screen.queryByRole("button", { name: "Tải file mẫu" })).not.toBeInTheDocument()
+      expect(screen.queryByRole("button", { name: "Thêm người khám" })).not.toBeInTheDocument()
+
+      queryClient.setQueryData(
+        ["auth", "session"],
+        session(["PARTICIPANT_VIEW", "PARTICIPANT_TEMPLATE_DOWNLOAD"])
+      )
+      expect(await screen.findByRole("button", { name: "Tải file mẫu" })).toBeInTheDocument()
       expect(screen.queryByRole("button", { name: "Nhập từ Excel" })).not.toBeInTheDocument()
 
-      queryClient.setQueryData(["auth", "session"], session([
-        "HEALTH_EXAMINATION_PARTICIPANT_READ", "HEALTH_EXAMINATION_PARTICIPANT_IMPORT",
-      ]))
-      expect(await screen.findByRole("button", { name: "Nhập từ Excel" })).toBeInTheDocument()
+      queryClient.setQueryData(
+        ["auth", "session"],
+        session(["PARTICIPANT_VIEW", "PARTICIPANT_CREATE"])
+      )
+      const addButton = await screen.findByRole("button", { name: "Thêm người khám" })
+      expect(addButton).toBeInTheDocument()
+      expect(screen.queryByRole("button", { name: "Nhập từ Excel" })).not.toBeInTheDocument()
+      await userEvent.setup().click(addButton)
+      expect(await screen.findByRole("heading", { name: "Thêm người khám" })).toBeInTheDocument()
     })
 
     it("does not request the list for a session without the read permission", async () => {
       nav.search = "tab=participants"
       vi.spyOn(batchApi, "fetchHealthExaminationBatchById").mockResolvedValue(batch)
       const get = vi.spyOn(apiClient, "get").mockResolvedValue(emptyPage)
-      const { queryClient } = renderPage()
-      queryClient.setQueryData(["auth", "session"], session(["ORGANIZATION_READ"]))
+      renderPage(session(["ORGANIZATION_READ"]))
 
       expect(await screen.findByText("Không có quyền xem")).toBeInTheDocument()
       expect(get).not.toHaveBeenCalledWith(expect.stringContaining("/participants"), expect.anything())
@@ -373,7 +404,7 @@ describe("HealthExaminationBatchDetailPage", () => {
       nav.search = "tab=report"
       const get = mockBackend()
       const { queryClient } = renderPage()
-      queryClient.setQueryData(["auth", "session"], session(["HEALTH_EXAMINATION_PARTICIPANT_READ"]))
+      queryClient.setQueryData(["auth", "session"], session(["PARTICIPANT_VIEW"]))
 
       await screen.findByRole("heading", { name: "Khám định kỳ 2026" })
       await waitFor(() => expect(screen.queryByRole("button", { name: "Báo cáo" })).not.toBeInTheDocument())
