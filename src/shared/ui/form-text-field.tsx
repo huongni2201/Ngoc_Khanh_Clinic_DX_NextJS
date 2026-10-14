@@ -5,8 +5,8 @@ import type { UseFormRegisterReturn } from "react-hook-form"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
-interface OrganizationTextFieldProps
-  extends Pick<ComponentProps<typeof Input>, "type" | "placeholder" | "inputMode" | "autoComplete"> {
+export interface FormTextFieldProps
+  extends Pick<ComponentProps<typeof Input>, "type" | "placeholder" | "inputMode" | "autoComplete" | "maxLength"> {
   id: string
   label: string
   required?: boolean
@@ -16,17 +16,17 @@ interface OrganizationTextFieldProps
 }
 
 /**
- * One labelled input for the organization create/edit forms, so both dialogs share the same
- * label, required marker, placeholder style and error wiring.
+ * One labelled input for React Hook Form dialogs (organizations, staff members), so every form
+ * shares the same label, required marker, placeholder style and error wiring.
  */
-export function OrganizationTextField({
+export function FormTextField({
   id,
   label,
   required = false,
   error,
   registration,
   ...inputProps
-}: OrganizationTextFieldProps) {
+}: FormTextFieldProps) {
   const errorId = `${id}-error`
 
   return (

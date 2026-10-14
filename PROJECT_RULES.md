@@ -11,7 +11,9 @@ HTTP scope is authentication, organization list/create/get/update/deactivate,
 batch list/create/get/update/delete/start (DRAFT to READY), Participant list/manual changes/template/import,
 examination-details list/summary/import/export, payment-summary JSON/DOCX,
 blank examination form printing (one PDF and background print jobs, section 13) and
-the active service catalog list (`GET /api/v1/catalog/services`).
+the active service catalog list (`GET /api/v1/catalog/services`) and staff administration
+(staff member list/create with the generated account, assignable roles; see
+[the staff member contract](../Ngoc_Khanh_Clinic_DX_Springboot/docs/api/staff-members.md)).
 See [the backend inventory](../Ngoc_Khanh_Clinic_DX_Springboot/docs/api/clean-slate-migration.md)
 for current routes. Handler existence does not imply production authorization.
 
@@ -480,6 +482,9 @@ Current corporate routes:
 /organizations/[organizationId]
 /organizations/[organizationId]/health-examination-batches/[batchId]
 ```
+
+Administration route: `/staff-members` (sidebar group "Quản trị", shown only with
+`STAFF_MEMBER_VIEW`; creating also needs `USER_ACCOUNT_CREATE`, `USER_ROLE_ASSIGN` and `ROLE_VIEW`).
 
 Other existing workspace routes include the following; route existence does not
 imply an available business HTTP contract:

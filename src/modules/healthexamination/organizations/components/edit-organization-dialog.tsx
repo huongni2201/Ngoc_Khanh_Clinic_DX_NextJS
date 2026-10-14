@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { toast } from "@/shared/ui/toaster"
-import { OrganizationTextField } from "./organization-text-field"
+import { FormTextField } from "@/shared/ui"
 import { ApiClientError } from "@/shared/api/api-client"
 import { OrganizationDetail } from "../types"
 import {
@@ -178,7 +178,7 @@ export function EditOrganizationDialog({
             <legend className="mb-3 text-xs font-semibold uppercase tracking-wide text-secondary-foreground">
               Thông tin đơn vị
             </legend>
-            <OrganizationTextField
+            <FormTextField
               id="edit-name"
               label="Tên đơn vị"
               required
@@ -188,7 +188,7 @@ export function EditOrganizationDialog({
               error={errors.name?.message}
             />
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <OrganizationTextField
+              <FormTextField
                 id="edit-taxCode"
                 label="Mã số thuế"
                 placeholder="VD: 0101234567"
@@ -196,7 +196,7 @@ export function EditOrganizationDialog({
                 registration={register("taxCode")}
                 error={errors.taxCode?.message}
               />
-              <OrganizationTextField
+              <FormTextField
                 id="edit-phone"
                 label="Điện thoại đơn vị"
                 type="tel"
@@ -205,7 +205,7 @@ export function EditOrganizationDialog({
                 error={errors.phone?.message}
               />
             </div>
-            <OrganizationTextField
+            <FormTextField
               id="edit-email"
               label="Email đơn vị"
               required
@@ -214,7 +214,7 @@ export function EditOrganizationDialog({
               registration={register("email")}
               error={errors.email?.message}
             />
-            <OrganizationTextField
+            <FormTextField
               id="edit-address"
               label="Địa chỉ"
               required
@@ -231,7 +231,7 @@ export function EditOrganizationDialog({
             <legend className="mb-3 text-xs font-semibold uppercase tracking-wide text-secondary-foreground">
               Người liên hệ
             </legend>
-            <OrganizationTextField
+            <FormTextField
               id="edit-contact-name"
               label="Người liên hệ"
               required
@@ -241,7 +241,7 @@ export function EditOrganizationDialog({
               error={errors.contactName?.message}
             />
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <OrganizationTextField
+              <FormTextField
                 id="edit-contact-phone"
                 label="Số điện thoại"
                 required
@@ -250,7 +250,7 @@ export function EditOrganizationDialog({
                 registration={register("contactPhone")}
                 error={errors.contactPhone?.message}
               />
-              <OrganizationTextField
+              <FormTextField
                 id="edit-contact-email"
                 label="Email người liên hệ"
                 required

@@ -54,7 +54,7 @@ describe("Danh sách lượt khám của bác sĩ", () => {
   })
 
   it("renders the application shell elements with the supplied staff identity and highlights Lượt khám in sidebar", () => {
-    render(<AppSidebar />)
+    renderWithClient(<AppSidebar />)
 
     // Check brand header
     expect(screen.getByText("Ngọc Khánh Clinic")).toBeInTheDocument()

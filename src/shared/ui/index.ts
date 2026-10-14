@@ -4,6 +4,9 @@ export type { DataTablePaginationProps } from "./data-table-pagination"
 export { MoneyInput, formatVND } from "./money-input"
 export type { MoneyInputProps } from "./money-input"
 
+export { FormTextField } from "./form-text-field"
+export type { FormTextFieldProps } from "./form-text-field"
+
 export { InfoList } from "./info-list"
 export type { InfoListItem, InfoListProps } from "./info-list"
 
