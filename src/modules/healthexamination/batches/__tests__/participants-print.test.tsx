@@ -329,4 +329,130 @@ describe("ParticipantsTab examination form printing", () => {
     )
     expect(screen.getByText("Chọn người khám để in phiếu hàng loạt")).toBeInTheDocument()
   })
+
+  describe("printing a whole examination day", () => {
+    /** Answers the day totals (one row per page) apart from the tab list and the name lookup. */
+    function mockDayGet(totals: { pending: number; attended: number }) {
+      return vi.spyOn(apiClient, "get").mockImplementation(async (path: string) => {
+        if (path.startsWith("/api/v1/document-render-jobs/")) return job() as never
+        const url = new URL(path, "http://local")
+        if (url.searchParams.get("size") === "1") {
+          const attendance = url.searchParams.get("attendanceStatus")
+          return page([], attendance === "ATTENDED" ? totals.attended : totals.pending) as never
+        }
+        return page(ROWS) as never
+      })
+    }
+
+    it("lets the backend choose the people of the day and names the skipped ones afterwards", async () => {
+      const get = mockDayGet({ pending: 3, attended: 2 })
+      const post = vi
+        .spyOn(apiClient, "post")
+        .mockResolvedValue({ result: "OK", code: 202, data: { jobId: "job-1" } })
+      renderTab()
+      const user = userEvent.setup()
+
+      await screen.findByText("Người khám 1")
+      await user.click(screen.getByRole("button", { name: "In theo ngày khám" }))
+      const dialog = await findDialog()
+
+      // Today is before both days, so the first day is preselected.
+      expect(within(dialog).getByRole("combobox", { name: "Ngày khám" })).toHaveTextContent(
+        "20/10/2026"
+      )
+      expect(await within(dialog).findByText("Sẽ in")).toBeInTheDocument()
+      await waitFor(() =>
+        expect(within(dialog).getByText("Sẽ in").nextElementSibling).toHaveTextContent("3")
+      )
+      expect(within(dialog).getByText("File PDF").nextElementSibling).toHaveTextContent("1")
+      expect(
+        get.mock.calls.some(([path]) => {
+          const url = new URL(path, "http://local")
+          return (
+            url.searchParams.get("size") === "1" &&
+            url.searchParams.get("batchDayId") === "day-1" &&
+            url.searchParams.get("rosterStatus") === "ACTIVE"
+          )
+        })
+      ).toBe(true)
+
+      await user.click(within(dialog).getByRole("button", { name: "Tạo lệnh in" }))
+
+      expect(post).toHaveBeenCalledWith(
+        `${PARTICIPANTS}/examination-form-print-jobs`,
+        { scope: "BATCH_DAY", batchDayId: "day-1", includeAttended: false, sort: "DEPARTMENT" },
+        { headers: { "Idempotency-Key": KEY_A } }
+      )
+      expect(
+        await within(dialog).findByText("Lệnh in phiếu khám ngày 20/10/2026")
+      ).toBeInTheDocument()
+      expect(await within(dialog).findByText("Phần 1/1")).toBeInTheDocument()
+      // The names come from the day's list, because the job only holds identifiers.
+      expect(
+        await within(dialog).findByText("KSK-2026-001-0003 · Người khám 3")
+      ).toBeInTheDocument()
+    })
+
+    it("also prints the people who already attended when asked, with a new Idempotency-Key", async () => {
+      mockDayGet({ pending: 3, attended: 2 })
+      const post = vi
+        .spyOn(apiClient, "post")
+        .mockResolvedValue({ result: "OK", code: 202, data: { jobId: "job-1" } })
+      renderTab()
+      const user = userEvent.setup()
+
+      await screen.findByText("Người khám 1")
+      await user.click(screen.getByRole("button", { name: "In theo ngày khám" }))
+      const dialog = await findDialog()
+      await waitFor(() =>
+        expect(within(dialog).getByText("Sẽ in").nextElementSibling).toHaveTextContent("3")
+      )
+      await user.click(
+        within(dialog).getByRole("checkbox", { name: "Gồm cả người đã khám (in lại phiếu)" })
+      )
+      await waitFor(() =>
+        expect(within(dialog).getByText("Sẽ in").nextElementSibling).toHaveTextContent("5")
+      )
+      await user.click(within(dialog).getByRole("button", { name: "Tạo lệnh in" }))
+
+      expect(post.mock.calls[0][1]).toEqual({
+        scope: "BATCH_DAY",
+        batchDayId: "day-1",
+        includeAttended: true,
+        sort: "DEPARTMENT",
+      })
+      expect(post.mock.calls[0][2]).toEqual({ headers: { "Idempotency-Key": KEY_B } })
+    })
+
+    it("does not queue an empty day and points to the reprint option", async () => {
+      mockDayGet({ pending: 0, attended: 4 })
+      const post = vi.spyOn(apiClient, "post")
+      renderTab()
+      const user = userEvent.setup()
+
+      await screen.findByText("Người khám 1")
+      await user.click(screen.getByRole("button", { name: "In theo ngày khám" }))
+      const dialog = await findDialog()
+
+      expect(await within(dialog).findByText(/Ngày này không còn ai chưa khám/)).toBeInTheDocument()
+      expect(within(dialog).getByRole("button", { name: "Tạo lệnh in" })).toBeDisabled()
+      expect(post).not.toHaveBeenCalled()
+    })
+
+    it("preselects the day the list is filtered to", async () => {
+      mockDayGet({ pending: 1, attended: 0 })
+      renderTab()
+      const user = userEvent.setup()
+
+      await screen.findByText("Người khám 1")
+      await user.click(screen.getByRole("combobox", { name: "Lọc theo ngày khám" }))
+      await user.click(await screen.findByRole("option", { name: "21/10/2026" }))
+      await user.click(screen.getByRole("button", { name: "In theo ngày khám" }))
+      const dialog = await findDialog()
+
+      expect(within(dialog).getByRole("combobox", { name: "Ngày khám" })).toHaveTextContent(
+        "21/10/2026"
+      )
+    })
+  })
 })

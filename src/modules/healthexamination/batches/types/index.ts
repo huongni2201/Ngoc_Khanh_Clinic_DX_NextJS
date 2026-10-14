@@ -455,14 +455,49 @@ export interface ExaminationFormPrintEntry {
 /** Order of the forms in a bulk print job. The backend prints in the order it receives. */
 export type ExaminationFormPrintOrder = "CODE" | "DEPARTMENT"
 
-export interface CreateExaminationFormPrintJobRequest {
+/**
+ * Order of the forms when the backend chooses the Participants of an examination day:
+ * `IMPORT_ORDER` follows the row order of the import file.
+ */
+export type ExaminationFormDayPrintOrder = ExaminationFormPrintOrder | "IMPORT_ORDER"
+
+/** One examination day of a batch, as a print job remembers it. */
+export interface ExaminationFormPrintDay {
+  id: string
+  /** `yyyy-MM-dd`. */
+  examinationDate: string
+}
+
+interface ExaminationFormPrintJobRequestBase {
   organizationId: string
   batchId: string
-  /** In print order, without duplicates; at most 1000. */
-  participantIds: string[]
   /** Reused when the same body is resent after a failure, so a retry never queues twice. */
   idempotencyKey: string
 }
+
+/** Prints the Participants the caller names. */
+export interface CreateExaminationFormPrintJobByIdsRequest
+  extends ExaminationFormPrintJobRequestBase {
+  scope?: "IDS"
+  /** In print order, without duplicates; at most 1000. */
+  participantIds: string[]
+}
+
+/**
+ * Prints the Participants of one examination day. The backend chooses them when the job is created:
+ * active people who have not been examined yet, plus the examined ones when `includeAttended`.
+ */
+export interface CreateExaminationFormPrintJobByDayRequest
+  extends ExaminationFormPrintJobRequestBase {
+  scope: "BATCH_DAY"
+  batchDayId: string
+  includeAttended: boolean
+  sort: ExaminationFormDayPrintOrder
+}
+
+export type CreateExaminationFormPrintJobRequest =
+  | CreateExaminationFormPrintJobByIdsRequest
+  | CreateExaminationFormPrintJobByDayRequest
 
 /** The print job the backend queued; follow it with the document render job endpoints. */
 export interface ExaminationFormPrintJob {

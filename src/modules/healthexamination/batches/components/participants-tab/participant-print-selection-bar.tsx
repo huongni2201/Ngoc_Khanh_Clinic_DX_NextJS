@@ -5,7 +5,7 @@ import {
   RENDER_JOB_STATUS_LABELS,
   useRenderJob,
 } from "@/modules/document"
-import { FileText, Loader2, Printer } from "@/shared/ui/product-icon"
+import { CalendarDays, FileText, Loader2, Printer } from "@/shared/ui/product-icon"
 import { Button } from "@/components/ui/button"
 import { EXAMINATION_FORM_PRINT_JOB_MAX_RECORDS } from "../../api/examination-forms"
 
@@ -15,6 +15,8 @@ interface ParticipantPrintSelectionBarProps {
   isSelectingAll: boolean
   onClear: () => void
   onPrint: () => void
+  /** Opens the print of a whole examination day. Omitted when the batch has no days. */
+  onPrintDay?: () => void
   /** The last print job created on this tab, to reopen its progress and files. */
   trackedJobId?: string
   onOpenTrackedJob: () => void
@@ -27,6 +29,7 @@ export function ParticipantPrintSelectionBar({
   isSelectingAll,
   onClear,
   onPrint,
+  onPrintDay,
   trackedJobId,
   onOpenTrackedJob,
 }: ParticipantPrintSelectionBarProps) {
@@ -67,6 +70,12 @@ export function ParticipantPrintSelectionBar({
 
       <div className="ml-auto flex flex-wrap items-center gap-2">
         {trackedJobId && <TrackedJobButton jobId={trackedJobId} onOpen={onOpenTrackedJob} />}
+        {onPrintDay && (
+          <Button type="button" variant="outline" size="sm" onClick={onPrintDay}>
+            <CalendarDays aria-hidden="true" className="size-3.5" />
+            In theo ngày khám
+          </Button>
+        )}
         <Button
           type="button"
           size="sm"

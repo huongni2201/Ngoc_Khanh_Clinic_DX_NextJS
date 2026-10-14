@@ -3,7 +3,7 @@
 import * as React from "react"
 import { toast } from "@/shared/ui/toaster"
 import { useRouter } from "next/navigation"
-import { PageHeader, ScreenLayout } from "@/shared/ui"
+import { DEFAULT_PAGE_SIZE, PageHeader, ScreenLayout } from "@/shared/ui"
 import { Button } from "@/components/ui/button"
 import { RefreshCw, Filter, ChevronRight } from "@/shared/ui/product-icon"
 import { DoctorCountersStrip } from "../components/doctor-counters-strip"
@@ -31,7 +31,7 @@ export function DoctorWorklistPage() {
   const [selectedDate, setSelectedDate] = React.useState<string>("")
   const [sortDirection, setSortDirection] = React.useState<"asc" | "desc">("asc")
   const [currentPage, setCurrentPage] = React.useState<number>(1)
-  const pageSize = 8
+  const [pageSize, setPageSize] = React.useState<number>(DEFAULT_PAGE_SIZE)
 
   // Advanced Filter Modal State
   const [priorityFilter, setPriorityFilter] = React.useState<string>("ALL")
@@ -267,6 +267,10 @@ export function DoctorWorklistPage() {
         pageSize={pageSize}
         totalPages={totalPages}
         onPageChange={setCurrentPage}
+        onPageSizeChange={(size) => {
+          setPageSize(size)
+          setCurrentPage(1)
+        }}
         isLoading={isLoadingWorklist}
         sortDirection={sortDirection}
         onToggleSort={handleToggleSort}

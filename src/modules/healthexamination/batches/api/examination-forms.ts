@@ -53,16 +53,31 @@ export async function fetchExaminationForm(
   return { blob, fileName: filename?.trim() || EXAMINATION_FORM_FALLBACK_FILE_NAME }
 }
 
+function buildPrintJobBody(
+  request: CreateExaminationFormPrintJobRequest
+): ExaminationFormPrintJobRequestDto {
+  if (request.scope === "BATCH_DAY") {
+    return {
+      scope: "BATCH_DAY",
+      batchDayId: request.batchDayId,
+      includeAttended: request.includeAttended,
+      sort: request.sort,
+    }
+  }
+  return { participantIds: request.participantIds }
+}
+
 /**
- * Queues the forms of many Participants in a background job (202). The same `idempotencyKey` with
- * the same body returns the job already queued instead of a second one.
+ * Queues the forms of many Participants in a background job (202), either the ones named or all of
+ * an examination day. The same `idempotencyKey` with the same body returns the job already queued
+ * instead of a second one.
  */
 export async function createExaminationFormPrintJob(
   request: CreateExaminationFormPrintJobRequest
 ): Promise<ExaminationFormPrintJob> {
   const response = await apiClient.post<ExaminationFormPrintJobRequestDto, unknown>(
     buildExaminationFormPrintJobsUrl(request.organizationId, request.batchId),
-    { participantIds: request.participantIds },
+    buildPrintJobBody(request),
     { headers: { "Idempotency-Key": request.idempotencyKey } }
   )
   if (!response.data) {

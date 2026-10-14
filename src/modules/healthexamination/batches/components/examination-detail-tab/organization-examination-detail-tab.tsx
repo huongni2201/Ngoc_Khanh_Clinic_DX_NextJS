@@ -30,7 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { DataTablePagination } from "@/shared/ui"
+import { DEFAULT_PAGE_SIZE, DataTablePagination } from "@/shared/ui"
 import { useOrganizationHealthExaminationBatches, useHealthExaminationBatchMatrix } from "../../hooks/use-health-examination-batches"
 import { type ParticipantExaminationProgress, type HealthExaminationBatchSummary } from "../../types"
 import { getHealthExaminationBatchStatusLabel } from "../../utils/batch-status"
@@ -73,6 +73,7 @@ export function OrganizationExaminationDetailTab({
   const [statusFilter, setStatusFilter] = React.useState("ALL")
   const [uncompletedOnly, setUncompletedOnly] = React.useState(false)
   const [page, setPage] = React.useState(1)
+  const [pageSize, setPageSize] = React.useState<number>(DEFAULT_PAGE_SIZE)
 
   // Drawer state
   const [selectedParticipant, setSelectedParticipant] =
@@ -102,7 +103,7 @@ export function OrganizationExaminationDetailTab({
     organizationUnit: department,
     examStatus: effectiveStatus,
     page,
-    pageSize: 10,
+    pageSize,
   })
 
   // Full matrix query without filters for summary counts
@@ -551,10 +552,14 @@ export function OrganizationExaminationDetailTab({
       {!isLoadingMatrix && !isErrorMatrix && totalItems > 0 && (
         <DataTablePagination
           currentPage={page}
-          pageSize={10}
+          pageSize={pageSize}
           totalItems={totalItems}
           totalPages={totalPages}
           onPageChange={setPage}
+          onPageSizeChange={(size) => {
+            setPageSize(size)
+            setPage(1)
+          }}
           entityName="người khám"
         />
       )}

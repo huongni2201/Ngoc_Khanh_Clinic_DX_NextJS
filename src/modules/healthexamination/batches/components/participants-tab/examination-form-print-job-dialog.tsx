@@ -26,6 +26,7 @@ import { toast } from "@/shared/ui/toaster"
 import { formatFileSize } from "@/lib/format-file-size"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Dialog,
   DialogContent,
@@ -43,23 +44,45 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { EXAMINATION_FORM_PRINT_JOB_MAX_RECORDS } from "../../api/examination-forms"
-import { useCreateExaminationFormPrintJob } from "../../hooks/use-examination-forms"
-import type { ExaminationFormPrintEntry, ExaminationFormPrintOrder } from "../../types"
+import {
+  useCreateExaminationFormPrintJob,
+  useExaminationDayPrintCounts,
+  useExaminationDayPrintEntries,
+} from "../../hooks/use-examination-forms"
+import type {
+  ExaminationFormDayPrintOrder,
+  ExaminationFormPrintDay,
+  ExaminationFormPrintEntry,
+  ExaminationFormPrintOrder,
+  HealthExaminationBatchDay,
+} from "../../types"
 import { saveBlobAs } from "../../utils/download-blob"
 import {
+  countExaminationFormPrintParts,
   describeCreatePrintJobError,
+  EXAMINATION_FORM_DAY_PRINT_ORDER_LABELS,
   EXAMINATION_FORM_PRINT_ORDER_LABELS,
+  EXAMINATION_FORM_PRINT_PART_SIZE,
+  localIsoDate,
   orderExaminationFormPrintEntries,
+  pickDefaultPrintDay,
 } from "../../utils/examination-form-print"
+import { formatHealthExaminationDate } from "../../utils/format-health-examination-date"
 
-/** A queued job and the Participants it was created for, in print order. */
+/**
+ * A queued job and the Participants it was created for, in print order. A day print is created by
+ * the backend from the examination day, so it has no entries until names are needed.
+ */
 export interface TrackedExaminationFormPrintJob {
   jobId: string
   entries: ExaminationFormPrintEntry[]
+  /** Set when the job prints an examination day chosen by the backend. */
+  day?: ExaminationFormPrintDay
 }
 
 export type ExaminationFormPrintJobDialogMode =
   | { kind: "create"; entries: ExaminationFormPrintEntry[] }
+  | { kind: "create-day"; initialDayId?: string }
   | { kind: "track"; job: TrackedExaminationFormPrintJob }
 
 interface ExaminationFormPrintJobDialogProps {
@@ -67,11 +90,13 @@ interface ExaminationFormPrintJobDialogProps {
   onOpenChange: (open: boolean) => void
   organizationId: string
   batchId: string
+  /** The examination days of the batch, for printing a whole day. */
+  days: HealthExaminationBatchDay[]
   mode: ExaminationFormPrintJobDialogMode | null
   /** The backend accepted the job; the caller keeps it so the dialog can be reopened. */
   onJobCreated: (job: TrackedExaminationFormPrintJob) => void
-  /** Prepare a new job for the same Participants (after a failure or an expiry). */
-  onRecreate: (entries: ExaminationFormPrintEntry[]) => void
+  /** Prepare a new job for the same Participants or day (after a failure or an expiry). */
+  onRecreate: (job: TrackedExaminationFormPrintJob) => void
 }
 
 const NEW_TAB_URL_LIFETIME_MS = 60_000
@@ -91,15 +116,17 @@ function formatDateTime(value: string | undefined) {
 }
 
 /**
- * Bulk printing of blank examination forms. "create" confirms the Participants and the order and
- * queues a background job; "track" follows that job until its PDF parts can be downloaded. Closing
- * the dialog does not stop the job.
+ * Bulk printing of blank examination forms. "create" confirms the chosen Participants and the order
+ * and queues a background job; "create-day" prints a whole examination day, with the Participants
+ * chosen by the backend when the job is created; "track" follows that job until its PDF parts can
+ * be downloaded. Closing the dialog does not stop the job.
  */
 export function ExaminationFormPrintJobDialog({
   open,
   onOpenChange,
   organizationId,
   batchId,
+  days,
   mode,
   onJobCreated,
   onRecreate,
@@ -116,8 +143,19 @@ export function ExaminationFormPrintJobDialog({
             onCancel={() => onOpenChange(false)}
             onJobCreated={onJobCreated}
           />
+        ) : mode?.kind === "create-day" ? (
+          <CreateDayPrintJobView
+            organizationId={organizationId}
+            batchId={batchId}
+            days={days}
+            initialDayId={mode.initialDayId}
+            onCancel={() => onOpenChange(false)}
+            onJobCreated={onJobCreated}
+          />
         ) : mode?.kind === "track" ? (
           <TrackPrintJobView
+            organizationId={organizationId}
+            batchId={batchId}
             job={mode.job}
             onClose={() => onOpenChange(false)}
             onRecreate={onRecreate}
@@ -268,23 +306,270 @@ function CreatePrintJobView({
   )
 }
 
-interface TrackPrintJobViewProps {
-  job: TrackedExaminationFormPrintJob
-  onClose: () => void
-  onRecreate: (entries: ExaminationFormPrintEntry[]) => void
+interface CreateDayPrintJobViewProps {
+  organizationId: string
+  batchId: string
+  days: HealthExaminationBatchDay[]
+  initialDayId?: string
+  onCancel: () => void
+  onJobCreated: (job: TrackedExaminationFormPrintJob) => void
 }
 
-function TrackPrintJobView({ job, onClose, onRecreate }: TrackPrintJobViewProps) {
+const DAY_ORDER_ITEMS = EXAMINATION_FORM_DAY_PRINT_ORDER_LABELS
+
+function CreateDayPrintJobView({
+  organizationId,
+  batchId,
+  days,
+  initialDayId,
+  onCancel,
+  onJobCreated,
+}: CreateDayPrintJobViewProps) {
+  const createJob = useCreateExaminationFormPrintJob()
+  const [dayId, setDayId] = React.useState(
+    () => pickDefaultPrintDay(days, localIsoDate(), initialDayId)?.id ?? ""
+  )
+  const [order, setOrder] = React.useState<ExaminationFormDayPrintOrder>("DEPARTMENT")
+  const [includeAttended, setIncludeAttended] = React.useState(false)
+  // One key per body: a retry of the same day and options returns the job already queued.
+  const [idempotencyKey, setIdempotencyKey] = React.useState(() => crypto.randomUUID())
+  const counts = useExaminationDayPrintCounts(organizationId, batchId, dayId || undefined)
+  const day = days.find((candidate) => candidate.id === dayId)
+  const dayItems = React.useMemo(
+    () =>
+      Object.fromEntries(
+        days.map((candidate) => [candidate.id, formatHealthExaminationDate(candidate.examinationDate)])
+      ),
+    [days]
+  )
+  const pending = createJob.isPending
+  const total =
+    counts.pending === undefined
+      ? undefined
+      : counts.pending + (includeAttended ? (counts.attended ?? 0) : 0)
+  const nothingToPrint = total === 0
+  const tooMany = total !== undefined && total > EXAMINATION_FORM_PRINT_JOB_MAX_RECORDS
+  const parts = total === undefined ? 0 : countExaminationFormPrintParts(total)
+
+  const changeOption = <T,>(set: (value: T) => void) => (value: T) => {
+    set(value)
+    setIdempotencyKey(crypto.randomUUID())
+    createJob.reset()
+  }
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault()
+    if (pending || !day || nothingToPrint || tooMany) return
+    try {
+      const job = await createJob.mutateAsync({
+        scope: "BATCH_DAY",
+        organizationId,
+        batchId,
+        batchDayId: day.id,
+        includeAttended,
+        sort: order,
+        idempotencyKey,
+      })
+      onJobCreated({
+        jobId: job.jobId,
+        entries: [],
+        day: { id: day.id, examinationDate: day.examinationDate },
+      })
+    } catch {
+      // Rendered below; the same key is reused if the user tries again.
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="grid gap-4" noValidate>
+      <DialogHeader>
+        <DialogTitle>In phiếu khám theo ngày</DialogTitle>
+        <DialogDescription>
+          Máy chủ lấy danh sách người khám của ngày được chọn ngay lúc tạo lệnh, tạo PDF trong nền
+          rồi gộp thành từng phần tối đa {EXAMINATION_FORM_PRINT_PART_SIZE} người. Người đã hủy
+          hoặc đã báo vắng không được in.
+        </DialogDescription>
+      </DialogHeader>
+
+      <div className="grid gap-1.5">
+        <Label htmlFor="examination-form-print-day">Ngày khám</Label>
+        <Select
+          items={dayItems}
+          value={dayId}
+          onValueChange={(value) => value && changeOption(setDayId)(value)}
+          disabled={pending}
+        >
+          <SelectTrigger id="examination-form-print-day" className="w-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {Object.entries(dayItems).map(([value, label]) => (
+              <SelectItem key={value} value={value}>
+                {label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <dl className="grid grid-cols-3 gap-3 rounded-lg border border-border bg-muted/40 p-3 text-xs">
+        <div>
+          <dt className="text-muted-foreground">Sẽ in</dt>
+          <dd className="mt-0.5 text-base font-semibold tabular-nums text-foreground">
+            {counts.isLoading ? "…" : total === undefined ? "—" : total.toLocaleString("vi-VN")}
+          </dd>
+        </div>
+        <div>
+          <dt className="text-muted-foreground">Đã khám trong ngày</dt>
+          <dd className="mt-0.5 text-base font-semibold tabular-nums text-foreground">
+            {counts.isLoading
+              ? "…"
+              : counts.attended === undefined
+                ? "—"
+                : counts.attended.toLocaleString("vi-VN")}
+          </dd>
+        </div>
+        <div>
+          <dt className="text-muted-foreground">File PDF</dt>
+          <dd className="mt-0.5 text-base font-semibold tabular-nums text-foreground">
+            {total === undefined ? "—" : parts.toLocaleString("vi-VN")}
+          </dd>
+        </div>
+      </dl>
+
+      <div className="grid gap-1.5">
+        <Label htmlFor="examination-form-print-day-order">Thứ tự in</Label>
+        <Select
+          items={DAY_ORDER_ITEMS}
+          value={order}
+          onValueChange={(value) =>
+            value && changeOption(setOrder)(value as ExaminationFormDayPrintOrder)
+          }
+          disabled={pending}
+        >
+          <SelectTrigger id="examination-form-print-day-order" className="w-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {Object.entries(DAY_ORDER_ITEMS).map(([value, label]) => (
+              <SelectItem key={value} value={value}>
+                {label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="flex items-start gap-2">
+        <Checkbox
+          id="examination-form-print-include-attended"
+          aria-label="Gồm cả người đã khám (in lại phiếu)"
+          checked={includeAttended}
+          onCheckedChange={(checked) => changeOption(setIncludeAttended)(checked === true)}
+          disabled={pending}
+        />
+        <Label htmlFor="examination-form-print-include-attended" className="text-xs font-normal">
+          Gồm cả người đã khám (in lại phiếu)
+        </Label>
+      </div>
+
+      <p className="flex items-start gap-2 text-xs text-muted-foreground">
+        <Info aria-hidden="true" className="mt-0.5 size-3.5 shrink-0" />
+        Mặc định chỉ in người chưa khám của ngày này. Người được thêm vào ngày sau khi tạo lệnh
+        không có trong lệnh; hãy in bổ sung bằng cách chọn riêng họ trong danh sách.
+      </p>
+
+      {counts.isError && (
+        <Alert>
+          <Info aria-hidden="true" />
+          <AlertDescription>
+            Chưa đọc được số người của ngày này. Vẫn có thể tạo lệnh in; máy chủ sẽ chọn danh sách.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {nothingToPrint && (
+        <Alert>
+          <Info aria-hidden="true" />
+          <AlertDescription>
+            {!includeAttended && (counts.attended ?? 0) > 0
+              ? "Ngày này không còn ai chưa khám. Chọn \"Gồm cả người đã khám\" nếu muốn in lại."
+              : "Ngày này không có người khám nào để in."}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {tooMany && (
+        <Alert variant="destructive">
+          <AlertCircle aria-hidden="true" />
+          <AlertDescription>
+            Mỗi lệnh in tối đa {EXAMINATION_FORM_PRINT_JOB_MAX_RECORDS.toLocaleString("vi-VN")}{" "}
+            người. Hãy bỏ chọn &quot;Gồm cả người đã khám&quot; hoặc chọn từng nhóm người trong
+            danh sách rồi in.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {createJob.isError && (
+        <Alert variant="destructive">
+          <AlertCircle aria-hidden="true" />
+          <AlertTitle>Chưa tạo được lệnh in</AlertTitle>
+          <AlertDescription>{describeCreatePrintJobError(createJob.error)}</AlertDescription>
+        </Alert>
+      )}
+
+      <DialogFooter>
+        <Button type="button" variant="outline" onClick={onCancel} disabled={pending}>
+          Hủy
+        </Button>
+        <Button type="submit" disabled={pending || !day || nothingToPrint || tooMany}>
+          {pending ? (
+            <Loader2 aria-hidden="true" className="size-4 animate-spin" />
+          ) : (
+            <Printer className="size-4" />
+          )}
+          {pending ? "Đang tạo lệnh in..." : "Tạo lệnh in"}
+        </Button>
+      </DialogFooter>
+    </form>
+  )
+}
+
+interface TrackPrintJobViewProps {
+  organizationId: string
+  batchId: string
+  job: TrackedExaminationFormPrintJob
+  onClose: () => void
+  onRecreate: (job: TrackedExaminationFormPrintJob) => void
+}
+
+function TrackPrintJobView({
+  organizationId,
+  batchId,
+  job,
+  onClose,
+  onRecreate,
+}: TrackPrintJobViewProps) {
   const query = useRenderJob(job.jobId)
   const data = query.data
   const notFound = isApiErrorStatus(query.error, 404)
+  // A day print has no list of names; read them only when some people were skipped.
+  const needNames = Boolean(job.day) && job.entries.length === 0 && (data?.skipped.length ?? 0) > 0
+  const names = useExaminationDayPrintEntries(organizationId, batchId, job.day?.id, {
+    enabled: needNames,
+  })
+  const entries = job.entries.length > 0 ? job.entries : (names.data?.entries ?? [])
+  const peopleCount = data?.totalCount ?? job.entries.length
+  const dayLabel = job.day ? formatHealthExaminationDate(job.day.examinationDate) : undefined
 
   return (
     <div className="grid gap-4">
       <DialogHeader>
-        <DialogTitle>Lệnh in phiếu khám</DialogTitle>
+        <DialogTitle>
+          {dayLabel ? `Lệnh in phiếu khám ngày ${dayLabel}` : "Lệnh in phiếu khám"}
+        </DialogTitle>
         <DialogDescription>
-          {job.entries.length.toLocaleString("vi-VN")} người khám. Chỉ tài khoản tạo lệnh mới xem và
+          {peopleCount.toLocaleString("vi-VN")} người khám. Chỉ tài khoản tạo lệnh mới xem và
           tải được file; file tự xóa sau 24 giờ.
         </DialogDescription>
       </DialogHeader>
@@ -305,7 +590,7 @@ function TrackPrintJobView({ job, onClose, onRecreate }: TrackPrintJobViewProps)
           </AlertDescription>
         </Alert>
       ) : data ? (
-        <PrintJobProgress job={data} entries={job.entries} />
+        <PrintJobProgress job={data} entries={entries} />
       ) : null}
 
       <DialogFooter>
@@ -315,7 +600,7 @@ function TrackPrintJobView({ job, onClose, onRecreate }: TrackPrintJobViewProps)
           </Button>
         )}
         {(notFound || data?.status === "FAILED" || data?.status === "EXPIRED") && (
-          <Button type="button" variant="outline" onClick={() => onRecreate(job.entries)}>
+          <Button type="button" variant="outline" onClick={() => onRecreate(job)}>
             Tạo lại lệnh in
           </Button>
         )}

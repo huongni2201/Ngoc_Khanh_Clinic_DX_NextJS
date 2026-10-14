@@ -77,6 +77,7 @@ function renderTab(props: Partial<React.ComponentProps<typeof ParticipantsTab>> 
         batchId="batch-1"
         batch={{ code: "DK 001", status: "DRAFT", rowVersion: 4, days: DAYS }}
         canManage
+        canCreate={props.canCreate ?? props.canManage ?? true}
         {...props}
       />
       <Toaster />
