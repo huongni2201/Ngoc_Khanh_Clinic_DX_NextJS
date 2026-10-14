@@ -44,9 +44,11 @@ import {
   EXAMINATION_SERVICE_RECONCILE_PERMISSION,
   EXAMINATION_SERVICE_RECORD_PERMISSION,
   EXAMINATION_SERVICE_TEMPLATE_DOWNLOAD_PERMISSION,
+  PARTICIPANT_CREATE_PERMISSION,
   PARTICIPANT_IMPORT_PERMISSION,
   PARTICIPANT_MANAGE_PERMISSION,
   PARTICIPANT_READ_PERMISSION,
+  PARTICIPANT_TEMPLATE_DOWNLOAD_PERMISSION,
 } from "../utils/participant-permissions"
 
 interface HealthExaminationBatchDetailPageProps {
@@ -78,6 +80,11 @@ export function HealthExaminationBatchDetailPage({
     ? hasStaffPermission(currentUser, PARTICIPANT_READ_PERMISSION)
     : true
   const canImportParticipants = hasStaffPermission(currentUser, PARTICIPANT_IMPORT_PERMISSION)
+  const canDownloadParticipantTemplate = hasStaffPermission(
+    currentUser,
+    PARTICIPANT_TEMPLATE_DOWNLOAD_PERMISSION
+  )
+  const canCreateParticipant = hasStaffPermission(currentUser, PARTICIPANT_CREATE_PERMISSION)
   const canManageParticipants = hasStaffPermission(currentUser, PARTICIPANT_MANAGE_PERMISSION)
   const canStartBatch = hasStaffPermission(currentUser, BATCH_START_PERMISSION)
   const canPrintExaminationForm = hasStaffPermission(currentUser, EXAMINATION_FORM_PRINT_PERMISSION)
@@ -260,7 +267,9 @@ export function HealthExaminationBatchDetailPage({
               days: batch.examinationDays,
             }}
             canRead={canReadParticipants}
+            canDownloadTemplate={canDownloadParticipantTemplate}
             canImport={canImportParticipants}
+            canCreate={canCreateParticipant}
             canManage={canManageParticipants}
             canPrintForm={canPrintExaminationForm}
             canBulkPrintForms={canBulkPrintExaminationForms}

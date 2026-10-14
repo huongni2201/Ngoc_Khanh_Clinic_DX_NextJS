@@ -170,4 +170,23 @@ describe("DataTablePagination page size", () => {
     await user.click(screen.getByRole("option", { name: "100" }))
     expect(handleSizeChange).toHaveBeenCalledWith(100)
   })
+
+  it("still lists a page size that is not one of the usual choices", async () => {
+    const user = userEvent.setup()
+    render(
+      <DataTablePagination
+        currentPage={1}
+        pageSize={8}
+        totalItems={35}
+        totalPages={5}
+        onPageChange={vi.fn()}
+        onPageSizeChange={vi.fn()}
+      />
+    )
+
+    expect(screen.getByRole("combobox", { name: "Số dòng mỗi trang" })).toHaveTextContent("8")
+    await user.click(screen.getByRole("combobox", { name: "Số dòng mỗi trang" }))
+    const options = await screen.findAllByRole("option")
+    expect(options.map((option) => option.textContent)).toEqual(["8", "10", "20", "50", "100"])
+  })
 })

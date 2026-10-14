@@ -22,6 +22,7 @@ interface ExaminationMatrixTableProps {
   pageSize: number
   totalPages: number
   onPageChange: (page: number) => void
+  onPageSizeChange?: (pageSize: number) => void
   /** True when a filter or search is active, which only changes the empty message. */
   filtered?: boolean
   /** Opens the manual entry for a row. When absent the table is read-only. */
@@ -45,6 +46,7 @@ export function ExaminationMatrixTable({
   pageSize,
   totalPages,
   onPageChange,
+  onPageSizeChange,
   filtered = false,
   onEditRow,
   highlightedRowId = null,
@@ -185,6 +187,7 @@ export function ExaminationMatrixTable({
         totalItems={totalItems}
         totalPages={totalPages}
         onPageChange={onPageChange}
+        onPageSizeChange={onPageSizeChange}
         entityName="người khám"
       />
     </div>

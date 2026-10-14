@@ -38,7 +38,7 @@ interface ParticipantsToolbarProps {
   days?: HealthExaminationBatchDay[]
   batchDayId?: string
   onBatchDayIdChange?: (value: string | undefined) => void
-  /** Template and import actions; omitted when the account or the batch cannot import. */
+  /** Actions the account may use in the current batch state. */
   actions?: ReactNode
 }
 

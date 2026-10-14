@@ -6,7 +6,7 @@ import { Plus, UserCheck, AlertCircle, RefreshCw } from "@/shared/ui/product-ico
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { DataTablePagination } from "@/shared/ui/data-table-pagination"
-import { PageHeader, ScreenLayout } from "@/shared/ui"
+import { DEFAULT_PAGE_SIZE, PageHeader, ScreenLayout } from "@/shared/ui"
 import { PatientCountersStrip } from "@/modules/patient"
 import { PatientToolbar } from "@/modules/patient"
 import { PatientTable } from "@/modules/patient"
@@ -15,8 +15,6 @@ import { EditPatientDialog } from "@/modules/patient"
 import { PatientCheckInDialog } from "@/widgets/reception"
 import { useSearchPatients, usePatientCounters } from "@/modules/patient"
 import { Patient, PatientAgeGroup, PatientGender } from "@/modules/patient"
-
-const PAGE_SIZE = 8
 
 export function PatientsPage() {
   const router = useRouter()
@@ -27,6 +25,7 @@ export function PatientsPage() {
   const [genderFilter, setGenderFilter] = React.useState<PatientGender | "ALL">("ALL")
   const [ageGroupFilter, setAgeGroupFilter] = React.useState<PatientAgeGroup>("ALL")
   const [currentPage, setCurrentPage] = React.useState(1)
+  const [pageSize, setPageSize] = React.useState(DEFAULT_PAGE_SIZE)
 
   // Selection state
   const [selectedIds, setSelectedIds] = React.useState<string[]>([])
@@ -83,11 +82,11 @@ export function PatientsPage() {
 
   // Pagination calculation
   const totalItems = allPatients.length
-  const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE))
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize))
   const paginatedPatients = React.useMemo(() => {
-    const start = (currentPage - 1) * PAGE_SIZE
-    return allPatients.slice(start, start + PAGE_SIZE)
-  }, [allPatients, currentPage])
+    const start = (currentPage - 1) * pageSize
+    return allPatients.slice(start, start + pageSize)
+  }, [allPatients, currentPage, pageSize])
 
   // Selection handlers
   const handleSelectPatient = (id: string, selected: boolean) => {
@@ -224,10 +223,14 @@ export function PatientsPage() {
       {!isLoading && totalItems > 0 && (
         <DataTablePagination
           currentPage={currentPage}
-          pageSize={PAGE_SIZE}
+          pageSize={pageSize}
           totalItems={totalItems}
           totalPages={totalPages}
           onPageChange={(page) => setCurrentPage(page)}
+          onPageSizeChange={(size) => {
+            setPageSize(size)
+            setCurrentPage(1)
+          }}
           entityName="bệnh nhân"
           showSinglePageNavigation={true}
           className="pt-1"

@@ -303,9 +303,14 @@ export const paymentSummaryReportResponseSchema = z.object({
 export type PaymentSummaryReportResponseDto = z.infer<typeof paymentSummaryReportResponseSchema>
 
 /** Body of `POST .../participants/examination-form-print-jobs`. */
-export interface ExaminationFormPrintJobRequestDto {
-  participantIds: string[]
-}
+export type ExaminationFormPrintJobRequestDto =
+  | { participantIds: string[] }
+  | {
+      scope: "BATCH_DAY"
+      batchDayId: string
+      includeAttended: boolean
+      sort: "DEPARTMENT" | "CODE" | "IMPORT_ORDER"
+    }
 
 export const examinationFormPrintJobResponseSchema = z.object({
   jobId: z.string().min(1),

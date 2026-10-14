@@ -4,6 +4,7 @@ import * as React from "react"
 import { Download, Info, Upload, UserPlus } from "@/shared/ui/product-icon"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
+import { DEFAULT_PAGE_SIZE } from "@/shared/ui"
 import { toast } from "@/shared/ui/toaster"
 import {
   useDownloadParticipantImportTemplate,
@@ -42,8 +43,6 @@ import { ParticipantsTable } from "./participants-table"
 import { ParticipantsToolbar } from "./participants-toolbar"
 import { ReactivateParticipantDialog } from "./reactivate-participant-dialog"
 
-const DEFAULT_PAGE_SIZE = 10
-
 /** A dialog closed without doing what was asked (no permission, changed by someone else). */
 const warn = (message: string) => {
   toast.warning(message)
@@ -62,9 +61,13 @@ interface ParticipantsTabProps {
   }
   /** UX only: the backend decides. When false the list is not requested at all. */
   canRead?: boolean
-  /** UX only: the backend decides. Hides the template and import actions when false. */
+  /** UX only: the backend decides. Shows the template download when true and the batch accepts imports. */
+  canDownloadTemplate?: boolean
+  /** UX only: the backend decides. Shows the import action when true and the batch allows it. */
   canImport?: boolean
-  /** UX only: the backend decides. Shows add, edit, cancel and reactivate when true and the batch allows it. */
+  /** UX only: the backend decides. Shows manual add when true and the batch allows it. */
+  canCreate?: boolean
+  /** UX only: the backend decides. Shows edit, cancel and reactivate when true and the batch allows it. */
   canManage?: boolean
   /** UX only: the backend decides. Shows "In phiếu" on each active row of a READY/FINALIZED batch. */
   canPrintForm?: boolean
@@ -77,7 +80,9 @@ export function ParticipantsTab({
   organizationId,
   batch,
   canRead = true,
+  canDownloadTemplate = false,
   canImport = false,
+  canCreate = false,
   canManage = false,
   canPrintForm = false,
   canBulkPrintForms = false,
@@ -117,8 +122,12 @@ export function ParticipantsTab({
   const templateDownload = useDownloadParticipantImportTemplate(organizationId, batchId)
   const selectPrintable = useSelectPrintableParticipants(organizationId, batchId)
 
+  const templateAllowed = canDownloadTemplate && isParticipantImportAllowed(batch.status)
   const importAllowed = canImport && isParticipantImportAllowed(batch.status)
+  const createAllowed = canCreate && isParticipantChangeAllowed(batch.status)
   const changeAllowed = canManage && isParticipantChangeAllowed(batch.status)
+  const hasWritePermission = canImport || canCreate || canManage
+  const writeAllowed = importAllowed || createAllowed || changeAllowed
   const days = batch.days ?? []
   const printAllowed = isExaminationFormPrintAllowed(batch.status)
   const singlePrintAllowed = canPrintForm && printAllowed
@@ -190,7 +199,8 @@ export function ParticipantsTab({
 
   const handlePrintJobCreated = (job: TrackedExaminationFormPrintJob) => {
     setTrackedJob(job)
-    setSelection(new Map())
+    // A day print does not use the selection, so it stays for the next print.
+    if (!job.day) setSelection(new Map())
     setPrintJobMode({ kind: "track", job })
   }
 
@@ -221,9 +231,9 @@ export function ParticipantsTab({
     )
 
   const actions =
-    importAllowed || changeAllowed ? (
+    templateAllowed || importAllowed || createAllowed ? (
       <>
-        {changeAllowed && (
+        {createAllowed && (
           <Button
             type="button"
             size="sm"
@@ -233,23 +243,23 @@ export function ParticipantsTab({
             Thêm người khám
           </Button>
         )}
+        {templateAllowed && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleDownloadTemplate}
+            disabled={templateDownload.isPending}
+          >
+            <Download className="mr-1.5 size-3.5" />
+            {templateDownload.isPending ? "Đang tải..." : "Tải file mẫu"}
+          </Button>
+        )}
         {importAllowed && (
-          <>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleDownloadTemplate}
-              disabled={templateDownload.isPending}
-            >
-              <Download className="mr-1.5 size-3.5" />
-              {templateDownload.isPending ? "Đang tải..." : "Tải file mẫu"}
-            </Button>
-            <Button type="button" size="sm" onClick={() => setIsImportOpen(true)}>
-              <Upload className="mr-1.5 size-3.5" />
-              Nhập từ Excel
-            </Button>
-          </>
+          <Button type="button" size="sm" onClick={() => setIsImportOpen(true)}>
+            <Upload className="mr-1.5 size-3.5" />
+            Nhập từ Excel
+          </Button>
         )}
       </>
     ) : undefined
@@ -265,20 +275,18 @@ export function ParticipantsTab({
 
   return (
     <div className="space-y-4">
-      {!isEmpty && (
-        <ParticipantsToolbar
-          search={search}
-          onSearchChange={resetPage(setSearch)}
-          rosterStatus={rosterStatus}
-          onRosterStatusChange={resetPage(setRosterStatus)}
-          attendanceStatus={attendanceStatus}
-          onAttendanceStatusChange={resetPage(setAttendanceStatus)}
-          days={days}
-          batchDayId={batchDayId}
-          onBatchDayIdChange={resetPage(setBatchDayId)}
-          actions={actions}
-        />
-      )}
+      <ParticipantsToolbar
+        search={search}
+        onSearchChange={resetPage(setSearch)}
+        rosterStatus={rosterStatus}
+        onRosterStatusChange={resetPage(setRosterStatus)}
+        attendanceStatus={attendanceStatus}
+        onAttendanceStatusChange={resetPage(setAttendanceStatus)}
+        days={days}
+        batchDayId={batchDayId}
+        onBatchDayIdChange={resetPage(setBatchDayId)}
+        actions={isEmpty ? undefined : actions}
+      />
 
       {!isEmpty && (canPrintForm || canBulkPrintForms) && !printAllowed && (
         <p className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -294,6 +302,11 @@ export function ParticipantsTab({
           isSelectingAll={selectPrintable.isPending}
           onClear={() => setSelection(new Map())}
           onPrint={() => openPrintJob({ kind: "create", entries: [...selection.values()] })}
+          onPrintDay={
+            days.length > 0
+              ? () => openPrintJob({ kind: "create-day", initialDayId: batchDayId })
+              : undefined
+          }
           trackedJobId={trackedJob?.jobId}
           onOpenTrackedJob={() => trackedJob && openPrintJob({ kind: "track", job: trackedJob })}
         />
@@ -327,7 +340,7 @@ export function ParticipantsTab({
         <EmptyParticipantsState
           actions={actions}
           note={
-            importAllowed || changeAllowed || (!canImport && !canManage)
+            writeAllowed || !hasWritePermission
               ? undefined
               : "Đợt khám này không còn nhận danh sách người khám mới."
           }
@@ -382,28 +395,21 @@ export function ParticipantsTab({
           onOpenChange={setIsPrintJobOpen}
           organizationId={organizationId}
           batchId={batchId}
+          days={days}
           mode={printJobMode}
           onJobCreated={handlePrintJobCreated}
-          onRecreate={(entries) => setPrintJobMode({ kind: "create", entries })}
+          onRecreate={(job) =>
+            setPrintJobMode(
+              job.day
+                ? { kind: "create-day", initialDayId: job.day.id }
+                : { kind: "create", entries: job.entries }
+            )
+          }
         />
       )}
 
       {changeAllowed && (
         <>
-          <ParticipantFormDialog
-            mode="create"
-            open={isCreateOpen}
-            onOpenChange={setIsCreateOpen}
-            organizationId={organizationId}
-            batchId={batchId}
-            days={days}
-            onSaved={() => toast.success("Đã thêm người khám vào danh sách.")}
-            onNotice={warn}
-            onReactivateCandidate={(participant) => {
-              setIsCreateOpen(false)
-              setReactivating(participant)
-            }}
-          />
           <ParticipantFormDialog
             mode="edit"
             open={editing !== null}
@@ -447,6 +453,27 @@ export function ParticipantsTab({
         </>
       )}
 
+      {createAllowed && (
+        <ParticipantFormDialog
+          mode="create"
+          open={isCreateOpen}
+          onOpenChange={setIsCreateOpen}
+          organizationId={organizationId}
+          batchId={batchId}
+          days={days}
+          onSaved={() => toast.success("Đã thêm người khám vào danh sách.")}
+          onNotice={warn}
+          onReactivateCandidate={
+            changeAllowed
+              ? (participant) => {
+                  setIsCreateOpen(false)
+                  setReactivating(participant)
+                }
+              : undefined
+          }
+        />
+      )}
+
       {importAllowed && (
         <ParticipantImportDialog
           open={isImportOpen}
@@ -454,7 +481,7 @@ export function ParticipantsTab({
           organizationId={organizationId}
           batchId={batchId}
           rowVersion={batch.rowVersion}
-          onDownloadTemplate={handleDownloadTemplate}
+          onDownloadTemplate={templateAllowed ? handleDownloadTemplate : undefined}
           isDownloadingTemplate={templateDownload.isPending}
           onImported={(imported) =>
             toast.success(`Đã thêm ${imported.createdCount} người khám vào đợt khám.`)

@@ -103,6 +103,29 @@ describe("examination form API", () => {
     expect(job).toEqual({ jobId: "job-1" })
   })
 
+  it("asks the backend to print a whole examination day without sending any Participant", async () => {
+    const post = vi
+      .spyOn(apiClient, "post")
+      .mockResolvedValue({ result: "OK", code: 202, data: { jobId: "job-2" } })
+
+    const job = await createExaminationFormPrintJob({
+      scope: "BATCH_DAY",
+      organizationId: "org-1",
+      batchId: "batch-1",
+      batchDayId: "day-1",
+      includeAttended: true,
+      sort: "IMPORT_ORDER",
+      idempotencyKey: "key-2",
+    })
+
+    expect(post).toHaveBeenCalledWith(
+      `${PARTICIPANTS}/examination-form-print-jobs`,
+      { scope: "BATCH_DAY", batchDayId: "day-1", includeAttended: true, sort: "IMPORT_ORDER" },
+      { headers: { "Idempotency-Key": "key-2" } }
+    )
+    expect(job).toEqual({ jobId: "job-2" })
+  })
+
   it("collects every active Participant matching the filter, page by page", async () => {
     const first = Array.from({ length: 100 }, (_, index) => item(index + 1))
     const get = vi

@@ -33,7 +33,7 @@ interface ParticipantImportDialogProps {
   batchId: string
   /** The batch `rowVersion` the workbook must have been prepared for. */
   rowVersion: number
-  onDownloadTemplate: () => void
+  onDownloadTemplate?: () => void
   isDownloadingTemplate: boolean
   /** Called with the result of a successful import just before the dialog closes. */
   onImported?: (result: ParticipantImportResult) => void
@@ -127,26 +127,30 @@ export function ParticipantImportDialog({
         <DialogHeader>
           <DialogTitle>Nhập danh sách người khám từ Excel</DialogTitle>
           <DialogDescription>
-            Tải file mẫu của đợt khám, điền dữ liệu rồi tải lên. Hệ thống chỉ thêm người khám mới và
-            nhập toàn bộ hoặc không nhập dòng nào.
+            {onDownloadTemplate
+              ? "Tải file mẫu của đợt khám, điền dữ liệu rồi tải lên."
+              : "Chọn file Excel theo mẫu của đợt khám rồi tải lên."} {" "}
+            Hệ thống chỉ thêm người khám mới và nhập toàn bộ hoặc không nhập dòng nào.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-          <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-muted/40 p-3 text-xs">
-            <span className="text-muted-foreground">
-              File mẫu gắn với phiên bản hiện tại của đợt khám. Tải lại nếu đợt khám vừa được sửa.
-            </span>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={onDownloadTemplate}
-              disabled={isDownloadingTemplate || pending}
-            >
-              {isDownloadingTemplate ? "Đang tải..." : "Tải file mẫu"}
-            </Button>
-          </div>
+          {onDownloadTemplate && (
+            <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-muted/40 p-3 text-xs">
+              <span className="text-muted-foreground">
+                File mẫu gắn với phiên bản hiện tại của đợt khám. Tải lại nếu đợt khám vừa được sửa.
+              </span>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={onDownloadTemplate}
+                disabled={isDownloadingTemplate || pending}
+              >
+                {isDownloadingTemplate ? "Đang tải..." : "Tải file mẫu"}
+              </Button>
+            </div>
+          )}
 
           <div className="space-y-1.5">
             <Label htmlFor="participant-import-file" className="text-xs font-medium">
