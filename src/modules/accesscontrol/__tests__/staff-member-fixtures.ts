@@ -15,7 +15,7 @@ export const staffMemberFixture: StaffMemberResponseDto = {
   email: "an@example.invalid",
   status: "ACTIVE",
   rowVersion: 0,
-  account: { id: "account-1", username: "annv1", status: "ACTIVE", roleCodes: ["GENERAL_PRACTITIONER"] },
+  account: { id: "account-1", username: "annv1", status: "ACTIVE", roleCode: "GENERAL_PRACTITIONER" },
 }
 
 export const rolesFixture: RoleResponseDto[] = [

@@ -10,7 +10,7 @@ const onOpenChange = vi.fn()
 async function fillValidForm(user: ReturnType<typeof userEvent.setup>) {
   await user.type(screen.getByLabelText(/^Họ và tên/), "Nguyễn Văn An")
   await user.type(screen.getByLabelText(/^Mật khẩu tạm/), "Tam@12345")
-  await user.click(await screen.findByRole("checkbox", { name: /Bác sĩ đa khoa/ }))
+  await user.click(await screen.findByRole("radio", { name: /Bác sĩ đa khoa/ }))
 }
 
 function postBodies(fetchMock: ReturnType<typeof mockStaffMemberFetch>) {
@@ -28,7 +28,7 @@ describe("CreateStaffMemberDialog", () => {
     mockStaffMemberFetch()
     renderWithClient(<CreateStaffMemberDialog open onOpenChange={onOpenChange} />)
 
-    expect(await screen.findByRole("checkbox", { name: /Lễ tân/ })).toBeInTheDocument()
+    expect(await screen.findByRole("radio", { name: /Lễ tân/ })).toBeInTheDocument()
     await user.type(screen.getByLabelText(/^Họ và tên/), "Nguyễn Văn An")
     expect(screen.getByTestId("username-preview")).toHaveTextContent("annv…")
     expect(screen.queryByLabelText(/Mã nhân viên/)).not.toBeInTheDocument()
@@ -39,12 +39,12 @@ describe("CreateStaffMemberDialog", () => {
     const user = userEvent.setup()
     const fetchMock = mockStaffMemberFetch()
     renderWithClient(<CreateStaffMemberDialog open onOpenChange={onOpenChange} />)
-    await screen.findByRole("checkbox", { name: /Lễ tân/ })
+    await screen.findByRole("radio", { name: /Lễ tân/ })
 
     await user.click(screen.getByRole("button", { name: "Tạo nhân viên" }))
 
     expect(await screen.findByText("Họ và tên là bắt buộc")).toBeInTheDocument()
-    expect(screen.getByText("Chọn ít nhất một vai trò")).toBeInTheDocument()
+    expect(screen.getByText("Vui lòng chọn một vai trò")).toBeInTheDocument()
     expect(postBodies(fetchMock)).toEqual([])
   })
 
@@ -60,7 +60,7 @@ describe("CreateStaffMemberDialog", () => {
     expect(screen.getByText("annv1")).toBeInTheDocument()
     expect(screen.getByText("NV-0001")).toBeInTheDocument()
     expect(postBodies(fetchMock)).toEqual([
-      { fullName: "Nguyễn Văn An", initialPassword: "Tam@12345", roleCodes: ["GENERAL_PRACTITIONER"] },
+      { fullName: "Nguyễn Văn An", initialPassword: "Tam@12345", roleCode: "GENERAL_PRACTITIONER" },
     ])
     expect(screen.queryByDisplayValue("Tam@12345")).not.toBeInTheDocument()
 
@@ -69,7 +69,7 @@ describe("CreateStaffMemberDialog", () => {
     expect(screen.getByLabelText(/^Mật khẩu tạm/)).toHaveValue("")
   })
 
-  it("reloads the roles and drops a role that is no longer available after a 409", async () => {
+  it("reloads the roles and clears a role that is no longer available after a 409", async () => {
     const user = userEvent.setup()
     const fetchMock = mockStaffMemberFetch({
       roles: [rolesFixture, [rolesFixture[1]]],
@@ -80,11 +80,11 @@ describe("CreateStaffMemberDialog", () => {
     await fillValidForm(user)
     await user.click(screen.getByRole("button", { name: "Tạo nhân viên" }))
 
-    expect(await screen.findByText(/Một hoặc nhiều vai trò không còn khả dụng/)).toBeInTheDocument()
+    expect(await screen.findByText(/Vai trò đã chọn không còn khả dụng/)).toBeInTheDocument()
     await waitFor(() =>
-      expect(screen.queryByRole("checkbox", { name: /Bác sĩ đa khoa/ })).not.toBeInTheDocument()
+      expect(screen.queryByRole("radio", { name: /Bác sĩ đa khoa/ })).not.toBeInTheDocument()
     )
-    expect(await screen.findByText("Chọn ít nhất một vai trò")).toBeInTheDocument()
+    expect(await screen.findByText("Vui lòng chọn một vai trò")).toBeInTheDocument()
     expect(fetchMock.mock.calls.filter(([url]) => String(url).endsWith("/api/v1/roles"))).toHaveLength(2)
   })
 

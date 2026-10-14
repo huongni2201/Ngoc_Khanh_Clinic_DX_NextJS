@@ -7,7 +7,6 @@ export const STAFF_MEMBER_EMAIL_MAX_LENGTH = 255
 export const STAFF_PASSWORD_MIN_LENGTH = 8
 /** Bcrypt reads at most 72 bytes; the backend rejects longer passwords instead of truncating them. */
 export const STAFF_PASSWORD_MAX_BYTES = 72
-export const STAFF_ROLE_MAX_COUNT = 20
 
 function todayIso() {
   const now = new Date()
@@ -66,10 +65,8 @@ export const createStaffMemberSchema = z.object({
     .refine((value) => passwordByteLength(value) <= STAFF_PASSWORD_MAX_BYTES, {
       message: "Mật khẩu tạm quá dài (tối đa 72 byte, ký tự có dấu tính nhiều byte)",
     }),
-  roleCodes: z
-    .array(z.string().min(1))
-    .min(1, { message: "Chọn ít nhất một vai trò" })
-    .max(STAFF_ROLE_MAX_COUNT, { message: `Chọn tối đa ${STAFF_ROLE_MAX_COUNT} vai trò` }),
+  // An account holds exactly one role.
+  roleCode: z.string().min(1, { message: "Vui lòng chọn một vai trò" }),
 })
 
 export type CreateStaffMemberFormValues = z.input<typeof createStaffMemberSchema>
@@ -82,5 +79,5 @@ export const EMPTY_CREATE_STAFF_MEMBER_FORM: CreateStaffMemberFormValues = {
   phone: "",
   email: "",
   initialPassword: "",
-  roleCodes: [],
+  roleCode: "",
 }

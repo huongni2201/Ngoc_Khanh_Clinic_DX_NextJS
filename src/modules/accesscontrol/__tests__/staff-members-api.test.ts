@@ -28,7 +28,7 @@ describe("staff members API", () => {
       email: "an@example.invalid",
       status: "ACTIVE",
       rowVersion: 0,
-      account: { id: "account-1", username: "annv1", status: "ACTIVE", roleCodes: ["GENERAL_PRACTITIONER"] },
+      account: { id: "account-1", username: "annv1", status: "ACTIVE", roleCode: "GENERAL_PRACTITIONER" },
     })
     expect(page).toMatchObject({ total: 1, page: 1, pageSize: 10, totalPages: 1 })
   })
@@ -64,7 +64,7 @@ describe("staff members API", () => {
       phone: " ",
       email: "an@example.invalid",
       initialPassword: " Tam@1234 ",
-      roleCodes: ["GENERAL_PRACTITIONER", "GENERAL_PRACTITIONER"],
+      roleCode: "GENERAL_PRACTITIONER",
     })
 
     expect(post).toHaveBeenCalledWith("/api/v1/staff-members", {
@@ -74,7 +74,7 @@ describe("staff members API", () => {
       phone: undefined,
       email: "an@example.invalid",
       initialPassword: " Tam@1234 ",
-      roleCodes: ["GENERAL_PRACTITIONER"],
+      roleCode: "GENERAL_PRACTITIONER",
     })
     expect(created.account?.username).toBe("annv1")
   })

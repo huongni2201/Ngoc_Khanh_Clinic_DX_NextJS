@@ -36,7 +36,7 @@ function mapStaffMember(dto: StaffMemberResponseDto): StaffMember {
           id: dto.account.id,
           username: dto.account.username,
           status: dto.account.status,
-          roleCodes: [...dto.account.roleCodes],
+          roleCode: dto.account.roleCode,
         }
       : null,
   }
@@ -61,7 +61,7 @@ function toRequest(input: CreateStaffMemberInput): CreateStaffMemberRequestDto {
     email: optionalText(input.email),
     // Passwords are never trimmed (ADR-0014).
     initialPassword: input.initialPassword,
-    roleCodes: [...new Set(input.roleCodes)],
+    roleCode: input.roleCode,
   }
 }
 

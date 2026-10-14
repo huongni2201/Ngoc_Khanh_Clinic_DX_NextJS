@@ -10,7 +10,7 @@ export const staffAccountResponseSchema = z.object({
   id: z.string().min(1),
   username: z.string().min(1),
   status: z.enum(ACCOUNT_STATUS_VALUES),
-  roleCodes: z.array(z.string()),
+  roleCode: z.string(),
 })
 
 export const staffMemberResponseSchema = z.object({
@@ -56,5 +56,5 @@ export interface CreateStaffMemberRequestDto {
   phone?: string
   email?: string
   initialPassword: string
-  roleCodes: string[]
+  roleCode: string
 }

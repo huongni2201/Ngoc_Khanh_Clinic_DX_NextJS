@@ -12,7 +12,7 @@ export interface StaffAccount {
   id: string
   username: string
   status: StaffAccountStatus
-  roleCodes: string[]
+  roleCode: string
 }
 
 export interface StaffMember {
@@ -63,5 +63,5 @@ export interface CreateStaffMemberInput {
   phone?: string
   email?: string
   initialPassword: string
-  roleCodes: string[]
+  roleCode: string
 }

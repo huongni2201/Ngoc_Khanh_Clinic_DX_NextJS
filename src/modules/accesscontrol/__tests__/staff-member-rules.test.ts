@@ -9,7 +9,7 @@ const valid = {
   ...EMPTY_CREATE_STAFF_MEMBER_FORM,
   fullName: "Nguyễn Văn An",
   initialPassword: "Tam@12345",
-  roleCodes: ["RECEPTIONIST"],
+  roleCode: "RECEPTIONIST",
 }
 
 function messages(values: typeof valid) {
@@ -40,7 +40,7 @@ describe("create staff member form rules", () => {
 
   it("requires a name with letters, a role and an 8 character password", () => {
     expect(messages({ ...valid, fullName: "123" })).toContain("Họ và tên phải có chữ cái")
-    expect(messages({ ...valid, roleCodes: [] })).toContain("Chọn ít nhất một vai trò")
+    expect(messages({ ...valid, roleCode: "" })).toContain("Vui lòng chọn một vai trò")
     expect(messages({ ...valid, initialPassword: "short" })).toContain(
       "Mật khẩu tạm phải có ít nhất 8 ký tự"
     )
@@ -64,10 +64,10 @@ describe("staff member errors and labels", () => {
   it("maps backend field paths to form fields", () => {
     const error = new ApiClientError("x", 400, 400, "Invalid", [
       { field: "initialPassword", code: "Size" },
-      { field: "roleCodes[0]", code: "NotBlank" },
+      { field: "roleCode", code: "NotBlank" },
       { field: "unknown", code: "X" },
     ])
-    expect(staffMemberFieldErrors(error).map((item) => item.field)).toEqual(["initialPassword", "roleCodes"])
+    expect(staffMemberFieldErrors(error).map((item) => item.field)).toEqual(["initialPassword", "roleCode"])
     expect(staffMemberFieldErrors(new Error("x"))).toEqual([])
   })
 

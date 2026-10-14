@@ -178,16 +178,9 @@ function StaffMemberRow({ staffMember }: { staffMember: StaffMember }) {
         ) : null}
       </TableCell>
       <TableCell className="hidden whitespace-normal px-4 py-3 md:table-cell">
-        {account?.roleCodes.length ? (
-          <span className="flex flex-wrap gap-1.5">
-            {account.roleCodes.map((code) => (
-              <span
-                key={code}
-                className="rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground"
-              >
-                {roleLabel(code)}
-              </span>
-            ))}
+        {account ? (
+          <span className="rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground">
+            {roleLabel(account.roleCode)}
           </span>
         ) : (
           <span className="text-sm text-muted-foreground">—</span>

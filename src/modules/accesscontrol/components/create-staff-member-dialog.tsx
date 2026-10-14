@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Controller, useForm, useWatch, type UseFormRegisterReturn } from "react-hook-form"
+import { useForm, useWatch, type UseFormRegisterReturn } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import {
   Dialog,
@@ -38,7 +38,7 @@ import {
   STAFF_MEMBER_SEX_LABELS,
 } from "../utils/staff-member-labels"
 import { previewUsernameBase } from "../utils/username-preview"
-import { RoleCheckboxGroup } from "./role-checkbox-group"
+import { RoleRadioGroup } from "./role-radio-group"
 
 interface CreateStaffMemberDialogProps {
   open: boolean
@@ -137,7 +137,7 @@ export function CreateStaffMemberDialog({ open, onOpenChange }: CreateStaffMembe
         phone: values.phone || undefined,
         email: values.email || undefined,
         initialPassword: values.initialPassword,
-        roleCodes: values.roleCodes,
+        roleCode: values.roleCode,
       })
       // The temporary password must not stay in memory once the account exists.
       reset(EMPTY_CREATE_STAFF_MEMBER_FORM)
@@ -150,12 +150,10 @@ export function CreateStaffMemberDialog({ open, onOpenChange }: CreateStaffMembe
       }
       if (isUnavailableRoleError(error)) {
         const refreshed = await rolesQuery.refetch()
-        const available = new Set((refreshed.data ?? []).map((role) => role.code))
-        setValue(
-          "roleCodes",
-          getValues("roleCodes").filter((code) => available.has(code)),
-          { shouldValidate: true }
+        const stillAvailable = (refreshed.data ?? []).some(
+          (role) => role.code === getValues("roleCode")
         )
+        if (!stillAvailable) setValue("roleCode", "", { shouldValidate: true })
       }
     }
   }
@@ -315,21 +313,13 @@ export function CreateStaffMemberDialog({ open, onOpenChange }: CreateStaffMembe
                     )}
                   </div>
 
-                  <Controller
-                    control={control}
-                    name="roleCodes"
-                    render={({ field, fieldState }) => (
-                      <RoleCheckboxGroup
-                        roles={rolesQuery.data}
-                        isLoading={rolesQuery.isLoading}
-                        isError={rolesQuery.isError}
-                        onRetry={() => void rolesQuery.refetch()}
-                        value={field.value}
-                        onChange={field.onChange}
-                        error={fieldState.error?.message}
-                        disabled={isPending}
-                      />
-                    )}
+                  <RoleRadioGroup
+                    roles={rolesQuery.data}
+                    isLoading={rolesQuery.isLoading}
+                    isError={rolesQuery.isError}
+                    onRetry={() => void rolesQuery.refetch()}
+                    registration={register("roleCode")}
+                    error={errors.roleCode?.message}
                   />
                 </fieldset>
               </div>
@@ -419,16 +409,13 @@ function CreatedStaffMemberResult({
         <div>
           <dt className="text-xs text-muted-foreground">Vai trò</dt>
           <dd className="mt-1 flex flex-wrap gap-1.5">
-            {account?.roleCodes.length
-              ? account.roleCodes.map((code) => (
-                  <span
-                    key={code}
-                    className="rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground"
-                  >
-                    {roleLabel(code, roles?.find((role) => role.code === code))}
-                  </span>
-                ))
-              : "—"}
+            {account ? (
+              <span className="rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground">
+                {roleLabel(account.roleCode, roles?.find((role) => role.code === account.roleCode))}
+              </span>
+            ) : (
+              "—"
+            )}
           </dd>
         </div>
         <div>

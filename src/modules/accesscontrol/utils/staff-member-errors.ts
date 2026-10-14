@@ -10,7 +10,7 @@ const FORM_FIELDS: readonly StaffMemberFormField[] = [
   "phone",
   "email",
   "initialPassword",
-  "roleCodes",
+  "roleCode",
 ]
 
 /** Vietnamese text for a field the backend rejected; its own message is English and never shown. */
@@ -21,7 +21,7 @@ const FIELD_MESSAGES: Record<StaffMemberFormField, string> = {
   phone: "Số điện thoại không hợp lệ",
   email: "Email không hợp lệ",
   initialPassword: "Mật khẩu tạm không hợp lệ (8–72 byte)",
-  roleCodes: "Vai trò không hợp lệ",
+  roleCode: "Vai trò không hợp lệ",
 }
 
 export interface StaffMemberFieldError {
@@ -29,7 +29,7 @@ export interface StaffMemberFieldError {
   message: string
 }
 
-/** Fields named by a backend 400, mapped to form fields (`roleCodes[0]` → `roleCodes`). */
+/** Fields named by a backend 400, mapped to form fields by the root of their JSON path. */
 export function staffMemberFieldErrors(error: unknown): StaffMemberFieldError[] {
   if (!(error instanceof ApiClientError) || error.status !== 400) return []
   const fields = new Set<StaffMemberFormField>()
@@ -41,7 +41,7 @@ export function staffMemberFieldErrors(error: unknown): StaffMemberFieldError[] 
 }
 
 /**
- * Whether the create failed because a chosen role is no longer available. A 409 on create has this
+ * Whether the create failed because the chosen role is no longer available. A 409 on create has this
  * one business rule; the envelope carries no error code, so it is decided from the operation.
  */
 export function isUnavailableRoleError(error: unknown) {
@@ -50,7 +50,7 @@ export function isUnavailableRoleError(error: unknown) {
 
 export function createStaffMemberErrorMessage(error: unknown): string {
   if (isUnavailableRoleError(error)) {
-    return "Một hoặc nhiều vai trò không còn khả dụng. Danh sách vai trò đã được tải lại, vui lòng chọn lại."
+    return "Vai trò đã chọn không còn khả dụng. Danh sách vai trò đã được tải lại, vui lòng chọn lại."
   }
   if (error instanceof ApiClientError && error.status === 400) {
     return "Thông tin chưa hợp lệ. Vui lòng kiểm tra các trường được đánh dấu."
