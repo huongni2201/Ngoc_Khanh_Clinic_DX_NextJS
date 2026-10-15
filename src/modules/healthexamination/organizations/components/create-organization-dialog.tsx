@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { toast } from "@/shared/ui/toaster"
-import { OrganizationTextField } from "./organization-text-field"
+import { FormTextField } from "@/shared/ui"
 import {
   createOrganizationSchema,
   type CreateOrganizationFormValues,
@@ -106,7 +106,7 @@ export function CreateOrganizationDialog({
             <legend className="mb-3 text-xs font-semibold uppercase tracking-wide text-secondary-foreground">
               Thông tin đơn vị
             </legend>
-            <OrganizationTextField
+            <FormTextField
               id="create-name"
               label="Tên đơn vị"
               required
@@ -115,7 +115,7 @@ export function CreateOrganizationDialog({
               registration={register("name")}
               error={errors.name?.message}
             />
-            <OrganizationTextField
+            <FormTextField
               id="create-taxCode"
               label="Mã số thuế"
               placeholder="VD: 0101234567"
@@ -123,7 +123,7 @@ export function CreateOrganizationDialog({
               registration={register("taxCode")}
               error={errors.taxCode?.message}
             />
-            <OrganizationTextField
+            <FormTextField
               id="create-email"
               label="Email đơn vị"
               required
@@ -132,7 +132,7 @@ export function CreateOrganizationDialog({
               registration={register("email")}
               error={errors.email?.message}
             />
-            <OrganizationTextField
+            <FormTextField
               id="create-address"
               label="Địa chỉ"
               required
@@ -149,7 +149,7 @@ export function CreateOrganizationDialog({
             <legend className="mb-3 text-xs font-semibold uppercase tracking-wide text-secondary-foreground">
               Người liên hệ
             </legend>
-            <OrganizationTextField
+            <FormTextField
               id="create-contact-name"
               label="Người liên hệ"
               required
@@ -159,7 +159,7 @@ export function CreateOrganizationDialog({
               error={errors.contactPerson?.message}
             />
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <OrganizationTextField
+              <FormTextField
                 id="create-contact-phone"
                 label="Số điện thoại"
                 required
@@ -168,7 +168,7 @@ export function CreateOrganizationDialog({
                 registration={register("contactPhone")}
                 error={errors.contactPhone?.message}
               />
-              <OrganizationTextField
+              <FormTextField
                 id="create-contact-email"
                 label="Email người liên hệ"
                 required

@@ -64,14 +64,16 @@ export function isApiErrorStatus(error: unknown, status: number): boolean {
 
 /**
  * Vietnamese text for HTTP failures the backend reports with English messages. The envelope has no
- * business error code, so a 409 cannot be told apart (stale version, duplicate code, rule violation).
- * Statuses without a mapped text keep the backend message.
+ * business error code, so a 409 cannot be told apart (stale version, duplicate code, rule violation);
+ * a 422 means a reference the caller chose (for example a role) can no longer be used. Statuses
+ * without a mapped text keep the backend message.
  */
 function statusMessage(status: number): string | undefined {
   if (status === 400) return "Thông tin không hợp lệ. Vui lòng kiểm tra lại."
   if (status === 403) return "Không được phép thực hiện thao tác này."
   if (status === 404) return "Không tìm thấy hoặc đã bị xóa/ngừng hoạt động."
   if (status === 409) return "Dữ liệu đã thay đổi hoặc không thỏa quy tắc nghiệp vụ. Vui lòng tải lại."
+  if (status === 422) return "Dữ liệu đã chọn không còn hợp lệ. Vui lòng tải lại và chọn lại."
   if (status >= 500) return "Máy chủ gặp lỗi. Vui lòng thử lại sau."
   return undefined
 }

@@ -40,6 +40,11 @@ export const PERMISSION = {
   HEALTH_EXAMINATION_SERVICE_EXPORT: "HEALTH_EXAMINATION_SERVICE_EXPORT", // GET /organizations/{organizationId}/health-examination-batches/{batchId}/examination-details/export
   HEALTH_EXAMINATION_REPORT_EXPORT: "HEALTH_EXAMINATION_REPORT_EXPORT", // GET /organizations/{organizationId}/health-examination-batches/{batchId}/reports/payment-summary/docx
   SERVICE_CATALOG_VIEW: "SERVICE_CATALOG_VIEW", // GET /catalog/services
+  STAFF_MEMBER_VIEW: "STAFF_MEMBER_VIEW", // GET /staff-members (V004)
+  USER_ACCOUNT_CREATE: "USER_ACCOUNT_CREATE", // POST /staff-members (V004)
+  ROLE_VIEW: "ROLE_VIEW", // GET /roles (V004)
+  // No endpoint of its own: POST /staff-members also requires it because it grants the role.
+  USER_ROLE_ASSIGN: "USER_ROLE_ASSIGN",
 } as const
 
 export type PermissionCode = (typeof PERMISSION)[keyof typeof PERMISSION]

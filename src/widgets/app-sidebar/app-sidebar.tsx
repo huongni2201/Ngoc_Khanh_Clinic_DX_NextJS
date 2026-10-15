@@ -12,6 +12,7 @@ import {
   Home01Icon,
   UserCheck01Icon,
   UserGroupIcon,
+  UserMultiple02Icon,
 } from "@hugeicons/core-free-icons"
 import { cn } from "@/lib/utils"
 import { PERMISSION, usePermissions, type PermissionCode } from "@/modules/accesscontrol"
@@ -27,6 +28,17 @@ interface NavItem {
 export function AppSidebar({ className }: { className?: string }) {
   const pathname = usePathname()
   const { isKnown, can } = usePermissions()
+
+  // Administration items appear only once the session is known to hold the permission, so an
+  // account without it never sees them flash. Display only; the backend checks every request.
+  const adminItems: NavItem[] = [
+    {
+      title: "Nhân viên",
+      href: "/staff-members",
+      icon: UserMultiple02Icon,
+      permission: PERMISSION.STAFF_MEMBER_VIEW,
+    },
+  ].filter((item) => isKnown && can(item.permission))
 
   const navItems: NavItem[] = [
     {
@@ -110,37 +122,60 @@ export function AppSidebar({ className }: { className?: string }) {
               ? pathname.startsWith("/doctor") || pathname.startsWith("/encounters")
               : pathname.startsWith(item.href)
 
-          return (
-            <Link
-              key={item.title}
-              href={item.href}
-              prefetch={false}
-              aria-current={isActive ? "page" : undefined}
-              className={cn(
-                "group flex h-10 items-center justify-between rounded-md px-3 text-sm font-medium transition-colors",
-                isActive
-                  ? "bg-sidebar-primary text-sidebar-primary-foreground font-semibold shadow-xs"
-                  : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-              )}
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                <HugeiconsIcon
-                  icon={item.icon}
-                  strokeWidth={1.8}
-                  className={cn(
-                    "size-[18px] shrink-0 transition-colors",
-                    isActive
-                      ? "text-sidebar-primary-foreground"
-                      : "text-sidebar-foreground group-hover:text-sidebar-accent-foreground"
-                  )}
-                />
-                <span className="truncate">{item.title}</span>
-              </div>
-            </Link>
-          )
+          return <SidebarLink key={item.title} item={item} isActive={isActive} />
         })}
+
+        {adminItems.length > 0 ? (
+          <div className="pt-4">
+            <p
+              id="sidebar-admin-heading"
+              className="px-3 pb-2 text-xs font-semibold uppercase tracking-wide text-sidebar-foreground"
+            >
+              Quản trị
+            </p>
+            <div role="group" aria-labelledby="sidebar-admin-heading" className="space-y-1">
+              {adminItems.map((item) => (
+                <SidebarLink
+                  key={item.title}
+                  item={item}
+                  isActive={pathname.startsWith(item.href)}
+                />
+              ))}
+            </div>
+          </div>
+        ) : null}
       </nav>
     </aside>
+  )
+}
+
+function SidebarLink({ item, isActive }: { item: NavItem; isActive: boolean }) {
+  return (
+    <Link
+      href={item.href}
+      prefetch={false}
+      aria-current={isActive ? "page" : undefined}
+      className={cn(
+        "group flex h-10 items-center justify-between rounded-md px-3 text-sm font-medium transition-colors",
+        isActive
+          ? "bg-sidebar-primary text-sidebar-primary-foreground font-semibold shadow-xs"
+          : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+      )}
+    >
+      <div className="flex items-center gap-3 min-w-0">
+        <HugeiconsIcon
+          icon={item.icon}
+          strokeWidth={1.8}
+          className={cn(
+            "size-[18px] shrink-0 transition-colors",
+            isActive
+              ? "text-sidebar-primary-foreground"
+              : "text-sidebar-foreground group-hover:text-sidebar-accent-foreground"
+          )}
+        />
+        <span className="truncate">{item.title}</span>
+      </div>
+    </Link>
   )
 }
 

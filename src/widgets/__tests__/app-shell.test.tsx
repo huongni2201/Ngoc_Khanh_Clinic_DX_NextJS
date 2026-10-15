@@ -52,6 +52,25 @@ describe("AppShell", () => {
     expect(
       screen.getByRole("link", { name: "Bỏ qua đến nội dung chính" })
     ).toHaveAttribute("href", "#main-content")
+    expect(screen.queryByRole("link", { name: "Nhân viên" })).not.toBeInTheDocument()
+  })
+
+  it("shows the staff member link only to sessions allowed to list staff members", async () => {
+    const administrator = {
+      ...staffSession,
+      roleAssignments: [
+        { ...staffSession.roleAssignments[0], roleCode: "ADMINISTRATOR", permissions: ["STAFF_MEMBER_VIEW"] },
+      ],
+    }
+    vi.stubGlobal("fetch", vi.fn().mockImplementation(() => Promise.resolve(ok(administrator))))
+    render(
+      <QueryClientProvider client={new QueryClient()}><AppShell>
+        <p>Nội dung</p>
+      </AppShell></QueryClientProvider>
+    )
+
+    expect(await screen.findByRole("link", { name: "Nhân viên" })).toHaveAttribute("href", "/staff-members")
+    expect(screen.getByRole("group", { name: "Quản trị" })).toBeInTheDocument()
   })
 
   it("hides the Đơn vị item from an account without the organization search permission", async () => {

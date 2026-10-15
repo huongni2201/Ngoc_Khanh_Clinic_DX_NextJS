@@ -13,3 +13,12 @@ export { AuthBoundary } from "./components/auth-boundary"
 export { AuthSessionSync } from "./components/auth-session-sync"
 export { replaceSession, notifySessionChanged } from "./utils/session-cache"
 export { hasStaffPermission } from "./utils/staff-workspace-access"
+export { StaffMemberListPage } from "./pages/staff-member-list-page"
+export type {
+  StaffMember,
+  StaffAccount,
+  RoleOption,
+  StaffMemberFilterParams,
+  StaffMemberListResponse,
+  CreateStaffMemberInput,
+} from "./types/staff-member"
