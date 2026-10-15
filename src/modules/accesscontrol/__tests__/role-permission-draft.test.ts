@@ -9,6 +9,7 @@ import {
   pendingChangeOf,
   rebaseDraft,
   setPermissions,
+  subtractSent,
 } from "../utils/role-permission-draft"
 import { toDisplayCatalog } from "../utils/permission-labels"
 import { roleDisplayDescription, roleDisplayName } from "../utils/role-labels"
@@ -43,6 +44,18 @@ describe("role permission draft", () => {
     const draft = setPermissions(EMPTY_DRAFT, granted, ["PAYMENT_REFUND", "PAYMENT_VIEW"], true)
     expect([...draft.grant]).toEqual(["PAYMENT_VIEW"])
     expect(draft.revoke.size).toBe(0)
+  })
+
+  it("keeps the changes made while a save was in flight", () => {
+    const sentDraft = setPermissions(EMPTY_DRAFT, granted, ["PAYMENT_VIEW"], true)
+    const sent = { grant: [...sentDraft.grant], revoke: [...sentDraft.revoke] }
+    const meanwhile = setPermissions(sentDraft, granted, ["PAYMENT_REFUND"], false)
+
+    const left = subtractSent(meanwhile, sent)
+
+    expect(left && [...left.grant]).toEqual([])
+    expect(left && [...left.revoke]).toEqual(["PAYMENT_REFUND"])
+    expect(subtractSent(sentDraft, sent)).toBeNull()
   })
 
   it("drops changes the saved permissions already contain", () => {

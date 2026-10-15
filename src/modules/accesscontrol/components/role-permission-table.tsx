@@ -26,8 +26,8 @@ interface RolePermissionTableProps {
 
 /**
  * Permissions of the Role Permissions screen (SRS 1.3.4 [4] and [5]), one card per module so the
- * groups stand apart. A module header grants or removes every permission of the module that is not
- * locked, and can fold the module away.
+ * groups stand apart. A module header grants or removes every shown permission of the module that
+ * is not locked, and can fold the module away.
  */
 export function RolePermissionTable({
   groups,
@@ -120,8 +120,12 @@ function ModuleCard({
   "readOnly" | "isGranted" | "pendingChange" | "isLocked" | "onChange"
 >) {
   const grantedCount = allCodes.filter(isGranted).length
-  const changeable = allCodes.filter((code) => !isLocked(code))
   const allGranted = allCodes.length > 0 && grantedCount === allCodes.length
+  // The module checkbox acts on the rows shown: a search or "show granted only" may hide some, and
+  // a hidden permission must not change.
+  const visibleCodes = group.permissions.map((permission) => permission.code)
+  const visibleGranted = visibleCodes.filter(isGranted).length
+  const changeable = visibleCodes.filter((code) => !isLocked(code))
   const progress = allCodes.length === 0 ? 0 : Math.round((grantedCount / allCodes.length) * 100)
   const titleId = React.useId()
   const listId = React.useId()
@@ -135,8 +139,8 @@ function ModuleCard({
       <div className="flex items-center gap-3 bg-surface-alt px-4 py-3">
         <Checkbox
           aria-labelledby={titleId}
-          checked={allGranted}
-          indeterminate={grantedCount > 0 && !allGranted}
+          checked={visibleGranted === visibleCodes.length}
+          indeterminate={visibleGranted > 0 && visibleGranted < visibleCodes.length}
           disabled={readOnly || changeable.length === 0}
           onCheckedChange={(checked) => onChange(changeable, checked === true)}
         />

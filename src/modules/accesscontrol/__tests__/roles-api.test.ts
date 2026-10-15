@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 import { ApiClientError, apiClient } from "@/shared/api/api-client"
 import {
   createRole,
+  fetchAllRoles,
   fetchPermissionCatalog,
   fetchRoles,
   updateRole,
@@ -20,11 +21,11 @@ describe("roles API", () => {
   it("requests a normalized page and maps a role without description", async () => {
     const fetchMock = mockRoleFetch({ roles: [nurseRole] })
 
-    const page = await fetchRoles({ search: "  nur ", status: "INACTIVE", page: 2, pageSize: 500 })
+    const page = await fetchRoles({ search: "  nur ", status: "INACTIVE", page: 1, pageSize: 500 })
 
     expect(fetchMock).toHaveBeenCalledWith(
       expect.stringContaining(
-        "/api/v1/admin/roles?page=2&size=100&searchKey=nur&status=INACTIVE&sortKey=code&sortBy=ASC"
+        "/api/v1/admin/roles?page=1&size=100&searchKey=nur&status=INACTIVE&sortKey=code&sortBy=ASC"
       ),
       expect.objectContaining({ method: "GET" })
     )
@@ -38,6 +39,22 @@ describe("roles API", () => {
       userCount: 0,
       rowVersion: 0,
     })
+  })
+
+  it("loads every page of roles and keeps their order", async () => {
+    const roles = Array.from({ length: 250 }, (_, index) => ({
+      ...nurseRole,
+      id: `role-${index}`,
+      code: `ROLE_${String(index).padStart(3, "0")}`,
+    }))
+    const fetchMock = mockRoleFetch({ roles })
+
+    const all = await fetchAllRoles()
+
+    expect(all.map((role) => role.id)).toEqual(roles.map((role) => role.id))
+    const pages = fetchMock.mock.calls.map(([input]) => new URL(String(input)).searchParams)
+    expect(pages.map((params) => params.get("page"))).toEqual(["1", "2", "3"])
+    expect(pages.every((params) => params.get("size") === "100")).toBe(true)
   })
 
   it("sends trimmed bodies without blank optional fields", async () => {

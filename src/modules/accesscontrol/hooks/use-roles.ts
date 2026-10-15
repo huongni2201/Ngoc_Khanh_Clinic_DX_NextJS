@@ -1,24 +1,27 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import {
   createRole,
+  fetchAllRoles,
   fetchPermissionCatalog,
   fetchRolePermissions,
-  fetchRoles,
   updateRole,
   updateRolePermissions,
 } from "../api/roles-api"
 import { permissionKeys, roleKeys } from "../staff-member-query-keys"
 import type {
   CreateRoleInput,
-  RoleFilterParams,
   UpdateRoleInput,
   UpdateRolePermissionsInput,
 } from "../types/role"
 
-export function useRoles(params: RoleFilterParams | undefined, enabled = true) {
+/**
+ * Every role, loaded page by page. Kept under `roleKeys.lists()`, so creating, updating a role or
+ * saving its permissions refreshes it.
+ */
+export function useAllRoles(enabled = true) {
   return useQuery({
-    queryKey: roleKeys.list(params),
-    queryFn: ({ signal }) => fetchRoles(params, signal),
+    queryKey: roleKeys.allRoles(),
+    queryFn: ({ signal }) => fetchAllRoles(signal),
     meta: { requiresAuth: true },
     retry: false,
     enabled,

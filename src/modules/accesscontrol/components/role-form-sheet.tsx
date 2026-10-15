@@ -42,7 +42,7 @@ import { useCreateRole, useUpdateRole } from "../hooks/use-roles"
 import type { RoleSummary } from "../types/role"
 import { isRoleVersionConflict, roleFieldErrors, roleFormErrorMessage } from "../utils/role-errors"
 import { roleDisplayDescription, roleDisplayName } from "../utils/role-labels"
-import { ADMINISTRATOR_ROLE_CODE } from "../utils/role-permission-draft"
+import { ADMINISTRATOR_ROLE_CODE, PATIENT_ROLE_CODE } from "../utils/role-permission-draft"
 
 interface RoleFormSheetProps {
   open: boolean
@@ -72,30 +72,39 @@ export function RoleFormSheet({
   onEditPermissions,
 }: RoleFormSheetProps) {
   const [dirty, setDirty] = React.useState(false)
-  const [confirmDiscardOpen, setConfirmDiscardOpen] = React.useState(false)
+  // What to do once the user agrees to drop unsaved changes: close the panel, or close it and open
+  // the Role Permissions screen. Null while no confirmation is asked.
+  const [pendingLeave, setPendingLeave] = React.useState<(() => void) | null>(null)
 
-  const requestClose = (next: boolean) => {
-    if (next) {
-      onOpenChange(true)
-      return
-    }
-    if (dirty) {
-      setConfirmDiscardOpen(true)
-      return
-    }
+  const close = () => {
+    setDirty(false)
     onOpenChange(false)
   }
+
+  /** Runs `leave` at once, or after confirmation when the form has unsaved changes. */
+  const leaveSafely = (leave: () => void) => {
+    if (dirty) setPendingLeave(() => leave)
+    else leave()
+  }
+
+  const requestClose = (next: boolean) => {
+    if (next) onOpenChange(true)
+    else leaveSafely(close)
+  }
+
+  const editPermissions = onEditPermissions
+    ? (target: RoleSummary) =>
+        leaveSafely(() => {
+          close()
+          onEditPermissions(target)
+        })
+    : undefined
 
   // Closing the sheet forgets the unsaved state (adjusted while rendering, not in an effect).
   const [wasOpen, setWasOpen] = React.useState(open)
   if (wasOpen !== open) {
     setWasOpen(open)
     if (!open) setDirty(false)
-  }
-
-  const close = () => {
-    setDirty(false)
-    onOpenChange(false)
   }
 
   return (
@@ -111,7 +120,7 @@ export function RoleFormSheet({
                 onCancel={() => requestClose(false)}
                 onSaved={close}
                 onReload={onReload}
-                onEditPermissions={onEditPermissions}
+                onEditPermissions={editPermissions}
               />
             ) : (
               <CreateRoleForm
@@ -125,22 +134,28 @@ export function RoleFormSheet({
         </SheetContent>
       </Sheet>
 
-      <Dialog open={confirmDiscardOpen} onOpenChange={setConfirmDiscardOpen}>
+      <Dialog
+        open={pendingLeave !== null}
+        onOpenChange={(next) => {
+          if (!next) setPendingLeave(null)
+        }}
+      >
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>Bỏ thay đổi chưa lưu?</DialogTitle>
             <DialogDescription>Các thay đổi của vai trò chưa được lưu và sẽ bị mất.</DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setConfirmDiscardOpen(false)}>
+            <Button type="button" variant="outline" onClick={() => setPendingLeave(null)}>
               Tiếp tục chỉnh sửa
             </Button>
             <Button
               type="button"
               variant="destructive"
               onClick={() => {
-                setConfirmDiscardOpen(false)
-                close()
+                const leave = pendingLeave
+                setPendingLeave(null)
+                leave?.()
               }}
             >
               Bỏ thay đổi
@@ -308,7 +323,7 @@ function CreateRoleForm({
   )
 }
 
-/** Prefills the Vietnamese name and description, so a save stores them instead of the seed text. */
+/** Prefills the Vietnamese name and description shown on screen. */
 function toEditValues(role: RoleSummary): UpdateRoleFormValues {
   return {
     name: roleDisplayName(role),
@@ -351,6 +366,7 @@ function EditRoleForm({
   const pending = updateMutation.isPending
   const isConflict = isRoleVersionConflict(updateMutation.error)
   const isAdministrator = base.code === ADMINISTRATOR_ROLE_CODE
+  const isPatient = base.code === PATIENT_ROLE_CODE
 
   // After a 409 the form keeps the user's input. Only an explicit reload replaces it, and the edit
   // is never resubmitted automatically.
@@ -375,10 +391,16 @@ function EditRoleForm({
   }
 
   const onSubmit = async (values: ValidatedUpdateRoleFormValues) => {
+    // A field left as its Vietnamese display text keeps the stored value, so changing only the
+    // status neither renames a seeded role nor collides with another role's Vietnamese name.
+    const shown = toEditValues(base)
     try {
       const updated = await updateMutation.mutateAsync({
-        name: values.name,
-        description: values.description,
+        name: values.name === shown.name.trim() ? base.name : values.name,
+        description:
+          values.description.trim() === shown.description.trim()
+            ? base.description
+            : values.description,
         active: values.active,
         rowVersion: base.rowVersion,
       })
@@ -446,11 +468,13 @@ function EditRoleForm({
 
         <ActiveField
           control={control}
-          disabled={isAdministrator}
+          disabled={isAdministrator || isPatient}
           hint={
             isAdministrator
               ? "Vai trò Quản trị viên luôn hoạt động để còn người quản trị được vai trò."
-              : "Vai trò ngừng hoạt động không cấp quyền nào cho người dùng của vai trò."
+              : isPatient
+                ? "Vai trò Bệnh nhân luôn hoạt động vì mọi tài khoản cổng bệnh nhân đều dùng vai trò này."
+                : "Vai trò ngừng hoạt động không cấp quyền nào cho người dùng của vai trò."
           }
         />
 

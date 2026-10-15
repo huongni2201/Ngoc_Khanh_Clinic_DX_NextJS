@@ -14,6 +14,7 @@ export const roleKeys = {
   all: ["roles"] as const,
   assignable: () => [...roleKeys.all, "assignable"] as const,
   lists: () => [...roleKeys.all, "list"] as const,
+  allRoles: () => [...roleKeys.lists(), "all"] as const,
   list: (params?: RoleFilterParams) =>
     [...roleKeys.lists(), normalizeRoleFilterParams(params)] as const,
   permissions: (roleId: string) => [...roleKeys.all, "permissions", roleId] as const,

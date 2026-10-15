@@ -54,3 +54,13 @@ export const PERMISSION = {
 } as const
 
 export type PermissionCode = (typeof PERMISSION)[keyof typeof PERMISSION]
+
+/**
+ * Everything the Role Permissions screen reads: the grants of a role, the permission catalogue and
+ * the role list of its selector. A link to the screen is shown only with all three.
+ */
+export const ROLE_PERMISSIONS_SCREEN_PERMISSIONS: readonly PermissionCode[] = [
+  PERMISSION.ROLE_PERMISSION_VIEW,
+  PERMISSION.PERMISSION_VIEW,
+  PERMISSION.ROLE_MANAGE,
+]

@@ -26,6 +26,17 @@ export const receptionistRole: RoleSummaryResponseDto = {
   rowVersion: 3,
 }
 
+export const patientRole: RoleSummaryResponseDto = {
+  id: "role-patient",
+  code: "PATIENT",
+  name: "Patient",
+  description: null,
+  active: true,
+  permissionCount: 5,
+  userCount: 1,
+  rowVersion: 0,
+}
+
 export const nurseRole: RoleSummaryResponseDto = {
   id: "role-nurse",
   code: "NURSE",
@@ -84,7 +95,8 @@ interface RoleFetchOptions {
   roles?: RoleSummaryResponseDto[]
   createResponse?: () => Response
   updateResponse?: () => Response
-  savePermissionsResponse?: () => Response
+  /** May resolve later, to keep a save in flight. */
+  savePermissionsResponse?: () => Response | Promise<Response>
 }
 
 /** Answers the role administration routes of docs/api/roles-and-permissions.md. */
@@ -122,13 +134,21 @@ export function mockRoleFetch(options: RoleFetchOptions = {}) {
       return options.updateResponse?.() ?? jsonResponse({ result: "OK", code: 200, data: receptionistRole })
     }
     const status = url.searchParams.get("status")
-    const items = roles.filter(
+    const matching = roles.filter(
       (role) => !status || (status === "ACTIVE" ? role.active : !role.active)
     )
+    const page = Number(url.searchParams.get("page") ?? "1")
+    const size = Number(url.searchParams.get("size") ?? "10")
     return jsonResponse({
       result: "OK",
       code: 200,
-      data: { items, page: 1, size: 10, totalElements: items.length, totalPages: 1 },
+      data: {
+        items: matching.slice((page - 1) * size, page * size),
+        page,
+        size,
+        totalElements: matching.length,
+        totalPages: Math.ceil(matching.length / size),
+      },
     })
   })
   vi.stubGlobal("fetch", fetchMock)

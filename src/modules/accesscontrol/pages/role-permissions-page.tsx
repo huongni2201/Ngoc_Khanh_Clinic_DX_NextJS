@@ -4,6 +4,14 @@ import * as React from "react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
@@ -19,14 +27,15 @@ import {
   toast,
 } from "@/shared/ui"
 import { RolePermissionTable } from "../components/role-permission-table"
+import { useLeaveConfirmation } from "../hooks/use-leave-confirmation"
 import { usePermissions } from "../hooks/use-permissions"
 import {
   usePermissionCatalog,
+  useAllRoles,
   useRolePermissions,
-  useRoles,
   useUpdateRolePermissions,
 } from "../hooks/use-roles"
-import { PERMISSION } from "../permissions"
+import { PERMISSION, ROLE_PERMISSIONS_SCREEN_PERMISSIONS } from "../permissions"
 import { toDisplayCatalog } from "../utils/permission-labels"
 import { rolePermissionsErrorMessage } from "../utils/role-errors"
 import { roleDisplayName } from "../utils/role-labels"
@@ -40,6 +49,7 @@ import {
   pendingChangeOf,
   rebaseDraft,
   setPermissions,
+  subtractSent,
   type RolePermissionDraft,
 } from "../utils/role-permission-draft"
 
@@ -53,21 +63,23 @@ export function RolePermissionsPage() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const { can, canAll } = usePermissions()
-  const canView = canAll(PERMISSION.ROLE_PERMISSION_VIEW, PERMISSION.PERMISSION_VIEW)
-  const canListRoles = can(PERMISSION.ROLE_MANAGE)
+  // The role selector needs the role list, so the screen needs it as much as the grants.
+  const canView = canAll(...ROLE_PERMISSIONS_SCREEN_PERMISSIONS)
   const canAssign = can(PERMISSION.ROLE_PERMISSION_ASSIGN)
 
   const roleId = searchParams?.get("roleId") || undefined
   const [search, setSearch] = React.useState("")
   const [grantedOnly, setGrantedOnly] = React.useState(false)
   const [drafts, setDrafts] = React.useState<Record<string, RolePermissionDraft>>({})
+  // The role whose last save failed: its error is shown only while that role is selected.
+  const [failedRoleId, setFailedRoleId] = React.useState<string | null>(null)
 
-  const rolesQuery = useRoles({ pageSize: 100 }, canView && canListRoles)
+  const rolesQuery = useAllRoles(canView)
   const catalogQuery = usePermissionCatalog(canView)
   const rolePermissionsQuery = useRolePermissions(canView ? roleId : undefined)
   const saveMutation = useUpdateRolePermissions()
 
-  const roles = React.useMemo(() => rolesQuery.data?.data ?? [], [rolesQuery.data])
+  const roles = React.useMemo(() => rolesQuery.data ?? [], [rolesQuery.data])
   const catalog = React.useMemo(() => toDisplayCatalog(catalogQuery.data ?? []), [catalogQuery.data])
   const selectedRole = roles.find((role) => role.id === roleId)
   const saved = rolePermissionsQuery.data
@@ -78,6 +90,7 @@ export function RolePermissionsPage() {
   const draft = (roleId && drafts[roleId]) || EMPTY_DRAFT
   const roleCode = saved?.roleCode ?? selectedRole?.code ?? ""
   const readOnly = !canAssign || !saved || !saved.active || saveMutation.isPending
+  const saveError = failedRoleId !== null && failedRoleId === roleId ? saveMutation.error : null
 
   // Changes another user already made are no longer pending (adjusted while rendering).
   const [rebasedFor, setRebasedFor] = React.useState(saved)
@@ -90,12 +103,7 @@ export function RolePermissionsPage() {
   }
 
   const anyPending = Object.values(drafts).some(hasPendingChanges)
-  React.useEffect(() => {
-    if (!anyPending) return
-    const warn = (event: BeforeUnloadEvent) => event.preventDefault()
-    window.addEventListener("beforeunload", warn)
-    return () => window.removeEventListener("beforeunload", warn)
-  }, [anyPending])
+  const leaveConfirmation = useLeaveConfirmation(anyPending)
 
   const isGranted = React.useCallback(
     (code: string) => isGrantedAfterSave(draft, granted, code),
@@ -117,8 +125,9 @@ export function RolePermissionsPage() {
   )
 
   const selectRole = (nextRoleId: string | null) => {
-    if (!nextRoleId) return
-    saveMutation.reset()
+    // A save in flight belongs to the selected role: switching now could mix its result with
+    // later edits.
+    if (!nextRoleId || saveMutation.isPending) return
     const query = new URLSearchParams(Array.from(searchParams?.entries() || []))
     query.set("roleId", nextRoleId)
     router.replace(`${pathname}?${query.toString()}`)
@@ -134,7 +143,7 @@ export function RolePermissionsPage() {
 
   const discard = () => {
     if (!roleId) return
-    saveMutation.reset()
+    setFailedRoleId(null)
     setDrafts((current) => {
       const next = { ...current }
       delete next[roleId]
@@ -144,30 +153,33 @@ export function RolePermissionsPage() {
 
   const save = async () => {
     if (!roleId || !saved || !hasPendingChanges(draft)) return
+    const sent = { roleId, grant: [...draft.grant], revoke: [...draft.revoke] }
+    const roleName = selectedRole ? roleDisplayName(selectedRole) : "đang chọn"
+    setFailedRoleId(null)
     try {
       await saveMutation.mutateAsync({
-        roleId,
-        input: {
-          rowVersion: saved.rowVersion,
-          grant: [...draft.grant],
-          revoke: [...draft.revoke],
-        },
+        roleId: sent.roleId,
+        input: { rowVersion: saved.rowVersion, grant: sent.grant, revoke: sent.revoke },
       })
+      // Only what was sent is now saved; anything changed meanwhile stays pending.
       setDrafts((current) => {
         const next = { ...current }
-        delete next[roleId]
+        const left = current[sent.roleId] ? subtractSent(current[sent.roleId], sent) : null
+        if (left) next[sent.roleId] = left
+        else delete next[sent.roleId]
         return next
       })
       toast.success(
-        `Đã lưu quyền của vai trò ${selectedRole ? roleDisplayName(selectedRole) : ""}: cấp ${draft.grant.size}, gỡ ${draft.revoke.size}.`
+        `Đã lưu quyền của vai trò ${roleName}: cấp ${sent.grant.length}, gỡ ${sent.revoke.length}.`
       )
     } catch {
-      // The error is rendered above the grid; the pending changes are kept.
+      // The error is rendered above the grid of this role; the pending changes are kept.
+      setFailedRoleId(sent.roleId)
     }
   }
 
   const reload = async () => {
-    saveMutation.reset()
+    setFailedRoleId(null)
     await Promise.all([rolePermissionsQuery.refetch(), rolesQuery.refetch()])
   }
 
@@ -203,7 +215,7 @@ export function RolePermissionsPage() {
               items={roleItems}
               value={roleId ?? null}
               onValueChange={(value) => selectRole(value as string | null)}
-              disabled={!canListRoles || rolesQuery.isLoading}
+              disabled={rolesQuery.isLoading || saveMutation.isPending}
             >
               <SelectTrigger
                 aria-label="Vai trò"
@@ -281,14 +293,14 @@ export function RolePermissionsPage() {
                   Vai trò trước.
                 </p>
               ) : null}
-              {saveMutation.error ? (
+              {saveError ? (
                 <div
                   role="alert"
                   className="mx-4 mt-3 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-muted p-3 text-xs text-foreground"
                 >
                   <span className="flex items-center gap-2">
                     <AlertCircle aria-hidden="true" className="size-4 shrink-0 text-destructive" />
-                    {rolePermissionsErrorMessage(saveMutation.error)}
+                    {rolePermissionsErrorMessage(saveError)}
                   </span>
                   <Button type="button" variant="outline" size="sm" onClick={() => void reload()}>
                     <RefreshCw className="size-3.5" />
@@ -355,6 +367,30 @@ export function RolePermissionsPage() {
           )}
         </div>
       )}
+
+      <Dialog
+        open={leaveConfirmation.pendingHref !== null}
+        onOpenChange={(open) => {
+          if (!open) leaveConfirmation.stay()
+        }}
+      >
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Bỏ thay đổi chưa lưu?</DialogTitle>
+            <DialogDescription>
+              Các thay đổi quyền chưa lưu của vai trò sẽ bị mất nếu rời khỏi trang này.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={leaveConfirmation.stay}>
+              Tiếp tục chỉnh sửa
+            </Button>
+            <Button type="button" variant="destructive" onClick={leaveConfirmation.leave}>
+              Bỏ thay đổi
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </ScreenLayout>
   )
 }

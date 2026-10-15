@@ -8,22 +8,34 @@ import { RolePermissionsPage } from "../pages/role-permissions-page"
 import { mockRoleFetch, roleAdministratorSession } from "./role-fixtures"
 import { jsonResponse, sessionWith } from "./staff-member-fixtures"
 
-const navigation = vi.hoisted(() => ({ roleId: "role-receptionist" }))
+const navigation = vi.hoisted(() => ({ roleId: "role-receptionist", push: vi.fn() }))
 
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ replace: vi.fn(), push: vi.fn() }),
+  useRouter: () => ({ replace: vi.fn(), push: navigation.push }),
   usePathname: () => "/roles/permissions",
   useSearchParams: () => new URLSearchParams({ roleId: navigation.roleId }),
 }))
 
-function renderPage(session: UserSession) {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  client.setQueryData(SESSION_QUERY_KEY, session)
-  return render(
+function pageTree(client: QueryClient) {
+  return (
     <QueryClientProvider client={client}>
+      {/* Stands for an in-app link such as the sidebar. */}
+      <a href="/roles">Vai trò</a>
       <RolePermissionsPage />
     </QueryClientProvider>
   )
+}
+
+function renderPage(session: UserSession) {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  client.setQueryData(SESSION_QUERY_KEY, session)
+  const view = render(pageTree(client))
+  /** Re-renders after the URL changed, as selecting another role does. */
+  const navigate = (roleId: string) => {
+    navigation.roleId = roleId
+    view.rerender(pageTree(client))
+  }
+  return { ...view, navigate }
 }
 
 function permissionRow(name: string) {
@@ -99,6 +111,99 @@ describe("RolePermissionsPage", () => {
     await waitFor(() =>
       expect(screen.getByText(/Thay đổi chờ lưu/)).toHaveTextContent("0 cấp · 0 gỡ")
     )
+  })
+
+  it("locks the role selector while a save is in flight", async () => {
+    const user = userEvent.setup()
+    let finishSave: (response: Response) => void = () => {}
+    mockRoleFetch({
+      savePermissionsResponse: () => new Promise<Response>((resolve) => (finishSave = resolve)),
+    })
+    renderPage(roleAdministratorSession)
+    await screen.findByText("Hoàn tiền")
+
+    await user.click(within(permissionRow("Tạo hồ sơ bệnh nhân")).getByRole("checkbox"))
+    await user.click(screen.getByRole("button", { name: "Lưu quyền" }))
+
+    const selector = screen.getByRole("combobox", { name: "Vai trò" })
+    await waitFor(() => expect(selector).toHaveAttribute("data-disabled"))
+
+    finishSave(
+      jsonResponse({
+        result: "OK",
+        code: 200,
+        data: {
+          roleId: "role-receptionist",
+          roleCode: "RECEPTIONIST",
+          active: true,
+          rowVersion: 4,
+          permissionCodes: ["PATIENT_CREATE", "PATIENT_VIEW", "PAYMENT_REFUND"],
+        },
+      })
+    )
+    await waitFor(() => expect(selector).not.toHaveAttribute("data-disabled"))
+    expect(screen.getByText(/Thay đổi chờ lưu/)).toHaveTextContent("0 cấp · 0 gỡ")
+  })
+
+  it("shows a failed save only on the role it belongs to", async () => {
+    const user = userEvent.setup()
+    mockRoleFetch({
+      savePermissionsResponse: () =>
+        jsonResponse({ result: "NG", code: 409, message: "Record was changed by another request" }, 409),
+    })
+    const view = renderPage(roleAdministratorSession)
+    await screen.findByText("Hoàn tiền")
+
+    await user.click(within(permissionRow("Tạo hồ sơ bệnh nhân")).getByRole("checkbox"))
+    await user.click(screen.getByRole("button", { name: "Lưu quyền" }))
+    expect(await screen.findByText(/vừa được người khác thay đổi/)).toBeInTheDocument()
+
+    view.navigate("role-administrator")
+    await screen.findByText("Cấp hoặc gỡ quyền của vai trò")
+    expect(screen.queryByText(/vừa được người khác thay đổi/)).not.toBeInTheDocument()
+
+    view.navigate("role-receptionist")
+    expect(await screen.findByText(/vừa được người khác thay đổi/)).toBeInTheDocument()
+    expect(screen.getByText(/Thay đổi chờ lưu/)).toHaveTextContent("1 cấp · 0 gỡ")
+  })
+
+  it("asks before an in-app link drops the pending changes", async () => {
+    const user = userEvent.setup()
+    mockRoleFetch()
+    renderPage(roleAdministratorSession)
+    await screen.findByText("Hoàn tiền")
+    await user.click(within(permissionRow("Tạo hồ sơ bệnh nhân")).getByRole("checkbox"))
+
+    await user.click(screen.getByRole("link", { name: "Vai trò" }))
+    expect(await screen.findByText("Bỏ thay đổi chưa lưu?")).toBeInTheDocument()
+    expect(navigation.push).not.toHaveBeenCalled()
+
+    await user.click(screen.getByRole("button", { name: "Tiếp tục chỉnh sửa" }))
+    expect(screen.getByText(/Thay đổi chờ lưu/)).toHaveTextContent("1 cấp · 0 gỡ")
+
+    await user.click(screen.getByRole("link", { name: "Vai trò" }))
+    await user.click(await screen.findByRole("button", { name: "Bỏ thay đổi" }))
+    expect(navigation.push).toHaveBeenCalledWith("/roles")
+  })
+
+  it("applies the module checkbox to the shown permissions only", async () => {
+    const user = userEvent.setup()
+    mockRoleFetch()
+    renderPage(roleAdministratorSession)
+    await screen.findByText("Hoàn tiền")
+
+    await user.type(screen.getByRole("textbox", { name: "Tìm quyền" }), "hoàn")
+    await waitFor(() =>
+      expect(screen.queryByText("Xem chi phí và lịch sử thanh toán của lượt khám")).not.toBeInTheDocument()
+    )
+    await user.click(
+      within(moduleCard("Hóa đơn và thanh toán")).getByRole("checkbox", {
+        name: "Hóa đơn và thanh toán",
+      })
+    )
+
+    expect(screen.getByText(/Thay đổi chờ lưu/)).toHaveTextContent("0 cấp · 1 gỡ")
+    expect(within(permissionRow("Hoàn tiền")).getByText("− Gỡ")).toBeInTheDocument()
   })
 
   it("discards pending changes and filters by permission name", async () => {

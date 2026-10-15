@@ -86,6 +86,23 @@ export async function fetchRoles(
   }
 }
 
+/** The backend's largest page size for the role list. */
+const ROLE_PAGE_LIMIT = 100
+
+/**
+ * Every role, in code order: the first page, then the remaining pages in parallel. Screens search
+ * and page the list themselves on the Vietnamese names they show.
+ */
+export async function fetchAllRoles(signal?: AbortSignal): Promise<RoleSummary[]> {
+  const first = await fetchRoles({ page: 1, pageSize: ROLE_PAGE_LIMIT }, signal)
+  const rest = await Promise.all(
+    Array.from({ length: Math.max(0, first.totalPages - 1) }, (_, index) =>
+      fetchRoles({ page: index + 2, pageSize: ROLE_PAGE_LIMIT }, signal)
+    )
+  )
+  return [first, ...rest].flatMap((page) => page.data)
+}
+
 export async function createRole(input: CreateRoleInput): Promise<RoleSummary> {
   const response = await apiClient.post<CreateRoleRequestDto, unknown>(ROLES_ENDPOINT, {
     code: input.code.trim(),

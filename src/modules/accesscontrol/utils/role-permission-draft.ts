@@ -13,6 +13,8 @@ export interface RolePermissionDraft {
 export const EMPTY_DRAFT: RolePermissionDraft = { grant: new Set(), revoke: new Set() }
 
 export const ADMINISTRATOR_ROLE_CODE = "ADMINISTRATOR"
+/** Role of patient portal accounts: always active and never a source to copy permissions from. */
+export const PATIENT_ROLE_CODE = "PATIENT"
 
 /**
  * Permissions the Administrator role never loses (backend `Role.ADMINISTRATOR_PROTECTED_PERMISSIONS`),
@@ -86,6 +88,21 @@ export function rebaseDraft(
   const revoke = [...draft.revoke].filter((code) => granted.has(code))
   if (grant.length === draft.grant.size && revoke.length === draft.revoke.size) return draft
   return { grant: new Set(grant), revoke: new Set(revoke) }
+}
+
+/**
+ * Drops from the draft the changes a successful save sent. Changes made while the save was in
+ * flight stay pending. Returns null when nothing is left.
+ */
+export function subtractSent(
+  draft: RolePermissionDraft,
+  sent: { grant: readonly string[]; revoke: readonly string[] }
+): RolePermissionDraft | null {
+  const sentGrant = new Set(sent.grant)
+  const sentRevoke = new Set(sent.revoke)
+  const grant = new Set([...draft.grant].filter((code) => !sentGrant.has(code)))
+  const revoke = new Set([...draft.revoke].filter((code) => !sentRevoke.has(code)))
+  return grant.size === 0 && revoke.size === 0 ? null : { grant, revoke }
 }
 
 export interface PermissionModuleGroup {

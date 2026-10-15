@@ -17,7 +17,12 @@ import {
   Key01Icon,
 } from "@hugeicons/core-free-icons"
 import { cn } from "@/lib/utils"
-import { PERMISSION, usePermissions, type PermissionCode } from "@/modules/accesscontrol"
+import {
+  PERMISSION,
+  ROLE_PERMISSIONS_SCREEN_PERMISSIONS,
+  usePermissions,
+  type PermissionCode,
+} from "@/modules/accesscontrol"
 
 interface NavItem {
   title: string
@@ -27,32 +32,37 @@ interface NavItem {
   permission?: PermissionCode
 }
 
+interface AdminNavItem extends Omit<NavItem, "permission"> {
+  /** The account must hold every one of them to see the item. */
+  permissions: readonly PermissionCode[]
+}
+
 export function AppSidebar({ className }: { className?: string }) {
   const pathname = usePathname()
-  const { isKnown, can } = usePermissions()
+  const { isKnown, can, canAll } = usePermissions()
 
   // Administration items appear only once the session is known to hold the permission, so an
   // account without it never sees them flash. Display only; the backend checks every request.
-  const adminItems: NavItem[] = [
+  const adminItems = ([
     {
       title: "Nhân viên",
       href: "/staff-members",
       icon: UserMultiple02Icon,
-      permission: PERMISSION.STAFF_MEMBER_VIEW,
+      permissions: [PERMISSION.STAFF_MEMBER_VIEW],
     },
     {
       title: "Vai trò",
       href: "/roles",
       icon: UserShield01Icon,
-      permission: PERMISSION.ROLE_MANAGE,
+      permissions: [PERMISSION.ROLE_MANAGE],
     },
     {
       title: "Phân quyền vai trò",
       href: "/roles/permissions",
       icon: Key01Icon,
-      permission: PERMISSION.ROLE_PERMISSION_VIEW,
+      permissions: ROLE_PERMISSIONS_SCREEN_PERMISSIONS,
     },
-  ].filter((item) => isKnown && can(item.permission))
+  ] satisfies AdminNavItem[]).filter((item) => isKnown && canAll(...item.permissions))
   // "/roles/permissions" sits under "/roles": only the most specific matching item is active.
   const activeAdminHref = adminItems
     .map((item) => item.href)
