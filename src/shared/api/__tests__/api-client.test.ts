@@ -131,6 +131,7 @@ describe("apiClient", () => {
     [403, "You are not authorized to perform this action", "Không được phép thực hiện thao tác này."],
     [404, "Organization not found", "Không tìm thấy hoặc đã bị xóa/ngừng hoạt động."],
     [409, "Business rule could not be completed", "Dữ liệu đã thay đổi hoặc không thỏa quy tắc nghiệp vụ. Vui lòng tải lại."],
+    [422, "The role is not available", "Dữ liệu đã chọn không còn hợp lệ. Vui lòng tải lại và chọn lại."],
     [500, "An unexpected error occurred", "Máy chủ gặp lỗi. Vui lòng thử lại sau."],
     [503, "Service unavailable", "Máy chủ gặp lỗi. Vui lòng thử lại sau."],
   ])("shows a Vietnamese message for HTTP %i instead of the English server text", async (status, serverMessage, expected) => {

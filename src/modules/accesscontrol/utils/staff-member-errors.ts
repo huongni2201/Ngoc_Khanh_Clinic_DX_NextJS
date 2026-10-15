@@ -15,7 +15,7 @@ const FORM_FIELDS: readonly StaffMemberFormField[] = [
 
 /** Vietnamese text for a field the backend rejected; its own message is English and never shown. */
 const FIELD_MESSAGES: Record<StaffMemberFormField, string> = {
-  fullName: "Họ và tên không hợp lệ (cần có chữ cái Latin)",
+  fullName: "Họ và tên chỉ gồm chữ cái tiếng Việt, dấu cách, dấu chấm, dấu nháy hoặc gạch nối",
   dateOfBirth: "Ngày sinh không hợp lệ",
   sex: "Giới tính không hợp lệ",
   phone: "Số điện thoại không hợp lệ",

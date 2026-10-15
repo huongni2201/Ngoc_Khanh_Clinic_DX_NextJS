@@ -43,11 +43,20 @@ describe("create staff member form rules", () => {
     expect(messages(valid)).toEqual([])
   })
 
-  it("requires a name with a Latin letter, a role and an 8 character password", () => {
-    const latinName = "Họ và tên phải có chữ cái Latin để tạo tên đăng nhập"
-    expect(messages({ ...valid, fullName: "123" })).toContain(latinName)
-    expect(messages({ ...valid, fullName: "王小明" })).toContain(latinName)
-    expect(messages({ ...valid, fullName: "Đặng Thị Đào" })).toEqual([])
+  it("accepts only Vietnamese alphabet names, a role and an 8 character password", () => {
+    const nameRule = "Họ và tên chỉ gồm chữ cái tiếng Việt, dấu cách, dấu chấm, dấu nháy hoặc gạch nối"
+    for (const name of ["123", "王小明", "Øyvind", "Straße", "Æsa", "Łukasz", "An 2", "An_B", ". -"]) {
+      expect(messages({ ...valid, fullName: name }), name).toContain(nameRule)
+    }
+    for (const name of [
+      "Đặng Thị Đào",
+      "NGUYỄN VĂN AN",
+      "Lê-Văn O'Neil",
+      "Trần T. Bình",
+      "Nguyễn Văn An",
+    ]) {
+      expect(messages({ ...valid, fullName: name }), name).toEqual([])
+    }
     expect(messages({ ...valid, roleCode: "" })).toContain("Vui lòng chọn một vai trò")
     expect(messages({ ...valid, initialPassword: "short" })).toContain(
       "Mật khẩu tạm phải có ít nhất 8 ký tự"
@@ -98,7 +107,8 @@ describe("staff member errors and labels", () => {
 
   it("labels known roles in Vietnamese and falls back for new ones", () => {
     expect(roleLabel("GENERAL_PRACTITIONER")).toBe("Bác sĩ đa khoa")
-    expect(roleLabel("NURSE", { name: "Nurse" })).toBe("Nurse")
-    expect(roleLabel("NURSE")).toBe("NURSE")
+    expect(roleLabel("NURSE")).toBe("Điều dưỡng")
+    expect(roleLabel("PHARMACIST", { name: "Pharmacist" })).toBe("Pharmacist")
+    expect(roleLabel("PHARMACIST")).toBe("PHARMACIST")
   })
 })

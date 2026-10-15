@@ -1,6 +1,5 @@
 import { z } from "zod"
 import { STAFF_MEMBER_SEX_VALUES } from "../types/staff-member-transport"
-import { previewUsernameBase } from "../utils/username-preview"
 
 export const STAFF_MEMBER_NAME_MAX_LENGTH = 200
 export const STAFF_MEMBER_PHONE_MAX_LENGTH = 30
@@ -13,6 +12,22 @@ export const STAFF_PASSWORD_MIN_LENGTH = 8
 export const STAFF_PASSWORD_MAX_LENGTH = 72
 /** Printable ASCII without spaces or diacritics: letters, digits and symbols (`!` to `~`). */
 const STAFF_PASSWORD_PATTERN = /^[\x21-\x7E]+$/
+
+/**
+ * Letters of the Vietnamese alphabet (plus f, j, w, z), the same set as the backend
+ * `CreateStaffMemberRequest.LATIN_NAME_PATTERN`: exactly the letters the username generator reduces
+ * to a–z. Letters such as ø, ß, æ or ł and other scripts are excluded.
+ */
+const NAME_LETTERS =
+  "A-Za-z\\u00C0-\\u00C3\\u00C8-\\u00CA\\u00CC\\u00CD\\u00D2-\\u00D5\\u00D9\\u00DA\\u00DD" +
+  "\\u00E0-\\u00E3\\u00E8-\\u00EA\\u00EC\\u00ED\\u00F2-\\u00F5\\u00F9\\u00FA\\u00FD" +
+  "\\u0102\\u0103\\u0110\\u0111\\u0128\\u0129\\u0168\\u0169\\u01A0\\u01A1\\u01AF\\u01B0" +
+  "\\u1EA0-\\u1EF9"
+/** Those letters, combining marks, spaces, `.`, `'` and `-`, with at least one letter. */
+const STAFF_MEMBER_NAME_PATTERN = new RegExp(
+  `^(?=.*[${NAME_LETTERS}])[${NAME_LETTERS}\\p{M} .'-]+$`,
+  "u"
+)
 
 function todayIso() {
   const now = new Date()
@@ -33,9 +48,9 @@ export const createStaffMemberSchema = z.object({
     .max(STAFF_MEMBER_NAME_MAX_LENGTH, {
       message: `Họ và tên không được vượt quá ${STAFF_MEMBER_NAME_MAX_LENGTH} ký tự`,
     })
-    // The backend builds the username from the Latin letters of the name, without diacritics.
-    .refine((value) => previewUsernameBase(value) !== null, {
-      message: "Họ và tên phải có chữ cái Latin để tạo tên đăng nhập",
+    // The backend builds the username from these letters, without diacritics.
+    .regex(STAFF_MEMBER_NAME_PATTERN, {
+      message: "Họ và tên chỉ gồm chữ cái tiếng Việt, dấu cách, dấu chấm, dấu nháy hoặc gạch nối",
     }),
   dateOfBirth: z.string().superRefine((value, context) => {
     if (value === "") return

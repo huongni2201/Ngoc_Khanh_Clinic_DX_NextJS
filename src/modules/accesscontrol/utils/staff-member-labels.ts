@@ -31,7 +31,7 @@ const ROLE_LABELS: Record<string, string> = {
   RECEPTIONIST: "Lễ tân",
   GENERAL_PRACTITIONER: "Bác sĩ đa khoa",
   DIAGNOSTIC_DOCTOR: "Bác sĩ chẩn đoán",
-  DATA_ENTRY_STAFF: "Nhân viên nhập liệu",
+  NURSE: "Điều dưỡng",
   CLINIC_MANAGER: "Quản lý phòng khám",
   ADMINISTRATOR: "Quản trị viên",
   PATIENT: "Bệnh nhân",
