@@ -5,46 +5,58 @@ import {
   RENDER_JOB_STATUS_LABELS,
   useRenderJob,
 } from "@/modules/document"
-import { CalendarDays, FileText, Loader2, Printer } from "@/shared/ui/product-icon"
+import { CalendarDays, FileText, Loader2, Printer, Trash2 } from "@/shared/ui/product-icon"
 import { Button } from "@/components/ui/button"
 import { EXAMINATION_FORM_PRINT_JOB_MAX_RECORDS } from "../../api/examination-forms"
 
-interface ParticipantPrintSelectionBarProps {
+interface ParticipantSelectionBarProps {
   selectedCount: number
   onSelectAllMatching: () => void
   isSelectingAll: boolean
   onClear: () => void
-  onPrint: () => void
+  /** Prints the ticked Participants. Omitted when the account or the batch state cannot print. */
+  onPrint?: () => void
   /** Opens the print of a whole examination day. Omitted when the batch has no days. */
   onPrintDay?: () => void
+  /** Cancels the ticked Participants. Omitted when the account or the batch state cannot cancel. */
+  onCancel?: () => void
   /** The last print job created on this tab, to reopen its progress and files. */
   trackedJobId?: string
   onOpenTrackedJob: () => void
 }
 
-/** Selection summary and bulk print actions above the Participant table. */
-export function ParticipantPrintSelectionBar({
+/**
+ * Selection summary and the actions that work on ticked Participants, above the Participant table.
+ * An action that needs ticks (print, cancel) appears only once something is ticked.
+ */
+export function ParticipantSelectionBar({
   selectedCount,
   onSelectAllMatching,
   isSelectingAll,
   onClear,
   onPrint,
   onPrintDay,
+  onCancel,
   trackedJobId,
   onOpenTrackedJob,
-}: ParticipantPrintSelectionBarProps) {
-  const tooMany = selectedCount > EXAMINATION_FORM_PRINT_JOB_MAX_RECORDS
+}: ParticipantSelectionBarProps) {
+  const tooMany = Boolean(onPrint) && selectedCount > EXAMINATION_FORM_PRINT_JOB_MAX_RECORDS
+  const hint = onPrint
+    ? onCancel
+      ? "Chọn người khám để in phiếu hoặc hủy hàng loạt"
+      : "Chọn người khám để in phiếu hàng loạt"
+    : "Chọn người khám để hủy hàng loạt"
 
   return (
     <div
       role="region"
-      aria-label="In phiếu khám hàng loạt"
+      aria-label={onPrint && !onCancel ? "In phiếu khám hàng loạt" : "Thao tác hàng loạt trên người khám"}
       className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-border bg-muted/40 px-3 py-2 text-xs"
     >
       <span className="font-medium text-foreground" aria-live="polite">
         {selectedCount > 0
           ? `Đã chọn ${selectedCount.toLocaleString("vi-VN")} người khám`
-          : "Chọn người khám để in phiếu hàng loạt"}
+          : hint}
       </span>
       <Button
         type="button"
@@ -69,22 +81,25 @@ export function ParticipantPrintSelectionBar({
       )}
 
       <div className="ml-auto flex flex-wrap items-center gap-2">
-        {trackedJobId && <TrackedJobButton jobId={trackedJobId} onOpen={onOpenTrackedJob} />}
-        {onPrintDay && (
+        {onPrint && trackedJobId && <TrackedJobButton jobId={trackedJobId} onOpen={onOpenTrackedJob} />}
+        {onPrint && onPrintDay && (
           <Button type="button" variant="outline" size="sm" onClick={onPrintDay}>
             <CalendarDays aria-hidden="true" className="size-3.5" />
             In theo ngày khám
           </Button>
         )}
-        <Button
-          type="button"
-          size="sm"
-          onClick={onPrint}
-          disabled={selectedCount === 0 || tooMany}
-        >
-          <Printer className="size-3.5" />
-          In phiếu khám{selectedCount > 0 ? ` (${selectedCount.toLocaleString("vi-VN")})` : ""}
-        </Button>
+        {onPrint && selectedCount > 0 && (
+          <Button type="button" size="sm" onClick={onPrint} disabled={tooMany}>
+            <Printer className="size-3.5" />
+            In phiếu khám ({selectedCount.toLocaleString("vi-VN")})
+          </Button>
+        )}
+        {onCancel && selectedCount > 0 && (
+          <Button type="button" variant="destructive" size="sm" onClick={onCancel}>
+            <Trash2 aria-hidden="true" className="size-3.5" />
+            Hủy khỏi danh sách ({selectedCount.toLocaleString("vi-VN")})
+          </Button>
+        )}
       </div>
     </div>
   )

@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useForm, useWatch, type UseFormRegisterReturn } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import {
   Dialog,
@@ -14,7 +14,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { CheckCircle2, Copy, Eye, EyeOff, Info, StatusPill, toast } from "@/shared/ui"
+import { CheckCircle2, Copy, Eye, EyeOff, FormTextField, Info, StatusPill, toast } from "@/shared/ui"
 import {
   createStaffMemberSchema,
   EMPTY_CREATE_STAFF_MEMBER_FORM,
@@ -43,48 +43,6 @@ import { RoleRadioGroup } from "./role-radio-group"
 interface CreateStaffMemberDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-}
-
-interface StaffTextFieldProps
-  extends Pick<React.ComponentProps<typeof Input>, "type" | "placeholder" | "autoComplete" | "maxLength"> {
-  id: string
-  label: string
-  required?: boolean
-  error?: string
-  registration: UseFormRegisterReturn
-}
-
-/** Labelled input of the staff member form, with its required marker and linked error. */
-function StaffTextField({ id, label, required = false, error, registration, ...inputProps }: StaffTextFieldProps) {
-  const errorId = `${id}-error`
-  return (
-    <div className="space-y-1.5">
-      <Label htmlFor={id} className="text-xs font-medium text-foreground">
-        {label}
-        {required ? (
-          <>
-            {" "}
-            <span aria-hidden="true" className="text-destructive">
-              *
-            </span>
-            <span className="sr-only">(bắt buộc)</span>
-          </>
-        ) : null}
-      </Label>
-      <Input
-        id={id}
-        {...inputProps}
-        {...registration}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={error ? errorId : undefined}
-      />
-      {error ? (
-        <p id={errorId} className="text-xs text-destructive">
-          {error}
-        </p>
-      ) : null}
-    </div>
-  )
 }
 
 /**
@@ -193,7 +151,7 @@ export function CreateStaffMemberDialog({ open, onOpenChange }: CreateStaffMembe
                   <legend className="mb-3 text-xs font-semibold uppercase tracking-wide text-secondary-foreground">
                     Thông tin nhân viên
                   </legend>
-                  <StaffTextField
+                  <FormTextField
                     id="staff-member-full-name"
                     label="Họ và tên"
                     required
@@ -204,7 +162,7 @@ export function CreateStaffMemberDialog({ open, onOpenChange }: CreateStaffMembe
                     error={errors.fullName?.message}
                   />
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <StaffTextField
+                    <FormTextField
                       id="staff-member-date-of-birth"
                       label="Ngày sinh"
                       type="date"
@@ -232,7 +190,7 @@ export function CreateStaffMemberDialog({ open, onOpenChange }: CreateStaffMembe
                         <p className="text-xs text-destructive">{errors.sex.message}</p>
                       ) : null}
                     </div>
-                    <StaffTextField
+                    <FormTextField
                       id="staff-member-phone"
                       label="Số điện thoại"
                       type="tel"
@@ -241,7 +199,7 @@ export function CreateStaffMemberDialog({ open, onOpenChange }: CreateStaffMembe
                       registration={register("phone")}
                       error={errors.phone?.message}
                     />
-                    <StaffTextField
+                    <FormTextField
                       id="staff-member-email"
                       label="Email"
                       type="email"
@@ -308,7 +266,8 @@ export function CreateStaffMemberDialog({ open, onOpenChange }: CreateStaffMembe
                       </p>
                     ) : (
                       <p id="staff-member-password-hint" className="text-xs text-muted-foreground">
-                        8–72 byte. Không lưu lại và không hiển thị lại sau khi tạo.
+                        8–72 ký tự gồm chữ không dấu, số và ký hiệu, không dấu cách. Không lưu lại
+                        và không hiển thị lại sau khi tạo.
                       </p>
                     )}
                   </div>

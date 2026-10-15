@@ -1,23 +1,24 @@
 import { z } from "zod"
 import { STAFF_MEMBER_SEX_VALUES } from "../types/staff-member-transport"
+import { previewUsernameBase } from "../utils/username-preview"
 
 export const STAFF_MEMBER_NAME_MAX_LENGTH = 200
 export const STAFF_MEMBER_PHONE_MAX_LENGTH = 30
 export const STAFF_MEMBER_EMAIL_MAX_LENGTH = 255
 export const STAFF_PASSWORD_MIN_LENGTH = 8
-/** Bcrypt reads at most 72 bytes; the backend rejects longer passwords instead of truncating them. */
-export const STAFF_PASSWORD_MAX_BYTES = 72
+/**
+ * Bcrypt reads at most 72 bytes. Temporary passwords are printable ASCII (one byte per character),
+ * so the limit is 72 characters.
+ */
+export const STAFF_PASSWORD_MAX_LENGTH = 72
+/** Printable ASCII without spaces or diacritics: letters, digits and symbols (`!` to `~`). */
+const STAFF_PASSWORD_PATTERN = /^[\x21-\x7E]+$/
 
 function todayIso() {
   const now = new Date()
   const month = String(now.getMonth() + 1).padStart(2, "0")
   const day = String(now.getDate()).padStart(2, "0")
   return `${now.getFullYear()}-${month}-${day}`
-}
-
-/** UTF-8 length after the NFKC normalization the backend applies before hashing. */
-export function passwordByteLength(password: string) {
-  return new TextEncoder().encode(password.normalize("NFKC")).length
 }
 
 /**
@@ -32,7 +33,10 @@ export const createStaffMemberSchema = z.object({
     .max(STAFF_MEMBER_NAME_MAX_LENGTH, {
       message: `Họ và tên không được vượt quá ${STAFF_MEMBER_NAME_MAX_LENGTH} ký tự`,
     })
-    .refine((value) => /\p{L}/u.test(value), { message: "Họ và tên phải có chữ cái" }),
+    // The backend builds the username from the Latin letters of the name, without diacritics.
+    .refine((value) => previewUsernameBase(value) !== null, {
+      message: "Họ và tên phải có chữ cái Latin để tạo tên đăng nhập",
+    }),
   dateOfBirth: z.string().superRefine((value, context) => {
     if (value === "") return
     if (!z.iso.date().safeParse(value).success) {
@@ -62,8 +66,11 @@ export const createStaffMemberSchema = z.object({
     .min(STAFF_PASSWORD_MIN_LENGTH, {
       message: `Mật khẩu tạm phải có ít nhất ${STAFF_PASSWORD_MIN_LENGTH} ký tự`,
     })
-    .refine((value) => passwordByteLength(value) <= STAFF_PASSWORD_MAX_BYTES, {
-      message: "Mật khẩu tạm quá dài (tối đa 72 byte, ký tự có dấu tính nhiều byte)",
+    .max(STAFF_PASSWORD_MAX_LENGTH, {
+      message: `Mật khẩu tạm không được vượt quá ${STAFF_PASSWORD_MAX_LENGTH} ký tự`,
+    })
+    .regex(STAFF_PASSWORD_PATTERN, {
+      message: "Mật khẩu tạm chỉ gồm chữ không dấu, số và ký hiệu, không có dấu cách",
     }),
   // An account holds exactly one role.
   roleCode: z.string().min(1, { message: "Vui lòng chọn một vai trò" }),

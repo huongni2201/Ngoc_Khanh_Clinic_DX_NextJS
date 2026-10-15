@@ -1,3 +1,4 @@
+import { DEFAULT_PAGE_SIZE } from "@/shared/ui/page-size"
 import { STAFF_MEMBER_SORT_KEYS, type StaffMemberFilterParams } from "../types/staff-member"
 
 const STAFF_MEMBER_MAX_SEARCH_LENGTH = 100
@@ -19,9 +20,10 @@ export function normalizeStaffMemberFilterParams(
     pageSize:
       pageSize !== undefined && Number.isSafeInteger(pageSize) && pageSize > 0
         ? Math.min(pageSize, 100)
-        : 10,
+        : DEFAULT_PAGE_SIZE,
     sortKey:
       params?.sortKey && STAFF_MEMBER_SORT_KEYS.includes(params.sortKey) ? params.sortKey : "id",
-    sortBy: params?.sortBy === "DESC" ? "DESC" : "ASC",
+    // Newest first: UUIDv7 ids grow with creation time, so a staff member just created is on page 1.
+    sortBy: params?.sortBy === "ASC" ? "ASC" : "DESC",
   }
 }

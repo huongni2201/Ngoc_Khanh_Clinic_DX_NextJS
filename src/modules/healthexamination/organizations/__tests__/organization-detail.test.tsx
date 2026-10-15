@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { OrganizationDetailPage } from "../pages/organization-detail-page"
 import { mockOrganizationFetch, organizationFixture } from "./organization-api-fixtures"
-import { renderWithClient } from "@/test-utils/render-with-client"
+import { ALL_PERMISSIONS, renderWithClient } from "@/test-utils/render-with-client"
 
 const mockNavigation = vi.hoisted(() => ({
   push: vi.fn(),
@@ -31,7 +31,7 @@ describe("OrganizationDetailPage", () => {
   })
 
   it("opens on the batch list and keeps the organization details beside it", async () => {
-    renderWithClient(<OrganizationDetailPage organizationId="org-1" />)
+    renderWithClient(<OrganizationDetailPage organizationId="org-1" />, { permissions: ALL_PERMISSIONS })
 
     expect(await screen.findByRole("heading", { name: organizationFixture.name })).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "Đợt khám" })).toBeInTheDocument()
@@ -47,8 +47,19 @@ describe("OrganizationDetailPage", () => {
     expect(screen.queryByRole("button", { name: "Báo cáo" })).not.toBeInTheDocument()
   })
 
+  it("hides edit and deactivate from an account that only reads organizations", async () => {
+    renderWithClient(<OrganizationDetailPage organizationId="org-1" />, {
+      permissions: ["ORGANIZATION_VIEW", "HEALTH_EXAMINATION_BATCH_VIEW"],
+    })
+
+    expect(await screen.findByRole("heading", { name: organizationFixture.name })).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Ngừng hoạt động" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: /Chỉnh sửa đơn vị/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Tạo đợt khám" })).not.toBeInTheDocument()
+  })
+
   it("turns the contact phone and email into tel and mailto links", async () => {
-    renderWithClient(<OrganizationDetailPage organizationId="org-1" />)
+    renderWithClient(<OrganizationDetailPage organizationId="org-1" />, { permissions: ALL_PERMISSIONS })
 
     const aside = await screen.findByRole("complementary", { name: "Thông tin đơn vị" })
     const phone = within(aside).getByRole("link", { name: organizationFixture.contactPhone })
@@ -59,7 +70,7 @@ describe("OrganizationDetailPage", () => {
 
   it("ignores the legacy tab query and still opens on the batch list", async () => {
     mockNavigation.search = "tab=batches"
-    renderWithClient(<OrganizationDetailPage organizationId="org-1" />)
+    renderWithClient(<OrganizationDetailPage organizationId="org-1" />, { permissions: ALL_PERMISSIONS })
 
     expect(await screen.findByText("Chưa có đợt khám nào cho đơn vị này")).toBeInTheDocument()
     expect(screen.queryByText(/Backend chưa cung cấp API/)).not.toBeInTheDocument()
@@ -69,7 +80,7 @@ describe("OrganizationDetailPage", () => {
   it("shows a safe error state when the organization cannot be loaded", async () => {
     mockNavigation.search = ""
     mockOrganizationFetch()
-    renderWithClient(<OrganizationDetailPage organizationId="nonexistent-999" />)
+    renderWithClient(<OrganizationDetailPage organizationId="nonexistent-999" />, { permissions: ALL_PERMISSIONS })
 
     expect(
       await screen.findByText("Không tìm thấy hoặc không thể tải dữ liệu đơn vị")
@@ -82,7 +93,7 @@ describe("OrganizationDetailPage", () => {
     const confirm = vi.fn(() => true)
     vi.stubGlobal("confirm", confirm)
     const user = userEvent.setup()
-    renderWithClient(<OrganizationDetailPage organizationId="org-1" />)
+    renderWithClient(<OrganizationDetailPage organizationId="org-1" />, { permissions: ALL_PERMISSIONS })
 
     await user.click(await screen.findByRole("button", { name: "Ngừng hoạt động" }))
     expect(fetchMock.mock.calls.some(([, init]) => init?.method === "DELETE")).toBe(false)
@@ -99,7 +110,7 @@ describe("OrganizationDetailPage", () => {
   it("does not deactivate when the dialog is cancelled", async () => {
     const fetchMock = mockOrganizationFetch()
     const user = userEvent.setup()
-    renderWithClient(<OrganizationDetailPage organizationId="org-1" />)
+    renderWithClient(<OrganizationDetailPage organizationId="org-1" />, { permissions: ALL_PERMISSIONS })
 
     await user.click(await screen.findByRole("button", { name: "Ngừng hoạt động" }))
     await user.click(await screen.findByRole("button", { name: "Hủy" }))
@@ -121,7 +132,7 @@ describe("OrganizationDetailPage", () => {
     })
     vi.stubGlobal("fetch", fetchMock)
     const user = userEvent.setup()
-    renderWithClient(<OrganizationDetailPage organizationId="org-1" />)
+    renderWithClient(<OrganizationDetailPage organizationId="org-1" />, { permissions: ALL_PERMISSIONS })
 
     await user.click(await screen.findByRole("button", { name: "Ngừng hoạt động" }))
     await user.click(await screen.findByRole("button", { name: "Xác nhận ngừng hoạt động" }))

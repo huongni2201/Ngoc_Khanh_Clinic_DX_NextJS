@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import * as batchApi from "@/modules/healthexamination/batches/api"
 import { ApiClientError } from "@/shared/api/api-client"
+import { ALL_PERMISSIONS, staffSessionWith } from "@/test-utils/render-with-client"
 import { OrganizationHealthExaminationBatchesTab } from "../components/organization-health-examination-batches-tab"
 import type { HealthExaminationBatchListResponse } from "../types"
 
@@ -15,10 +16,11 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(nav.search),
 }))
 
-function renderTab() {
+function renderTab(permissions: readonly string[] = ALL_PERMISSIONS) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   })
+  queryClient.setQueryData(["auth", "session"], staffSessionWith(permissions))
   return render(
     <QueryClientProvider client={queryClient}>
       <OrganizationHealthExaminationBatchesTab
@@ -128,6 +130,15 @@ describe("OrganizationHealthExaminationBatchesTab", () => {
     spy.mockResolvedValue(listResponse(0, { totalPages: 0 }))
     renderTab()
     expect(await screen.findByText("Không tìm thấy đợt khám phù hợp")).toBeInTheDocument()
+  })
+
+  it("hides the create action from an account without the create permission", async () => {
+    vi.spyOn(batchApi, "fetchHealthExaminationBatchesByOrganization")
+      .mockResolvedValue(listResponse(0, { totalPages: 0 }))
+    renderTab(["HEALTH_EXAMINATION_BATCH_VIEW"])
+
+    expect(await screen.findByText("Chưa có đợt khám nào cho đơn vị này")).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: /Tạo đợt khám/ })).not.toBeInTheDocument()
   })
 
   it("shows a Vietnamese error with a retry action and no stale rows", async () => {

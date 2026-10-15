@@ -16,6 +16,7 @@ import {
 import { ApiClientError } from "@/shared/api/api-client"
 import { ScreenLayout, ScreenLoadingSkeleton } from "@/shared/ui"
 import { toast } from "@/shared/ui/toaster"
+import { useOrganizationPermissions } from "../hooks/use-organization-permissions"
 import {
   useDeactivateOrganization,
   useOrganization,
@@ -34,6 +35,8 @@ export function OrganizationDetailPage({
   organizationId,
 }: OrganizationDetailPageProps) {
   const router = useRouter()
+  // Display only; the backend checks every request.
+  const { canEdit, canDeactivate } = useOrganizationPermissions()
 
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false)
 
@@ -122,8 +125,8 @@ export function OrganizationDetailPage({
       {/* 1. Identity: name, status, tax code, address and actions */}
       <OrganizationDetailHeader
         organization={organization}
-        onEditClick={() => setIsEditDialogOpen(true)}
-        onDeactivateClick={() => setIsDeactivateOpen(true)}
+        onEditClick={canEdit ? () => setIsEditDialogOpen(true) : undefined}
+        onDeactivateClick={canDeactivate ? () => setIsDeactivateOpen(true) : undefined}
         isDeactivating={deactivateMutation.isPending}
       />
 
@@ -145,63 +148,67 @@ export function OrganizationDetailPage({
       </div>
 
       {/* 3. Deactivate confirmation */}
-      <Dialog open={isDeactivateOpen} onOpenChange={handleDeactivateOpenChange}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Ngừng hoạt động đơn vị</DialogTitle>
-            <DialogDescription>
-              Đơn vị “{organization.name}” sẽ không còn xuất hiện trong danh sách. Các đợt khám đã tạo
-              vẫn được giữ lại.
-            </DialogDescription>
-          </DialogHeader>
-          {deactivateMutation.error && (
-            <div role="alert" className="space-y-2 text-xs text-destructive">
-              <p>{deactivateMutation.error.message || "Không thể ngừng hoạt động đơn vị."}</p>
-              {isDeactivateConflict && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleReloadAfterConflict}
-                  disabled={reloadMutation.isPending}
-                >
-                  {reloadMutation.isPending ? "Đang tải..." : "Tải lại dữ liệu mới nhất"}
-                </Button>
-              )}
-            </div>
-          )}
-          {reloadMutation.error && (
-            <p role="alert" className="text-xs text-destructive">
-              {reloadMutation.error.message || "Không thể tải lại dữ liệu đơn vị."}
-            </p>
-          )}
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => handleDeactivateOpenChange(false)}
-              disabled={deactivateMutation.isPending}
-            >
-              Hủy
-            </Button>
-            <Button
-              type="button"
-              variant="destructive"
-              onClick={handleDeactivate}
-              disabled={deactivateMutation.isPending}
-            >
-              {deactivateMutation.isPending ? "Đang ngừng..." : "Xác nhận ngừng hoạt động"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {canDeactivate && (
+        <Dialog open={isDeactivateOpen} onOpenChange={handleDeactivateOpenChange}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Ngừng hoạt động đơn vị</DialogTitle>
+              <DialogDescription>
+                Đơn vị “{organization.name}” sẽ không còn xuất hiện trong danh sách. Các đợt khám đã tạo
+                vẫn được giữ lại.
+              </DialogDescription>
+            </DialogHeader>
+            {deactivateMutation.error && (
+              <div role="alert" className="space-y-2 text-xs text-destructive">
+                <p>{deactivateMutation.error.message || "Không thể ngừng hoạt động đơn vị."}</p>
+                {isDeactivateConflict && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleReloadAfterConflict}
+                    disabled={reloadMutation.isPending}
+                  >
+                    {reloadMutation.isPending ? "Đang tải..." : "Tải lại dữ liệu mới nhất"}
+                  </Button>
+                )}
+              </div>
+            )}
+            {reloadMutation.error && (
+              <p role="alert" className="text-xs text-destructive">
+                {reloadMutation.error.message || "Không thể tải lại dữ liệu đơn vị."}
+              </p>
+            )}
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => handleDeactivateOpenChange(false)}
+                disabled={deactivateMutation.isPending}
+              >
+                Hủy
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={handleDeactivate}
+                disabled={deactivateMutation.isPending}
+              >
+                {deactivateMutation.isPending ? "Đang ngừng..." : "Xác nhận ngừng hoạt động"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
 
       {/* 4. Edit Organization Modal Dialog */}
-      <EditOrganizationDialog
-        open={isEditDialogOpen}
-        onOpenChange={setIsEditDialogOpen}
-        organization={organization}
-      />
+      {canEdit && (
+        <EditOrganizationDialog
+          open={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+          organization={organization}
+        />
+      )}
 
     </ScreenLayout>
   )

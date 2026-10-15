@@ -72,4 +72,21 @@ describe("AppShell", () => {
     expect(await screen.findByRole("link", { name: "Nhân viên" })).toHaveAttribute("href", "/staff-members")
     expect(screen.getByRole("group", { name: "Quản trị" })).toBeInTheDocument()
   })
+
+  it("hides the Đơn vị item from an account without the organization search permission", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockImplementation(() =>
+      Promise.resolve(ok({
+        ...staffSession,
+        roleAssignments: [{ ...staffSession.roleAssignments[0], permissions: ["PARTICIPANT_VIEW"] }],
+      }))
+    ))
+    render(
+      <QueryClientProvider client={new QueryClient()}><AppShell>
+        <p>Nội dung</p>
+      </AppShell></QueryClientProvider>
+    )
+
+    await screen.findByText("staff.test")
+    expect(screen.queryByRole("link", { name: "Đơn vị" })).not.toBeInTheDocument()
+  })
 })

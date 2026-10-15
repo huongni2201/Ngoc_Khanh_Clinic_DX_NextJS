@@ -1,3 +1,4 @@
+import type { PermissionCode } from "../permissions"
 import type { UserSession } from "../types"
 
 /**
@@ -8,15 +9,24 @@ export function canAccessStaffWorkspace(session: UserSession | null | undefined)
   return session?.principalType === "STAFF"
 }
 
+const NO_PERMISSIONS: ReadonlySet<string> = new Set()
+
 /**
- * Whether a STAFF session carries a permission code in any role. Display only: it decides which
- * actions are shown, never what is allowed; the backend checks every request.
+ * Every permission code a STAFF session carries, across all of its roles. Empty without a session
+ * and for a PATIENT session. Display only: it decides which actions are shown, never what is
+ * allowed; the backend checks every request.
  */
+export function getStaffPermissions(
+  session: UserSession | null | undefined,
+): ReadonlySet<string> {
+  if (session?.principalType !== "STAFF") return NO_PERMISSIONS
+  return new Set(session.roleAssignments.flatMap((assignment) => assignment.permissions))
+}
+
+/** Whether a STAFF session carries the permission in any role. Display only, like the set above. */
 export function hasStaffPermission(
   session: UserSession | null | undefined,
-  permission: string,
+  permission: PermissionCode,
 ): boolean {
-  return session?.principalType === "STAFF" && session.roleAssignments.some((assignment) =>
-    assignment.permissions.includes(permission),
-  )
+  return getStaffPermissions(session).has(permission)
 }

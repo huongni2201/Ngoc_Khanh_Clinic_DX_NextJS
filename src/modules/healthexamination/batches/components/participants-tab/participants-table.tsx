@@ -10,7 +10,6 @@ import {
   PARTICIPANT_ATTENDANCE_STATUS_LABELS,
   PARTICIPANT_ROSTER_STATUS_LABELS,
   PARTICIPANT_SEX_LABELS,
-  getParticipantCancelBlockReason,
 } from "../../utils/participant-labels"
 import { formatHealthExaminationDate } from "../../utils/format-health-examination-date"
 
@@ -26,16 +25,15 @@ interface ParticipantsTableProps {
   sortKey: ParticipantSortKey
   sortBy: "ASC" | "DESC"
   onSortChange: (sortKey: ParticipantSortKey) => void
-  /** Shows the action column. UX only: the backend decides every change. */
-  canManage?: boolean
+  /** Shows "Sửa" on active rows. UX only: the backend decides every change. */
   onEdit?: (participant: HealthExaminationParticipant) => void
-  onCancel?: (participant: HealthExaminationParticipant) => void
+  /** Shows "Khôi phục" on cancelled rows. UX only: the backend decides. */
   onReactivate?: (participant: HealthExaminationParticipant) => void
   /** Shows "In phiếu" on active rows. UX only: the backend decides. */
   onPrint?: (participant: HealthExaminationParticipant) => void
   /**
-   * Shows a selection column for bulk printing. Cancelled rows cannot be selected. The selection
-   * itself is owned by the caller so it survives paging.
+   * Shows a selection column for the bulk actions (print, cancel). Cancelled rows cannot be
+   * selected. The selection itself is owned by the caller so it survives paging.
    */
   selection?: {
     isSelected: (participantId: string) => boolean
@@ -91,22 +89,18 @@ function SortableHeader({ label, sortKey, activeKey, direction, onSort }: Sortab
 
 interface ParticipantRowActionsProps {
   participant: HealthExaminationParticipant
-  canManage: boolean
   onEdit?: (participant: HealthExaminationParticipant) => void
-  onCancel?: (participant: HealthExaminationParticipant) => void
   onReactivate?: (participant: HealthExaminationParticipant) => void
   onPrint?: (participant: HealthExaminationParticipant) => void
 }
 
 /**
- * Print, edit and cancel for one row. A cancelled Participant can only be reactivated; the backend
- * still decides.
+ * Print and edit for one row. A cancelled Participant can only be reactivated; the backend still
+ * decides. Cancelling needs ticks, so it lives in the selection bar and not on the row.
  */
 function ParticipantRowActions({
   participant,
-  canManage,
   onEdit,
-  onCancel,
   onReactivate,
   onPrint,
 }: ParticipantRowActionsProps) {
@@ -125,57 +119,35 @@ function ParticipantRowActions({
       </Button>
     )
   }
-  const printButton = onPrint ? (
-    <Button
-      type="button"
-      variant="outline"
-      size="sm"
-      className="h-7 px-2.5 text-xs"
-      aria-label={`In phiếu khám của ${participant.fullName}`}
-      onClick={() => onPrint(participant)}
-    >
-      <Printer aria-hidden="true" className="size-3.5" />
-      In phiếu
-    </Button>
-  ) : null
-  if (!canManage) {
-    return printButton ?? <span className="text-muted-foreground">—</span>
-  }
-  const blockReason = getParticipantCancelBlockReason(participant)
-  const reasonId = `cancel-block-${participant.id}`
+  if (!onPrint && !onEdit) return <span className="text-muted-foreground">—</span>
 
   return (
     <div className="flex items-center gap-1.5">
-      {printButton}
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        className="h-7 px-2.5 text-xs"
-        aria-label={`Sửa người khám ${participant.fullName}`}
-        onClick={() => onEdit?.(participant)}
-      >
-        Sửa
-      </Button>
-      <span title={blockReason ?? undefined}>
+      {onPrint && (
         <Button
           type="button"
           variant="outline"
           size="sm"
           className="h-7 px-2.5 text-xs"
-          aria-label={`Hủy người khám ${participant.fullName}`}
-          aria-describedby={blockReason ? reasonId : undefined}
-          disabled={blockReason !== null}
-          onClick={() => onCancel?.(participant)}
+          aria-label={`In phiếu khám của ${participant.fullName}`}
+          onClick={() => onPrint(participant)}
         >
-          Hủy
+          <Printer aria-hidden="true" className="size-3.5" />
+          In phiếu
         </Button>
-        {blockReason && (
-          <span id={reasonId} className="sr-only">
-            {blockReason}
-          </span>
-        )}
-      </span>
+      )}
+      {onEdit && (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="h-7 px-2.5 text-xs"
+          aria-label={`Sửa người khám ${participant.fullName}`}
+          onClick={() => onEdit(participant)}
+        >
+          Sửa
+        </Button>
+      )}
     </div>
   )
 }
@@ -191,14 +163,12 @@ export function ParticipantsTable({
   sortKey,
   sortBy,
   onSortChange,
-  canManage = false,
   onEdit,
-  onCancel,
   onReactivate,
   onPrint,
   selection,
 }: ParticipantsTableProps) {
-  const showActions = canManage || Boolean(onPrint)
+  const showActions = Boolean(onEdit || onReactivate || onPrint)
   const columnCount = 10 + (showActions ? 1 : 0) + (selection ? 1 : 0)
   const sortProps = { activeKey: sortKey, direction: sortBy, onSort: onSortChange }
   const selectable = participants.filter((participant) => participant.rosterStatus === "ACTIVE")
@@ -301,9 +271,7 @@ export function ParticipantsTable({
                       <td className="py-2.5 px-3 whitespace-nowrap">
                         <ParticipantRowActions
                           participant={participant}
-                          canManage={canManage}
                           onEdit={onEdit}
-                          onCancel={onCancel}
                           onReactivate={onReactivate}
                           onPrint={onPrint}
                         />

@@ -69,11 +69,12 @@ describe("CreateStaffMemberDialog", () => {
     expect(screen.getByLabelText(/^Mật khẩu tạm/)).toHaveValue("")
   })
 
-  it("reloads the roles and clears a role that is no longer available after a 409", async () => {
+  it("reloads the roles and clears a role that is no longer available after a 422", async () => {
     const user = userEvent.setup()
     const fetchMock = mockStaffMemberFetch({
       roles: [rolesFixture, [rolesFixture[1]]],
-      createResponse: () => jsonResponse({ result: "NG", code: 409, message: "Conflict" }, 409),
+      createResponse: () =>
+        jsonResponse({ result: "NG", code: 422, message: "The role is not available" }, 422),
     })
     renderWithClient(<CreateStaffMemberDialog open onOpenChange={onOpenChange} />)
 
@@ -86,6 +87,22 @@ describe("CreateStaffMemberDialog", () => {
     )
     expect(await screen.findByText("Vui lòng chọn một vai trò")).toBeInTheDocument()
     expect(fetchMock.mock.calls.filter(([url]) => String(url).endsWith("/api/v1/roles"))).toHaveLength(2)
+  })
+
+  it("keeps the chosen role and asks to submit again when a generated identity collided", async () => {
+    const user = userEvent.setup()
+    const fetchMock = mockStaffMemberFetch({
+      createResponse: () =>
+        jsonResponse({ result: "NG", code: 409, message: "Duplicate" }, 409),
+    })
+    renderWithClient(<CreateStaffMemberDialog open onOpenChange={onOpenChange} />)
+
+    await fillValidForm(user)
+    await user.click(screen.getByRole("button", { name: "Tạo nhân viên" }))
+
+    expect(await screen.findByText(/vừa bị trùng với dữ liệu khác/)).toBeInTheDocument()
+    expect(screen.getByRole("radio", { name: /Bác sĩ đa khoa/ })).toBeChecked()
+    expect(fetchMock.mock.calls.filter(([url]) => String(url).endsWith("/api/v1/roles"))).toHaveLength(1)
   })
 
   it("marks the field the backend rejected", async () => {
@@ -107,7 +124,9 @@ describe("CreateStaffMemberDialog", () => {
     await fillValidForm(user)
     await user.click(screen.getByRole("button", { name: "Tạo nhân viên" }))
 
-    expect(await screen.findByText("Mật khẩu tạm không hợp lệ (8–72 byte)")).toBeInTheDocument()
+    expect(
+      await screen.findByText("Mật khẩu tạm không hợp lệ (8–72 ký tự không dấu, không dấu cách)")
+    ).toBeInTheDocument()
     expect(screen.getByLabelText(/^Mật khẩu tạm/)).toHaveAttribute("aria-invalid", "true")
     expect(screen.queryByText("too long")).not.toBeInTheDocument()
   })

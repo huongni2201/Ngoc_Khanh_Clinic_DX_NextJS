@@ -57,6 +57,23 @@ function page(items: unknown[]) {
   return envelope({ items, page: 1, size: 10, totalElements: items.length, totalPages: 1 })
 }
 
+/** Every manual-write permission off, as for an account that may only read the list. */
+const NO_WRITE = { canCreate: false, canEdit: false, canRemove: false, canReactivate: false }
+
+/** Ticks a Participant, then opens the cancel dialog from the selection bar. */
+async function openCancelDialog(
+  user: ReturnType<typeof userEvent.setup>,
+  names: string[] = ["Người khám 1"]
+) {
+  for (const name of names) {
+    await user.click(await screen.findByRole("checkbox", { name: `Chọn ${name}` }))
+  }
+  await user.click(
+    screen.getByRole("button", { name: `Hủy khỏi danh sách (${names.length})` })
+  )
+  return findDialog()
+}
+
 /** Routes GET by URL: the list, or the detail of one Participant. */
 function stubGets(items: unknown[], details: Record<string, unknown> = {}) {
   return vi.spyOn(apiClient, "get").mockImplementation(async (path: string) => {
@@ -76,8 +93,10 @@ function renderTab(props: Partial<React.ComponentProps<typeof ParticipantsTab>> 
         organizationId="org-1"
         batchId="batch-1"
         batch={{ code: "DK 001", status: "DRAFT", rowVersion: 4, days: DAYS }}
-        canManage
-        canCreate={props.canCreate ?? props.canManage ?? true}
+        canCreate
+        canEdit
+        canRemove
+        canReactivate
         {...props}
       />
       <Toaster />
@@ -89,14 +108,23 @@ afterEach(() => vi.restoreAllMocks())
 beforeEach(() => vi.clearAllMocks())
 
 describe("manual Participant actions are shown only when allowed", () => {
-  it("shows Add, Edit and Cancel for a manager on a Draft batch", async () => {
+  it("shows Add and Edit for a manager on a Draft batch, and Cancel only once a row is ticked", async () => {
     stubGets([item(1)])
     renderTab()
+    const user = userEvent.setup()
 
     expect(await screen.findByText("Người khám 1")).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Thêm người khám" })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Sửa người khám Người khám 1" })).toBeEnabled()
-    expect(screen.getByRole("button", { name: "Hủy người khám Người khám 1" })).toBeEnabled()
+    // Cancelling needs ticks: no button until a row is ticked, and none on the row itself.
+    expect(screen.queryByRole("button", { name: /^Hủy khỏi danh sách/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: /^Hủy người khám/ })).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole("checkbox", { name: "Chọn Người khám 1" }))
+    expect(screen.getByRole("button", { name: "Hủy khỏi danh sách (1)" })).toBeEnabled()
+
+    await user.click(screen.getByRole("button", { name: "Bỏ chọn" }))
+    expect(screen.queryByRole("button", { name: /^Hủy khỏi danh sách/ })).not.toBeInTheDocument()
   })
 
   it("shows them on a Ready batch too", async () => {
@@ -106,14 +134,37 @@ describe("manual Participant actions are shown only when allowed", () => {
     expect(await screen.findByRole("button", { name: "Thêm người khám" })).toBeInTheDocument()
   })
 
-  it("hides them without the manage permission", async () => {
+  it("hides them without the permissions", async () => {
     stubGets([item(1)])
-    renderTab({ canManage: false })
+    renderTab(NO_WRITE)
 
     expect(await screen.findByText("Người khám 1")).toBeInTheDocument()
     expect(screen.queryByRole("button", { name: "Thêm người khám" })).not.toBeInTheDocument()
     expect(screen.queryByRole("button", { name: /^Sửa người khám/ })).not.toBeInTheDocument()
-    expect(screen.queryByRole("button", { name: /^Hủy người khám/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument()
+  })
+
+  it("grants each action on its own permission", async () => {
+    stubGets([item(1)])
+    renderTab({ ...NO_WRITE, canEdit: true })
+    const user = userEvent.setup()
+
+    expect(await screen.findByRole("button", { name: "Sửa người khám Người khám 1" })).toBeEnabled()
+    // Edit alone gives no way to tick or cancel.
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Thêm người khám" })).not.toBeInTheDocument()
+    expect(user).toBeDefined()
+  })
+
+  it("offers ticking and cancelling with the remove permission alone", async () => {
+    stubGets([item(1)])
+    renderTab({ ...NO_WRITE, canRemove: true })
+    const user = userEvent.setup()
+
+    expect(await screen.findByText("Chọn người khám để hủy hàng loạt")).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: /^Sửa người khám/ })).not.toBeInTheDocument()
+    await user.click(screen.getByRole("checkbox", { name: "Chọn Người khám 1" }))
+    expect(screen.getByRole("button", { name: "Hủy khỏi danh sách (1)" })).toBeInTheDocument()
   })
 
   it.each(["FINALIZED", "CLOSED"])("hides them on a %s batch", async (status) => {
@@ -123,25 +174,33 @@ describe("manual Participant actions are shown only when allowed", () => {
     expect(await screen.findByText("Người khám 1")).toBeInTheDocument()
     expect(screen.queryByRole("button", { name: "Thêm người khám" })).not.toBeInTheDocument()
     expect(screen.queryByRole("button", { name: /^Sửa người khám/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument()
   })
 
-  it("offers no actions on a cancelled Participant", async () => {
+  it("offers no edit and no tick on a cancelled Participant", async () => {
     stubGets([item(1, { rosterStatus: "CANCELLED" })])
     renderTab()
 
     expect(await screen.findByText("Người khám 1")).toBeInTheDocument()
     expect(screen.queryByRole("button", { name: /^Sửa người khám/ })).not.toBeInTheDocument()
-    expect(screen.queryByRole("button", { name: /^Hủy người khám/ })).not.toBeInTheDocument()
+    expect(screen.getByRole("checkbox", { name: "Chọn Người khám 1" })).toHaveAttribute(
+      "aria-disabled",
+      "true"
+    )
   })
 
-  it("disables Cancel with the reason for a prepared Participant, but still allows Edit", async () => {
+  it("skips a prepared Participant in the cancel dialog with the reason, but still allows Edit", async () => {
     stubGets([item(1, { preparedAt: "2026-10-07T01:00:00Z" })])
+    const del = vi.spyOn(apiClient, "delete")
     renderTab()
+    const user = userEvent.setup()
 
-    const cancel = await screen.findByRole("button", { name: "Hủy người khám Người khám 1" })
-    expect(cancel).toBeDisabled()
-    expect(cancel).toHaveAccessibleDescription(/đã được chuẩn bị lượt khám/)
-    expect(screen.getByRole("button", { name: "Sửa người khám Người khám 1" })).toBeEnabled()
+    expect(await screen.findByRole("button", { name: "Sửa người khám Người khám 1" })).toBeEnabled()
+    const dialog = await openCancelDialog(user)
+
+    expect(within(dialog).getByText(/đã được chuẩn bị lượt khám, đã đến khám hoặc đã đối soát nên không thể hủy/)).toBeInTheDocument()
+    expect(within(dialog).getByRole("button", { name: "Hủy người khám" })).toBeDisabled()
+    expect(del).not.toHaveBeenCalled()
   })
 })
 
@@ -299,14 +358,13 @@ describe("editing a Participant", () => {
   })
 })
 
-describe("cancelling a Participant", () => {
+describe("cancelling Participants", () => {
   it("confirms, sends the row's version in the query and reports the cancellation", async () => {
     stubGets([item(1, { rowVersion: 6 })])
     const del = vi.spyOn(apiClient, "delete").mockResolvedValue(envelope(undefined) as never)
     renderTab()
     const user = userEvent.setup()
-    await user.click(await screen.findByRole("button", { name: "Hủy người khám Người khám 1" }))
-    const dialog = await findDialog()
+    const dialog = await openCancelDialog(user)
 
     expect(within(dialog).getByText(/không phải xóa/)).toBeInTheDocument()
     await user.click(within(dialog).getByRole("button", { name: "Hủy người khám" }))
@@ -314,6 +372,37 @@ describe("cancelling a Participant", () => {
     await waitFor(() => expect(del).toHaveBeenCalledWith(`${BASE}/p-1?rowVersion=6`))
     await waitFor(() => expect(queryDialog()).not.toBeInTheDocument())
     expect(await screen.findByText("Đã hủy người khám Người khám 1.")).toBeInTheDocument()
+    // The cancelled Participant is unticked, so the bar is gone with its buttons.
+    expect(screen.queryByRole("button", { name: /^Hủy khỏi danh sách/ })).not.toBeInTheDocument()
+  })
+
+  it("cancels every ticked Participant with its own version", async () => {
+    stubGets([item(1, { rowVersion: 6 }), item(2, { rowVersion: 9 }), item(3)])
+    const del = vi.spyOn(apiClient, "delete").mockResolvedValue(envelope(undefined) as never)
+    renderTab()
+    const user = userEvent.setup()
+    const dialog = await openCancelDialog(user, ["Người khám 1", "Người khám 2"])
+
+    await user.click(within(dialog).getByRole("button", { name: "Hủy 2 người khám" }))
+
+    await waitFor(() => expect(del).toHaveBeenCalledTimes(2))
+    expect(del).toHaveBeenNthCalledWith(1, `${BASE}/p-1?rowVersion=6`)
+    expect(del).toHaveBeenNthCalledWith(2, `${BASE}/p-2?rowVersion=9`)
+    expect(await screen.findByText("Đã hủy 2 người khám.")).toBeInTheDocument()
+  })
+
+  it("skips the people who can no longer be cancelled and sends only the others", async () => {
+    stubGets([item(1), item(2, { attendanceStatus: "ATTENDED" })])
+    const del = vi.spyOn(apiClient, "delete").mockResolvedValue(envelope(undefined) as never)
+    renderTab()
+    const user = userEvent.setup()
+    const dialog = await openCancelDialog(user, ["Người khám 1", "Người khám 2"])
+
+    expect(within(dialog).getByText(/^1 người đã được chuẩn bị lượt khám/)).toBeInTheDocument()
+    await user.click(within(dialog).getByRole("button", { name: "Hủy người khám" }))
+
+    await waitFor(() => expect(del).toHaveBeenCalledTimes(1))
+    expect(del).toHaveBeenCalledWith(`${BASE}/p-1?rowVersion=2`)
   })
 
   it("does nothing when the user keeps the Participant", async () => {
@@ -321,16 +410,17 @@ describe("cancelling a Participant", () => {
     const del = vi.spyOn(apiClient, "delete")
     renderTab()
     const user = userEvent.setup()
-    await user.click(await screen.findByRole("button", { name: "Hủy người khám Người khám 1" }))
-    const dialog = await findDialog()
+    const dialog = await openCancelDialog(user)
 
     await user.click(within(dialog).getByRole("button", { name: "Giữ lại" }))
 
     await waitFor(() => expect(queryDialog()).not.toBeInTheDocument())
     expect(del).not.toHaveBeenCalled()
+    // The tick stays, so the action can be chosen again.
+    expect(screen.getByRole("button", { name: "Hủy khỏi danh sách (1)" })).toBeInTheDocument()
   })
 
-  it("explains a refusal in Vietnamese and keeps the dialog open", async () => {
+  it("explains a refusal in Vietnamese, keeps the dialog open and keeps the refused row ticked", async () => {
     stubGets([item(1)])
     vi.spyOn(apiClient, "delete").mockRejectedValue(
       new ApiClientError(
@@ -342,13 +432,47 @@ describe("cancelling a Participant", () => {
     )
     renderTab()
     const user = userEvent.setup()
-    await user.click(await screen.findByRole("button", { name: "Hủy người khám Người khám 1" }))
-    const dialog = await findDialog()
+    const dialog = await openCancelDialog(user)
 
     await user.click(within(dialog).getByRole("button", { name: "Hủy người khám" }))
 
     expect(await within(dialog).findByText(/Không thể hủy người khám đã được chuẩn bị/)).toBeInTheDocument()
-    expect(getDialog()).toBeInTheDocument()
+    expect(within(dialog).getByRole("button", { name: "Xong" })).toBeInTheDocument()
+    await user.click(within(dialog).getByRole("button", { name: "Xong" }))
+    await waitFor(() => expect(queryDialog()).not.toBeInTheDocument())
+    expect(screen.getByRole("button", { name: "Hủy khỏi danh sách (1)" })).toBeInTheDocument()
+  })
+
+  it("reports the people it could not cancel and unticks those it did", async () => {
+    stubGets([item(1), item(2)])
+    vi.spyOn(apiClient, "delete")
+      .mockResolvedValueOnce(envelope(undefined) as never)
+      .mockRejectedValueOnce(new ApiClientError("x", 409, 409, "Record was changed by another request"))
+    renderTab()
+    const user = userEvent.setup()
+    const dialog = await openCancelDialog(user, ["Người khám 1", "Người khám 2"])
+
+    await user.click(within(dialog).getByRole("button", { name: "Hủy 2 người khám" }))
+
+    expect(await within(dialog).findByText(/Đã hủy 1 người; không hủy được 1 người/)).toBeInTheDocument()
+    await user.click(within(dialog).getByRole("button", { name: "Xong" }))
+    await waitFor(() => expect(queryDialog()).not.toBeInTheDocument())
+    expect(screen.getByRole("button", { name: "Hủy khỏi danh sách (1)" })).toBeInTheDocument()
+  })
+
+  it("stops at the first refusal that would repeat for everyone", async () => {
+    stubGets([item(1), item(2), item(3)])
+    const del = vi
+      .spyOn(apiClient, "delete")
+      .mockRejectedValue(new ApiClientError("x", 403, 403, "Forbidden"))
+    renderTab()
+    const user = userEvent.setup()
+    const dialog = await openCancelDialog(user, ["Người khám 1", "Người khám 2", "Người khám 3"])
+
+    await user.click(within(dialog).getByRole("button", { name: "Hủy 3 người khám" }))
+
+    expect(await within(dialog).findByText(/Bạn không có quyền/)).toBeInTheDocument()
+    expect(del).toHaveBeenCalledTimes(1)
   })
 })
 
@@ -362,9 +486,10 @@ describe("reactivating a Participant", () => {
 
     expect(await screen.findByText("Người khám 1")).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Khôi phục người khám Người khám 1" })).toBeEnabled()
-    // An active row keeps Edit and Cancel and gets no Reactivate.
+    // An active row keeps Edit and its tick, and gets no Reactivate.
     expect(screen.queryByRole("button", { name: "Khôi phục người khám Người khám 2" })).not.toBeInTheDocument()
-    expect(screen.getByRole("button", { name: "Hủy người khám Người khám 2" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Sửa người khám Người khám 2" })).toBeInTheDocument()
+    expect(screen.getByRole("checkbox", { name: "Chọn Người khám 2" })).toBeEnabled()
   })
 
   it("shows it on a Ready batch too", async () => {
@@ -376,9 +501,9 @@ describe("reactivating a Participant", () => {
     ).toBeInTheDocument()
   })
 
-  it("hides it without the manage permission", async () => {
+  it("hides it without the reactivate permission", async () => {
     stubGets([cancelledRow()])
-    renderTab({ canManage: false })
+    renderTab({ canReactivate: false })
 
     expect(await screen.findByText("Người khám 1")).toBeInTheDocument()
     expect(screen.queryByRole("button", { name: /^Khôi phục người khám/ })).not.toBeInTheDocument()
@@ -615,8 +740,7 @@ describe("the cancel dialog wording", () => {
     stubGets([item(1)])
     renderTab()
     const user = userEvent.setup()
-    await user.click(await screen.findByRole("button", { name: "Hủy người khám Người khám 1" }))
-    const dialog = await findDialog()
+    const dialog = await openCancelDialog(user)
 
     expect(
       within(dialog).getByText(

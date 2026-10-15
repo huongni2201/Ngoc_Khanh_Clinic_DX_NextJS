@@ -147,7 +147,9 @@ export function HealthExaminationBatchTable({
                 <p className="mx-auto mt-1 mb-5 max-w-sm whitespace-normal text-xs text-muted-foreground">
                   {isFiltered
                     ? "Thử đổi từ khóa tìm kiếm."
-                    : "Tạo đợt khám để cấu hình thời gian, địa điểm và hạng mục khám."}
+                    : onCreateClick
+                      ? "Tạo đợt khám để cấu hình thời gian, địa điểm và hạng mục khám."
+                      : "Đơn vị này chưa có đợt khám nào."}
                 </p>
                 {onCreateClick && !isFiltered && (
                   <Button type="button" onClick={onCreateClick}>

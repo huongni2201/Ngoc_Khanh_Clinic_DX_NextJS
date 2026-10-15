@@ -8,7 +8,7 @@ export const staffSession: UserSession = {
   username: "staff.test", principalType: "STAFF",
   roleAssignments: [{
     roleId: "33333333-3333-4333-8333-333333333333", roleCode: "DOCTOR",
-    permissions: ["ORGANIZATION_READ"],
+    permissions: ["ORGANIZATION_SEARCH", "ORGANIZATION_VIEW"],
   }],
   idleExpiresAt: "2026-09-29T12:30:00Z", absoluteExpiresAt: "2026-09-29T20:00:00Z",
 }

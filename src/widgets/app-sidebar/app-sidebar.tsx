@@ -15,22 +15,30 @@ import {
   UserMultiple02Icon,
 } from "@hugeicons/core-free-icons"
 import { cn } from "@/lib/utils"
-import { canViewStaffMembers, useCachedUserSession } from "@/modules/accesscontrol"
+import { PERMISSION, usePermissions, type PermissionCode } from "@/modules/accesscontrol"
 
 interface NavItem {
   title: string
   href: string
   icon: IconSvgElement
+  /** The account must hold it to see the item. Items without one are not gated yet. */
+  permission?: PermissionCode
 }
 
 export function AppSidebar({ className }: { className?: string }) {
   const pathname = usePathname()
-  const session = useCachedUserSession()
+  const { isKnown, can } = usePermissions()
 
-  // Shown only to sessions holding the list permission; the backend still checks every request.
-  const adminItems: NavItem[] = canViewStaffMembers(session)
-    ? [{ title: "Nhân viên", href: "/staff-members", icon: UserMultiple02Icon }]
-    : []
+  // Administration items appear only once the session is known to hold the permission, so an
+  // account without it never sees them flash. Display only; the backend checks every request.
+  const adminItems: NavItem[] = [
+    {
+      title: "Nhân viên",
+      href: "/staff-members",
+      icon: UserMultiple02Icon,
+      permission: PERMISSION.STAFF_MEMBER_VIEW,
+    },
+  ].filter((item) => isKnown && can(item.permission))
 
   const navItems: NavItem[] = [
     {
@@ -67,8 +75,13 @@ export function AppSidebar({ className }: { className?: string }) {
       title: "Đơn vị",
       href: "/organizations",
       icon: Building03Icon,
+      permission: PERMISSION.ORGANIZATION_SEARCH,
     },
   ]
+  // Display only; the backend checks every request. Before the session is known the item shows.
+  const visibleItems = navItems.filter(
+    (item) => !item.permission || !isKnown || can(item.permission)
+  )
 
   return (
     <aside
@@ -101,7 +114,7 @@ export function AppSidebar({ className }: { className?: string }) {
 
       {/* Navigation Menu */}
       <nav aria-label="Điều hướng chính" className="flex-1 space-y-1 px-3 py-4">
-        {navItems.map((item) => {
+        {visibleItems.map((item) => {
           const isActive =
             item.href === "/dashboard"
               ? pathname === "/dashboard" || pathname === "/"

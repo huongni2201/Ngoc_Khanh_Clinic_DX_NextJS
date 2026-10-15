@@ -15,7 +15,7 @@ describe("staff members API", () => {
     const page = await fetchStaffMembers({ search: "  annv ", page: 2, pageSize: 500, sortKey: "fullName" })
 
     expect(fetchMock).toHaveBeenCalledWith(
-      expect.stringContaining("/api/v1/staff-members?page=2&size=100&searchKey=annv&sortKey=fullName&sortBy=ASC"),
+      expect.stringContaining("/api/v1/staff-members?page=2&size=100&searchKey=annv&sortKey=fullName&sortBy=DESC"),
       expect.objectContaining({ method: "GET" })
     )
     expect(page.data[0]).toEqual({

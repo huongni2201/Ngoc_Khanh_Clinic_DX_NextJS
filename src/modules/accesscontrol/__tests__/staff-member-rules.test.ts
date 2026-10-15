@@ -2,7 +2,12 @@ import { describe, expect, it } from "vitest"
 import { ApiClientError } from "@/shared/api/api-client"
 import { createStaffMemberSchema, EMPTY_CREATE_STAFF_MEMBER_FORM } from "../schemas/staff-member.schema"
 import { previewUsernameBase } from "../utils/username-preview"
-import { isUnavailableRoleError, staffMemberFieldErrors } from "../utils/staff-member-errors"
+import {
+  createStaffMemberErrorMessage,
+  isDuplicateIdentityError,
+  isUnavailableRoleError,
+  staffMemberFieldErrors,
+} from "../utils/staff-member-errors"
 import { roleLabel } from "../utils/staff-member-labels"
 
 const valid = {
@@ -38,20 +43,26 @@ describe("create staff member form rules", () => {
     expect(messages(valid)).toEqual([])
   })
 
-  it("requires a name with letters, a role and an 8 character password", () => {
-    expect(messages({ ...valid, fullName: "123" })).toContain("Họ và tên phải có chữ cái")
+  it("requires a name with a Latin letter, a role and an 8 character password", () => {
+    const latinName = "Họ và tên phải có chữ cái Latin để tạo tên đăng nhập"
+    expect(messages({ ...valid, fullName: "123" })).toContain(latinName)
+    expect(messages({ ...valid, fullName: "王小明" })).toContain(latinName)
+    expect(messages({ ...valid, fullName: "Đặng Thị Đào" })).toEqual([])
     expect(messages({ ...valid, roleCode: "" })).toContain("Vui lòng chọn một vai trò")
     expect(messages({ ...valid, initialPassword: "short" })).toContain(
       "Mật khẩu tạm phải có ít nhất 8 ký tự"
     )
   })
 
-  it("rejects a password above 72 UTF-8 bytes even when it has fewer characters", () => {
-    const accented = "ệ".repeat(25) // 25 characters, 75 bytes
-    expect(accented.length).toBeLessThan(72)
-    expect(messages({ ...valid, initialPassword: accented })).toContain(
-      "Mật khẩu tạm quá dài (tối đa 72 byte, ký tự có dấu tính nhiều byte)"
+  it("accepts only printable ASCII passwords without spaces, up to 72 characters", () => {
+    const ascii = "Mật khẩu tạm chỉ gồm chữ không dấu, số và ký hiệu, không có dấu cách"
+    for (const password of ["Mậtkhẩu123", "Tam 12345", "Tam\t12345", "ệ".repeat(25)]) {
+      expect(messages({ ...valid, initialPassword: password })).toContain(ascii)
+    }
+    expect(messages({ ...valid, initialPassword: "a".repeat(73) })).toContain(
+      "Mật khẩu tạm không được vượt quá 72 ký tự"
     )
+    expect(messages({ ...valid, initialPassword: "A1!~" + "x".repeat(68) })).toEqual([])
   })
 
   it("rejects a birth date that is not in the past and an invalid email", () => {
@@ -71,9 +82,18 @@ describe("staff member errors and labels", () => {
     expect(staffMemberFieldErrors(new Error("x"))).toEqual([])
   })
 
-  it("treats a create 409 as an unavailable role", () => {
-    expect(isUnavailableRoleError(new ApiClientError("x", 409))).toBe(true)
-    expect(isUnavailableRoleError(new ApiClientError("x", 400))).toBe(false)
+  it("tells an unavailable role (422) from a duplicate identity (409) by the status code", () => {
+    const failure = (status: number) => new ApiClientError("x", status, status, "Failure")
+
+    expect(isUnavailableRoleError(failure(422))).toBe(true)
+    expect(isDuplicateIdentityError(failure(422))).toBe(false)
+    expect(isDuplicateIdentityError(failure(409))).toBe(true)
+    expect(isUnavailableRoleError(failure(409))).toBe(false)
+    expect(isUnavailableRoleError(failure(400))).toBe(false)
+    expect(createStaffMemberErrorMessage(failure(409))).toContain("vừa bị trùng")
+    expect(createStaffMemberErrorMessage(failure(422))).toContain(
+      "Vai trò đã chọn không còn khả dụng"
+    )
   })
 
   it("labels known roles in Vietnamese and falls back for new ones", () => {

@@ -6,7 +6,9 @@ import { Button } from "@/components/ui/button"
 import {
   AlertCircle,
   DataTablePagination,
+  DEFAULT_PAGE_SIZE,
   Lock,
+  parsePageSize,
   PageHeader,
   Plus,
   RefreshCw,
@@ -14,29 +16,33 @@ import {
 } from "@/shared/ui"
 import { CreateStaffMemberDialog } from "../components/create-staff-member-dialog"
 import { StaffMemberTable } from "../components/staff-member-table"
-import { useCachedUserSession } from "../hooks/use-cached-user-session"
+import { usePermissions } from "../hooks/use-permissions"
+import { PERMISSION } from "../permissions"
 import { useStaffMembers } from "../hooks/use-staff-members"
-import { canCreateStaffMembers, canViewStaffMembers } from "../utils/staff-member-permissions"
-
-const PAGE_SIZE = 10
 
 /** Staff members with their accounts; administrators create new ones from here. */
 export function StaffMemberListPage() {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  const session = useCachedUserSession()
-  const canView = canViewStaffMembers(session)
-  const canCreate = canCreateStaffMembers(session)
+  const { can, canAll } = usePermissions()
+  const canView = can(PERMISSION.STAFF_MEMBER_VIEW)
+  // The create form also loads the role list, and the backend checks both write permissions.
+  const canCreate = canAll(
+    PERMISSION.USER_ACCOUNT_CREATE,
+    PERMISSION.USER_ROLE_ASSIGN,
+    PERMISSION.ROLE_VIEW
+  )
 
   const search = searchParams?.get("q")?.trim() || ""
   const pageParam = Number(searchParams?.get("page"))
   const page = Number.isSafeInteger(pageParam) && pageParam > 0 ? pageParam : 1
+  const pageSize = parsePageSize(searchParams?.get("size"))
 
   const [isCreateOpen, setIsCreateOpen] = React.useState(false)
 
   const updateUrlParams = React.useCallback(
-    (next: { q?: string; page?: number }) => {
+    (next: { q?: string; page?: number; pageSize?: number }) => {
       const current = new URLSearchParams(Array.from(searchParams?.entries() || []))
       if (next.q !== undefined) {
         if (next.q.trim()) current.set("q", next.q.trim())
@@ -44,6 +50,11 @@ export function StaffMemberListPage() {
         current.set("page", "1")
       }
       if (next.page !== undefined) current.set("page", String(next.page))
+      if (next.pageSize !== undefined) {
+        if (next.pageSize === DEFAULT_PAGE_SIZE) current.delete("size")
+        else current.set("size", String(next.pageSize))
+        current.set("page", "1")
+      }
       const query = current.toString()
       router.replace(query ? `${pathname}?${query}` : pathname)
     },
@@ -51,7 +62,7 @@ export function StaffMemberListPage() {
   )
 
   const { data, isLoading, isError, error, refetch } = useStaffMembers(
-    { search, page, pageSize: PAGE_SIZE },
+    { search, page, pageSize },
     canView
   )
 
@@ -112,10 +123,11 @@ export function StaffMemberListPage() {
             <div className="mt-1 pt-1">
               <DataTablePagination
                 currentPage={data?.page ?? 1}
-                pageSize={data?.pageSize ?? PAGE_SIZE}
+                pageSize={data?.pageSize ?? pageSize}
                 totalItems={data?.total ?? 0}
                 totalPages={data?.totalPages ?? 1}
                 onPageChange={(nextPage) => updateUrlParams({ page: nextPage })}
+                onPageSizeChange={(nextSize) => updateUrlParams({ pageSize: nextSize })}
                 entityName="nhân viên"
               />
             </div>

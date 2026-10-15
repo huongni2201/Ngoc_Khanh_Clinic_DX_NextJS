@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { AlertCircle, RefreshCw } from "@/shared/ui/product-icon"
 import { Button } from "@/components/ui/button"
 import { DataTablePagination, parsePageSize } from "@/shared/ui"
+import { useBatchPermissions } from "../hooks/use-batch-permissions"
 import { useOrganizationHealthExaminationBatches } from "../hooks/use-health-examination-batches"
 import { BATCH_DEFAULT_PAGE_SIZE, BATCH_MAX_SEARCH_LENGTH } from "../utils/batch-list-params"
 import { HealthExaminationBatchTable } from "./batch-list/health-examination-batch-table"
@@ -35,6 +36,9 @@ export function OrganizationHealthExaminationBatchesTab({
   const pageValue = Number(searchParams?.get(PAGE_PARAM))
   const page = Number.isSafeInteger(pageValue) && pageValue > 0 ? pageValue : 1
   const pageSize = parsePageSize(searchParams?.get(PAGE_SIZE_PARAM), BATCH_DEFAULT_PAGE_SIZE)
+
+  // Display only; the backend checks every request.
+  const { canCreate } = useBatchPermissions().batch
 
   const [searchInput, setSearchInput] = React.useState(search)
   const [isCreateOpen, setIsCreateOpen] = React.useState(false)
@@ -86,7 +90,7 @@ export function OrganizationHealthExaminationBatchesTab({
       <HealthExaminationBatchToolbar
         search={searchInput}
         onSearchChange={setSearchInput}
-        onCreateClick={() => setIsCreateOpen(true)}
+        onCreateClick={canCreate ? () => setIsCreateOpen(true) : undefined}
       />
 
       {isError ? (
@@ -110,7 +114,7 @@ export function OrganizationHealthExaminationBatchesTab({
             batches={data?.data ?? []}
             isLoading={isLoading}
             isFiltered={Boolean(search)}
-            onCreateClick={() => setIsCreateOpen(true)}
+            onCreateClick={canCreate ? () => setIsCreateOpen(true) : undefined}
           />
           {data && (
             <DataTablePagination
@@ -126,13 +130,15 @@ export function OrganizationHealthExaminationBatchesTab({
         </>
       )}
 
-      <CreateHealthExaminationBatchDialog
-        open={isCreateOpen}
-        onOpenChange={setIsCreateOpen}
-        organizationId={organizationId}
-        organizationName={organizationName}
-        organizationAddress={organizationAddress}
-      />
+      {canCreate && (
+        <CreateHealthExaminationBatchDialog
+          open={isCreateOpen}
+          onOpenChange={setIsCreateOpen}
+          organizationId={organizationId}
+          organizationName={organizationName}
+          organizationAddress={organizationAddress}
+        />
+      )}
     </div>
   )
 }

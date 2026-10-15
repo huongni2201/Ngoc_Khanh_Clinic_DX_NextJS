@@ -8,6 +8,7 @@ import { OrganizationPageHeader } from "../components/organization-page-header"
 import { OrganizationTable } from "../components/organization-table"
 import { DataTablePagination, ScreenLayout, parsePageSize, DEFAULT_PAGE_SIZE } from "@/shared/ui"
 import { CreateOrganizationDialog } from "../components/create-organization-dialog"
+import { useOrganizationPermissions } from "../hooks/use-organization-permissions"
 import { useOrganizations } from "../hooks/use-organizations"
 
 export function OrganizationListPage() {
@@ -20,6 +21,9 @@ export function OrganizationListPage() {
   const pageParam = Number(searchParams?.get("page"))
   const page = Number.isSafeInteger(pageParam) && pageParam > 0 ? pageParam : 1
   const pageSize = parsePageSize(searchParams?.get("size"))
+
+  // Display only; the backend checks every request.
+  const { canCreate, canEdit } = useOrganizationPermissions()
 
   // Dialog state
   const [isCreateOpen, setIsCreateOpen] = React.useState(false)
@@ -67,7 +71,7 @@ export function OrganizationListPage() {
   return (
     <ScreenLayout data-slot="organization-list-page">
       {/* 1. Page Header */}
-      <OrganizationPageHeader onOpenCreateDialog={() => setIsCreateOpen(true)} />
+      <OrganizationPageHeader onOpenCreateDialog={canCreate ? () => setIsCreateOpen(true) : undefined} />
 
       {/* Error State */}
       {isError && (
@@ -95,7 +99,8 @@ export function OrganizationListPage() {
             totalItems={data?.total || 0}
             searchTerm={search}
             onSearchChange={(q) => updateUrlParams({ q })}
-            onCreateClick={() => setIsCreateOpen(true)}
+            onCreateClick={canCreate ? () => setIsCreateOpen(true) : undefined}
+            canEdit={canEdit}
           />
         </div>
       )}
@@ -116,11 +121,13 @@ export function OrganizationListPage() {
       )}
 
       {/* 5. Create Organization Modal */}
-      <CreateOrganizationDialog
-        open={isCreateOpen}
-        onOpenChange={setIsCreateOpen}
-        onCreated={(organizationId) => router.push(`/organizations/${organizationId}`)}
-      />
+      {canCreate && (
+        <CreateOrganizationDialog
+          open={isCreateOpen}
+          onOpenChange={setIsCreateOpen}
+          onCreated={(organizationId) => router.push(`/organizations/${organizationId}`)}
+        />
+      )}
     </ScreenLayout>
   )
 }
