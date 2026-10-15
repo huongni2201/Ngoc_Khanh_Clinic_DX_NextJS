@@ -1,7 +1,7 @@
 import type { UserSession } from "../types"
 import { hasStaffPermission } from "./staff-workspace-access"
 
-/** Backend permission codes of the staff member routes (V002, V008). Used only to decide what is shown. */
+/** Backend permission codes of the staff member routes (V002, V004). Used only to decide what is shown. */
 export const STAFF_MEMBER_VIEW_PERMISSION = "STAFF_MEMBER_VIEW"
 export const ROLE_VIEW_PERMISSION = "ROLE_VIEW"
 export const USER_ACCOUNT_CREATE_PERMISSION = "USER_ACCOUNT_CREATE"
