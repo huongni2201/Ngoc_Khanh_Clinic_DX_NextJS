@@ -230,6 +230,30 @@ describe("RoleListPage", () => {
     expect(push).toHaveBeenCalledWith("/roles/permissions?roleId=role-receptionist")
   })
 
+  it("rejects a name another role shows, on create and on rename", async () => {
+    const user = userEvent.setup()
+    const fetchMock = mockRoleFetch()
+    renderPage(roleAdministratorSession)
+    await screen.findByText("Lễ tân")
+
+    await user.click(screen.getByRole("button", { name: "Thêm vai trò" }))
+    await user.type(await screen.findByLabelText(/^Tên vai trò/), "lễ tân")
+    await user.type(screen.getByLabelText(/^Mã vai trò/), "FRONT_OFFICE")
+    await user.click(screen.getByRole("button", { name: "Tạo vai trò" }))
+    expect(await screen.findByText("Tên vai trò đã tồn tại")).toBeInTheDocument()
+    expect(bodies(fetchMock, "POST")).toEqual([])
+    await user.click(screen.getByRole("button", { name: "Hủy" }))
+    await user.click(await screen.findByRole("button", { name: "Bỏ thay đổi" }))
+
+    await user.click(await screen.findByRole("button", { name: "Sửa vai trò Điều dưỡng" }))
+    const name = await screen.findByLabelText(/^Tên vai trò/)
+    await user.clear(name)
+    await user.type(name, "Quản trị viên")
+    await user.click(screen.getByRole("button", { name: "Lưu thay đổi" }))
+    expect(await screen.findByText("Tên vai trò đã tồn tại")).toBeInTheDocument()
+    expect(bodies(fetchMock, "PUT")).toEqual([])
+  })
+
   it("opens Sửa quyền at once when nothing was edited", async () => {
     const user = userEvent.setup()
     mockRoleFetch()

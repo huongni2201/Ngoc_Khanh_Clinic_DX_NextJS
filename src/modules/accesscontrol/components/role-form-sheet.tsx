@@ -41,7 +41,7 @@ import {
 import { useCreateRole, useUpdateRole } from "../hooks/use-roles"
 import type { RoleSummary } from "../types/role"
 import { isRoleVersionConflict, roleFieldErrors, roleFormErrorMessage } from "../utils/role-errors"
-import { roleDisplayDescription, roleDisplayName } from "../utils/role-labels"
+import { isRoleNameTaken, roleDisplayDescription, roleDisplayName } from "../utils/role-labels"
 import { ADMINISTRATOR_ROLE_CODE, PATIENT_ROLE_CODE } from "../utils/role-permission-draft"
 
 interface RoleFormSheetProps {
@@ -51,6 +51,8 @@ interface RoleFormSheetProps {
   role?: RoleSummary
   /** Active roles offered by "Copy permissions from" when creating. */
   copySources?: RoleSummary[]
+  /** Every role, to reject a name already shown for another role. */
+  existingRoles?: RoleSummary[]
   /** Reloads the edited role after a conflict; resolves to its latest version, if it still exists. */
   onReload?: () => Promise<RoleSummary | undefined>
   /** Shown as "Sửa quyền" when editing and the session may view role permissions. */
@@ -58,6 +60,7 @@ interface RoleFormSheetProps {
 }
 
 const NO_COPY = ""
+const DUPLICATE_NAME_MESSAGE = "Tên vai trò đã tồn tại"
 
 /**
  * New Role and Edit Role panel sliding in from the right over the Role List. Closing it with unsaved
@@ -68,6 +71,7 @@ export function RoleFormSheet({
   onOpenChange,
   role,
   copySources,
+  existingRoles,
   onReload,
   onEditPermissions,
 }: RoleFormSheetProps) {
@@ -116,6 +120,7 @@ export function RoleFormSheet({
               <EditRoleForm
                 key={role.id}
                 role={role}
+                existingRoles={existingRoles ?? []}
                 onDirtyChange={setDirty}
                 onCancel={() => requestClose(false)}
                 onSaved={close}
@@ -125,6 +130,7 @@ export function RoleFormSheet({
             ) : (
               <CreateRoleForm
                 copySources={copySources ?? []}
+                existingRoles={existingRoles ?? []}
                 onDirtyChange={setDirty}
                 onCancel={() => requestClose(false)}
                 onSaved={close}
@@ -175,10 +181,11 @@ interface FormProps {
 
 function CreateRoleForm({
   copySources,
+  existingRoles,
   onDirtyChange,
   onCancel,
   onSaved,
-}: FormProps & { copySources: RoleSummary[] }) {
+}: FormProps & { copySources: RoleSummary[]; existingRoles: RoleSummary[] }) {
   const createMutation = useCreateRole()
   const {
     register,
@@ -206,6 +213,10 @@ function CreateRoleForm({
   const pending = createMutation.isPending
 
   const onSubmit = async (values: ValidatedCreateRoleFormValues) => {
+    if (isRoleNameTaken(values.name, existingRoles)) {
+      setError("name", { type: "duplicate", message: DUPLICATE_NAME_MESSAGE })
+      return
+    }
     try {
       const created = await createMutation.mutateAsync({
         code: values.code,
@@ -235,7 +246,7 @@ function CreateRoleForm({
       <fieldset disabled={pending} className="m-0 min-w-0 flex-1 space-y-5 border-0 px-6 pb-4">
         {createMutation.error && roleFieldErrors(createMutation.error).length === 0 ? (
           <p role="alert" className="text-xs text-destructive">
-            {roleFormErrorMessage(createMutation.error)}
+            {roleFormErrorMessage(createMutation.error, "create")}
           </p>
         ) : null}
 
@@ -334,6 +345,7 @@ function toEditValues(role: RoleSummary): UpdateRoleFormValues {
 
 function EditRoleForm({
   role,
+  existingRoles,
   onDirtyChange,
   onCancel,
   onSaved,
@@ -341,6 +353,7 @@ function EditRoleForm({
   onEditPermissions,
 }: FormProps & {
   role: RoleSummary
+  existingRoles: RoleSummary[]
   onReload?: () => Promise<RoleSummary | undefined>
   onEditPermissions?: (role: RoleSummary) => void
 }) {
@@ -394,9 +407,14 @@ function EditRoleForm({
     // A field left as its Vietnamese display text keeps the stored value, so changing only the
     // status neither renames a seeded role nor collides with another role's Vietnamese name.
     const shown = toEditValues(base)
+    const nameChanged = values.name !== shown.name.trim()
+    if (nameChanged && isRoleNameTaken(values.name, existingRoles, base.id)) {
+      setError("name", { type: "duplicate", message: DUPLICATE_NAME_MESSAGE })
+      return
+    }
     try {
       const updated = await updateMutation.mutateAsync({
-        name: values.name === shown.name.trim() ? base.name : values.name,
+        name: nameChanged ? values.name : base.name,
         description:
           values.description.trim() === shown.description.trim()
             ? base.description
@@ -431,7 +449,7 @@ function EditRoleForm({
             role="alert"
             className="space-y-2 rounded-lg border border-border bg-muted p-3 text-xs text-foreground"
           >
-            <p>{roleFormErrorMessage(updateMutation.error)}</p>
+            <p>{roleFormErrorMessage(updateMutation.error, "edit")}</p>
             {isConflict && onReload ? (
               <Button type="button" variant="outline" size="sm" onClick={() => void reload()}>
                 <RefreshCw className="size-3.5" />

@@ -38,7 +38,7 @@ import {
 import { PERMISSION, ROLE_PERMISSIONS_SCREEN_PERMISSIONS } from "../permissions"
 import { toDisplayCatalog } from "../utils/permission-labels"
 import { rolePermissionsErrorMessage } from "../utils/role-errors"
-import { roleDisplayName } from "../utils/role-labels"
+import { roleDisplayName, sortRolesByDisplayName } from "../utils/role-labels"
 import {
   EMPTY_DRAFT,
   filterPermissions,
@@ -73,13 +73,17 @@ export function RolePermissionsPage() {
   const [drafts, setDrafts] = React.useState<Record<string, RolePermissionDraft>>({})
   // The role whose last save failed: its error is shown only while that role is selected.
   const [failedRoleId, setFailedRoleId] = React.useState<string | null>(null)
+  // Row version each draft was started from. A save sends it, so a change another user made since
+  // is reported as a conflict (5-EX-02) even if the grants were reloaded meanwhile. It moves only
+  // when the user explicitly reloads or a save succeeds.
+  const [baseVersions, setBaseVersions] = React.useState<Record<string, number>>({})
 
   const rolesQuery = useAllRoles(canView)
   const catalogQuery = usePermissionCatalog(canView)
   const rolePermissionsQuery = useRolePermissions(canView ? roleId : undefined)
   const saveMutation = useUpdateRolePermissions()
 
-  const roles = React.useMemo(() => rolesQuery.data ?? [], [rolesQuery.data])
+  const roles = React.useMemo(() => sortRolesByDisplayName(rolesQuery.data ?? []), [rolesQuery.data])
   const catalog = React.useMemo(() => toDisplayCatalog(catalogQuery.data ?? []), [catalogQuery.data])
   const selectedRole = roles.find((role) => role.id === roleId)
   const saved = rolePermissionsQuery.data
@@ -109,9 +113,18 @@ export function RolePermissionsPage() {
     (code: string) => isGrantedAfterSave(draft, granted, code),
     [draft, granted]
   )
+  // "Show granted only" keeps rows with a pending change, so a permission just cleared stays on
+  // screen with its "− Gỡ" mark and can be ticked again.
+  const isShownWhenGrantedOnly = React.useCallback(
+    (code: string) => isGranted(code) || pendingChangeOf(draft, code) !== null,
+    [isGranted, draft]
+  )
   const groups = React.useMemo(
-    () => groupByModule(filterPermissions(catalog, search, grantedOnly ? isGranted : null)),
-    [catalog, search, grantedOnly, isGranted]
+    () =>
+      groupByModule(
+        filterPermissions(catalog, search, grantedOnly ? isShownWhenGrantedOnly : null)
+      ),
+    [catalog, search, grantedOnly, isShownWhenGrantedOnly]
   )
   const moduleCodes = React.useMemo(
     () =>
@@ -134,7 +147,15 @@ export function RolePermissionsPage() {
   }
 
   const change = (codes: readonly string[], checked: boolean) => {
-    if (!roleId || readOnly) return
+    if (!roleId || readOnly || !saved) return
+    // A draft starts from the grants on screen; one that is still pending keeps its own start.
+    const startedFrom = saved.rowVersion
+    const draftPending = hasPendingChanges(drafts[roleId])
+    setBaseVersions((current) =>
+      draftPending && current[roleId] !== undefined
+        ? current
+        : { ...current, [roleId]: startedFrom }
+    )
     setDrafts((current) => ({
       ...current,
       [roleId]: setPermissions(current[roleId] ?? EMPTY_DRAFT, granted, codes, checked),
@@ -149,6 +170,11 @@ export function RolePermissionsPage() {
       delete next[roleId]
       return next
     })
+    setBaseVersions((current) => {
+      const next = { ...current }
+      delete next[roleId]
+      return next
+    })
   }
 
   const save = async () => {
@@ -157,15 +183,26 @@ export function RolePermissionsPage() {
     const roleName = selectedRole ? roleDisplayName(selectedRole) : "đang chọn"
     setFailedRoleId(null)
     try {
-      await saveMutation.mutateAsync({
+      const result = await saveMutation.mutateAsync({
         roleId: sent.roleId,
-        input: { rowVersion: saved.rowVersion, grant: sent.grant, revoke: sent.revoke },
+        input: {
+          rowVersion: baseVersions[sent.roleId] ?? saved.rowVersion,
+          grant: sent.grant,
+          revoke: sent.revoke,
+        },
       })
       // Only what was sent is now saved; anything changed meanwhile stays pending.
+      const left = drafts[sent.roleId] ? subtractSent(drafts[sent.roleId], sent) : null
       setDrafts((current) => {
         const next = { ...current }
-        const left = current[sent.roleId] ? subtractSent(current[sent.roleId], sent) : null
-        if (left) next[sent.roleId] = left
+        const remaining = current[sent.roleId] ? subtractSent(current[sent.roleId], sent) : null
+        if (remaining) next[sent.roleId] = remaining
+        else delete next[sent.roleId]
+        return next
+      })
+      setBaseVersions((current) => {
+        const next = { ...current }
+        if (left) next[sent.roleId] = result.rowVersion
         else delete next[sent.roleId]
         return next
       })
@@ -180,7 +217,16 @@ export function RolePermissionsPage() {
 
   const reload = async () => {
     setFailedRoleId(null)
-    await Promise.all([rolePermissionsQuery.refetch(), rolesQuery.refetch()])
+    const [latest] = await Promise.all([rolePermissionsQuery.refetch(), rolesQuery.refetch()])
+    // The user chose to continue from the latest grants: later saves are based on them.
+    const reloaded = latest.data
+    if (reloaded) {
+      setBaseVersions((current) =>
+        current[reloaded.roleId] === undefined
+          ? current
+          : { ...current, [reloaded.roleId]: reloaded.rowVersion }
+      )
+    }
   }
 
   const roleItems = roles.map((role) => {

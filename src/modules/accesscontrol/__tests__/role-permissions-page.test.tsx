@@ -1,11 +1,11 @@
-import { render, screen, waitFor, within } from "@testing-library/react"
+import { act, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type { UserSession } from "../types"
 import { SESSION_QUERY_KEY } from "../utils/session-cache"
 import { RolePermissionsPage } from "../pages/role-permissions-page"
-import { mockRoleFetch, roleAdministratorSession } from "./role-fixtures"
+import { grantsFixture, mockRoleFetch, roleAdministratorSession } from "./role-fixtures"
 import { jsonResponse, sessionWith } from "./staff-member-fixtures"
 
 const navigation = vi.hoisted(() => ({ roleId: "role-receptionist", push: vi.fn() }))
@@ -35,7 +35,7 @@ function renderPage(session: UserSession) {
     navigation.roleId = roleId
     view.rerender(pageTree(client))
   }
-  return { ...view, navigate }
+  return { ...view, navigate, client }
 }
 
 function permissionRow(name: string) {
@@ -111,6 +111,54 @@ describe("RolePermissionsPage", () => {
     await waitFor(() =>
       expect(screen.getByText(/Thay đổi chờ lưu/)).toHaveTextContent("0 cấp · 0 gỡ")
     )
+  })
+
+  it("saves with the version the draft started from, even after the grants reloaded", async () => {
+    const user = userEvent.setup()
+    const fetchMock = mockRoleFetch({
+      savePermissionsResponse: () =>
+        jsonResponse({ result: "NG", code: 409, message: "Record was changed by another request" }, 409),
+    })
+    const view = renderPage(roleAdministratorSession)
+    await screen.findByText("Hoàn tiền")
+    await user.click(within(permissionRow("Tạo hồ sơ bệnh nhân")).getByRole("checkbox"))
+
+    // Another administrator changed the role; the grants are read again in the background.
+    const original = grantsFixture["role-receptionist"]
+    grantsFixture["role-receptionist"] = { ...original, rowVersion: 5 }
+    try {
+      await act(() => view.client.refetchQueries({ queryKey: ["roles", "permissions", "role-receptionist"] }))
+      await user.click(screen.getByRole("button", { name: "Lưu quyền" }))
+      expect(await screen.findByText(/vừa được người khác thay đổi/)).toBeInTheDocument()
+
+      // After an explicit reload the user continues from the latest grants.
+      await user.click(screen.getByRole("button", { name: "Tải lại" }))
+      await waitFor(() => expect(screen.queryByText(/vừa được người khác thay đổi/)).not.toBeInTheDocument())
+      await user.click(screen.getByRole("button", { name: "Lưu quyền" }))
+      await screen.findByText(/vừa được người khác thay đổi/)
+    } finally {
+      grantsFixture["role-receptionist"] = original
+    }
+
+    const versions = fetchMock.mock.calls
+      .filter(([, init]) => init?.method === "PUT")
+      .map(([, init]) => JSON.parse(String(init?.body)).rowVersion)
+    expect(versions).toEqual([3, 5])
+  })
+
+  it("keeps a permission just cleared on screen while showing granted only", async () => {
+    const user = userEvent.setup()
+    mockRoleFetch()
+    renderPage(roleAdministratorSession)
+    await screen.findByText("Hoàn tiền")
+
+    await user.click(screen.getByRole("checkbox", { name: "Chỉ hiện quyền đã cấp" }))
+    await waitFor(() => expect(screen.queryByText("Tạo hồ sơ bệnh nhân")).not.toBeInTheDocument())
+    await user.click(within(permissionRow("Hoàn tiền")).getByRole("checkbox"))
+
+    expect(within(permissionRow("Hoàn tiền")).getByText("− Gỡ")).toBeInTheDocument()
+    await user.click(within(permissionRow("Hoàn tiền")).getByRole("checkbox"))
+    expect(screen.getByText(/Thay đổi chờ lưu/)).toHaveTextContent("0 cấp · 0 gỡ")
   })
 
   it("locks the role selector while a save is in flight", async () => {

@@ -18,7 +18,7 @@ import { CreateStaffMemberDialog } from "../components/create-staff-member-dialo
 import { StaffMemberTable } from "../components/staff-member-table"
 import { usePermissions } from "../hooks/use-permissions"
 import { PERMISSION } from "../permissions"
-import { useStaffMembers } from "../hooks/use-staff-members"
+import { useAssignableRoles, useStaffMembers } from "../hooks/use-staff-members"
 
 /** Staff members with their accounts; administrators create new ones from here. */
 export function StaffMemberListPage() {
@@ -65,6 +65,8 @@ export function StaffMemberListPage() {
     { search, page, pageSize },
     canView
   )
+  // Stored role names, so a role renamed on the Role List shows its new name here too.
+  const rolesQuery = useAssignableRoles(canView && can(PERMISSION.ROLE_VIEW))
 
   const openCreate = canCreate ? () => setIsCreateOpen(true) : undefined
 
@@ -112,6 +114,7 @@ export function StaffMemberListPage() {
           <div className="flex flex-1 flex-col">
             <StaffMemberTable
               staffMembers={data?.data ?? []}
+              roles={rolesQuery.data}
               isLoading={isLoading}
               totalItems={data?.total ?? 0}
               searchTerm={search}

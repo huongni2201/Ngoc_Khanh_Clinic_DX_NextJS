@@ -89,18 +89,32 @@ export async function fetchRoles(
 /** The backend's largest page size for the role list. */
 const ROLE_PAGE_LIMIT = 100
 
+/** Reads again when roles were added while the pages were read, at most this many times. */
+const ROLE_READ_ATTEMPTS = 3
+
 /**
  * Every role, in code order: the first page, then the remaining pages in parallel. Screens search
- * and page the list themselves on the Vietnamese names they show.
+ * and page the list themselves on the Vietnamese names they show. Pages are read by offset, so a
+ * role created meanwhile can shift rows between pages: the read is repeated while the total
+ * changes, and a role seen twice is kept once.
  */
 export async function fetchAllRoles(signal?: AbortSignal): Promise<RoleSummary[]> {
-  const first = await fetchRoles({ page: 1, pageSize: ROLE_PAGE_LIMIT }, signal)
-  const rest = await Promise.all(
-    Array.from({ length: Math.max(0, first.totalPages - 1) }, (_, index) =>
-      fetchRoles({ page: index + 2, pageSize: ROLE_PAGE_LIMIT }, signal)
+  for (let attempt = 1; ; attempt += 1) {
+    const first = await fetchRoles({ page: 1, pageSize: ROLE_PAGE_LIMIT }, signal)
+    const rest = await Promise.all(
+      Array.from({ length: Math.max(0, first.totalPages - 1) }, (_, index) =>
+        fetchRoles({ page: index + 2, pageSize: ROLE_PAGE_LIMIT }, signal)
+      )
     )
-  )
-  return [first, ...rest].flatMap((page) => page.data)
+    const stable = rest.every((page) => page.total === first.total)
+    if (stable || attempt >= ROLE_READ_ATTEMPTS) {
+      const byId = new Map<string, RoleSummary>()
+      for (const role of [first, ...rest].flatMap((page) => page.data)) {
+        if (!byId.has(role.id)) byId.set(role.id, role)
+      }
+      return [...byId.values()]
+    }
+  }
 }
 
 export async function createRole(input: CreateRoleInput): Promise<RoleSummary> {

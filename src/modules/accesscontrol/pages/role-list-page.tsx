@@ -172,6 +172,7 @@ export function RoleListPage() {
           open={isCreateOpen}
           onOpenChange={setIsCreateOpen}
           copySources={copySources}
+          existingRoles={allRoles}
         />
       ) : null}
       {canEdit ? (
@@ -181,6 +182,7 @@ export function RoleListPage() {
             if (!open) setRoleToEditId(null)
           }}
           role={roleToEdit}
+          existingRoles={allRoles}
           onReload={async () => {
             const refreshed = await refetch()
             return refreshed.data?.find((role) => role.id === roleToEditId)
