@@ -9,6 +9,7 @@ import { toast } from "@/shared/ui/toaster"
 import {
   useDownloadParticipantImportTemplate,
   useHealthExaminationBatchParticipants,
+  type CancelParticipantsResult,
 } from "../../hooks/use-health-examination-batches"
 import { useSelectPrintableParticipants } from "../../hooks/use-examination-forms"
 import type {
@@ -17,6 +18,7 @@ import type {
   HealthExaminationParticipant,
   ParticipantAttendanceStatus,
   ParticipantRosterStatus,
+  ParticipantSelectionEntry,
   ParticipantSortKey,
 } from "../../types"
 import {
@@ -28,7 +30,8 @@ import {
   isExaminationFormPrintAllowed,
   toExaminationFormPrintEntry,
 } from "../../utils/examination-form-print"
-import { CancelParticipantDialog } from "./cancel-participant-dialog"
+import { toParticipantSelectionEntry } from "../../utils/participant-selection"
+import { CancelParticipantsDialog } from "./cancel-participants-dialog"
 import { EmptyParticipantsState } from "./empty-participants-state"
 import { ExaminationFormPreviewDialog } from "./examination-form-preview-dialog"
 import {
@@ -36,9 +39,9 @@ import {
   type ExaminationFormPrintJobDialogMode,
   type TrackedExaminationFormPrintJob,
 } from "./examination-form-print-job-dialog"
-import { ParticipantPrintSelectionBar } from "./participant-print-selection-bar"
 import { ParticipantFormDialog } from "./participant-form-dialog"
 import { ParticipantImportDialog } from "./participant-import-dialog"
+import { ParticipantSelectionBar } from "./participant-selection-bar"
 import { ParticipantsTable } from "./participants-table"
 import { ParticipantsToolbar } from "./participants-toolbar"
 import { ReactivateParticipantDialog } from "./reactivate-participant-dialog"
@@ -67,8 +70,12 @@ interface ParticipantsTabProps {
   canImport?: boolean
   /** UX only: the backend decides. Shows manual add when true and the batch allows it. */
   canCreate?: boolean
-  /** UX only: the backend decides. Shows edit, cancel and reactivate when true and the batch allows it. */
-  canManage?: boolean
+  /** UX only: the backend decides. Shows "Sửa" on each row when true and the batch allows it. */
+  canEdit?: boolean
+  /** UX only: the backend decides. Shows row selection and "Hủy khỏi danh sách" once rows are ticked. */
+  canRemove?: boolean
+  /** UX only: the backend decides. Shows "Khôi phục" on cancelled rows when true and the batch allows it. */
+  canReactivate?: boolean
   /** UX only: the backend decides. Shows "In phiếu" on each active row of a READY/FINALIZED batch. */
   canPrintForm?: boolean
   /** UX only: the backend decides. Shows row selection and the bulk print job. */
@@ -83,7 +90,9 @@ export function ParticipantsTab({
   canDownloadTemplate = false,
   canImport = false,
   canCreate = false,
-  canManage = false,
+  canEdit = false,
+  canRemove = false,
+  canReactivate = false,
   canPrintForm = false,
   canBulkPrintForms = false,
 }: ParticipantsTabProps) {
@@ -99,11 +108,12 @@ export function ParticipantsTab({
   const [isImportOpen, setIsImportOpen] = React.useState(false)
   const [isCreateOpen, setIsCreateOpen] = React.useState(false)
   const [editing, setEditing] = React.useState<HealthExaminationParticipant | null>(null)
-  const [cancelling, setCancelling] = React.useState<HealthExaminationParticipant | null>(null)
+  // The ticked Participants a cancellation was asked for; null while the dialog is closed.
+  const [cancelTargets, setCancelTargets] = React.useState<ParticipantSelectionEntry[] | null>(null)
   const [reactivating, setReactivating] = React.useState<HealthExaminationParticipant | null>(null)
   const [batchDayId, setBatchDayId] = React.useState<string | undefined>()
   // Kept across pages and sorting; cleared when the filter changes, so it never hides rows.
-  const [selection, setSelection] = React.useState<ReadonlyMap<string, ExaminationFormPrintEntry>>(
+  const [selection, setSelection] = React.useState<ReadonlyMap<string, ParticipantSelectionEntry>>(
     () => new Map()
   )
   const [previewing, setPreviewing] = React.useState<ExaminationFormPrintEntry | null>(null)
@@ -125,13 +135,18 @@ export function ParticipantsTab({
   const templateAllowed = canDownloadTemplate && isParticipantImportAllowed(batch.status)
   const importAllowed = canImport && isParticipantImportAllowed(batch.status)
   const createAllowed = canCreate && isParticipantChangeAllowed(batch.status)
-  const changeAllowed = canManage && isParticipantChangeAllowed(batch.status)
-  const hasWritePermission = canImport || canCreate || canManage
-  const writeAllowed = importAllowed || createAllowed || changeAllowed
+  const editAllowed = canEdit && isParticipantChangeAllowed(batch.status)
+  const removeAllowed = canRemove && isParticipantChangeAllowed(batch.status)
+  const reactivateAllowed = canReactivate && isParticipantChangeAllowed(batch.status)
+  const hasWritePermission = canImport || canCreate || canEdit || canRemove || canReactivate
+  const writeAllowed =
+    importAllowed || createAllowed || editAllowed || removeAllowed || reactivateAllowed
   const days = batch.days ?? []
   const printAllowed = isExaminationFormPrintAllowed(batch.status)
   const singlePrintAllowed = canPrintForm && printAllowed
   const bulkPrintAllowed = canBulkPrintForms && printAllowed
+  // Ticking is offered when a ticked row can be printed or cancelled.
+  const selectionEnabled = bulkPrintAllowed || removeAllowed
   const hasFilter = Boolean(search.trim() || rosterStatus || attendanceStatus || batchDayId)
   const participants = data?.data ?? []
   const total = data?.total ?? 0
@@ -152,7 +167,7 @@ export function ParticipantsTab({
       const next = new Map(current)
       for (const participant of changed) {
         if (selected && participant.rosterStatus === "ACTIVE") {
-          next.set(participant.id, toExaminationFormPrintEntry(participant))
+          next.set(participant.id, toParticipantSelectionEntry(participant))
         } else {
           next.delete(participant.id)
         }
@@ -202,6 +217,21 @@ export function ParticipantsTab({
     // A day print does not use the selection, so it stays for the next print.
     if (!job.day) setSelection(new Map())
     setPrintJobMode({ kind: "track", job })
+  }
+
+  const handleCancelProcessed = (
+    result: CancelParticipantsResult,
+    targets: ParticipantSelectionEntry[]
+  ) => {
+    if (result.cancelled.length === 0) return
+    const cancelled = new Set(result.cancelled)
+    setSelection((current) => new Map([...current].filter(([id]) => !cancelled.has(id))))
+    const [first] = targets.filter((target) => cancelled.has(target.id))
+    toast.success(
+      result.cancelled.length === 1 && first
+        ? `Đã hủy người khám ${first.fullName}.`
+        : `Đã hủy ${result.cancelled.length.toLocaleString("vi-VN")} người khám.`
+    )
   }
 
   const handleSortChange = (key: ParticipantSortKey) => {
@@ -295,18 +325,23 @@ export function ParticipantsTab({
         </p>
       )}
 
-      {!isEmpty && !isLoading && !isError && bulkPrintAllowed && (
-        <ParticipantPrintSelectionBar
+      {!isEmpty && !isLoading && !isError && selectionEnabled && (
+        <ParticipantSelectionBar
           selectedCount={selection.size}
           onSelectAllMatching={handleSelectAllMatching}
           isSelectingAll={selectPrintable.isPending}
           onClear={() => setSelection(new Map())}
-          onPrint={() => openPrintJob({ kind: "create", entries: [...selection.values()] })}
+          onPrint={
+            bulkPrintAllowed
+              ? () => openPrintJob({ kind: "create", entries: [...selection.values()] })
+              : undefined
+          }
           onPrintDay={
             days.length > 0
               ? () => openPrintJob({ kind: "create-day", initialDayId: batchDayId })
               : undefined
           }
+          onCancel={removeAllowed ? () => setCancelTargets([...selection.values()]) : undefined}
           trackedJobId={trackedJob?.jobId}
           onOpenTrackedJob={() => trackedJob && openPrintJob({ kind: "track", job: trackedJob })}
         />
@@ -357,17 +392,15 @@ export function ParticipantsTab({
           sortKey={sortKey}
           sortBy={sortBy}
           onSortChange={handleSortChange}
-          canManage={changeAllowed}
-          onEdit={setEditing}
-          onCancel={setCancelling}
-          onReactivate={changeAllowed ? setReactivating : undefined}
+          onEdit={editAllowed ? setEditing : undefined}
+          onReactivate={reactivateAllowed ? setReactivating : undefined}
           onPrint={
             singlePrintAllowed
               ? (participant) => setPreviewing(toExaminationFormPrintEntry(participant))
               : undefined
           }
           selection={
-            bulkPrintAllowed
+            selectionEnabled
               ? {
                   isSelected: (participantId) => selection.has(participantId),
                   onChange: handleSelectionChange,
@@ -408,49 +441,48 @@ export function ParticipantsTab({
         />
       )}
 
-      {changeAllowed && (
-        <>
-          <ParticipantFormDialog
-            mode="edit"
-            open={editing !== null}
-            onOpenChange={(open) => {
-              if (!open) setEditing(null)
-            }}
-            organizationId={organizationId}
-            batchId={batchId}
-            days={days}
-            participantId={editing?.id}
-            onSaved={() => toast.success("Đã cập nhật thông tin người khám.")}
-            onNotice={warn}
-          />
-          <CancelParticipantDialog
-            open={cancelling !== null}
-            onOpenChange={(open) => {
-              if (!open) setCancelling(null)
-            }}
-            organizationId={organizationId}
-            batchId={batchId}
-            participant={cancelling}
-            onCancelled={(participant) =>
-              toast.success(`Đã hủy người khám ${participant.fullName}.`)
-            }
-            onNotice={warn}
-          />
-          <ReactivateParticipantDialog
-            open={reactivating !== null}
-            onOpenChange={(open) => {
-              if (!open) setReactivating(null)
-            }}
-            organizationId={organizationId}
-            batchId={batchId}
-            participant={reactivating}
-            days={days}
-            onReactivated={(participant) =>
-              toast.success(`Đã khôi phục người khám ${participant.fullName}.`)
-            }
-            onNotice={warn}
-          />
-        </>
+      {editAllowed && (
+        <ParticipantFormDialog
+          mode="edit"
+          open={editing !== null}
+          onOpenChange={(open) => {
+            if (!open) setEditing(null)
+          }}
+          organizationId={organizationId}
+          batchId={batchId}
+          days={days}
+          participantId={editing?.id}
+          onSaved={() => toast.success("Đã cập nhật thông tin người khám.")}
+          onNotice={warn}
+        />
+      )}
+      {removeAllowed && (
+        <CancelParticipantsDialog
+          open={cancelTargets !== null}
+          onOpenChange={(open) => {
+            if (!open) setCancelTargets(null)
+          }}
+          organizationId={organizationId}
+          batchId={batchId}
+          participants={cancelTargets ?? []}
+          onProcessed={handleCancelProcessed}
+        />
+      )}
+      {reactivateAllowed && (
+        <ReactivateParticipantDialog
+          open={reactivating !== null}
+          onOpenChange={(open) => {
+            if (!open) setReactivating(null)
+          }}
+          organizationId={organizationId}
+          batchId={batchId}
+          participant={reactivating}
+          days={days}
+          onReactivated={(participant) =>
+            toast.success(`Đã khôi phục người khám ${participant.fullName}.`)
+          }
+          onNotice={warn}
+        />
       )}
 
       {createAllowed && (
@@ -464,7 +496,7 @@ export function ParticipantsTab({
           onSaved={() => toast.success("Đã thêm người khám vào danh sách.")}
           onNotice={warn}
           onReactivateCandidate={
-            changeAllowed
+            reactivateAllowed
               ? (participant) => {
                   setIsCreateOpen(false)
                   setReactivating(participant)

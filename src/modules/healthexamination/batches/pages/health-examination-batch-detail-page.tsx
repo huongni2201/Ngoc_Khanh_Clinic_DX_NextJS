@@ -5,10 +5,10 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useQueryClient } from "@tanstack/react-query"
 import { Edit, Info, PlayCircle, Trash2 } from "@/shared/ui/product-icon"
 import { Button } from "@/components/ui/button"
-import { hasStaffPermission, useCachedUserSession } from "@/modules/accesscontrol"
 import { isApiErrorStatus } from "@/shared/api/api-client"
 import { PageHeader, ScreenLayout, ScreenLoadingSkeleton, StatusPill } from "@/shared/ui"
 import { toast } from "@/shared/ui/toaster"
+import { useBatchPermissions } from "../hooks/use-batch-permissions"
 import {
   useDeleteHealthExaminationBatch,
   useHealthExaminationBatchDetail,
@@ -33,23 +33,6 @@ import {
   HEALTH_EXAMINATION_BATCH_STATUS_TONES,
   getHealthExaminationBatchStatusLabel,
 } from "../utils/batch-status"
-import {
-  BATCH_START_PERMISSION,
-  DOCUMENT_RENDER_JOB_DOWNLOAD_PERMISSION,
-  DOCUMENT_RENDER_JOB_READ_PERMISSION,
-  EXAMINATION_FORM_BULK_PRINT_PERMISSION,
-  EXAMINATION_FORM_PRINT_PERMISSION,
-  EXAMINATION_REPORT_READ_PERMISSION,
-  EXAMINATION_SERVICE_READ_PERMISSION,
-  EXAMINATION_SERVICE_RECONCILE_PERMISSION,
-  EXAMINATION_SERVICE_RECORD_PERMISSION,
-  EXAMINATION_SERVICE_TEMPLATE_DOWNLOAD_PERMISSION,
-  PARTICIPANT_CREATE_PERMISSION,
-  PARTICIPANT_IMPORT_PERMISSION,
-  PARTICIPANT_MANAGE_PERMISSION,
-  PARTICIPANT_READ_PERMISSION,
-  PARTICIPANT_TEMPLATE_DOWNLOAD_PERMISSION,
-} from "../utils/participant-permissions"
 
 interface HealthExaminationBatchDetailPageProps {
   organizationId: string
@@ -74,47 +57,11 @@ export function HealthExaminationBatchDetailPage({
   const batchesHref = `/organizations/${encodeURIComponent(organizationId)}`
 
   const queryClient = useQueryClient()
-  const currentUser = useCachedUserSession()
-  // Display only; the backend checks every request. An unknown session still tries to read.
-  const canReadParticipants = currentUser
-    ? hasStaffPermission(currentUser, PARTICIPANT_READ_PERMISSION)
-    : true
-  const canImportParticipants = hasStaffPermission(currentUser, PARTICIPANT_IMPORT_PERMISSION)
-  const canDownloadParticipantTemplate = hasStaffPermission(
-    currentUser,
-    PARTICIPANT_TEMPLATE_DOWNLOAD_PERMISSION
-  )
-  const canCreateParticipant = hasStaffPermission(currentUser, PARTICIPANT_CREATE_PERMISSION)
-  const canManageParticipants = hasStaffPermission(currentUser, PARTICIPANT_MANAGE_PERMISSION)
-  const canStartBatch = hasStaffPermission(currentUser, BATCH_START_PERMISSION)
-  const canPrintExaminationForm = hasStaffPermission(currentUser, EXAMINATION_FORM_PRINT_PERMISSION)
-  // A bulk job is only useful when the account can also follow it and download its files.
-  const canBulkPrintExaminationForms =
-    hasStaffPermission(currentUser, EXAMINATION_FORM_BULK_PRINT_PERMISSION) &&
-    hasStaffPermission(currentUser, DOCUMENT_RENDER_JOB_READ_PERMISSION) &&
-    hasStaffPermission(currentUser, DOCUMENT_RENDER_JOB_DOWNLOAD_PERMISSION)
-  // An unknown session still tries to read; a known session without the permission loses the tab.
-  const canReadExamination = currentUser
-    ? hasStaffPermission(currentUser, EXAMINATION_SERVICE_READ_PERMISSION)
-    : true
-  const canReconcileExamination = hasStaffPermission(
-    currentUser,
-    EXAMINATION_SERVICE_RECONCILE_PERMISSION
-  )
-  const canDownloadExaminationTemplate = hasStaffPermission(
-    currentUser,
-    EXAMINATION_SERVICE_TEMPLATE_DOWNLOAD_PERMISSION
-  )
-  const canRecordExamination = hasStaffPermission(
-    currentUser,
-    EXAMINATION_SERVICE_RECORD_PERMISSION
-  )
-  const canReadReport = currentUser
-    ? hasStaffPermission(currentUser, EXAMINATION_REPORT_READ_PERMISSION)
-    : true
+  // Display only; the backend checks every request.
+  const permissions = useBatchPermissions()
   const hiddenTabs: HealthExaminationBatchTabType[] = [
-    ...(canReadExamination ? [] : (["examination"] as const)),
-    ...(canReadReport ? [] : (["report"] as const)),
+    ...(permissions.examination.canRead ? [] : (["examination"] as const)),
+    ...(permissions.report.canRead ? [] : (["report"] as const)),
   ]
   const activeTab = hiddenTabs.includes(requestedTab) ? "overview" : requestedTab
   const [isDeleted, setIsDeleted] = React.useState(false)
@@ -195,6 +142,7 @@ export function HealthExaminationBatchDetailPage({
   }
 
   const editable = isBatchEditable(batch.status)
+  const { canStart, canEdit, canDelete } = permissions.batch
 
   return (
     <ScreenLayout data-slot="health-examination-batch-detail-page" className="gap-6">
@@ -217,28 +165,32 @@ export function HealthExaminationBatchDetailPage({
           </>
         }
         actions={
-          editable ? (
+          editable && (canStart || canEdit || canDelete) ? (
             <>
-              {canStartBatch && (
+              {canStart && (
                 <Button type="button" onClick={() => setIsStartOpen(true)}>
                   <PlayCircle className="size-4" />
                   Bắt đầu đợt khám
                 </Button>
               )}
-              <Button type="button" variant="outline" onClick={() => setIsEditOpen(true)}>
-                <Edit className="size-4" />
-                Chỉnh sửa
-              </Button>
-              <Button type="button" variant="destructive" onClick={() => setIsDeleteOpen(true)}>
-                <Trash2 className="size-4" />
-                Xóa đợt khám
-              </Button>
+              {canEdit && (
+                <Button type="button" variant="outline" onClick={() => setIsEditOpen(true)}>
+                  <Edit className="size-4" />
+                  Chỉnh sửa
+                </Button>
+              )}
+              {canDelete && (
+                <Button type="button" variant="destructive" onClick={() => setIsDeleteOpen(true)}>
+                  <Trash2 className="size-4" />
+                  Xóa đợt khám
+                </Button>
+              )}
             </>
           ) : undefined
         }
       />
 
-      {!editable && (
+      {!editable && (canEdit || canDelete) && (
         <p className="flex items-center gap-2 text-xs text-muted-foreground">
           <Info aria-hidden="true" className="size-3.5 shrink-0" />
           Chỉ đợt khám ở trạng thái Nháp mới được chỉnh sửa hoặc xóa.
@@ -266,13 +218,15 @@ export function HealthExaminationBatchDetailPage({
               rowVersion: batch.rowVersion,
               days: batch.examinationDays,
             }}
-            canRead={canReadParticipants}
-            canDownloadTemplate={canDownloadParticipantTemplate}
-            canImport={canImportParticipants}
-            canCreate={canCreateParticipant}
-            canManage={canManageParticipants}
-            canPrintForm={canPrintExaminationForm}
-            canBulkPrintForms={canBulkPrintExaminationForms}
+            canRead={permissions.participants.canRead}
+            canDownloadTemplate={permissions.participants.canDownloadTemplate}
+            canImport={permissions.participants.canImport}
+            canCreate={permissions.participants.canCreate}
+            canEdit={permissions.participants.canEdit}
+            canRemove={permissions.participants.canRemove}
+            canReactivate={permissions.participants.canReactivate}
+            canPrintForm={permissions.participants.canPrintForm}
+            canBulkPrintForms={permissions.participants.canBulkPrintForms}
           />
         ) : activeTab === "examination" ? (
           <ExaminationDetailTab
@@ -283,21 +237,21 @@ export function HealthExaminationBatchDetailPage({
               services: batch.services,
               startDate: batch.examinationDates[0],
             }}
-            canRead={canReadExamination}
-            canImport={canReconcileExamination}
-            canDownloadTemplate={canDownloadExaminationTemplate}
-            canRecord={canRecordExamination}
+            canRead={permissions.examination.canRead}
+            canImport={permissions.examination.canReconcile}
+            canDownloadTemplate={permissions.examination.canDownloadTemplate}
+            canRecord={permissions.examination.canRecord}
           />
         ) : (
           <ReportTab
             organizationId={organizationId}
             batchId={batch.id}
-            canExportDetails={canReadExamination}
+            canExportDetails={permissions.examination.canRead}
           />
         )}
       </div>
 
-      {editable && (
+      {editable && canEdit && (
         <EditHealthExaminationBatchDialog
           open={isEditOpen}
           onOpenChange={setIsEditOpen}
@@ -306,7 +260,7 @@ export function HealthExaminationBatchDetailPage({
         />
       )}
 
-      {editable && canStartBatch && (
+      {editable && canStart && (
         <StartHealthExaminationBatchDialog
           open={isStartOpen}
           onOpenChange={setIsStartOpen}
@@ -318,18 +272,20 @@ export function HealthExaminationBatchDetailPage({
         />
       )}
 
-      <DeleteHealthExaminationBatchDialog
-        open={isDeleteOpen}
-        onOpenChange={handleDeleteOpenChange}
-        batchName={batch.name}
-        deleteError={deleteMutation.error}
-        isDeleteConflict={isDeleteConflict}
-        isDeleting={deleteMutation.isPending}
-        reloadError={reloadMutation.error}
-        isReloading={reloadMutation.isPending}
-        onConfirm={handleDelete}
-        onReload={handleReloadAfterConflict}
-      />
+      {canDelete && (
+        <DeleteHealthExaminationBatchDialog
+          open={isDeleteOpen}
+          onOpenChange={handleDeleteOpenChange}
+          batchName={batch.name}
+          deleteError={deleteMutation.error}
+          isDeleteConflict={isDeleteConflict}
+          isDeleting={deleteMutation.isPending}
+          reloadError={reloadMutation.error}
+          isReloading={reloadMutation.isPending}
+          onConfirm={handleDelete}
+          onReload={handleReloadAfterConflict}
+        />
+      )}
     </ScreenLayout>
   )
 }

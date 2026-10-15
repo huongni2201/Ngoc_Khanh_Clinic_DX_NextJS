@@ -2,14 +2,15 @@ import { apiClient } from "@/shared/api/api-client"
 import type {
   CreateExaminationFormPrintJobRequest,
   DownloadedFile,
-  ExaminationFormPrintEntry,
   ExaminationFormPrintJob,
   ParticipantListFilterParams,
+  ParticipantSelectionEntry,
 } from "../types"
 import {
   examinationFormPrintJobResponseSchema,
   type ExaminationFormPrintJobRequestDto,
 } from "../types/transport"
+import { toParticipantSelectionEntry } from "../utils/participant-selection"
 import { fetchHealthExaminationBatchParticipants } from "./participants"
 
 /** Records one print job may hold (`nkc.document.jobs.max-records`). */
@@ -88,7 +89,7 @@ export async function createExaminationFormPrintJob(
 
 export interface PrintableParticipants {
   /** Participants on the active roster that match the filter, in list order. */
-  entries: ExaminationFormPrintEntry[]
+  entries: ParticipantSelectionEntry[]
   /** Matching Participants on the active roster. */
   total: number
   /** More than one print job may hold: nothing was collected beyond the first page. */
@@ -106,7 +107,7 @@ export async function fetchPrintableParticipants(
   signal?: AbortSignal,
   maxRecords: number = EXAMINATION_FORM_PRINT_JOB_MAX_RECORDS
 ): Promise<PrintableParticipants> {
-  const entries: ExaminationFormPrintEntry[] = []
+  const entries: ParticipantSelectionEntry[] = []
   let page = 1
   for (;;) {
     const result = await fetchHealthExaminationBatchParticipants(
@@ -116,14 +117,7 @@ export async function fetchPrintableParticipants(
       signal
     )
     if (result.total > maxRecords) return { entries: [], total: result.total, tooMany: true }
-    for (const participant of result.data) {
-      entries.push({
-        id: participant.id,
-        participantCode: participant.participantCode,
-        fullName: participant.fullName,
-        departmentName: participant.departmentName,
-      })
-    }
+    for (const participant of result.data) entries.push(toParticipantSelectionEntry(participant))
     if (result.data.length === 0 || page >= result.totalPages) {
       return { entries: uniqueById(entries), total: result.total, tooMany: false }
     }
@@ -132,7 +126,7 @@ export async function fetchPrintableParticipants(
 }
 
 /** A row added between two page reads can shift the next page; keep the first occurrence only. */
-function uniqueById(entries: ExaminationFormPrintEntry[]): ExaminationFormPrintEntry[] {
+function uniqueById(entries: ParticipantSelectionEntry[]): ParticipantSelectionEntry[] {
   const seen = new Set<string>()
   return entries.filter((entry) => (seen.has(entry.id) ? false : (seen.add(entry.id), true)))
 }

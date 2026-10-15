@@ -24,7 +24,10 @@ interface OrganizationTableProps {
   totalItems?: number
   searchTerm?: string
   onSearchChange?: (search: string) => void
+  /** Omitted when the account may not create Organizations. */
   onCreateClick?: () => void
+  /** Shows the edit action on each row. UX only: the backend decides. */
+  canEdit?: boolean
 }
 
 const HEAD_CLASS = "h-10 px-4 text-xs font-semibold text-table-header-fg"
@@ -46,6 +49,7 @@ export function OrganizationTable({
   searchTerm = "",
   onSearchChange,
   onCreateClick,
+  canEdit = false,
 }: OrganizationTableProps) {
   const router = useRouter()
   const [organizationToEdit, setOrganizationToEdit] = React.useState<OrganizationDetail | null>(null)
@@ -162,7 +166,9 @@ export function OrganizationTable({
                 <p className="mx-auto mt-1 mb-5 max-w-sm whitespace-normal text-xs text-muted-foreground">
                   {isFiltered
                     ? "Thử đổi từ khóa hoặc tìm theo mã số thuế."
-                    : "Thêm đơn vị đầu tiên để bắt đầu tạo đợt khám sức khỏe."}
+                    : onCreateClick
+                      ? "Thêm đơn vị đầu tiên để bắt đầu tạo đợt khám sức khỏe."
+                      : "Đơn vị mới sẽ xuất hiện ở đây khi được thêm."}
                 </p>
                 {isFiltered && onSearchChange ? (
                   <Button type="button" variant="outline" onClick={clearSearch}>
@@ -241,16 +247,18 @@ export function OrganizationTable({
                       >
                         <Eye className="size-3.5" />
                       </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setOrganizationToEdit(organization)}
-                        className={ICON_BUTTON_CLASS}
-                        title={`Chỉnh sửa - ${organization.name}`}
-                        aria-label={`Chỉnh sửa cho ${organization.name}`}
-                      >
-                        <Edit3 className="size-3.5" />
-                      </Button>
+                      {canEdit && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setOrganizationToEdit(organization)}
+                          className={ICON_BUTTON_CLASS}
+                          title={`Chỉnh sửa - ${organization.name}`}
+                          aria-label={`Chỉnh sửa cho ${organization.name}`}
+                        >
+                          <Edit3 className="size-3.5" />
+                        </Button>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>
@@ -260,7 +268,7 @@ export function OrganizationTable({
         </TableBody>
       </Table>
 
-      {organizationToEdit && (
+      {canEdit && organizationToEdit && (
         <EditOrganizationDialog
           open
           organization={organizationToEdit}

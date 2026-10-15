@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { OrganizationListPage } from "../pages/organization-list-page"
 import { mockOrganizationFetch, organizationFixture } from "./organization-api-fixtures"
-import { renderWithClient } from "@/test-utils/render-with-client"
+import { ALL_PERMISSIONS, renderWithClient } from "@/test-utils/render-with-client"
 
 const mockNavigation = vi.hoisted(() => ({
   push: vi.fn(),
@@ -25,6 +25,18 @@ describe("OrganizationListPage", () => {
   })
 
   afterEach(() => vi.unstubAllGlobals())
+
+  it("offers adding an organization only to an account that may create one", async () => {
+    renderWithClient(<OrganizationListPage />, { permissions: ALL_PERMISSIONS })
+    await screen.findByText(organizationFixture.name)
+    expect(screen.getByRole("button", { name: /Thêm đơn vị/ })).toBeInTheDocument()
+  })
+
+  it("hides the add action from an account without the create permission", async () => {
+    renderWithClient(<OrganizationListPage />, { permissions: ["ORGANIZATION_SEARCH", "ORGANIZATION_VIEW"] })
+    await screen.findByText(organizationFixture.name)
+    expect(screen.queryByRole("button", { name: /Thêm đơn vị/ })).not.toBeInTheDocument()
+  })
 
   it("renders organization data from the backend response", async () => {
     renderWithClient(<OrganizationListPage />)

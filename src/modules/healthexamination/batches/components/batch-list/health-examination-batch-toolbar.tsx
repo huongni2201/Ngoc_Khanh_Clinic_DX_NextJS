@@ -8,7 +8,8 @@ import { BATCH_MAX_SEARCH_LENGTH } from "../../utils/batch-list-params"
 interface HealthExaminationBatchToolbarProps {
   search: string
   onSearchChange: (value: string) => void
-  onCreateClick: () => void
+  /** Omitted when the account may not create batches: the action is then not shown. */
+  onCreateClick?: () => void
 }
 
 export function HealthExaminationBatchToolbar({
@@ -25,10 +26,12 @@ export function HealthExaminationBatchToolbar({
         placeholder="Tìm theo mã hoặc tên đợt khám..."
         label="Tìm đợt khám"
       />
-      <Button type="button" onClick={onCreateClick}>
-        <Plus className="size-4" />
-        Tạo đợt khám
-      </Button>
+      {onCreateClick && (
+        <Button type="button" onClick={onCreateClick}>
+          <Plus className="size-4" />
+          Tạo đợt khám
+        </Button>
+      )}
     </div>
   )
 }

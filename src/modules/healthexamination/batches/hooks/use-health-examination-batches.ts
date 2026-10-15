@@ -16,6 +16,7 @@ import {
 import { healthExaminationKeys } from "../query-keys"
 import { saveBlobAs } from "../utils/download-blob"
 import { sanitizeFileName } from "../utils/file-name"
+import { describeParticipantWriteError } from "../utils/participant-write-errors"
 import { CreateHealthExaminationBatchRequest, DeleteHealthExaminationBatchRequest, StartHealthExaminationBatchRequest, UpdateHealthExaminationBatchRequest, HealthExaminationBatchFilterParams, HealthExaminationBatch, HealthExaminationBatchListResponse, ParticipantListFilterParams, ParticipantListResponse, ParticipantDetail, CreateParticipantRequest, UpdateParticipantRequest, CancelParticipantRequest, ReactivateParticipantRequest, HealthExaminationParticipant, ImportParticipantsRequest, ParticipantImportResult, ExaminationProgressFilterParams, ExaminationProgressResponse, HealthExaminationBatchReportSummary } from "../types"
 
 export function useOrganizationHealthExaminationBatches(
@@ -244,6 +245,65 @@ export function useCancelParticipant() {
     mutationFn: (request) => cancelParticipant(request),
     retry: false,
     onSuccess: (_result, request) => {
+      void queryClient.invalidateQueries({
+        queryKey: healthExaminationKeys.participantsRoot(request.organizationId, request.batchId),
+      })
+    },
+  })
+}
+
+export interface CancelParticipantsRequest {
+  organizationId: string
+  batchId: string
+  /** The ticked Participants with the version each cancellation is based on. */
+  participants: ReadonlyArray<{ id: string; rowVersion: number }>
+}
+
+export interface CancelParticipantsResult {
+  cancelled: string[]
+  /** Participants the backend refused, with Vietnamese guidance. */
+  failed: Array<{ id: string; message: string }>
+  /** Not tried: the run stopped on a failure every other request would repeat (session, rights, network). */
+  notAttempted: string[]
+}
+
+/**
+ * Cancels the ticked Participants one request at a time (the backend has no bulk endpoint, and each
+ * cancellation checks its own version). A failure that would repeat for everyone stops the run.
+ * The list is reloaded once at the end. It never retries.
+ */
+export function useCancelParticipants() {
+  const queryClient = useQueryClient()
+
+  return useMutation<CancelParticipantsResult, Error, CancelParticipantsRequest>({
+    mutationFn: async ({ organizationId, batchId, participants }) => {
+      const result: CancelParticipantsResult = { cancelled: [], failed: [], notAttempted: [] }
+      for (const [index, participant] of participants.entries()) {
+        try {
+          await cancelParticipant({
+            organizationId,
+            batchId,
+            participantId: participant.id,
+            rowVersion: participant.rowVersion,
+          })
+          result.cancelled.push(participant.id)
+        } catch (error) {
+          const described = describeParticipantWriteError(error, "cancel")
+          result.failed.push({ id: participant.id, message: described.message })
+          if (
+            described.kind === "forbidden" ||
+            described.kind === "unauthenticated" ||
+            described.kind === "network"
+          ) {
+            result.notAttempted = participants.slice(index + 1).map((rest) => rest.id)
+            break
+          }
+        }
+      }
+      return result
+    },
+    retry: false,
+    onSettled: (_result, _error, request) => {
       void queryClient.invalidateQueries({
         queryKey: healthExaminationKeys.participantsRoot(request.organizationId, request.batchId),
       })

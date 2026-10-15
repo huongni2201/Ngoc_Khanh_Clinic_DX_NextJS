@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/shared/ui"
 
 interface OrganizationPageHeaderProps {
-  onOpenCreateDialog: () => void
+  /** Omitted when the account may not create Organizations: the action is then not shown. */
+  onOpenCreateDialog?: () => void
 }
 
 export function OrganizationPageHeader({
@@ -18,10 +19,12 @@ export function OrganizationPageHeader({
       title="Đơn vị"
       description="Quản lý đơn vị và các đợt khám sức khỏe"
       actions={
-        <Button type="button" onClick={onOpenCreateDialog}>
-          <HugeiconsIcon icon={Add01Icon} className="size-4" />
-          Thêm đơn vị
-        </Button>
+        onOpenCreateDialog ? (
+          <Button type="button" onClick={onOpenCreateDialog}>
+            <HugeiconsIcon icon={Add01Icon} className="size-4" />
+            Thêm đơn vị
+          </Button>
+        ) : undefined
       }
     />
   )

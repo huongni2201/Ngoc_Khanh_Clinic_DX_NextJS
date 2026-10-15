@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import * as batchApi from "@/modules/healthexamination/batches/api"
 import { ApiClientError, apiClient } from "@/shared/api/api-client"
+import { ALL_PERMISSIONS, staffSessionWith } from "@/test-utils/render-with-client"
 import { HealthExaminationBatchDetailPage } from "../pages/health-examination-batch-detail-page"
 import { healthExaminationKeys } from "../query-keys"
 import type { HealthExaminationBatch } from "../types"
@@ -43,11 +44,12 @@ const batch: HealthExaminationBatch = {
   ],
 }
 
-function renderPage(initialSession?: unknown) {
+/** Signs in with every permission unless a test passes its own session. */
+function renderPage(initialSession: unknown = staffSessionWith(ALL_PERMISSIONS)) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   })
-  if (initialSession !== undefined) queryClient.setQueryData(["auth", "session"], initialSession)
+  queryClient.setQueryData(["auth", "session"], initialSession)
   const view = render(
     <QueryClientProvider client={queryClient}>
       <HealthExaminationBatchDetailPage organizationId="org-1" batchId="batch-1" />
@@ -115,6 +117,26 @@ describe("HealthExaminationBatchDetailPage", () => {
     expect(screen.queryByRole("button", { name: "Chỉnh sửa" })).not.toBeInTheDocument()
     expect(screen.queryByRole("button", { name: "Xóa đợt khám" })).not.toBeInTheDocument()
     expect(screen.getByText(/Chỉ đợt khám ở trạng thái Nháp/)).toBeInTheDocument()
+  })
+
+  it("shows only the batch actions the account may use", async () => {
+    vi.spyOn(batchApi, "fetchHealthExaminationBatchById").mockResolvedValue(batch)
+    renderPage(staffSessionWith(["HEALTH_EXAMINATION_BATCH_DETAIL_VIEW", "HEALTH_EXAMINATION_BATCH_UPDATE"]))
+
+    await screen.findByRole("heading", { name: "Khám định kỳ 2026" })
+    expect(screen.getByRole("button", { name: "Chỉnh sửa" })).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Xóa đợt khám" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Bắt đầu đợt khám" })).not.toBeInTheDocument()
+  })
+
+  it("shows no batch action to an account that can only read", async () => {
+    vi.spyOn(batchApi, "fetchHealthExaminationBatchById").mockResolvedValue(batch)
+    renderPage(staffSessionWith(["HEALTH_EXAMINATION_BATCH_DETAIL_VIEW"]))
+
+    await screen.findByRole("heading", { name: "Khám định kỳ 2026" })
+    for (const name of ["Chỉnh sửa", "Xóa đợt khám", "Bắt đầu đợt khám"]) {
+      expect(screen.queryByRole("button", { name })).not.toBeInTheDocument()
+    }
   })
 
   describe("delete", () => {
@@ -337,7 +359,7 @@ describe("HealthExaminationBatchDetailPage", () => {
       nav.search = "tab=participants"
       vi.spyOn(batchApi, "fetchHealthExaminationBatchById").mockResolvedValue(batch)
       const get = vi.spyOn(apiClient, "get").mockResolvedValue(emptyPage)
-      renderPage(session(["ORGANIZATION_READ"]))
+      renderPage(session(["ORGANIZATION_VIEW"]))
 
       expect(await screen.findByText("Không có quyền xem")).toBeInTheDocument()
       expect(get).not.toHaveBeenCalledWith(expect.stringContaining("/participants"), expect.anything())

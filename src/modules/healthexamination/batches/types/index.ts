@@ -452,6 +452,17 @@ export interface ExaminationFormPrintEntry {
   departmentName: string
 }
 
+/**
+ * A ticked Participant: what a bulk print needs, plus what a cancellation needs. The same ticks
+ * feed both actions, so the version is read when the row is ticked.
+ */
+export interface ParticipantSelectionEntry extends ExaminationFormPrintEntry {
+  /** Version the cancellation is based on. */
+  rowVersion: number
+  /** Why the Participant cannot be cancelled (prepared, attended, reconciled), else `null`. */
+  cancelBlockReason: string | null
+}
+
 /** Order of the forms in a bulk print job. The backend prints in the order it receives. */
 export type ExaminationFormPrintOrder = "CODE" | "DEPARTMENT"
 

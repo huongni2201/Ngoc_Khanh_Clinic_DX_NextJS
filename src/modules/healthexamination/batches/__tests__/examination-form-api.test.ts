@@ -154,6 +154,8 @@ describe("examination form API", () => {
       participantCode: "KSK-2026-001-0001",
       fullName: "Người khám 1",
       departmentName: "Kho vận",
+      rowVersion: 0,
+      cancelBlockReason: null,
     })
     expect(result.tooMany).toBe(false)
   })

@@ -139,6 +139,35 @@ describe("ParticipantsTab examination form printing", () => {
     expect(screen.getByText(/chỉ in được phiếu khám khi đợt khám/i)).toBeInTheDocument()
   })
 
+  it("shows the bulk print button only once someone is ticked", async () => {
+    mockGet()
+    renderTab()
+    const user = userEvent.setup()
+
+    await screen.findByText("Người khám 1")
+    // Printing the whole day needs no ticks; printing the ticked people does.
+    expect(screen.getByRole("button", { name: "In theo ngày khám" })).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: /^In phiếu khám \(/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: /^Hủy khỏi danh sách/ })).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole("checkbox", { name: "Chọn Người khám 1" }))
+    expect(screen.getByRole("button", { name: "In phiếu khám (1)" })).toBeEnabled()
+
+    await user.click(screen.getByRole("button", { name: "Bỏ chọn" }))
+    expect(screen.queryByRole("button", { name: /^In phiếu khám \(/ })).not.toBeInTheDocument()
+  })
+
+  it("keeps print and cancel apart when the account may do both", async () => {
+    mockGet()
+    renderTab({ canRemove: true })
+    const user = userEvent.setup()
+
+    expect(await screen.findByText("Chọn người khám để in phiếu hoặc hủy hàng loạt")).toBeInTheDocument()
+    await user.click(screen.getByRole("checkbox", { name: "Chọn Người khám 1" }))
+    expect(screen.getByRole("button", { name: "In phiếu khám (1)" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Hủy khỏi danh sách (1)" })).toBeInTheDocument()
+  })
+
   it("hides printing from an account without the permissions", async () => {
     mockGet()
     renderTab({ canPrintForm: false, canBulkPrintForms: false })

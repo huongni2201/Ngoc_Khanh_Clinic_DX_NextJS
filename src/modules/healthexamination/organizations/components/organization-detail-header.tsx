@@ -9,8 +9,10 @@ import { OrganizationDetail } from "../types"
 
 interface OrganizationDetailHeaderProps {
   organization: OrganizationDetail
-  onEditClick: () => void
-  onDeactivateClick: () => void
+  /** Omitted when the account may not edit: the action is then not shown. */
+  onEditClick?: () => void
+  /** Omitted when the account may not deactivate: the action is then not shown. */
+  onDeactivateClick?: () => void
   isDeactivating: boolean
 }
 
@@ -68,11 +70,13 @@ export function OrganizationDetailHeader({
       }
       actions={
         <>
-          <Button type="button" variant="outline" onClick={onEditClick}>
-            <HugeiconsIcon icon={Edit02Icon} className="size-4" />
-            Chỉnh sửa đơn vị
-          </Button>
-          {organization.status !== "INACTIVE" && (
+          {onEditClick && (
+            <Button type="button" variant="outline" onClick={onEditClick}>
+              <HugeiconsIcon icon={Edit02Icon} className="size-4" />
+              Chỉnh sửa đơn vị
+            </Button>
+          )}
+          {onDeactivateClick && organization.status !== "INACTIVE" && (
             <Button
               type="button"
               variant="ghost"

@@ -210,8 +210,8 @@ and import/export, payment-summary JSON/DOCX, and blank examination form printin
 for exact routes and authorization gaps. The single-step roster import was restored
 on 2026-10-06; the former preview/confirm/cancel chain remains removed. Visit
 preparation and official clinical printing need explicit HTTP contracts. The
-Participant action gates still use legacy permissions and need alignment with
-the backend's separate permission codes; mapped Organization/Batch DELETE and
+Participant action gates use the backend's separate permission codes (see
+"Permission checks" under accesscontrol); mapped Organization/Batch DELETE and
 catalog lookup also have production authorization gaps. Existing
 FE callers do not make missing endpoints supported. See
 [code follow-ups](../maintenance/code-follow-ups.md).
@@ -281,6 +281,21 @@ Cross-tab signals reset the query and re-read the hint. See
 and [ADR-0008](../adr/0008-login-session-restoration.md) for restoration behavior.
 Backend authorization remains
 required; the client boundary does not protect server-side data access.
+
+**Permission checks.** A screen decides which features to show or enable only through
+`usePermissions()` (`can`, `canAll`, `canAny`) from `modules/accesscontrol`. It reads the
+permission codes already carried by the session (`roleAssignments[].permissions`) and knows
+nothing about roles; there is no role matrix in the frontend. Codes are the `PERMISSION`
+constants in `accesscontrol/permissions.ts`, the backend permissions tied to an HTTP
+endpoint, so a typo fails type checking and `permission-codes.test.ts` fails when a code is
+not defined by the backend migrations (skipped without the backend checkout). A feature
+that calls several endpoints needs all of them. Each feature module groups its flags in one
+hook, for example `useBatchPermissions()` for the batch screens (participants, batch
+create/edit/delete/start) and `useOrganizationPermissions()` for the Organization screens
+(create, edit, deactivate), instead of calling `hasStaffPermission` inline. The sidebar hides
+an item whose `permission` the session lacks ("Đơn vị" needs `ORGANIZATION_SEARCH`). Until the session is loaded (`isKnown` false) a read still
+tries and the backend answers. Add a code to `PERMISSION` when a screen needs it. These
+checks only hide or disable controls; the backend decides every request.
 
 Update this file when the **current architecture** changes.
 
