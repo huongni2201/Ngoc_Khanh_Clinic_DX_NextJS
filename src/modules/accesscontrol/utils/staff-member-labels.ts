@@ -27,7 +27,7 @@ export const STAFF_ACCOUNT_STATUS_PRESENTATION: Record<
 }
 
 /** Vietnamese names of the roles seeded by V002 and the local TEST role. */
-const ROLE_LABELS: Record<string, string> = {
+export const ROLE_LABELS: Record<string, string> = {
   RECEPTIONIST: "Lễ tân",
   GENERAL_PRACTITIONER: "Bác sĩ đa khoa",
   DIAGNOSTIC_DOCTOR: "Bác sĩ chẩn đoán",
@@ -35,7 +35,7 @@ const ROLE_LABELS: Record<string, string> = {
   CLINIC_MANAGER: "Quản lý phòng khám",
   ADMINISTRATOR: "Quản trị viên",
   PATIENT: "Bệnh nhân",
-  TEST: "Kiểm thử (local)",
+  TEST: "Kiểm thử nội bộ",
 }
 
 /**

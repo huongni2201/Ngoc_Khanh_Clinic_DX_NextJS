@@ -13,7 +13,10 @@ examination-details list/summary/import/export, payment-summary JSON/DOCX,
 blank examination form printing (one PDF and background print jobs, section 13) and
 the active service catalog list (`GET /api/v1/catalog/services`) and staff administration
 (staff member list/create with the generated account, assignable roles; see
-[the staff member contract](../Ngoc_Khanh_Clinic_DX_Springboot/docs/api/staff-members.md)).
+[the staff member contract](../Ngoc_Khanh_Clinic_DX_Springboot/docs/api/staff-members.md)) and
+role administration (role list/create/update, permission catalogue, grant/remove role permissions;
+permissions themselves are predefined and never created; see
+[the roles and permissions contract](../Ngoc_Khanh_Clinic_DX_Springboot/docs/api/roles-and-permissions.md)).
 See [the backend inventory](../Ngoc_Khanh_Clinic_DX_Springboot/docs/api/clean-slate-migration.md)
 for current routes. Handler existence does not imply production authorization.
 

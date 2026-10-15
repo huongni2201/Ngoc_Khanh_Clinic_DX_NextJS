@@ -43,7 +43,7 @@ function mapStaffMember(dto: StaffMemberResponseDto): StaffMember {
 }
 
 function mapRole(dto: RoleResponseDto): RoleOption {
-  return { id: dto.id, code: dto.code, name: dto.name, description: dto.description }
+  return { id: dto.id, code: dto.code, name: dto.name, description: dto.description ?? "" }
 }
 
 /** Optional text is sent only when filled, so the backend stores null instead of an empty string. */
