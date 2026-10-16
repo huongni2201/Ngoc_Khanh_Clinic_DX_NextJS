@@ -15,8 +15,8 @@ export async function generateMetadata({
 }: OrganizationDetailPageProps): Promise<Metadata> {
   const resolvedParams = await params
   return {
-    title: `Chi tiết đơn vị — Ngọc Khánh Clinic`,
-    description: `Chi tiết đơn vị ${resolvedParams.organizationId} tại Ngọc Khánh Clinic`,
+    title: `Chi tiết đơn vị — Phòng khám Ngọc Khánh`,
+    description: `Chi tiết đơn vị ${resolvedParams.organizationId} tại Phòng khám Ngọc Khánh`,
   }
 }
 

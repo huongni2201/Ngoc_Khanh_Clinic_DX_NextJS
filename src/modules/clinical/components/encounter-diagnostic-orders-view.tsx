@@ -100,7 +100,7 @@ export function EncounterDiagnosticOrdersView({ data, onViewDetail }: EncounterD
                     {order.actionType === "pdf" ? (
                       <button
                         type="button"
-                        onClick={() => alert(`Xem file PDF kết quả ${order.serviceName}`)}
+                        onClick={() => alert(`Xem tệp PDF kết quả ${order.serviceName}`)}
                         className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:text-primary transition-colors"
                       >
                         <FileText className="size-3.5" />

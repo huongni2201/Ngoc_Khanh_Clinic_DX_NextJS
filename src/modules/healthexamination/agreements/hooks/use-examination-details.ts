@@ -72,8 +72,8 @@ export function useExportExaminationDetails(organizationId: string, agreementId:
       return file
     },
     retry: false,
-    onSuccess: (file) => toast.success("Đã xuất file chi tiết khám.", { description: file.fileName }),
-    onError: (error) => toast.error(error.message || "Không thể xuất file Excel."),
+    onSuccess: (file) => toast.success("Đã xuất tệp chi tiết khám.", { description: file.fileName }),
+    onError: (error) => toast.error(error.message || "Không thể xuất tệp Excel."),
   })
 }
 

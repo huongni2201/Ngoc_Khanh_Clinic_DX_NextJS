@@ -20,7 +20,7 @@ const FIELD_LABELS: Record<string, string> = {
   identification_issue_place: "Nơi cấp CCCD",
   ethnicity: "Dân tộc",
   phone: "Số điện thoại",
-  email: "Email",
+  email: "Thư điện tử",
   address: "Chỗ ở",
   workplace: "Nơi làm việc",
   department_name: "Đơn vị/Phòng ban",
@@ -78,7 +78,7 @@ const RULES: Rule[] = [
   {
     pattern: /^Row (\d+): there is a value outside the template columns$/,
     describe: (m) => ({
-      message: `Dòng ${m[1]}: có dữ liệu nằm ngoài các cột của file mẫu.`,
+      message: `Dòng ${m[1]}: có dữ liệu nằm ngoài các cột của tệp mẫu.`,
       rowNumber: row(m),
       needsNewTemplate: false,
     }),
@@ -118,7 +118,7 @@ const RULES: Rule[] = [
   {
     pattern: /^Duplicate participant identity at rows (\d+) and (\d+)$/,
     describe: (m) => ({
-      message: `CCCD bị trùng trong file: dòng ${m[1]} và dòng ${m[2]}.`,
+      message: `CCCD bị trùng trong tệp: dòng ${m[1]} và dòng ${m[2]}.`,
       rowNumber: Number(m[2]),
       needsNewTemplate: false,
     }),
@@ -126,7 +126,7 @@ const RULES: Rule[] = [
   {
     pattern: /^Data is only accepted in worksheet rows 2 to (\d+)$/,
     describe: (m) => ({
-      message: `File chỉ được chứa dữ liệu từ dòng 2 đến dòng ${m[1]}.`,
+      message: `Tệp chỉ được chứa dữ liệu từ dòng 2 đến dòng ${m[1]}.`,
       needsNewTemplate: false,
     }),
   },
@@ -134,28 +134,28 @@ const RULES: Rule[] = [
     pattern: /^The workbook does not match this agreement version; download the template again$/,
     describe: () => ({
       message:
-        "File không khớp với phiên bản hiện tại của thỏa thuận. Vui lòng tải lại file mẫu mới nhất và nhập lại.",
+        "Tệp không khớp với phiên bản hiện tại của thỏa thuận. Vui lòng tải lại tệp mẫu mới nhất và nhập lại.",
       needsNewTemplate: true,
     }),
   },
   {
     pattern: /download the template again$/,
     describe: () => ({
-      message: "Không đọc được thông tin file mẫu. Vui lòng tải lại file mẫu và nhập lại.",
+      message: "Không đọc được thông tin tệp mẫu. Vui lòng tải lại tệp mẫu và nhập lại.",
       needsNewTemplate: true,
     }),
   },
   {
     pattern: /^The workbook has no data rows$/,
     describe: () => ({
-      message: "File không có dòng dữ liệu nào để nhập.",
+      message: "Tệp không có dòng dữ liệu nào để nhập.",
       needsNewTemplate: false,
     }),
   },
   {
     pattern: /^The header /,
     describe: () => ({
-      message: "Dòng tiêu đề của file không đúng mẫu. Vui lòng dùng file mẫu của thỏa thuận.",
+      message: "Dòng tiêu đề của tệp không đúng mẫu. Vui lòng dùng tệp mẫu của thỏa thuận.",
       needsNewTemplate: true,
     }),
   },
@@ -170,7 +170,7 @@ const RULES: Rule[] = [
     pattern: /^(Macros|The workbook (contains|has|is)|Merged cells|The Participants sheet)/,
     describe: () => ({
       message:
-        "File Excel không đúng mẫu hoặc có thành phần không được hỗ trợ (macro, ô gộp, liên kết ngoài, sheet thừa). Vui lòng dùng file mẫu của thỏa thuận.",
+        "Tệp Excel không đúng mẫu hoặc có thành phần không được hỗ trợ (lệnh tự động, ô gộp, liên kết ngoài, trang tính thừa). Vui lòng dùng tệp mẫu của thỏa thuận.",
       needsNewTemplate: true,
     }),
   },
@@ -185,7 +185,7 @@ const RULES: Rule[] = [
   {
     pattern: /^Idempotency key was used for another request$/,
     describe: () => ({
-      message: "Yêu cầu nhập này trùng mã với một yêu cầu khác. Vui lòng chọn lại file để thử lại.",
+      message: "Yêu cầu nhập này trùng mã với một yêu cầu khác. Vui lòng chọn lại tệp để thử lại.",
       needsNewTemplate: false,
     }),
   },
@@ -201,7 +201,7 @@ const RULES: Rule[] = [
     pattern: /^Record was changed by another request$/,
     describe: () => ({
       message:
-        "Thỏa thuận đã được cập nhật bởi người khác. Vui lòng tải lại file mẫu mới nhất và nhập lại.",
+        "Thỏa thuận đã được cập nhật bởi người khác. Vui lòng tải lại tệp mẫu mới nhất và nhập lại.",
       needsNewTemplate: true,
     }),
   },
@@ -211,13 +211,13 @@ function byStatus(status: number): ParticipantImportFailure {
   switch (status) {
     case 0:
       return {
-        message: "Không thể kết nối máy chủ. Có thể thử lại với cùng file, hệ thống sẽ không nhập trùng.",
+        message: "Không thể kết nối máy chủ. Có thể thử lại với cùng tệp, hệ thống sẽ không nhập trùng.",
         needsNewTemplate: false,
         retryable: true,
       }
     case 400:
       return {
-        message: "File hoặc thông tin gửi lên không hợp lệ. Vui lòng kiểm tra lại.",
+        message: "Tệp hoặc thông tin gửi lên không hợp lệ. Vui lòng kiểm tra lại.",
         needsNewTemplate: false,
         retryable: false,
       }
@@ -247,7 +247,7 @@ function byStatus(status: number): ParticipantImportFailure {
       }
     case 413:
       return {
-        message: "File vượt quá dung lượng cho phép (tối đa 5 MB).",
+        message: "Tệp vượt quá dung lượng cho phép (tối đa 5 MB).",
         needsNewTemplate: false,
         retryable: false,
       }
@@ -261,7 +261,7 @@ function byStatus(status: number): ParticipantImportFailure {
       return {
         message:
           status >= 500
-            ? "Máy chủ gặp lỗi. Có thể thử lại với cùng file, hệ thống sẽ không nhập trùng."
+            ? "Máy chủ gặp lỗi. Có thể thử lại với cùng tệp, hệ thống sẽ không nhập trùng."
             : "Không thể nhập danh sách người khám. Vui lòng thử lại.",
         needsNewTemplate: false,
         retryable: status >= 500,
@@ -321,6 +321,6 @@ export function validateParticipantImportFile(
 ): string | null {
   if (!file.name.toLowerCase().endsWith(".xlsx")) return "Chỉ chấp nhận tệp Excel định dạng .xlsx."
   if (file.size === 0) return "Tệp rỗng."
-  if (file.size > maxBytes) return "File vượt quá dung lượng cho phép (tối đa 5 MB)."
+  if (file.size > maxBytes) return "Tệp vượt quá dung lượng cho phép (tối đa 5 MB)."
   return null
 }

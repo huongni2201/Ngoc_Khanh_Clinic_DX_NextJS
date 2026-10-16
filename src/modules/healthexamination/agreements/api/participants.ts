@@ -1,3 +1,4 @@
+import { parseApiData } from "@/shared/api/parse-api-data"
 import { apiClient } from "@/shared/api/api-client"
 import type {
   CancelParticipantRequest,
@@ -179,7 +180,7 @@ function toWriteBody(input: ParticipantInput): ParticipantWriteRequestDto {
 
 function parseDetail(data: unknown, emptyMessage: string): ParticipantDetail {
   if (!data) throw new Error(emptyMessage)
-  return mapParticipantDetail(participantDetailResponseSchema.parse(data))
+  return mapParticipantDetail(parseApiData(participantDetailResponseSchema, data))
 }
 
 /** The complete Participant (full CCCD, phone, email) for the edit form. Requires the manage permission. */
@@ -193,7 +194,7 @@ export async function fetchParticipantDetail(
     buildParticipantItemUrl(organizationId, agreementId, participantId),
     { signal }
   )
-  return parseDetail(response.data, response.message || "Phản hồi chi tiết người khám không có dữ liệu.")
+  return parseDetail(response.data, "Phản hồi chi tiết người khám không có dữ liệu.")
 }
 
 /**
@@ -207,7 +208,7 @@ export async function createParticipant(
     participantsEndpoint(request.organizationId, request.agreementId),
     toWriteBody(request)
   )
-  return parseDetail(response.data, response.message || "Phản hồi thêm người khám không có dữ liệu.")
+  return parseDetail(response.data, "Phản hồi thêm người khám không có dữ liệu.")
 }
 
 export async function updateParticipant(
@@ -219,7 +220,7 @@ export async function updateParticipant(
   )
   return parseDetail(
     response.data,
-    response.message || "Phản hồi cập nhật người khám không có dữ liệu."
+    "Phản hồi cập nhật người khám không có dữ liệu."
   )
 }
 
@@ -249,7 +250,7 @@ export async function reactivateParticipant(
   )
   return parseDetail(
     response.data,
-    response.message || "Phản hồi khôi phục người khám không có dữ liệu."
+    "Phản hồi khôi phục người khám không có dữ liệu."
   )
 }
 
@@ -264,10 +265,10 @@ export async function fetchHealthExaminationAgreementParticipants(
     { signal }
   )
   if (!response.data) {
-    throw new Error(response.message || "Phản hồi danh sách người khám không có dữ liệu.")
+    throw new Error("Phản hồi danh sách người khám không có dữ liệu.")
   }
 
-  const page = participantPageResponseSchema.parse(response.data)
+  const page = parseApiData(participantPageResponseSchema, response.data)
   return {
     data: page.items.map(mapParticipant),
     total: page.totalElements,
@@ -314,10 +315,11 @@ export async function importHealthExaminationAgreementParticipants(
     { headers: { "Idempotency-Key": request.idempotencyKey } }
   )
   if (!response.data) {
-    throw new Error(response.message || "Phản hồi nhập danh sách người khám không có dữ liệu.")
+    throw new Error("Phản hồi nhập danh sách người khám không có dữ liệu.")
   }
 
-  const { sessionId, assignedCount, ...result } = participantImportResponseSchema.parse(
+  const { sessionId, assignedCount, ...result } = parseApiData(
+    participantImportResponseSchema,
     response.data
   )
   return sessionId ? { ...result, sessionId, assignedCount: assignedCount ?? 0 } : result

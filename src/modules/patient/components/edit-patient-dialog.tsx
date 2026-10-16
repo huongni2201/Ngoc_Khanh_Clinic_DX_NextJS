@@ -290,7 +290,7 @@ export function EditPatientDialog({
                 htmlFor="edit-email"
                 className="text-xs font-semibold text-secondary-foreground"
               >
-                Email
+                Thư điện tử
               </Label>
               <Input
                 id="edit-email"

@@ -136,7 +136,10 @@ describe("participant manual API", () => {
     await expect(fetchParticipantDetail("org-1", "agreement-1", "p-1")).rejects.toThrow()
 
     vi.spyOn(apiClient, "get").mockResolvedValueOnce(envelope({ ...backendDetail, source: "OTHER" }))
-    await expect(fetchParticipantDetail("org-1", "agreement-1", "p-1")).rejects.toBeInstanceOf(ZodError)
+    await expect(fetchParticipantDetail("org-1", "agreement-1", "p-1")).rejects.toMatchObject({
+      message: "Dữ liệu phản hồi từ máy chủ không hợp lệ. Vui lòng tải lại hoặc liên hệ quản trị viên.",
+      cause: expect.any(ZodError),
+    })
   })
 
   it("creates with a trimmed body, null for blank optional text and no Idempotency-Key", async () => {

@@ -1,3 +1,4 @@
+import { parseApiData } from "@/shared/api/parse-api-data"
 import { apiClient } from "@/shared/api/api-client"
 import {
   renderJobResponseSchema,
@@ -37,9 +38,9 @@ function mapRenderJob(job: RenderJobResponseDto): RenderJob {
 export async function fetchRenderJob(jobId: string, signal?: AbortSignal): Promise<RenderJob> {
   const response = await apiClient.get<unknown>(buildRenderJobUrl(jobId), { signal })
   if (!response.data) {
-    throw new Error(response.message || "Phản hồi lệnh in không có dữ liệu.")
+    throw new Error("Phản hồi lệnh in không có dữ liệu.")
   }
-  return mapRenderJob(renderJobResponseSchema.parse(response.data))
+  return mapRenderJob(parseApiData(renderJobResponseSchema, response.data))
 }
 
 /** One merged PDF part of a finished job; 404 once the job expired, 409 while it is not finished. */

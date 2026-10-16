@@ -31,7 +31,7 @@ function field(name: string) {
 const row = (match: RegExpMatchArray) => Number(match[1])
 
 const STALE_FILE_MESSAGE =
-  "File không khớp với thỏa thuận hiện tại (thiếu sheet, sai cột hoặc là file cũ)."
+  "Tệp không khớp với thỏa thuận hiện tại (thiếu trang tính, sai cột hoặc là tệp cũ)."
 
 const RULES: Rule[] = [
   {
@@ -45,7 +45,7 @@ const RULES: Rule[] = [
   {
     pattern: /^Row (\d+): (participant_id|row_version) is (required|not valid)$/,
     describe: (m) => ({
-      message: `Dòng ${m[1]}: ${field(m[2])} bị thiếu hoặc không hợp lệ. Vui lòng xuất lại file và không sửa các cột ẩn.`,
+      message: `Dòng ${m[1]}: ${field(m[2])} bị thiếu hoặc không hợp lệ. Vui lòng xuất lại tệp và không sửa các cột ẩn.`,
       rowNumber: row(m),
       needsNewExport: true,
     }),
@@ -85,7 +85,7 @@ const RULES: Rule[] = [
   {
     pattern: /^Row (\d+): there is a value outside the file columns$/,
     describe: (m) => ({
-      message: `Dòng ${m[1]}: có dữ liệu nằm ngoài các cột của file xuất.`,
+      message: `Dòng ${m[1]}: có dữ liệu nằm ngoài các cột của tệp xuất.`,
       rowNumber: row(m),
       needsNewExport: false,
     }),
@@ -101,7 +101,7 @@ const RULES: Rule[] = [
   {
     pattern: /^Row (\d+): participant is not in this agreement$/,
     describe: (m) => ({
-      message: `Dòng ${m[1]}: người khám không thuộc thỏa thuận này. Vui lòng xuất lại file từ thỏa thuận hiện tại.`,
+      message: `Dòng ${m[1]}: người khám không thuộc thỏa thuận này. Vui lòng xuất lại tệp từ thỏa thuận hiện tại.`,
       rowNumber: row(m),
       needsNewExport: true,
     }),
@@ -109,7 +109,7 @@ const RULES: Rule[] = [
   {
     pattern: /^Row (\d+): participant is cancelled$/,
     describe: (m) => ({
-      message: `Dòng ${m[1]}: người khám đã bị hủy khỏi danh sách. Vui lòng xuất lại file.`,
+      message: `Dòng ${m[1]}: người khám đã bị hủy khỏi danh sách. Vui lòng xuất lại tệp.`,
       rowNumber: row(m),
       needsNewExport: true,
     }),
@@ -117,7 +117,7 @@ const RULES: Rule[] = [
   {
     pattern: /^Row (\d+): participant was changed after export; export again$/,
     describe: (m) => ({
-      message: `Dòng ${m[1]}: người khám đã được thay đổi sau khi xuất file. Vui lòng xuất lại file mới nhất rồi nhập lại.`,
+      message: `Dòng ${m[1]}: người khám đã được thay đổi sau khi xuất tệp. Vui lòng xuất lại tệp mới nhất rồi nhập lại.`,
       rowNumber: row(m),
       needsNewExport: true,
     }),
@@ -125,7 +125,7 @@ const RULES: Rule[] = [
   {
     pattern: /^Row (\d+): a marked service is no longer offered in this agreement$/,
     describe: (m) => ({
-      message: `Dòng ${m[1]}: có hạng mục đánh dấu X không còn được thực hiện trong thỏa thuận này. Vui lòng xuất lại file.`,
+      message: `Dòng ${m[1]}: có hạng mục đánh dấu X không còn được thực hiện trong thỏa thuận này. Vui lòng xuất lại tệp.`,
       rowNumber: row(m),
       needsNewExport: true,
     }),
@@ -133,14 +133,14 @@ const RULES: Rule[] = [
   {
     pattern: /^Data is only accepted in worksheet rows 3 to (\d+)$/,
     describe: (m) => ({
-      message: `File chỉ được chứa dữ liệu từ dòng 3 đến dòng ${m[1]}.`,
+      message: `Tệp chỉ được chứa dữ liệu từ dòng 3 đến dòng ${m[1]}.`,
       needsNewExport: false,
     }),
   },
   {
     pattern: /^The workbook has no data rows$/,
     describe: () => ({
-      message: "File không có dòng dữ liệu nào để nhập.",
+      message: "Tệp không có dòng dữ liệu nào để nhập.",
       needsNewExport: false,
     }),
   },
@@ -148,21 +148,21 @@ const RULES: Rule[] = [
     pattern: /^The file does not match this agreement; export it again$/,
     describe: () => ({
       message:
-        "File không khớp với các hạng mục hiện tại của thỏa thuận. Vui lòng xuất lại file mới nhất rồi nhập lại.",
+        "Tệp không khớp với các hạng mục hiện tại của thỏa thuận. Vui lòng xuất lại tệp mới nhất rồi nhập lại.",
       needsNewExport: true,
     }),
   },
   {
     pattern: /export (it|the file) again$/,
     describe: () => ({
-      message: `${STALE_FILE_MESSAGE} Vui lòng xuất lại file mới nhất rồi nhập lại.`,
+      message: `${STALE_FILE_MESSAGE} Vui lòng xuất lại tệp mới nhất rồi nhập lại.`,
       needsNewExport: true,
     }),
   },
   {
     pattern: /^(Merged cells|The workbook has an unexpected sheet|The file has too many|A service column)/,
     describe: () => ({
-      message: `${STALE_FILE_MESSAGE} Vui lòng dùng file xuất của thỏa thuận, không gộp ô hoặc thêm sheet.`,
+      message: `${STALE_FILE_MESSAGE} Vui lòng dùng tệp xuất của thỏa thuận, không gộp ô hoặc thêm trang tính.`,
       needsNewExport: true,
     }),
   },
@@ -177,7 +177,7 @@ const RULES: Rule[] = [
     pattern: /^(Macros|The workbook (contains|is)|The Participants sheet)/,
     describe: () => ({
       message:
-        "File Excel có thành phần không được hỗ trợ (macro, liên kết ngoài hoặc quá lớn). Vui lòng dùng file xuất của thỏa thuận.",
+        "Tệp Excel có thành phần không được hỗ trợ (lệnh tự động, liên kết ngoài hoặc quá lớn). Vui lòng dùng tệp xuất của thỏa thuận.",
       needsNewExport: true,
     }),
   },
@@ -192,7 +192,7 @@ const RULES: Rule[] = [
   {
     pattern: /^Idempotency key was used for another request$/,
     describe: () => ({
-      message: "Yêu cầu nhập này trùng mã với một yêu cầu khác. Vui lòng chọn lại file để thử lại.",
+      message: "Yêu cầu nhập này trùng mã với một yêu cầu khác. Vui lòng chọn lại tệp để thử lại.",
       needsNewExport: false,
     }),
   },
@@ -210,13 +210,13 @@ function byStatus(status: number): ExaminationDetailImportFailure {
   switch (status) {
     case 0:
       return {
-        message: "Không thể kết nối máy chủ. Có thể thử lại với cùng file, hệ thống sẽ không ghi trùng.",
+        message: "Không thể kết nối máy chủ. Có thể thử lại với cùng tệp, hệ thống sẽ không ghi trùng.",
         needsNewExport: false,
         retryable: true,
       }
     case 400:
       return {
-        message: "File hoặc thông tin gửi lên không hợp lệ. Vui lòng kiểm tra lại.",
+        message: "Tệp hoặc thông tin gửi lên không hợp lệ. Vui lòng kiểm tra lại.",
         needsNewExport: false,
         retryable: false,
       }
@@ -240,13 +240,13 @@ function byStatus(status: number): ExaminationDetailImportFailure {
       }
     case 409:
       return {
-        message: "Dữ liệu thỏa thuận đã thay đổi hoặc không thỏa quy tắc nghiệp vụ. Vui lòng xuất lại file.",
+        message: "Dữ liệu thỏa thuận đã thay đổi hoặc không thỏa quy tắc nghiệp vụ. Vui lòng xuất lại tệp.",
         needsNewExport: true,
         retryable: false,
       }
     case 413:
       return {
-        message: "File vượt quá dung lượng cho phép (tối đa 5 MB).",
+        message: "Tệp vượt quá dung lượng cho phép (tối đa 5 MB).",
         needsNewExport: false,
         retryable: false,
       }
@@ -260,7 +260,7 @@ function byStatus(status: number): ExaminationDetailImportFailure {
       return {
         message:
           status >= 500
-            ? "Máy chủ gặp lỗi. Có thể thử lại với cùng file, hệ thống sẽ không ghi trùng."
+            ? "Máy chủ gặp lỗi. Có thể thử lại với cùng tệp, hệ thống sẽ không ghi trùng."
             : "Không thể nhập chi tiết khám. Vui lòng thử lại.",
         needsNewExport: false,
         retryable: status >= 500,

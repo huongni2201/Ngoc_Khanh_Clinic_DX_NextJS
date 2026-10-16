@@ -234,7 +234,7 @@ export function TodayAppointmentsDialog({
                   <TableCell colSpan={7} className="h-40 text-center text-xs text-muted-foreground">
                     {error instanceof Error
                       ? error.message
-                      : "Backend chưa cung cấp API lịch hẹn."}
+                      : "Chưa hỗ trợ chức năng lịch hẹn."}
                   </TableCell>
                 </TableRow>
               ) : filteredAppointments.length === 0 ? (

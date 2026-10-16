@@ -16,8 +16,8 @@ export async function generateMetadata({
 }: HealthExaminationAgreementDetailPageProps): Promise<Metadata> {
   const resolvedParams = await params
   return {
-    title: "Chi tiết thỏa thuận — Ngọc Khánh Clinic",
-    description: "Chi tiết thỏa thuận " + resolvedParams.agreementId + " tại Ngọc Khánh Clinic",
+    title: "Chi tiết thỏa thuận — Phòng khám Ngọc Khánh",
+    description: "Chi tiết thỏa thuận " + resolvedParams.agreementId + " tại Phòng khám Ngọc Khánh",
   }
 }
 

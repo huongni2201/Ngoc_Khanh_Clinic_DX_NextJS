@@ -158,7 +158,7 @@ export function ParticipantFormFields({
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="participant-email">Email</Label>
+        <Label htmlFor="participant-email">Thư điện tử</Label>
         <Input
           id="participant-email"
           type="email"

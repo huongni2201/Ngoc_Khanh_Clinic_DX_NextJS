@@ -5,7 +5,7 @@ import { AppointmentsPage } from "@/widgets/appointment-workspace"
 import { ScreenLoadingSkeleton } from "@/shared/ui"
 
 export const metadata: Metadata = {
-  title: "Lịch hẹn — Ngọc Khánh Clinic",
+  title: "Lịch hẹn — Phòng khám Ngọc Khánh",
   description: "Quản lý lịch hẹn khám bệnh tại Phòng Khám Ngọc Khánh",
 }
 

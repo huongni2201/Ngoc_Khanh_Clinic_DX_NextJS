@@ -142,13 +142,13 @@ export function ReceptionPage() {
   const incomingCheckinCode = searchParams?.get("checkinCode")
   const appointmentCheckInError =
     incomingAppointmentId || incomingCheckinCode
-      ? "Backend chưa cung cấp API tra cứu hồ sơ bệnh nhân từ lịch hẹn."
+      ? "Chưa hỗ trợ chức năng tra cứu hồ sơ bệnh nhân từ lịch hẹn."
       : checkInUnavailableError
 
   const handleCheckInFromAppointmentList = (apt: Appointment) => {
     void apt
     setCheckInUnavailableError(
-      "Backend chưa cung cấp API tra cứu hồ sơ bệnh nhân từ lịch hẹn."
+      "Chưa hỗ trợ chức năng tra cứu hồ sơ bệnh nhân từ lịch hẹn."
     )
   }
 

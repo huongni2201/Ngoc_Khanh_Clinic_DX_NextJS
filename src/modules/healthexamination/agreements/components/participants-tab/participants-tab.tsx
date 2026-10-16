@@ -291,7 +291,7 @@ export function ParticipantsTab({
       { agreementCode: agreement.code },
       {
         onError: () =>
-          toast.error("Không thể tải file mẫu. Vui lòng thử lại.", {
+          toast.error("Không thể tải tệp mẫu. Vui lòng thử lại.", {
             id: "participant-template-download-failed",
             action: { label: "Thử lại", onClick: handleDownloadTemplate },
           }),
@@ -320,7 +320,7 @@ export function ParticipantsTab({
             disabled={templateDownload.isPending}
           >
             <Download className="mr-1.5 size-3.5" />
-            {templateDownload.isPending ? "Đang tải..." : "Tải file mẫu"}
+            {templateDownload.isPending ? "Đang tải..." : "Tải tệp mẫu"}
           </Button>
         )}
         {importAllowed && (

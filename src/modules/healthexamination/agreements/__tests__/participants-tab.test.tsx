@@ -86,7 +86,7 @@ describe("ParticipantsTab list", () => {
 
     expect(await screen.findByText("Chưa có người khám trong thỏa thuận")).toBeInTheDocument()
     expect(screen.queryByRole("button", { name: /nhập từ excel/i })).not.toBeInTheDocument()
-    expect(screen.queryByRole("button", { name: /tải file mẫu/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: /tải tệp mẫu/i })).not.toBeInTheDocument()
   })
 
   it("does not call the backend and says so when the user cannot read Participants", () => {
@@ -188,7 +188,7 @@ describe("ParticipantsTab actions", () => {
 
       await screen.findByText("Người khám 1")
       expect(screen.queryByRole("button", { name: /nhập từ excel/i })).not.toBeInTheDocument()
-      expect(screen.queryByRole("button", { name: /tải file mẫu/i })).not.toBeInTheDocument()
+      expect(screen.queryByRole("button", { name: /tải tệp mẫu/i })).not.toBeInTheDocument()
     }
   )
 
@@ -200,7 +200,7 @@ describe("ParticipantsTab actions", () => {
     const user = userEvent.setup()
     await screen.findByText("Người khám 1")
 
-    await user.click(screen.getByRole("button", { name: "Tải file mẫu" }))
+    await user.click(screen.getByRole("button", { name: "Tải tệp mẫu" }))
 
     await waitFor(() => expect(download.saveBlobAs).toHaveBeenCalledTimes(1))
     expect(getBlob).toHaveBeenCalledWith(
@@ -218,10 +218,10 @@ describe("ParticipantsTab actions", () => {
     const user = userEvent.setup()
     await screen.findByText("Người khám 1")
 
-    await user.click(screen.getByRole("button", { name: "Tải file mẫu" }))
+    await user.click(screen.getByRole("button", { name: "Tải tệp mẫu" }))
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Không thể tải file mẫu. Vui lòng thử lại."
+      "Không thể tải tệp mẫu. Vui lòng thử lại."
     )
   })
 })
@@ -253,7 +253,7 @@ describe("Participant import dialog", () => {
     })
     renderTab({ canImport: true })
     const { user, dialog } = await openDialog()
-    expect(within(dialog).queryByRole("button", { name: "Tải file mẫu" })).not.toBeInTheDocument()
+    expect(within(dialog).queryByRole("button", { name: "Tải tệp mẫu" })).not.toBeInTheDocument()
     const listCalls = get.mock.calls.length
 
     await user.upload(within(dialog).getByLabelText(/Tệp Excel/), xlsx())

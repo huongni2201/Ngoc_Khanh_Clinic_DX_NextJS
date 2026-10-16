@@ -116,7 +116,7 @@ export function OrganizationTable({
             <TableHead className={`${HEAD_CLASS} hidden w-[19%] min-w-48 lg:table-cell`}>Địa chỉ</TableHead>
             <TableHead className={`${HEAD_CLASS} hidden w-[13%] md:table-cell`}>Người liên hệ</TableHead>
             <TableHead className={`${HEAD_CLASS} hidden w-[11%] min-w-28 lg:table-cell`}>SĐT người liên hệ</TableHead>
-            <TableHead className={`${HEAD_CLASS} hidden w-[15%] min-w-44 lg:table-cell`}>Email người liên hệ</TableHead>
+            <TableHead className={`${HEAD_CLASS} hidden w-[15%] min-w-44 lg:table-cell`}>Thư điện tử người liên hệ</TableHead>
             <TableHead className={`${HEAD_CLASS} w-[12%]`}>Trạng thái</TableHead>
             <TableHead className={`${HEAD_CLASS} w-14 text-right sm:w-24`}>
               <span className="sr-only">Thao tác</span>

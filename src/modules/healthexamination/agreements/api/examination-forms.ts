@@ -1,3 +1,4 @@
+import { parseApiData } from "@/shared/api/parse-api-data"
 import { apiClient } from "@/shared/api/api-client"
 import type {
   CreateExaminationFormPrintJobRequest,
@@ -88,9 +89,9 @@ export async function createExaminationFormPrintJob(
     { headers: { "Idempotency-Key": request.idempotencyKey } }
   )
   if (!response.data) {
-    throw new Error(response.message || "Phản hồi tạo lệnh in không có dữ liệu.")
+    throw new Error("Phản hồi tạo lệnh in không có dữ liệu.")
   }
-  return examinationFormPrintJobResponseSchema.parse(response.data)
+  return parseApiData(examinationFormPrintJobResponseSchema, response.data)
 }
 
 export interface PrintableParticipants {

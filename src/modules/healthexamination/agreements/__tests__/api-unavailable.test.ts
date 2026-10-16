@@ -28,7 +28,7 @@ describe("health examination backend gaps", () => {
     expect(failure).toBeInstanceOf(ApiUnavailableError)
     expect(failure).toMatchObject({
       feature,
-      message: `Backend chưa cung cấp API cho ${feature}.`,
+      message: `Chưa hỗ trợ chức năng ${feature}.`,
     })
     expect(failure).not.toHaveProperty("status")
     expect(get).not.toHaveBeenCalled()

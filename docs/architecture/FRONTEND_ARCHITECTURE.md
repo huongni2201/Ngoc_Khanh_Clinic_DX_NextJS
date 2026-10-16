@@ -298,6 +298,32 @@ an item whose `permission` the session lacks ("Đơn vị" needs `ORGANIZATION_S
 tries and the backend answers. Add a code to `PERMISSION` when a screen needs it. These
 checks only hide or disable controls; the backend decides every request.
 
+### Clinic Manager catalog management
+
+The same AppShell/AppSidebar contains the permission-gated staff member entry and a catalog
+group at `/admin/catalog/{departments|rooms|specialties|services|medicines}`. Catalog screens
+use the shared canAccessCatalogManagement check (STAFF with CLINIC_MANAGER or local TEST)
+in addition to typed endpoint permissions; the existing staff-member
+workflow keeps its permission checks. Staff accounts, including Clinic Manager, are created by an authorized administrator through the
+existing `/staff-members` form with one role, loaded from the role API.
+
+Catalog owns its management adapters, hooks, query keys and forms. It reuses ScreenLayout,
+PageHeader, SearchField, StatusPill and DataTablePagination. Service list rows and detail records
+are distinct: opening detail/edit fetches the full record so preparation instructions are not
+lost. The adapter maps numeric backend prices into the form's decimal string and maps its
+department filter to the backend's `performingDepartmentId` parameter. Dialogs mount when opened
+so each edit starts with its own record. TEST keeps every backend-granted permission and can
+open all five catalogs; neither its role nor this UI check invents permissions absent from the session.
+Sidebar, direct routes and the catalog index use the same access predicate. Backend V007 grants catalog access to CLINIC_MANAGER; administrator has no catalog grants; sign in again after deployment to refresh the permission snapshot.
+
+Catalog mutations use a module-local hook to clear the session/business cache on 401 and
+refresh management queries on 409; writes are never automatically retried. Conflict recovery
+keeps the draft until the user explicitly discards it and loads a fresh detail/version. Form
+reload blocks closing/submitting until the new snapshot is ready. Status dialogs offer the
+same explicit reload without a draft. Parent filters reuse the searchable, paginated reference
+picker with all statuses; creation pickers stay active-only. Reference choices are buttons with
+keyboard/focus behavior, and enum/status Select controls receive Vietnamese label mappings.
+
 Update this file when the **current architecture** changes.
 
 Create or supersede an ADR when the **decision/rationale** changes.

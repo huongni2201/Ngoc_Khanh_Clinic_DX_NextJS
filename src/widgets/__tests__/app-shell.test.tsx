@@ -36,6 +36,8 @@ describe("AppShell", () => {
     )
 
     await screen.findByText("staff.test")
+    expect(screen.getByText("Bác sĩ")).toBeInTheDocument()
+    expect(screen.queryByText("DOCTOR")).not.toBeInTheDocument()
     expect(
       screen.getByRole("navigation", { name: "Điều hướng chính" })
     ).toBeInTheDocument()

@@ -62,8 +62,8 @@ export function agreementServerFieldIssue(error: ApiFieldError): AgreementServer
       return {
         target: null,
         message: required
-          ? `Thiếu trường bắt buộc "${error.field}". Backend đang chạy có thể là bản cũ; hãy khởi động lại backend.`
-          : `Trường "${error.field}" không hợp lệ.`,
+          ? "Thiếu thông tin bắt buộc. Máy chủ có thể đang chạy phiên bản cũ; vui lòng liên hệ quản trị viên."
+          : "Có thông tin không hợp lệ. Vui lòng kiểm tra lại hoặc liên hệ quản trị viên.",
       }
   }
 }

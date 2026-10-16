@@ -31,7 +31,7 @@ export function HealthExaminationAgreementTabs({
 }: HealthExaminationAgreementTabsProps) {
   return (
     <div className="border-b border-border">
-      <nav aria-label="Tabs" className="-mb-px flex gap-6 overflow-x-auto no-scrollbar">
+      <nav aria-label="Các mục của thỏa thuận" className="-mb-px flex gap-6 overflow-x-auto no-scrollbar">
         {TABS.filter((tab) => !hiddenTabs.includes(tab.key)).map((tab) => {
           const isActive = activeTab === tab.key
 

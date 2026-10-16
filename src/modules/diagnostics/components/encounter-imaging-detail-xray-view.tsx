@@ -37,7 +37,7 @@ export function EncounterImagingDetailXRayView({
             {imagingReport.serviceName}
           </h2>
           <p className="text-sm text-muted-foreground">
-            Backend chưa cung cấp API để tải ảnh chẩn đoán hình ảnh.
+            Chưa hỗ trợ chức năng để tải ảnh chẩn đoán hình ảnh.
           </p>
           <p className="text-xs text-muted-foreground">
             Mã phiếu: {imagingReport.orderCode}

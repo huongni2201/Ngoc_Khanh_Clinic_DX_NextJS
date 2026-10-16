@@ -13,7 +13,7 @@ function Pagination({ className, ...props }: React.ComponentProps<"nav">) {
   return (
     <nav
       role="navigation"
-      aria-label="pagination"
+      aria-label="Phân trang"
       data-slot="pagination"
       className={cn("mx-auto flex w-full justify-center", className)}
       {...props}
@@ -179,7 +179,7 @@ function PaginationEllipsis({
       {...props}
     >
       <HugeiconsIcon icon={EllipsisIcon} strokeWidth={2} />
-      <span className="sr-only">More pages</span>
+      <span className="sr-only">Các trang khác</span>
     </span>
   )
 }

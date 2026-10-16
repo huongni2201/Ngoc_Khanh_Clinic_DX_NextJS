@@ -39,6 +39,7 @@ import {
 } from "../utils/staff-member-labels"
 import { previewUsernameBase } from "../utils/username-preview"
 import { RoleRadioGroup } from "./role-radio-group"
+import { StaffRoleHelp } from "./staff-role-help"
 
 interface CreateStaffMemberDialogProps {
   open: boolean
@@ -71,6 +72,7 @@ export function CreateStaffMemberDialog({ open, onOpenChange }: CreateStaffMembe
   })
 
   const fullName = useWatch({ control, name: "fullName" })
+  const roleCode = useWatch({ control, name: "roleCode" })
   const usernamePreview = previewUsernameBase(fullName ?? "")
   const isPending = isSubmitting || createMutation.isPending
 
@@ -201,7 +203,7 @@ export function CreateStaffMemberDialog({ open, onOpenChange }: CreateStaffMembe
                     />
                     <FormTextField
                       id="staff-member-email"
-                      label="Email"
+                      label="Thư điện tử"
                       type="email"
                       placeholder="VD: an.nguyen@clinic.vn"
                       maxLength={STAFF_MEMBER_EMAIL_MAX_LENGTH}
@@ -280,6 +282,7 @@ export function CreateStaffMemberDialog({ open, onOpenChange }: CreateStaffMembe
                     registration={register("roleCode")}
                     error={errors.roleCode?.message}
                   />
+                  <StaffRoleHelp roleCode={roleCode} />
                 </fieldset>
               </div>
 

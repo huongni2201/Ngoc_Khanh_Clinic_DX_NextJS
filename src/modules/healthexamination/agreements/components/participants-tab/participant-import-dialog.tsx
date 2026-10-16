@@ -180,8 +180,8 @@ export function ParticipantImportDialog({
           <DialogTitle>Nhập danh sách người khám từ Excel</DialogTitle>
           <DialogDescription>
             {onDownloadTemplate
-              ? "Tải file mẫu của thỏa thuận, điền dữ liệu rồi tải lên."
-              : "Chọn file Excel theo mẫu của thỏa thuận rồi tải lên."} {" "}
+              ? "Tải tệp mẫu của thỏa thuận, điền dữ liệu rồi tải lên."
+              : "Chọn tệp Excel theo mẫu của thỏa thuận rồi tải lên."} {" "}
             Hệ thống chỉ thêm người khám mới và nhập toàn bộ hoặc không nhập dòng nào.
           </DialogDescription>
         </DialogHeader>
@@ -190,7 +190,7 @@ export function ParticipantImportDialog({
           {onDownloadTemplate && (
             <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-muted/40 p-3 text-xs">
               <span className="text-muted-foreground">
-                File mẫu gắn với phiên bản hiện tại của thỏa thuận. Tải lại nếu thỏa thuận vừa được sửa.
+                Tệp mẫu gắn với phiên bản hiện tại của thỏa thuận. Tải lại nếu thỏa thuận vừa được sửa.
               </span>
               <Button
                 type="button"
@@ -199,7 +199,7 @@ export function ParticipantImportDialog({
                 onClick={onDownloadTemplate}
                 disabled={isDownloadingTemplate || pending}
               >
-                {isDownloadingTemplate ? "Đang tải..." : "Tải file mẫu"}
+                {isDownloadingTemplate ? "Đang tải..." : "Tải tệp mẫu"}
               </Button>
             </div>
           )}
@@ -285,7 +285,7 @@ export function ParticipantImportDialog({
                 <p>{failure.message}</p>
                 <p className="mt-1 text-xs">Chưa có người khám nào được thêm vào thỏa thuận.</p>
                 {failure.needsNewTemplate && (
-                  <p className="mt-1 text-xs">Hãy tải lại file mẫu mới nhất rồi nhập lại.</p>
+                  <p className="mt-1 text-xs">Hãy tải lại tệp mẫu mới nhất rồi nhập lại.</p>
                 )}
               </AlertDescription>
             </Alert>

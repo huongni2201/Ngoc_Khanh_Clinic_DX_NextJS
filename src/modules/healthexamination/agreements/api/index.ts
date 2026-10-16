@@ -1,3 +1,4 @@
+import { parseApiData } from "@/shared/api/parse-api-data"
 import { unavailableApi } from "@/shared/api/api-unavailable"
 import { apiClient } from "@/shared/api/api-client"
 import type {
@@ -95,7 +96,7 @@ function toConfigurationBody(
 
 function parseAgreement(data: unknown, emptyMessage: string): HealthExaminationAgreement {
   if (!data) throw new Error(emptyMessage)
-  return mapAgreement(healthExaminationAgreementDetailResponseSchema.parse(data))
+  return mapAgreement(parseApiData(healthExaminationAgreementDetailResponseSchema, data))
 }
 
 export async function fetchHealthExaminationAgreementsByOrganization(
@@ -116,10 +117,10 @@ export async function fetchHealthExaminationAgreementsByOrganization(
     { signal }
   )
   if (!response.data) {
-    throw new Error(response.message || "Phản hồi danh sách thỏa thuận không có dữ liệu.")
+    throw new Error("Phản hồi danh sách thỏa thuận không có dữ liệu.")
   }
 
-  const page = healthExaminationAgreementPageResponseSchema.parse(response.data)
+  const page = parseApiData(healthExaminationAgreementPageResponseSchema, response.data)
   return {
     data: page.items.map((agreement) => mapAgreementSummary(agreement, organizationId)),
     total: page.totalElements,
@@ -138,7 +139,7 @@ export async function fetchHealthExaminationAgreementById(
     agreementItemEndpoint(organizationId, agreementId),
     { signal }
   )
-  return parseAgreement(response.data, response.message || "Phản hồi chi tiết thỏa thuận không có dữ liệu.")
+  return parseAgreement(response.data, "Phản hồi chi tiết thỏa thuận không có dữ liệu.")
 }
 
 export async function createHealthExaminationAgreement(
@@ -148,7 +149,7 @@ export async function createHealthExaminationAgreement(
     agreementEndpoint(request.organizationId),
     toConfigurationBody(request)
   )
-  return parseAgreement(response.data, response.message || "Phản hồi tạo thỏa thuận không có dữ liệu.")
+  return parseAgreement(response.data, "Phản hồi tạo thỏa thuận không có dữ liệu.")
 }
 
 export async function updateHealthExaminationAgreement(
@@ -164,7 +165,7 @@ export async function updateHealthExaminationAgreement(
   )
   return parseAgreement(
     response.data,
-    response.message || "Phản hồi cập nhật thỏa thuận không có dữ liệu."
+    "Phản hồi cập nhật thỏa thuận không có dữ liệu."
   )
 }
 
@@ -203,7 +204,7 @@ export async function activateHealthExaminationAgreement(
   )
   return parseAgreement(
     response.data,
-    response.message || "Phản hồi kích hoạt thỏa thuận không có dữ liệu."
+    "Phản hồi kích hoạt thỏa thuận không có dữ liệu."
   )
 }
 
@@ -217,7 +218,7 @@ export async function endHealthExaminationAgreement(
   )
   return parseAgreement(
     response.data,
-    response.message || "Phản hồi kết thúc thỏa thuận không có dữ liệu."
+    "Phản hồi kết thúc thỏa thuận không có dữ liệu."
   )
 }
 

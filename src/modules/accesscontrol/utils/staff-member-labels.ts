@@ -34,5 +34,5 @@ export const STAFF_ACCOUNT_STATUS_PRESENTATION: Record<
  */
 export function roleLabel(code: string, role?: Pick<RoleOption, "name">) {
   if (role?.name) return roleDisplayName({ code, name: role.name })
-  return ROLE_LABELS[code] ?? code
+  return ROLE_LABELS[code] ?? (code === "DOCTOR" ? "Bác sĩ" : code)
 }

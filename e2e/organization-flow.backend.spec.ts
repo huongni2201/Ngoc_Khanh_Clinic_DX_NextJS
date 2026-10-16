@@ -25,10 +25,10 @@ test("create, find, edit and deactivate an organization on the real backend", as
   const dialog = page.getByRole("dialog")
   await dialog.getByLabel(/Tên đơn vị/).fill(name)
   await dialog.getByLabel(/Mã số thuế/).fill(taxCode)
-  await dialog.getByLabel(/Email đơn vị/).fill(`org-${suffix.toLowerCase()}@example.com`)
+  await dialog.getByLabel(/Thư điện tử đơn vị/).fill(`org-${suffix.toLowerCase()}@example.com`)
   await dialog.getByLabel(/Người liên hệ/).fill("Người liên hệ E2E")
   await dialog.getByLabel(/Điện thoại người liên hệ|^Số điện thoại/).fill("0900000002")
-  await dialog.getByLabel(/Email người liên hệ/).fill(`contact-${suffix.toLowerCase()}@example.com`)
+  await dialog.getByLabel(/Thư điện tử người liên hệ/).fill(`contact-${suffix.toLowerCase()}@example.com`)
   await dialog.getByLabel(/Địa chỉ/).fill("1 Đường Kiểm Thử, Hà Nội")
   await dialog.getByRole("button", { name: "Tạo đơn vị" }).click()
 

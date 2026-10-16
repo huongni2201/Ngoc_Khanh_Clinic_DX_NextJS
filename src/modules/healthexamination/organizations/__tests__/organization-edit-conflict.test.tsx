@@ -100,10 +100,10 @@ describe("CreateOrganizationDialog conflict", () => {
 
     await user.type(screen.getByLabelText(/Mã số thuế/), "0101243150")
     await user.type(screen.getByLabelText(/Tên đơn vị/), "Công ty FPT")
-    await user.type(screen.getByLabelText(/Email đơn vị/), "office@example.invalid")
+    await user.type(screen.getByLabelText(/Thư điện tử đơn vị/), "office@example.invalid")
     await user.type(screen.getByLabelText(/Người liên hệ/), "Nguyễn Văn Hùng")
     await user.type(screen.getByLabelText(/^Số điện thoại/), "0912345678")
-    await user.type(screen.getByLabelText(/Email người liên hệ/), "person@example.invalid")
+    await user.type(screen.getByLabelText(/Thư điện tử người liên hệ/), "person@example.invalid")
     await user.type(screen.getByLabelText(/Địa chỉ/), "Hà Nội")
     await user.click(screen.getByRole("button", { name: /Tạo đơn vị|Lưu|Tạo/ }))
 

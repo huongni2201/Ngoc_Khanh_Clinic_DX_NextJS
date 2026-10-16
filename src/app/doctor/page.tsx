@@ -5,8 +5,8 @@ import { DoctorWorklistPage } from "@/widgets/doctor"
 import { ScreenLoadingSkeleton } from "@/shared/ui"
 
 export const metadata: Metadata = {
-  title: "Danh sách lượt khám — Bác sĩ — Ngọc Khánh Clinic",
-  description: "Theo dõi bệnh nhân đang chờ, đang khám và tiến độ xử lý trong ngày tại Ngọc Khánh Clinic",
+  title: "Danh sách lượt khám — Bác sĩ — Phòng khám Ngọc Khánh",
+  description: "Theo dõi bệnh nhân đang chờ, đang khám và tiến độ xử lý trong ngày tại Phòng khám Ngọc Khánh",
 }
 
 export default function DoctorRoute() {

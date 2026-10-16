@@ -230,19 +230,19 @@ describe("ExaminationDetailTab", () => {
 
     await user.click(screen.getByRole("button", { name: "Xuất Excel" }))
 
-    expect(await screen.findByText("Đã xuất file chi tiết khám.")).toBeInTheDocument()
+    expect(await screen.findByText("Đã xuất tệp chi tiết khám.")).toBeInTheDocument()
   })
 
   it("tells the user with a toast when the export fails", async () => {
     mockGet([backendRow(1)])
-    vi.spyOn(apiClient, "getBlob").mockRejectedValue(new Error("Bạn không có quyền xuất file."))
+    vi.spyOn(apiClient, "getBlob").mockRejectedValue(new Error("Bạn không có quyền xuất tệp."))
     const user = userEvent.setup()
     renderTab()
     await screen.findByText("Người khám 1")
 
     await user.click(screen.getByRole("button", { name: "Xuất Excel" }))
 
-    expect(await screen.findByRole("alert")).toHaveTextContent("Bạn không có quyền xuất file.")
+    expect(await screen.findByRole("alert")).toHaveTextContent("Bạn không có quyền xuất tệp.")
   })
 
   it("shows the import only with the reconcile permission and while the agreement accepts changes", async () => {
@@ -277,7 +277,7 @@ describe("ExaminationDetailTab", () => {
     renderTab({ canDownloadTemplate: true })
     await screen.findByText("Người khám 1")
 
-    await user.click(screen.getByRole("button", { name: "Tải file mẫu" }))
+    await user.click(screen.getByRole("button", { name: "Tải tệp mẫu" }))
 
     await waitFor(() =>
       expect(download.saveBlobAs).toHaveBeenCalledWith(blob, "mau-nhap-chi-tiet-kham-DK001.xlsx")
@@ -292,7 +292,7 @@ describe("ExaminationDetailTab", () => {
     mockGet([backendRow(1)])
     renderTab({ canDownloadTemplate: false })
     await screen.findByText("Người khám 1")
-    expect(screen.queryByRole("button", { name: "Tải file mẫu" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Tải tệp mẫu" })).not.toBeInTheDocument()
   })
 
   it("falls back to the export inside the import dialog when the user cannot download the template", async () => {
@@ -305,7 +305,7 @@ describe("ExaminationDetailTab", () => {
     await screen.findByText("Người khám 1")
 
     await user.click(screen.getByRole("button", { name: "Nhập Excel" }))
-    await user.click(await screen.findByRole("button", { name: "Tải file mẫu" }))
+    await user.click(await screen.findByRole("button", { name: "Tải tệp mẫu" }))
 
     await waitFor(() => expect(getBlob).toHaveBeenCalledTimes(1))
     expect(String(getBlob.mock.calls[0][0])).toMatch(/\/examination-details\/export$/)

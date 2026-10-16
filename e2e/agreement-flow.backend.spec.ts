@@ -27,10 +27,10 @@ test("organization to agreement chain works on the real backend", async ({ page 
   const orgDialog = page.getByRole("dialog")
   await orgDialog.getByLabel(/Tên đơn vị/).fill(orgName)
   await orgDialog.getByLabel(/Mã số thuế/).fill(taxCode)
-  await orgDialog.getByLabel(/Email đơn vị/).fill(`org-${suffix.toLowerCase()}@example.com`)
+  await orgDialog.getByLabel(/Thư điện tử đơn vị/).fill(`org-${suffix.toLowerCase()}@example.com`)
   await orgDialog.getByLabel(/Người liên hệ/).fill("Người liên hệ E2E")
   await orgDialog.getByLabel(/Điện thoại người liên hệ|^Số điện thoại/).fill("0900000002")
-  await orgDialog.getByLabel(/Email người liên hệ/).fill(`contact-${suffix.toLowerCase()}@example.com`)
+  await orgDialog.getByLabel(/Thư điện tử người liên hệ/).fill(`contact-${suffix.toLowerCase()}@example.com`)
   await orgDialog.getByLabel(/Địa chỉ/).fill("1 Đường Kiểm Thử, Hà Nội")
   await orgDialog.getByRole("button", { name: "Tạo đơn vị" }).click()
 

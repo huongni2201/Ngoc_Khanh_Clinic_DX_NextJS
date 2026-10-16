@@ -13,8 +13,9 @@ describe("agreement server field errors", () => {
     const issue = agreementServerFieldIssue({ field: "someNewField", code: "NotBlank" })
 
     expect(issue.target).toBeNull()
-    expect(issue.message).toContain('"someNewField"')
-    expect(issue.message).toContain("khởi động lại backend")
+    expect(issue.message).toContain("Thiếu thông tin bắt buộc")
+    expect(issue.message).toContain("liên hệ quản trị viên")
+    expect(issue.message).not.toContain("someNewField")
   })
 
   it("maps a negotiated price to its table row and drops duplicate messages", () => {
@@ -43,7 +44,7 @@ describe("agreement server field errors", () => {
   it("no longer knows the site fields of the old batch form", () => {
     expect(agreementServerFieldIssue({ field: "examinationSiteAddress", code: "AssertTrue" })).toEqual({
       target: null,
-      message: "Trường \"examinationSiteAddress\" không hợp lệ.",
+      message: "Có thông tin không hợp lệ. Vui lòng kiểm tra lại hoặc liên hệ quản trị viên.",
     })
   })
 })

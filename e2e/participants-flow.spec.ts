@@ -142,7 +142,7 @@ test("imports a roster from Excel and refreshes the Participant list", async ({ 
 
   await expect(page.getByText("Chưa có người khám trong thỏa thuận")).toBeVisible()
   const download = page.waitForEvent("download")
-  await page.getByRole("button", { name: "Tải file mẫu" }).click()
+  await page.getByRole("button", { name: "Tải tệp mẫu" }).click()
   expect((await download).suggestedFilename()).toMatch(/^mau-nhap-nguoi-kham-.*\.xlsx$/)
 
   await page.getByRole("button", { name: "Nhập từ Excel" }).click()
@@ -196,7 +196,7 @@ test("a session without the import permission sees the list but no import action
 
   await expect(page.getByText("Chưa có người khám trong thỏa thuận")).toBeVisible()
   await expect(page.getByRole("button", { name: "Nhập từ Excel" })).toHaveCount(0)
-  await expect(page.getByRole("button", { name: "Tải file mẫu" })).toHaveCount(0)
+  await expect(page.getByRole("button", { name: "Tải tệp mẫu" })).toHaveCount(0)
 })
 
 test("a session without the read permission never requests the list", async ({ page }) => {

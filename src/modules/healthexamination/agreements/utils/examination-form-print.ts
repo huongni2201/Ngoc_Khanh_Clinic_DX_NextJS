@@ -23,9 +23,9 @@ export const EXAMINATION_FORM_SESSION_PRINT_ORDER_LABELS: Record<
   ExaminationFormSessionPrintOrder,
   string
 > = {
-  DEPARTMENT: "Theo đơn vị/phòng ban, rồi thứ tự trong file danh sách",
+  DEPARTMENT: "Theo đơn vị/phòng ban, rồi thứ tự trong tệp danh sách",
   CODE: "Theo mã người khám",
-  IMPORT_ORDER: "Theo thứ tự trong file danh sách",
+  IMPORT_ORDER: "Theo thứ tự trong tệp danh sách",
 }
 
 /** Forms per merged PDF (`nkc.document.jobs.part-size`). */
@@ -109,7 +109,7 @@ export function describeCreatePrintJobError(error: unknown): string {
       return "Chưa tạo được lệnh in: thỏa thuận không còn ở trạng thái cho phép in, lịch khám không còn ai cần in hoặc thuộc thỏa thuận khác, danh sách của lịch vừa thay đổi so với lần gửi trước, hoặc bạn đang có 3 lệnh in chưa xong. Kiểm tra lại rồi thử lại."
     }
     if (error.status === 503) {
-      return "Máy chủ chưa sẵn sàng lưu file in. Liên hệ quản trị hệ thống."
+      return "Máy chủ chưa sẵn sàng lưu tệp in. Liên hệ quản trị hệ thống."
     }
     if (error.status >= 500) return "Máy chủ gặp lỗi. Vui lòng thử lại sau."
     if (error.status === 0) return error.message

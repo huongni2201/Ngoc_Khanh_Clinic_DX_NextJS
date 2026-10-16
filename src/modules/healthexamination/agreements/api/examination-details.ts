@@ -1,3 +1,4 @@
+import { parseApiData } from "@/shared/api/parse-api-data"
 import { apiClient } from "@/shared/api/api-client"
 import type {
   DownloadedFile,
@@ -119,10 +120,10 @@ export async function fetchExaminationDetails(
     { signal }
   )
   if (!response.data) {
-    throw new Error(response.message || "Phản hồi chi tiết khám không có dữ liệu.")
+    throw new Error("Phản hồi chi tiết khám không có dữ liệu.")
   }
 
-  const page = examinationDetailPageResponseSchema.parse(response.data)
+  const page = parseApiData(examinationDetailPageResponseSchema, response.data)
   return {
     data: page.items.map(mapRow),
     total: page.totalElements,
@@ -141,10 +142,10 @@ export async function fetchExaminationSummary(
     signal,
   })
   if (!response.data) {
-    throw new Error(response.message || "Phản hồi số liệu chi tiết khám không có dữ liệu.")
+    throw new Error("Phản hồi số liệu chi tiết khám không có dữ liệu.")
   }
 
-  return examinationSummaryResponseSchema.parse(response.data)
+  return parseApiData(examinationSummaryResponseSchema, response.data)
 }
 
 /**
@@ -196,10 +197,10 @@ export async function recordExaminationDetail(
     }
   )
   if (!response.data) {
-    throw new Error(response.message || "Phản hồi cập nhật chi tiết khám không có dữ liệu.")
+    throw new Error("Phản hồi cập nhật chi tiết khám không có dữ liệu.")
   }
 
-  return mapRow(examinationDetailRowResponseSchema.parse(response.data))
+  return mapRow(parseApiData(examinationDetailRowResponseSchema, response.data))
 }
 
 /**
@@ -219,8 +220,8 @@ export async function importExaminationDetails(
     { headers: { "Idempotency-Key": request.idempotencyKey } }
   )
   if (!response.data) {
-    throw new Error(response.message || "Phản hồi nhập chi tiết khám không có dữ liệu.")
+    throw new Error("Phản hồi nhập chi tiết khám không có dữ liệu.")
   }
 
-  return examinationDetailImportResponseSchema.parse(response.data)
+  return parseApiData(examinationDetailImportResponseSchema, response.data)
 }
