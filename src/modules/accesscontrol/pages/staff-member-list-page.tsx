@@ -14,11 +14,13 @@ import {
   RefreshCw,
   ScreenLayout,
 } from "@/shared/ui"
+import { ChangeRoleSheet } from "../components/change-role-sheet"
 import { CreateStaffMemberDialog } from "../components/create-staff-member-dialog"
 import { StaffMemberTable } from "../components/staff-member-table"
 import { usePermissions } from "../hooks/use-permissions"
 import { PERMISSION } from "../permissions"
 import { useAssignableRoles, useStaffMembers } from "../hooks/use-staff-members"
+import type { StaffMember } from "../types/staff-member"
 
 /** Staff members with their accounts; administrators create new ones from here. */
 export function StaffMemberListPage() {
@@ -40,6 +42,10 @@ export function StaffMemberListPage() {
   const pageSize = parsePageSize(searchParams?.get("size"))
 
   const [isCreateOpen, setIsCreateOpen] = React.useState(false)
+  // Change Role (SRS UC-010): the panel lists the assignable roles, so it needs ROLE_VIEW too.
+  const canChangeRole = canAll(PERMISSION.USER_ROLE_ASSIGN, PERMISSION.ROLE_VIEW)
+  const canViewRolePermissions = canAll(PERMISSION.ROLE_PERMISSION_VIEW, PERMISSION.PERMISSION_VIEW)
+  const [roleChangeFor, setRoleChangeFor] = React.useState<StaffMember | null>(null)
 
   const updateUrlParams = React.useCallback(
     (next: { q?: string; page?: number; pageSize?: number }) => {
@@ -120,6 +126,7 @@ export function StaffMemberListPage() {
               searchTerm={search}
               onSearchChange={(q) => updateUrlParams({ q })}
               onCreateClick={openCreate}
+              onChangeRole={canChangeRole ? setRoleChangeFor : undefined}
             />
           </div>
           {!isLoading && (data?.total ?? 0) > 0 ? (
@@ -140,6 +147,17 @@ export function StaffMemberListPage() {
 
       {canCreate ? (
         <CreateStaffMemberDialog open={isCreateOpen} onOpenChange={setIsCreateOpen} />
+      ) : null}
+      {canChangeRole ? (
+        <ChangeRoleSheet
+          staffMember={roleChangeFor}
+          onClose={() => setRoleChangeFor(null)}
+          roles={rolesQuery.data}
+          rolesLoading={rolesQuery.isLoading}
+          rolesError={rolesQuery.isError}
+          onRetryRoles={() => void rolesQuery.refetch()}
+          canViewPermissions={canViewRolePermissions}
+        />
       ) : null}
     </ScreenLayout>
   )

@@ -2,6 +2,7 @@ import { vi } from "vitest"
 import type { UserSession } from "../types"
 import type { RoleResponseDto, StaffMemberResponseDto } from "../types/staff-member-transport"
 import { staffSession } from "./fixtures"
+import { catalogFixture } from "./role-fixtures"
 
 // Synthetic data shaped like docs/api/staff-members.md.
 
@@ -15,12 +16,18 @@ export const staffMemberFixture: StaffMemberResponseDto = {
   email: "an@example.invalid",
   status: "ACTIVE",
   rowVersion: 0,
-  account: { id: "account-1", username: "annv1", status: "ACTIVE", roleCode: "GENERAL_PRACTITIONER" },
+  account: {
+    id: "account-1",
+    username: "annv1",
+    status: "ACTIVE",
+    roleCode: "GENERAL_PRACTITIONER",
+    rowVersion: 3,
+  },
 }
 
 export const rolesFixture: RoleResponseDto[] = [
-  { id: "role-1", code: "GENERAL_PRACTITIONER", name: "General Practitioner", description: "Examines outpatients." },
-  { id: "role-2", code: "RECEPTIONIST", name: "Receptionist", description: "Registers patients." },
+  { id: "role-1", code: "GENERAL_PRACTITIONER", name: "General Practitioner", description: "Examines outpatients.", permissionCount: 21 },
+  { id: "role-2", code: "RECEPTIONIST", name: "Receptionist", description: "Registers patients.", permissionCount: 24 },
 ]
 
 export function sessionWith(permissions: string[]): UserSession {
@@ -47,6 +54,9 @@ export function jsonResponse(body: unknown, status = 200) {
 interface StaffMemberFetchOptions {
   createResponse?: () => Response
   roles?: RoleResponseDto[][]
+  staffMembers?: StaffMemberResponseDto[]
+  /** Answer of PUT /api/v1/accounts/{accountId}/role. */
+  changeRoleResponse?: () => Response | Promise<Response>
 }
 
 /** Answers the staff member and role routes; `roles` lists successive role responses. */
@@ -62,6 +72,31 @@ export function mockStaffMemberFetch(options: StaffMemberFetchOptions = {}) {
       return jsonResponse({ result: "OK", code: 200, data: list })
     }
 
+    if (/^\/api\/v1\/accounts\/[^/]+\/role$/.test(url.pathname) && method === "PUT") {
+      return (
+        options.changeRoleResponse?.() ??
+        jsonResponse({
+          result: "OK",
+          code: 200,
+          message: "Account role changed",
+          data: { accountId: "account-1", roleCode: "RECEPTIONIST", rowVersion: 4 },
+        })
+      )
+    }
+
+    if (url.pathname === "/api/v1/admin/permissions") {
+      return jsonResponse({ result: "OK", code: 200, data: catalogFixture })
+    }
+
+    const grants = url.pathname.match(/^\/api\/v1\/admin\/roles\/([^/]+)\/permissions$/)
+    if (grants) {
+      return jsonResponse({
+        result: "OK",
+        code: 200,
+        data: { roleId: grants[1], roleCode: "RECEPTIONIST", active: true, rowVersion: 0, permissionCodes: ["PATIENT_VIEW", "PAYMENT_REFUND"] },
+      })
+    }
+
     if (url.pathname === "/api/v1/staff-members" && method === "POST") {
       return (
         options.createResponse?.() ??
@@ -72,7 +107,13 @@ export function mockStaffMemberFetch(options: StaffMemberFetchOptions = {}) {
     return jsonResponse({
       result: "OK",
       code: 200,
-      data: { items: [staffMemberFixture], page: 1, size: 10, totalElements: 1, totalPages: 1 },
+      data: {
+        items: options.staffMembers ?? [staffMemberFixture],
+        page: 1,
+        size: 10,
+        totalElements: (options.staffMembers ?? [staffMemberFixture]).length,
+        totalPages: 1,
+      },
     })
   })
   vi.stubGlobal("fetch", fetchMock)

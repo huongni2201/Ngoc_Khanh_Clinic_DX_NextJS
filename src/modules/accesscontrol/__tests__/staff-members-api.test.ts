@@ -1,6 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { apiClient } from "@/shared/api/api-client"
-import { createStaffMember, fetchAssignableRoles, fetchStaffMembers } from "../api/staff-members-api"
+import {
+  changeAccountRole,
+  createStaffMember,
+  fetchAssignableRoles,
+  fetchStaffMembers,
+} from "../api/staff-members-api"
 import { mockStaffMemberFetch, rolesFixture, staffMemberFixture } from "./staff-member-fixtures"
 
 describe("staff members API", () => {
@@ -28,7 +33,7 @@ describe("staff members API", () => {
       email: "an@example.invalid",
       status: "ACTIVE",
       rowVersion: 0,
-      account: { id: "account-1", username: "annv1", status: "ACTIVE", roleCode: "GENERAL_PRACTITIONER" },
+      account: { id: "account-1", username: "annv1", status: "ACTIVE", roleCode: "GENERAL_PRACTITIONER", rowVersion: 3 },
     })
     expect(page).toMatchObject({ total: 1, page: 1, pageSize: 10, totalPages: 1 })
   })
@@ -79,8 +84,26 @@ describe("staff members API", () => {
     expect(created.account?.username).toBe("annv1")
   })
 
-  it("lists assignable roles", async () => {
+  it("lists assignable roles with their permission counts", async () => {
     mockStaffMemberFetch()
-    await expect(fetchAssignableRoles()).resolves.toEqual(rolesFixture)
+    const roles = await fetchAssignableRoles()
+    expect(roles).toEqual(rolesFixture)
+    expect(roles.map((role) => role.permissionCount)).toEqual([21, 24])
+  })
+
+  it("changes the role of an account with the version it was read at", async () => {
+    const put = vi.spyOn(apiClient, "put").mockResolvedValue({
+      result: "OK",
+      code: 200,
+      data: { accountId: "account-1", roleCode: "RECEPTIONIST", rowVersion: 4 },
+    })
+
+    const changed = await changeAccountRole("account-1", { roleCode: "RECEPTIONIST", rowVersion: 3 })
+
+    expect(put).toHaveBeenCalledWith("/api/v1/accounts/account-1/role", {
+      roleCode: "RECEPTIONIST",
+      rowVersion: 3,
+    })
+    expect(changed).toEqual({ accountId: "account-1", roleCode: "RECEPTIONIST", rowVersion: 4 })
   })
 })

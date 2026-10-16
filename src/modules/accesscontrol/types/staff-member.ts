@@ -13,6 +13,8 @@ export interface StaffAccount {
   username: string
   status: StaffAccountStatus
   roleCode: string
+  /** Version to send back when changing the role. */
+  rowVersion: number
 }
 
 export interface StaffMember {
@@ -35,6 +37,20 @@ export interface RoleOption {
   code: string
   name: string
   description: string
+  permissionCount: number
+}
+
+/** New role of an account (SRS UC-010 Change User Role). */
+export interface ChangeAccountRoleInput {
+  roleCode: string
+  /** The account version last read. */
+  rowVersion: number
+}
+
+export interface AccountRole {
+  accountId: string
+  roleCode: string
+  rowVersion: number
 }
 
 export const STAFF_MEMBER_SORT_KEYS = ["id", "staffCode", "fullName"] as const

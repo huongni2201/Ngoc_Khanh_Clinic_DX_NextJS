@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Plus, SearchField, StatusPill, Users } from "@/shared/ui"
+import { Plus, SearchField, StatusPill, UserCheck, Users } from "@/shared/ui"
 import {
   Table,
   TableBody,
@@ -29,10 +29,11 @@ interface StaffMemberTableProps {
   onCreateClick?: () => void
   /** Roles with their stored names, so a renamed role shows its new name. */
   roles?: RoleOption[]
+  /** Opens the Change Role panel (SRS UC-010); omitted when the session may not change roles. */
+  onChangeRole?: (staffMember: StaffMember) => void
 }
 
 const HEAD_CLASS = "h-10 px-4 text-xs font-semibold text-table-header-fg"
-const COLUMN_COUNT = 5
 
 export function StaffMemberTable({
   staffMembers,
@@ -42,7 +43,9 @@ export function StaffMemberTable({
   onSearchChange,
   onCreateClick,
   roles,
+  onChangeRole,
 }: StaffMemberTableProps) {
+  const columnCount = onChangeRole ? 6 : 5
   // Local value for the debounced search, re-synced when the URL changes.
   const [searchValue, setSearchValue] = React.useState(searchTerm)
   const [prevSearch, setPrevSearch] = React.useState(searchTerm)
@@ -93,6 +96,9 @@ export function StaffMemberTable({
             <TableHead className={`${HEAD_CLASS} hidden w-[20%] md:table-cell`}>Tên đăng nhập</TableHead>
             <TableHead className={`${HEAD_CLASS} hidden w-[26%] md:table-cell`}>Vai trò</TableHead>
             <TableHead className={`${HEAD_CLASS} w-[16%]`}>Trạng thái</TableHead>
+            {onChangeRole ? (
+              <TableHead className={`${HEAD_CLASS} w-[1%] text-right`}>Thao tác</TableHead>
+            ) : null}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -114,11 +120,16 @@ export function StaffMemberTable({
                 <TableCell className="px-4 py-3">
                   <Skeleton className="h-6 w-24 rounded-full" />
                 </TableCell>
+                {onChangeRole ? (
+                  <TableCell className="px-4 py-3">
+                    <Skeleton className="ml-auto h-7 w-24" />
+                  </TableCell>
+                ) : null}
               </TableRow>
             ))
           ) : staffMembers.length === 0 ? (
             <TableRow className="hover:bg-transparent">
-              <TableCell colSpan={COLUMN_COUNT} className="py-16 text-center">
+              <TableCell colSpan={columnCount} className="py-16 text-center">
                 <Users aria-hidden="true" className="mx-auto mb-3 size-9 text-muted-foreground" />
                 <p className="text-sm font-medium text-foreground">
                   {isFiltered ? "Không tìm thấy nhân viên phù hợp" : "Chưa có nhân viên nào"}
@@ -143,7 +154,12 @@ export function StaffMemberTable({
             </TableRow>
           ) : (
             staffMembers.map((staffMember) => (
-              <StaffMemberRow key={staffMember.id} staffMember={staffMember} roles={roles} />
+              <StaffMemberRow
+                key={staffMember.id}
+                staffMember={staffMember}
+                roles={roles}
+                onChangeRole={onChangeRole}
+              />
             ))
           )}
         </TableBody>
@@ -155,9 +171,11 @@ export function StaffMemberTable({
 function StaffMemberRow({
   staffMember,
   roles,
+  onChangeRole,
 }: {
   staffMember: StaffMember
   roles?: RoleOption[]
+  onChangeRole?: (staffMember: StaffMember) => void
 }) {
   const status = STAFF_MEMBER_STATUS_PRESENTATION[staffMember.status]
   const account = staffMember.account
@@ -201,6 +219,30 @@ function StaffMemberRow({
       <TableCell className="px-4 py-3">
         <StatusPill tone={status.tone}>{status.label}</StatusPill>
       </TableCell>
+      {onChangeRole ? (
+        <TableCell className="px-4 py-3 text-right">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => onChangeRole(staffMember)}
+            // Only an active account changes role (SRS UC-010 pre-condition 2).
+            disabled={account?.status !== "ACTIVE"}
+            title={
+              !account
+                ? "Nhân viên chưa có tài khoản"
+                : account.status === "ACTIVE"
+                  ? undefined
+                  : "Chỉ đổi vai trò cho tài khoản đang hoạt động"
+            }
+            aria-label={`Đổi vai trò của ${staffMember.fullName}`}
+            className="h-7 gap-1.5 px-2.5 text-xs"
+          >
+            <UserCheck className="size-3.5" />
+            Đổi vai trò
+          </Button>
+        </TableCell>
+      ) : null}
     </TableRow>
   )
 }

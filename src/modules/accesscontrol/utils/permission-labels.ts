@@ -160,7 +160,7 @@ const PERMISSION_LABELS: Record<string, string> = {
   ROLE_PERMISSION_VIEW: "Xem quyền của vai trò",
   ROLE_UPDATE: "Cập nhật, kích hoạt hoặc ngừng hoạt động vai trò",
   ROLE_VIEW: "Xem các vai trò có thể gán",
-  USER_ROLE_ASSIGN: "Gán hoặc gỡ vai trò của người dùng",
+  USER_ROLE_ASSIGN: "Đổi vai trò của tài khoản người dùng",
   STAFF_MEMBER_VIEW: "Xem danh sách nhân viên",
   USER_ACCOUNT_CREATE: "Tạo tài khoản người dùng",
   USER_ACCOUNT_STATUS_UPDATE: "Khóa hoặc mở lại tài khoản người dùng",

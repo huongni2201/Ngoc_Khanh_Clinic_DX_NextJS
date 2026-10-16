@@ -11,6 +11,8 @@ export const staffAccountResponseSchema = z.object({
   username: z.string().min(1),
   status: z.enum(ACCOUNT_STATUS_VALUES),
   roleCode: z.string(),
+  /** Account version, sent back when changing the role (PUT /api/v1/accounts/{accountId}/role). */
+  rowVersion: z.number().int().nonnegative(),
 })
 
 export const staffMemberResponseSchema = z.object({
@@ -44,11 +46,26 @@ export const roleResponseSchema = z.object({
   name: z.string(),
   // Optional since V005: a role created by an administrator may have no description.
   description: z.string().nullish(),
+  /** Number of permissions the role grants. */
+  permissionCount: z.number().int().nonnegative(),
 })
 
 export const roleListResponseSchema = z.array(roleResponseSchema)
 
 export type RoleResponseDto = z.infer<typeof roleResponseSchema>
+
+export interface ChangeAccountRoleRequestDto {
+  roleCode: string
+  rowVersion: number
+}
+
+export const accountRoleResponseSchema = z.object({
+  accountId: z.string().min(1),
+  roleCode: z.string().min(1),
+  rowVersion: z.number().int().nonnegative(),
+})
+
+export type AccountRoleResponseDto = z.infer<typeof accountRoleResponseSchema>
 
 export interface CreateStaffMemberRequestDto {
   fullName: string

@@ -1,13 +1,17 @@
 import { apiClient } from "@/shared/api/api-client"
 import {
+  accountRoleResponseSchema,
   roleListResponseSchema,
   staffMemberPageResponseSchema,
   staffMemberResponseSchema,
+  type ChangeAccountRoleRequestDto,
   type CreateStaffMemberRequestDto,
   type RoleResponseDto,
   type StaffMemberResponseDto,
 } from "../types/staff-member-transport"
 import type {
+  AccountRole,
+  ChangeAccountRoleInput,
   CreateStaffMemberInput,
   RoleOption,
   StaffMember,
@@ -19,6 +23,7 @@ import { normalizeStaffMemberFilterParams } from "../utils/staff-member-list-par
 // Contract: Ngoc_Khanh_Clinic_DX_Springboot/docs/api/staff-members.md
 const STAFF_MEMBERS_ENDPOINT = "/api/v1/staff-members"
 const ROLES_ENDPOINT = "/api/v1/roles"
+const ACCOUNTS_ENDPOINT = "/api/v1/accounts"
 
 function mapStaffMember(dto: StaffMemberResponseDto): StaffMember {
   return {
@@ -37,13 +42,20 @@ function mapStaffMember(dto: StaffMemberResponseDto): StaffMember {
           username: dto.account.username,
           status: dto.account.status,
           roleCode: dto.account.roleCode,
+          rowVersion: dto.account.rowVersion,
         }
       : null,
   }
 }
 
 function mapRole(dto: RoleResponseDto): RoleOption {
-  return { id: dto.id, code: dto.code, name: dto.name, description: dto.description ?? "" }
+  return {
+    id: dto.id,
+    code: dto.code,
+    name: dto.name,
+    description: dto.description ?? "",
+    permissionCount: dto.permissionCount,
+  }
 }
 
 /** Optional text is sent only when filled, so the backend stores null instead of an empty string. */
@@ -110,4 +122,19 @@ export async function fetchAssignableRoles(signal?: AbortSignal): Promise<RoleOp
     throw new Error(response.message || "Phản hồi danh sách vai trò không có dữ liệu.")
   }
   return roleListResponseSchema.parse(response.data).map(mapRole)
+}
+
+/** Replaces the one role of a staff account (SRS UC-010 Change User Role). */
+export async function changeAccountRole(
+  accountId: string,
+  input: ChangeAccountRoleInput
+): Promise<AccountRole> {
+  const response = await apiClient.put<ChangeAccountRoleRequestDto, unknown>(
+    `${ACCOUNTS_ENDPOINT}/${encodeURIComponent(accountId)}/role`,
+    { roleCode: input.roleCode, rowVersion: input.rowVersion }
+  )
+  if (!response.data) {
+    throw new Error(response.message || "Phản hồi đổi vai trò không có dữ liệu.")
+  }
+  return accountRoleResponseSchema.parse(response.data)
 }

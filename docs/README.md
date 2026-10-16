@@ -1,6 +1,6 @@
 # Mục lục tài liệu frontend
 
-Cập nhật 2026-10-13. Tài liệu hiện hành mô tả trạng thái source và contract;
+Cập nhật 2026-10-17. Tài liệu hiện hành mô tả trạng thái source và contract;
 ADR ghi quyết định; báo cáo kiểm tra ghi kết quả và giới hạn theo thời điểm.
 
 ## Tài liệu hiện hành
@@ -32,6 +32,9 @@ authorization production; đối chiếu các khoảng trống quyền trong inv
 Các liên kết này cần checkout backend ở thư mục cùng cấp.
 
 ## Kết quả kiểm chứng
+
+[Đổi vai trò tài khoản — E2E 2026-10-17](maintenance/change-account-role-e2e-2026-10-17.md)
+ghi kết quả kiểm thử với backend thật, kiểm thử hỗ trợ và giới hạn của lần chạy.
 
 [Module verification 2026-10-09](maintenance/backend-aligned-modules-verification.md)
 ghi kết quả kiểm tra và giới hạn của lần chuyển module. Cấu trúc hiện tại nằm
