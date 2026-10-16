@@ -15,8 +15,9 @@ export interface LeaveConfirmation {
 /**
  * Asks before leaving a page with unsaved changes. A reload or closing the tab gets the browser's
  * own prompt. A click on an in-app link (sidebar, breadcrumb) is held back and reported through
- * `pendingHref`, because client navigation never fires `beforeunload`. Links opened in another
- * tab and the browser Back button are not intercepted.
+ * `pendingHref`, because client navigation never fires `beforeunload`. A link to the same page with
+ * another query keeps the page mounted, so nothing is lost and it is not held back. Links opened in
+ * another tab and the browser Back button are not intercepted.
  */
 export function useLeaveConfirmation(enabled: boolean): LeaveConfirmation {
   const router = useRouter()
@@ -35,7 +36,7 @@ export function useLeaveConfirmation(enabled: boolean): LeaveConfirmation {
       if ((anchor.target && anchor.target !== "_self") || anchor.hasAttribute("download")) return
       const url = new URL(anchor.href, window.location.href)
       if (url.origin !== window.location.origin) return
-      if (url.pathname === window.location.pathname && url.search === window.location.search) return
+      if (url.pathname === window.location.pathname) return
       event.preventDefault()
       event.stopPropagation()
       setPendingHref(`${url.pathname}${url.search}${url.hash}`)

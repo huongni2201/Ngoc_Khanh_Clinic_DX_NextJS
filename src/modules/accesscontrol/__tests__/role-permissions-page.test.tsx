@@ -21,6 +21,7 @@ function pageTree(client: QueryClient) {
     <QueryClientProvider client={client}>
       {/* Stands for an in-app link such as the sidebar. */}
       <a href="/roles">Vai trò</a>
+      <a href="/roles/permissions">Phân quyền vai trò</a>
       <RolePermissionsPage />
     </QueryClientProvider>
   )
@@ -232,6 +233,41 @@ describe("RolePermissionsPage", () => {
     await user.click(screen.getByRole("link", { name: "Vai trò" }))
     await user.click(await screen.findByRole("button", { name: "Bỏ thay đổi" }))
     expect(navigation.push).toHaveBeenCalledWith("/roles")
+  })
+
+  it("lets a link to this same page through, since the pending changes stay", async () => {
+    const user = userEvent.setup()
+    window.history.pushState({}, "", "/roles/permissions?roleId=role-receptionist")
+    mockRoleFetch()
+    renderPage(roleAdministratorSession)
+    await screen.findByText("Hoàn tiền")
+    await user.click(within(permissionRow("Tạo hồ sơ bệnh nhân")).getByRole("checkbox"))
+
+    await user.click(screen.getByRole("link", { name: "Phân quyền vai trò" }))
+
+    expect(screen.queryByText("Bỏ thay đổi chưa lưu?")).not.toBeInTheDocument()
+    expect(screen.getByText(/Thay đổi chờ lưu/)).toHaveTextContent("1 cấp · 0 gỡ")
+    window.history.pushState({}, "", "/")
+  })
+
+  it("retries a failed role list without reading the grants of an unselected role", async () => {
+    const user = userEvent.setup()
+    navigation.roleId = ""
+    let failed = false
+    const fetchMock = mockRoleFetch({
+      listResponse: () => {
+        if (failed) return undefined
+        failed = true
+        return jsonResponse({ result: "NG", code: 503, message: "Unavailable" }, 503)
+      },
+    })
+    renderPage(roleAdministratorSession)
+
+    await user.click(await screen.findByRole("button", { name: "Thử lại" }))
+
+    expect(await screen.findByText("Chọn vai trò để phân quyền")).toBeInTheDocument()
+    const paths = fetchMock.mock.calls.map(([input]) => new URL(String(input)).pathname)
+    expect(paths.filter((path) => path.endsWith("/permissions") && path.includes("/roles/"))).toEqual([])
   })
 
   it("applies the module checkbox to the shown permissions only", async () => {

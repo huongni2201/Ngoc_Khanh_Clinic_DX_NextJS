@@ -97,6 +97,8 @@ interface RoleFetchOptions {
   updateResponse?: () => Response
   /** May resolve later, to keep a save in flight. */
   savePermissionsResponse?: () => Response | Promise<Response>
+  /** Replaces a role list response, for example to fail it once; undefined answers normally. */
+  listResponse?: () => Response | undefined
 }
 
 /** Answers the role administration routes of docs/api/roles-and-permissions.md. */
@@ -133,6 +135,8 @@ export function mockRoleFetch(options: RoleFetchOptions = {}) {
     if (path.startsWith("/api/v1/admin/roles/") && method === "PUT") {
       return options.updateResponse?.() ?? jsonResponse({ result: "OK", code: 200, data: receptionistRole })
     }
+    const listed = options.listResponse?.()
+    if (listed) return listed
     const matching = roles
     const page = Number(url.searchParams.get("page") ?? "1")
     const size = Number(url.searchParams.get("size") ?? "10")

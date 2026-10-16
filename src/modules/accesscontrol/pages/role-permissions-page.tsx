@@ -217,9 +217,13 @@ export function RolePermissionsPage() {
 
   const reload = async () => {
     setFailedRoleId(null)
-    const [latest] = await Promise.all([rolePermissionsQuery.refetch(), rolesQuery.refetch()])
+    // refetch runs even on a disabled query: without a selected role there are no grants to read.
+    const [latest] = await Promise.all([
+      roleId ? rolePermissionsQuery.refetch() : Promise.resolve(null),
+      rolesQuery.refetch(),
+    ])
     // The user chose to continue from the latest grants: later saves are based on them.
-    const reloaded = latest.data
+    const reloaded = latest?.data
     if (reloaded) {
       setBaseVersions((current) =>
         current[reloaded.roleId] === undefined

@@ -78,10 +78,11 @@ export function useUpdateRolePermissions() {
   return useMutation({
     mutationFn: ({ roleId, input }: { roleId: string; input: UpdateRolePermissionsInput }) =>
       updateRolePermissions(roleId, input),
-    onSuccess: async (saved) => {
+    onSuccess: (saved) => {
       queryClient.setQueryData(roleKeys.permissions(saved.roleId), saved)
-      // Permission counts on the role list and the role selector change.
-      await queryClient.invalidateQueries({ queryKey: roleKeys.lists() })
+      // Permission counts on the role list and the role selector change. Not awaited: the save is
+      // done, and reading every page of roles must not keep the screen locked.
+      void queryClient.invalidateQueries({ queryKey: roleKeys.lists() })
     },
   })
 }
