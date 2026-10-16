@@ -292,7 +292,7 @@ describe("ParticipantsTab examination form printing", () => {
     await user.click(screen.getByRole("button", { name: "In phiếu khám (1)" }))
     const dialog = await findDialog()
     await user.click(within(dialog).getByRole("button", { name: "Tạo lệnh in" }))
-    expect(await within(dialog).findByText("Đang tạo file")).toBeInTheDocument()
+    expect(await within(dialog).findByText("Đang tạo tệp")).toBeInTheDocument()
     expect(within(dialog).getByRole("progressbar", { name: "Tiến độ lệnh in" })).toHaveAttribute(
       "aria-valuenow",
       "1"
@@ -300,7 +300,7 @@ describe("ParticipantsTab examination form printing", () => {
 
     await user.click(within(dialog).getByRole("button", { name: "Đóng, tiếp tục chạy nền" }))
     await user.click(await screen.findByRole("button", { name: /lệnh in gần nhất · 1\/3/i }))
-    expect(await within(await findDialog()).findByText("Đang tạo file")).toBeInTheDocument()
+    expect(await within(await findDialog()).findByText("Đang tạo tệp")).toBeInTheDocument()
   })
 
   it("reuses the Idempotency-Key when a rejected job is sent again", async () => {
@@ -393,7 +393,7 @@ describe("ParticipantsTab examination form printing", () => {
       await waitFor(() =>
         expect(within(dialog).getByText("Sẽ in").nextElementSibling).toHaveTextContent("3")
       )
-      expect(within(dialog).getByText("File PDF").nextElementSibling).toHaveTextContent("1")
+      expect(within(dialog).getByText("Tệp PDF").nextElementSibling).toHaveTextContent("1")
       expect(
         get.mock.calls.some(([path]) => {
           const url = new URL(path, "http://local")

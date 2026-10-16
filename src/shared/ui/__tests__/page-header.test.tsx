@@ -23,7 +23,7 @@ describe("PageHeader", () => {
     ).toBeInTheDocument()
     expect(screen.getByText("Đang diễn ra")).toBeInTheDocument()
     expect(
-      screen.getByRole("navigation", { name: "Breadcrumb" })
+      screen.getByRole("navigation", { name: "Đường dẫn điều hướng" })
     ).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "Đơn vị" })).toHaveAttribute(
       "href",

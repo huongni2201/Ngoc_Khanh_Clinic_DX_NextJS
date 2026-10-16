@@ -152,7 +152,7 @@ export function PrintExaminationDialog({
                 <div className="relative size-12 shrink-0 pt-0.5">
                   <Image
                     src="/images/logo.png"
-                    alt="Ngọc Khánh Clinic Logo"
+                    alt="Biểu trưng Phòng khám Ngọc Khánh"
                     width={48}
                     height={48}
                     className="size-full object-contain"

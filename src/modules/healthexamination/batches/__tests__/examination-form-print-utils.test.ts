@@ -51,7 +51,7 @@ describe("examination form printing rules", () => {
     expect(describeExaminationFormError(conflict)).not.toContain("pages")
     expect(describeExaminationFormError(new ApiClientError("x", 503))).toContain("PDF")
     expect(describeCreatePrintJobError(new ApiClientError("x", 409))).toContain("3 lệnh in")
-    expect(describeCreatePrintJobError(new ApiClientError("x", 503))).toContain("lưu file")
+    expect(describeCreatePrintJobError(new ApiClientError("x", 503))).toContain("lưu tệp")
   })
 
   it("reads the paper of the first page from the PDF", async () => {

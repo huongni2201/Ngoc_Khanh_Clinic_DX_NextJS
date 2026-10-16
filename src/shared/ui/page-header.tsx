@@ -32,7 +32,7 @@ export function PageHeader({
   return (
     <header className={cn("min-w-0 space-y-3", className)}>
       {breadcrumbs?.length ? (
-        <nav aria-label="Breadcrumb">
+        <nav aria-label="Đường dẫn điều hướng">
           <ol className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
             {breadcrumbs.map((item, index) => {
               const isCurrent = index === breadcrumbs.length - 1

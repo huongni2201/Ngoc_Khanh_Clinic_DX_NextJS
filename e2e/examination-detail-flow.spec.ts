@@ -263,9 +263,9 @@ test("shows a Vietnamese message when a Participant changed after the export", a
 
   const dialog = await chooseWorkbook(page)
 
-  await expect(dialog.getByText(/Dòng 9: người khám đã được thay đổi sau khi xuất file/)).toBeVisible()
+  await expect(dialog.getByText(/Dòng 9: người khám đã được thay đổi sau khi xuất tệp/)).toBeVisible()
   await expect(dialog.getByText("Chưa có thay đổi nào được ghi vào đợt khám.")).toBeVisible()
-  await expect(dialog.getByRole("button", { name: "Tải lại file mẫu" })).toBeVisible()
+  await expect(dialog.getByRole("button", { name: "Tải lại tệp mẫu" })).toBeVisible()
   await expect(dialog.getByText(/participant was changed/)).toHaveCount(0)
 })
 
@@ -327,7 +327,7 @@ test("downloads the template and records one Participant by hand", async ({ page
   await expect(page.getByText("Người khám 2")).toBeVisible()
 
   const download = page.waitForEvent("download")
-  await page.getByRole("button", { name: "Tải file mẫu" }).click()
+  await page.getByRole("button", { name: "Tải tệp mẫu" }).click()
   expect((await download).suggestedFilename()).toBe("mau-nhap-chi-tiet-kham-SEED-1.xlsx")
 
   await page.getByRole("button", { name: "Cập nhật chi tiết khám của Người khám 2" }).click()

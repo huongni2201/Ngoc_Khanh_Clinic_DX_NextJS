@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { renderWithClient } from "@/test-utils/render-with-client"
 import { CreateStaffMemberDialog } from "../components/create-staff-member-dialog"
-import { jsonResponse, mockStaffMemberFetch, rolesFixture } from "./staff-member-fixtures"
+import { jsonResponse, mockStaffMemberFetch, rolesFixture, staffMemberFixture } from "./staff-member-fixtures"
 
 const onOpenChange = vi.fn()
 
@@ -129,5 +129,27 @@ describe("CreateStaffMemberDialog", () => {
     ).toBeInTheDocument()
     expect(screen.getByLabelText(/^Mật khẩu tạm/)).toHaveAttribute("aria-invalid", "true")
     expect(screen.queryByText("too long")).not.toBeInTheDocument()
+  })
+
+  it("creates one clinic manager role through the existing staff form and explains catalog access", async () => {
+    const user = userEvent.setup()
+    const fetchMock = mockStaffMemberFetch({
+      roles: [[...rolesFixture, { id: "role-manager", code: "CLINIC_MANAGER", name: "Clinic Manager", description: "Manages the clinic" }]],
+      createResponse: () => jsonResponse({ result: "OK", code: 201, data: {
+        ...staffMemberFixture,
+        account: { ...staffMemberFixture.account, roleCode: "CLINIC_MANAGER" },
+      } }, 201),
+    })
+    renderWithClient(<CreateStaffMemberDialog open onOpenChange={onOpenChange} />)
+    await user.type(screen.getByLabelText(/^Họ và tên/), "Nguyễn Văn An")
+    await user.type(screen.getByLabelText(/^Mật khẩu tạm/), "Tam@12345")
+    await user.click(await screen.findByRole("radio", { name: /Quản lý phòng khám/ }))
+    expect(screen.getByRole("status")).toHaveTextContent("khoa, phòng, chuyên khoa, dịch vụ, giá dịch vụ và thuốc")
+    expect(screen.getAllByRole("radio").filter((radio) => (radio as HTMLInputElement).checked)).toHaveLength(1)
+    await user.click(screen.getByRole("button", { name: "Tạo nhân viên" }))
+    expect(await screen.findByText("Đã tạo nhân viên và tài khoản")).toBeInTheDocument()
+    expect(screen.getByText("Quản lý phòng khám")).toBeInTheDocument()
+    expect(postBodies(fetchMock)).toEqual([{ fullName: "Nguyễn Văn An", initialPassword: "Tam@12345", roleCode: "CLINIC_MANAGER" }])
+    expect(screen.queryByDisplayValue("Tam@12345")).not.toBeInTheDocument()
   })
 })

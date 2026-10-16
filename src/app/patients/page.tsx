@@ -5,7 +5,7 @@ import { PatientsPage } from "@/widgets/patient-workspace"
 import { ScreenLoadingSkeleton } from "@/shared/ui"
 
 export const metadata: Metadata = {
-  title: "Danh sách bệnh nhân — Ngọc Khánh Clinic",
+  title: "Danh sách bệnh nhân — Phòng khám Ngọc Khánh",
   description: "Quản lý thông tin hồ sơ bệnh nhân của Phòng Khám Ngọc Khánh",
 }
 

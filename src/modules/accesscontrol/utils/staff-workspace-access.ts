@@ -30,3 +30,19 @@ export function hasStaffPermission(
 ): boolean {
   return getStaffPermissions(session).has(permission)
 }
+
+/**
+ * Whether the session belongs to a STAFF user with the ADMINISTRATOR role.
+ */
+export function isAdministrator(session: UserSession | null | undefined): boolean {
+  return session?.principalType === "STAFF" && session.roleAssignments.some((assignment) =>
+    assignment.roleCode === "ADMINISTRATOR",
+  )
+}
+
+/** Clinic Manager owns catalog operations UC-110 through UC-115. */
+export function isClinicManager(session: UserSession | null | undefined): boolean {
+  return session?.principalType === "STAFF" && session.roleAssignments.some((assignment) =>
+    assignment.roleCode === "CLINIC_MANAGER",
+  )
+}

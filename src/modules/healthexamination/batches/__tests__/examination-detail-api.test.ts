@@ -122,7 +122,10 @@ describe("fetchExaminationDetails", () => {
       },
     })
 
-    await expect(fetchExaminationDetails("org-1", "batch-1")).rejects.toBeInstanceOf(ZodError)
+    await expect(fetchExaminationDetails("org-1", "batch-1")).rejects.toMatchObject({
+      message: "Dữ liệu phản hồi từ máy chủ không hợp lệ. Vui lòng tải lại hoặc liên hệ quản trị viên.",
+      cause: expect.any(ZodError),
+    })
   })
 
   it("fails when the envelope has no data", async () => {
@@ -159,7 +162,10 @@ describe("fetchExaminationSummary", () => {
       data: { registered: -1, unconfirmed: 0, attended: 0, absent: 0, reconciled: 0, pendingReconciliation: 0 },
     })
 
-    await expect(fetchExaminationSummary("org-1", "batch-1")).rejects.toBeInstanceOf(ZodError)
+    await expect(fetchExaminationSummary("org-1", "batch-1")).rejects.toMatchObject({
+      message: "Dữ liệu phản hồi từ máy chủ không hợp lệ. Vui lòng tải lại hoặc liên hệ quản trị viên.",
+      cause: expect.any(ZodError),
+    })
   })
 })
 

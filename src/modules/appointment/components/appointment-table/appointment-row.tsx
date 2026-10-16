@@ -44,7 +44,7 @@ export function AppointmentRow({
         variant="outline"
         className="bg-surface-alt text-primary border-primary/20 text-[10px] font-normal"
       >
-        Đặt online
+        Đặt trực tuyến
       </Badge>
     ) : (
       <Badge

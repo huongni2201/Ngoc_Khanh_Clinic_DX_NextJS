@@ -80,8 +80,8 @@ export const participantFormSchema = z.object({
   identificationIssuePlace: optionalText("Nơi cấp CCCD"),
   ethnicity: optionalText("Dân tộc"),
   phone: optionalText("Số điện thoại"),
-  email: optionalText("Email").refine((value) => value === "" || z.email().safeParse(value).success, {
-    message: "Email không hợp lệ",
+  email: optionalText("Thư điện tử").refine((value) => value === "" || z.email().safeParse(value).success, {
+    message: "Thư điện tử không hợp lệ",
   }),
   address: optionalText("Chỗ ở", PARTICIPANT_ADDRESS_MAX_LENGTH),
   workplace: optionalText("Nơi làm việc"),

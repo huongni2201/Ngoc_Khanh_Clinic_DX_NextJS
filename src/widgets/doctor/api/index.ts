@@ -8,11 +8,11 @@ import type {
 
 export function fetchDoctorWorklist(params?: DoctorFilterParams): Promise<DoctorWorklistResponse> {
   void params
-  return unavailableApi("worklist bác sĩ")
+  return unavailableApi("danh sách chờ khám của bác sĩ")
 }
 
 export function fetchDoctorCounters(): Promise<DoctorCounters> {
-  return unavailableApi("thống kê worklist bác sĩ")
+  return unavailableApi("thống kê danh sách chờ khám của bác sĩ")
 }
 
 export function fetchDoctorNextAction(doctorParam?: string): Promise<NextDoctorAction> {

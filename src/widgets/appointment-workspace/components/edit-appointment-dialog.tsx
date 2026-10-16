@@ -209,7 +209,7 @@ export function EditAppointmentDialog({
                       variant="outline"
                       className="bg-card text-secondary-foreground text-[10px]"
                     >
-                      {appointment.bookingChannel === "ONLINE" ? "Đặt online" : "Lễ tân tạo"}
+                      {appointment.bookingChannel === "ONLINE" ? "Đặt trực tuyến" : "Lễ tân tạo"}
                     </Badge>
                   </div>
                 </div>

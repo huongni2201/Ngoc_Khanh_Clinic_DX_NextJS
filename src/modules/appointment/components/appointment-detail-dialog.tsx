@@ -119,7 +119,7 @@ export function AppointmentDetailDialog({
                     {appointment.careProgram === "ORGANIZATION_HEALTH_EXAMINATION"
                       ? "Khám đoàn DN"
                       : appointment.bookingChannel === "ONLINE"
-                      ? "Đặt online"
+                      ? "Đặt trực tuyến"
                       : "Lễ tân tạo"}
                   </Badge>
                 </div>

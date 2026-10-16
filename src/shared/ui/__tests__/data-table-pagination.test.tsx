@@ -128,7 +128,7 @@ describe("DataTablePagination (shadcn/ui Composition)", () => {
     expect(screen.getByRole("button", { name: "Trang 5" })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Trang 6" })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Trang 10" })).toBeInTheDocument()
-    expect(screen.getAllByText("More pages").length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText("Các trang khác").length).toBeGreaterThanOrEqual(1)
   })
 })
 

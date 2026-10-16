@@ -3,7 +3,7 @@ import type { PatientCheckInRequest, AssignRoomDto } from "../types/encounter-ac
 
 export function checkInPatient(dto: PatientCheckInRequest): Promise<never> {
   void dto
-  return unavailableApi("check-in bệnh nhân")
+  return unavailableApi("tiếp nhận bệnh nhân")
 }
 
 export function assignRoomAndDoctor(dto: AssignRoomDto): Promise<never> {

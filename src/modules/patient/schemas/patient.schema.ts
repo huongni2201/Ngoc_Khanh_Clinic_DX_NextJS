@@ -24,7 +24,7 @@ export const createPatientSchema = z.object({
   email: z
     .string()
     .trim()
-    .email("Email không đúng định dạng")
+    .email("Thư điện tử không đúng định dạng")
     .optional()
     .or(z.literal("")),
   address: z
@@ -61,7 +61,7 @@ export const updatePatientSchema = z.object({
   email: z
     .string()
     .trim()
-    .email("Email không đúng định dạng")
+    .email("Thư điện tử không đúng định dạng")
     .optional()
     .or(z.literal("")),
   address: z

@@ -247,7 +247,7 @@ export function CreatePatientDialog({
               {/* Row 3: Email (6 cols) & Address (6 cols) */}
               <div className="sm:col-span-6 space-y-1.5">
                 <Label htmlFor="email" className="text-xs font-medium text-foreground">
-                  Email <span className="text-muted-foreground font-normal">(Tùy chọn)</span>
+                  Thư điện tử <span className="text-muted-foreground font-normal">(Tùy chọn)</span>
                 </Label>
                 <Input
                   id="email"

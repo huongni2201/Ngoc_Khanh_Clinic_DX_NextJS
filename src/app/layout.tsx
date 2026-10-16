@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Ngọc Khánh Clinic — Quản lý khám sức khỏe đơn vị",
-  description: "Hệ thống quản lý khám sức khỏe định kỳ đơn vị Ngọc Khánh Clinic",
+  title: "Phòng khám Ngọc Khánh — Quản lý khám sức khỏe đơn vị",
+  description: "Hệ thống quản lý khám sức khỏe định kỳ đơn vị Phòng khám Ngọc Khánh",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -76,7 +76,7 @@ describe("create staff member form rules", () => {
 
   it("rejects a birth date that is not in the past and an invalid email", () => {
     expect(messages({ ...valid, dateOfBirth: "2999-01-01" })).toContain("Ngày sinh phải trước hôm nay")
-    expect(messages({ ...valid, email: "not-an-email" })).toContain("Email không hợp lệ")
+    expect(messages({ ...valid, email: "not-an-email" })).toContain("Thư điện tử không hợp lệ")
   })
 })
 

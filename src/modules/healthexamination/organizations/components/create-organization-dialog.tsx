@@ -125,7 +125,7 @@ export function CreateOrganizationDialog({
             />
             <FormTextField
               id="create-email"
-              label="Email đơn vị"
+              label="Thư điện tử đơn vị"
               required
               type="email"
               placeholder="VD: lienhe@congty.vn"
@@ -170,7 +170,7 @@ export function CreateOrganizationDialog({
               />
               <FormTextField
                 id="create-contact-email"
-                label="Email người liên hệ"
+                label="Thư điện tử người liên hệ"
                 required
                 type="email"
                 placeholder="VD: nguyenvana@congty.vn"

@@ -5,8 +5,8 @@ import { EncounterDetailPage } from "@/widgets/encounter-detail"
 import { ScreenLoadingSkeleton } from "@/shared/ui"
 
 export const metadata: Metadata = {
-  title: "Chi tiết lượt khám — Ngọc Khánh Clinic",
-  description: "Chi tiết lượt khám, chẩn đoán, đơn thuốc, cận lâm sàng và tài liệu y tế tại Ngọc Khánh Clinic",
+  title: "Chi tiết lượt khám — Phòng khám Ngọc Khánh",
+  description: "Chi tiết lượt khám, chẩn đoán, đơn thuốc, cận lâm sàng và tài liệu y tế tại Phòng khám Ngọc Khánh",
 }
 
 export default function EncounterDetailRoute() {

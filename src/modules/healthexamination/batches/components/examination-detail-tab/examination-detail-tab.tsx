@@ -136,7 +136,7 @@ export function ExaminationDetailTab({
           disabled={downloadTemplate.isPending}
         >
           <FileSpreadsheet className="mr-1.5 size-3.5" />
-          {downloadTemplate.isPending ? "Đang tải..." : "Tải file mẫu"}
+          {downloadTemplate.isPending ? "Đang tải..." : "Tải tệp mẫu"}
         </Button>
       )}
       {importAllowed && (
@@ -176,7 +176,7 @@ export function ExaminationDetailTab({
         <p role="alert" className="text-xs text-destructive">
           {downloadTemplate.error instanceof Error && downloadTemplate.error.message
             ? downloadTemplate.error.message
-            : "Không thể tải file mẫu. Vui lòng thử lại."}
+            : "Không thể tải tệp mẫu. Vui lòng thử lại."}
         </p>
       )}
 

@@ -27,7 +27,7 @@ export function EncounterHistoryTable({ patientId }: EncounterHistoryTableProps)
   if (isError) {
     return (
       <div role="status" className="rounded-lg border border-border bg-muted p-6 text-sm text-muted-foreground">
-        <p>{error instanceof Error ? error.message : "Backend chưa cung cấp API lịch sử lượt khám."}</p>
+        <p>{error instanceof Error ? error.message : "Chưa hỗ trợ chức năng lịch sử lượt khám."}</p>
         <Button variant="outline" size="sm" className="mt-3" onClick={() => refetch()}>
           Thử lại
         </Button>

@@ -129,7 +129,7 @@ describe("Encounter Detail Screens", () => {
       />
     )
     expect(screen.getByText("Chụp X-quang ngực thẳng (PA)")).toBeInTheDocument()
-    expect(screen.getByText("Backend chưa cung cấp API để tải ảnh chẩn đoán hình ảnh.")).toBeInTheDocument()
+    expect(screen.getByText("Chưa hỗ trợ chức năng để tải ảnh chẩn đoán hình ảnh.")).toBeInTheDocument()
     expect(screen.queryByText(/Shimadzu Radspeed Pro/)).not.toBeInTheDocument()
   })
 

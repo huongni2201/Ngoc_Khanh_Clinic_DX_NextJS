@@ -224,7 +224,7 @@ function CreatePrintJobView({
       <DialogHeader>
         <DialogTitle>In phiếu khám hàng loạt</DialogTitle>
         <DialogDescription>
-          Máy chủ tạo file PDF trong nền rồi gộp thành từng phần tối đa 200 người. Có thể đóng hộp
+          Máy chủ tạo tệp PDF trong nền rồi gộp thành từng phần tối đa 200 người. Có thể đóng hộp
           thoại trong lúc chờ.
         </DialogDescription>
       </DialogHeader>
@@ -430,7 +430,7 @@ function CreateDayPrintJobView({
           </dd>
         </div>
         <div>
-          <dt className="text-muted-foreground">File PDF</dt>
+          <dt className="text-muted-foreground">Tệp PDF</dt>
           <dd className="mt-0.5 text-base font-semibold tabular-nums text-foreground">
             {total === undefined ? "—" : parts.toLocaleString("vi-VN")}
           </dd>
@@ -570,7 +570,7 @@ function TrackPrintJobView({
         </DialogTitle>
         <DialogDescription>
           {peopleCount.toLocaleString("vi-VN")} người khám. Chỉ tài khoản tạo lệnh mới xem và
-          tải được file; file tự xóa sau 24 giờ.
+          tải được tệp; tệp tự xóa sau 24 giờ.
         </DialogDescription>
       </DialogHeader>
 
@@ -585,7 +585,7 @@ function TrackPrintJobView({
           <AlertTitle>{notFound ? "Không còn lệnh in này" : "Không đọc được lệnh in"}</AlertTitle>
           <AlertDescription>
             {notFound
-              ? "Lệnh in đã hết hạn (file bị xóa sau 24 giờ) hoặc không phải do tài khoản này tạo."
+              ? "Lệnh in đã hết hạn (tệp bị xóa sau 24 giờ) hoặc không phải do tài khoản này tạo."
               : "Không kết nối được máy chủ để xem tiến độ. Lệnh in vẫn chạy trên máy chủ."}
           </AlertDescription>
         </Alert>
@@ -642,8 +642,8 @@ function PrintJobProgress({
     } catch (error) {
       toast.error(
         isApiErrorStatus(error, 404)
-          ? "File của phần này đã hết hạn hoặc không còn trên máy chủ."
-          : "Không tải được file PDF. Vui lòng thử lại.",
+          ? "Tệp của phần này đã hết hạn hoặc không còn trên máy chủ."
+          : "Không tải được tệp PDF. Vui lòng thử lại.",
         { id: `render-job-part-${job.id}-${partNo}` }
       )
     } finally {
@@ -694,7 +694,7 @@ function PrintJobProgress({
         <Alert>
           <Info aria-hidden="true" />
           <AlertDescription>
-            File của lệnh in đã bị xóa sau 24 giờ. Tạo lại lệnh in nếu cần in thêm.
+            Tệp của lệnh in đã bị xóa sau 24 giờ. Tạo lại lệnh in nếu cần in thêm.
           </AlertDescription>
         </Alert>
       )}
@@ -702,7 +702,7 @@ function PrintJobProgress({
       {job.status === "SUCCEEDED" && ranges.length > 0 && (
         <section aria-labelledby="print-job-parts" className="grid gap-2">
           <h3 id="print-job-parts" className="text-sm font-semibold text-foreground">
-            File PDF ({printedCount.toLocaleString("vi-VN")} phiếu)
+            Tệp PDF ({printedCount.toLocaleString("vi-VN")} phiếu)
           </h3>
           <ul className="divide-y divide-border rounded-lg border border-border">
             {ranges.map((part) => {
@@ -754,7 +754,7 @@ function PrintJobProgress({
             <span>
               In bằng Foxit/Adobe hoặc trình duyệt, đúng khổ giấy của mẫu, tỉ lệ 100% (không chọn
               &quot;Vừa với trang&quot;) để mã vạch không bị co và quét được. Mẫu sổ gấp A3 in 2 mặt, lật cạnh ngắn.
-              {expiresAt ? ` File được giữ đến ${expiresAt}.` : ""}
+              {expiresAt ? ` Tệp được giữ đến ${expiresAt}.` : ""}
             </span>
           </p>
         </section>

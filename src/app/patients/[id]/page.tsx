@@ -5,8 +5,8 @@ import { PatientDetailPage } from "@/widgets/patient-workspace"
 import { ScreenLoadingSkeleton } from "@/shared/ui"
 
 export const metadata: Metadata = {
-  title: "Hồ sơ bệnh nhân — Ngọc Khánh Clinic",
-  description: "Chi tiết hồ sơ bệnh nhân và lịch sử khám tại Ngọc Khánh Clinic",
+  title: "Hồ sơ bệnh nhân — Phòng khám Ngọc Khánh",
+  description: "Chi tiết hồ sơ bệnh nhân và lịch sử khám tại Phòng khám Ngọc Khánh",
 }
 
 export default function PatientDetailRoute() {

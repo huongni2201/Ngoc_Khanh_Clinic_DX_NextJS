@@ -66,14 +66,19 @@ export function isApiErrorStatus(error: unknown, status: number): boolean {
  * Vietnamese text for HTTP failures the backend reports with English messages. The envelope has no
  * business error code, so a 409 cannot be told apart (stale version, duplicate code, rule violation);
  * a 422 means a reference the caller chose (for example a role) can no longer be used. Statuses
- * without a mapped text keep the backend message.
+ * without a mapped text use the Vietnamese fallback. Raw server text is debug-only.
  */
 function statusMessage(status: number): string | undefined {
   if (status === 400) return "Thông tin không hợp lệ. Vui lòng kiểm tra lại."
+  if (status === 401) return "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại."
   if (status === 403) return "Không được phép thực hiện thao tác này."
   if (status === 404) return "Không tìm thấy hoặc đã bị xóa/ngừng hoạt động."
   if (status === 409) return "Dữ liệu đã thay đổi hoặc không thỏa quy tắc nghiệp vụ. Vui lòng tải lại."
+  if (status === 408) return "Yêu cầu đã hết thời gian chờ. Vui lòng thử lại."
+  if (status === 413) return "Dữ liệu gửi lên vượt quá dung lượng cho phép."
+  if (status === 415) return "Định dạng dữ liệu gửi lên không được hỗ trợ."
   if (status === 422) return "Dữ liệu đã chọn không còn hợp lệ. Vui lòng tải lại và chọn lại."
+  if (status === 429) return "Bạn đã gửi quá nhiều yêu cầu. Vui lòng đợi rồi thử lại."
   if (status >= 500) return "Máy chủ gặp lỗi. Vui lòng thử lại sau."
   return undefined
 }
@@ -94,7 +99,7 @@ function responseError(
   fallback: string
 ) {
   return new ApiClientError(
-    statusMessage(response.status) ?? payload?.message ?? fallback,
+    statusMessage(response.status) ?? fallback,
     response.status,
     payload?.code,
     payload?.message,
@@ -108,8 +113,10 @@ function getApiBaseUrl() {
   if (process.env.NODE_ENV !== "production") return "http://localhost:8080"
 
   throw new ApiClientError(
-    "NEXT_PUBLIC_API_BASE_URL is required outside development",
-    0
+    "Chưa cấu hình địa chỉ kết nối máy chủ. Vui lòng liên hệ quản trị viên.",
+    0,
+    undefined,
+    "NEXT_PUBLIC_API_BASE_URL is required outside development"
   )
 }
 
@@ -199,9 +206,11 @@ async function request<T>(path: string, requestOptions: ApiClientRequestOptions 
 
     if (payload.result !== "OK") {
       throw new ApiClientError(
-        payload.message ?? "Yêu cầu không được chấp nhận.",
+        "Yêu cầu không được chấp nhận. Vui lòng kiểm tra lại.",
         response.status,
-        payload.code
+        payload.code,
+        payload.message,
+        fieldErrorsOf(payload)
       )
     }
 

@@ -53,7 +53,7 @@ export function OrganizationInfoCard({ organization }: OrganizationInfoCardProps
                 mono: true,
               },
               {
-                label: "Email",
+                label: "Thư điện tử",
                 value: organization.contactEmail ? <EmailLink value={organization.contactEmail} /> : undefined,
               },
             ]}
@@ -78,7 +78,7 @@ export function OrganizationInfoCard({ organization }: OrganizationInfoCardProps
                 mono: true,
               },
               {
-                label: "Email đơn vị",
+                label: "Thư điện tử đơn vị",
                 value: organization.email ? <EmailLink value={organization.email} /> : undefined,
               },
               { label: "Địa chỉ", value: organization.address },

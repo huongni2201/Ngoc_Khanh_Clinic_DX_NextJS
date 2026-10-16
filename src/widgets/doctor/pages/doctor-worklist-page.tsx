@@ -216,7 +216,7 @@ export function DoctorWorklistPage() {
           <span>
             {[worklistError, countersError, nextActionError].find(
               (error) => error instanceof Error
-            )?.message ?? "Backend chưa cung cấp API worklist bác sĩ."}
+            )?.message ?? "Chưa hỗ trợ chức năng danh sách chờ khám của bác sĩ."}
           </span>
           <Button type="button" variant="outline" size="sm" onClick={handleRefresh}>
             Thử lại

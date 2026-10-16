@@ -15,7 +15,7 @@ describe("describeExaminationDetailImportError", () => {
     [400, "Row 6: participant appears more than once (first at row 3)", 6, false, /Dòng 6.*dòng 3/],
     [409, "Row 5: participant is not in this batch", 5, true, /Dòng 5.*không thuộc đợt khám/],
     [409, "Row 5: participant is cancelled", 5, true, /Dòng 5.*đã bị hủy/],
-    [409, "Row 9: participant was changed after export; export again", 9, true, /Dòng 9.*sau khi xuất file/],
+    [409, "Row 9: participant was changed after export; export again", 9, true, /Dòng 9.*sau khi xuất tệp/],
     [409, "Row 12: a marked service is no longer offered in this batch", 12, true, /Dòng 12.*không còn/],
   ] as const)("describes %i %s with its row", (status, text, row, needsNewExport, pattern) => {
     const failure = describeExaminationDetailImportError(fail(status, text))
@@ -56,7 +56,7 @@ describe("describeExaminationDetailImportError", () => {
     const failure = describeExaminationDetailImportError(
       fail(409, "Idempotency key was used for another request")
     )
-    expect(failure.message).toMatch(/chọn lại file/)
+    expect(failure.message).toMatch(/chọn lại tệp/)
   })
 
   it("never shows the English backend text and falls back to the status", () => {
