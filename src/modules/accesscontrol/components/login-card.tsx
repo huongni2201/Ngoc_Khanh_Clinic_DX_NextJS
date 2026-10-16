@@ -25,7 +25,7 @@ export function LoginCard({
         <div className="relative size-12 sm:size-14 shrink-0">
           <Image
             src="/images/logo.png"
-            alt="Ngọc Khánh Clinic Logo"
+            alt="Biểu trưng Phòng khám Ngọc Khánh"
             width={56}
             height={56}
             className="size-full object-contain"
@@ -34,7 +34,7 @@ export function LoginCard({
         </div>
         <div className="flex flex-col text-left">
           <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground leading-tight">
-            Ngọc Khánh <span className="text-primary font-bold">Clinic</span>
+            <span className="text-primary font-bold">Phòng khám</span> Ngọc Khánh
           </h2>
           <p className="text-xs sm:text-sm text-muted-foreground leading-snug">
             Quản lý khám sức khỏe đơn vị

@@ -21,8 +21,8 @@ describe("CreateOrganizationDialog", () => {
 
     expect(screen.getByLabelText(/Tên đơn vị/i)).toBeInTheDocument()
     expect(screen.queryByLabelText(/Điện thoại đơn vị/i)).not.toBeInTheDocument()
-    expect(screen.getByLabelText(/Email đơn vị/i)).toBeInTheDocument()
-    expect(screen.getByLabelText(/Email người liên hệ/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/Thư điện tử đơn vị/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/Thư điện tử người liên hệ/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/Mã số thuế/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/Địa chỉ/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/^Người liên hệ \*/i)).toBeInTheDocument()
@@ -50,8 +50,8 @@ describe("CreateOrganizationDialog", () => {
 
     await user.type(screen.getByLabelText(/Tên đơn vị/i), "Đại học Bách Khoa Hà Nội")
     await user.type(screen.getByLabelText(/Mã số thuế/i), "0100998877")
-    await user.type(screen.getByLabelText(/Email đơn vị/i), "contact@example.invalid")
-    await user.type(screen.getByLabelText(/Email người liên hệ/i), "person@example.invalid")
+    await user.type(screen.getByLabelText(/Thư điện tử đơn vị/i), "contact@example.invalid")
+    await user.type(screen.getByLabelText(/Thư điện tử người liên hệ/i), "person@example.invalid")
     await user.type(screen.getByLabelText(/Địa chỉ/i), "Số 1 Đại Cồ Việt")
     await user.type(screen.getByLabelText(/^Người liên hệ \*/i), "Lê Hoàng Quân")
     await user.type(screen.getByLabelText(/Số điện thoại/i), "0912345678")

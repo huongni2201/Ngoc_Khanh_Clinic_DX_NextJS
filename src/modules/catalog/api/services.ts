@@ -1,3 +1,4 @@
+import { parseApiData } from "@/shared/api/parse-api-data"
 import { apiClient } from "@/shared/api/api-client"
 import type { ClinicalService } from "../types"
 import { serviceCatalogPageResponseSchema } from "../types/transport"
@@ -18,10 +19,10 @@ export async function fetchClinicalServiceCatalog(
   })
   const response = await apiClient.get<unknown>(`${SERVICE_CATALOG_ENDPOINT}?${query}`, { signal })
   if (!response.data) {
-    throw new Error(response.message || "Phản hồi danh mục dịch vụ khám không có dữ liệu.")
+    throw new Error("Phản hồi danh mục dịch vụ khám không có dữ liệu.")
   }
 
-  return serviceCatalogPageResponseSchema.parse(response.data).items.map((item) => ({
+  return parseApiData(serviceCatalogPageResponseSchema, response.data).items.map((item) => ({
     id: item.id,
     code: item.code,
     name: item.name,

@@ -73,7 +73,7 @@ describe("OrganizationDetailPage", () => {
     renderWithClient(<OrganizationDetailPage organizationId="org-1" />, { permissions: ALL_PERMISSIONS })
 
     expect(await screen.findByText("Chưa có đợt khám nào cho đơn vị này")).toBeInTheDocument()
-    expect(screen.queryByText(/Backend chưa cung cấp API/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Chưa hỗ trợ chức năng/)).not.toBeInTheDocument()
     expect(mockNavigation.push).not.toHaveBeenCalled()
   })
 

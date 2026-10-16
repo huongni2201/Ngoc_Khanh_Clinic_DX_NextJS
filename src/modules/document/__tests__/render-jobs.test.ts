@@ -62,7 +62,10 @@ describe("render job API", () => {
       code: 200,
       data: { ...job, status: "DONE" },
     })
-    await expect(fetchRenderJob("job-1")).rejects.toBeInstanceOf(ZodError)
+    await expect(fetchRenderJob("job-1")).rejects.toMatchObject({
+      message: "Dữ liệu phản hồi từ máy chủ không hợp lệ. Vui lòng tải lại hoặc liên hệ quản trị viên.",
+      cause: expect.any(ZodError),
+    })
   })
 
   it("downloads a part with the longer timeout and keeps the backend file name", async () => {

@@ -47,7 +47,7 @@ describe("OrganizationListPage", () => {
     expect(screen.getByRole("columnheader", { name: "Địa chỉ" })).toBeInTheDocument()
     expect(screen.getByRole("columnheader", { name: "Mã số thuế" })).toBeInTheDocument()
     expect(screen.getByRole("columnheader", { name: "SĐT người liên hệ" })).toBeInTheDocument()
-    expect(screen.getByRole("columnheader", { name: "Email người liên hệ" })).toBeInTheDocument()
+    expect(screen.getByRole("columnheader", { name: "Thư điện tử người liên hệ" })).toBeInTheDocument()
   })
 
   it("normalizes an invalid page query to page 1", async () => {

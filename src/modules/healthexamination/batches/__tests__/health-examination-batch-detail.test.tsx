@@ -326,7 +326,7 @@ describe("HealthExaminationBatchDetailPage", () => {
         screen.getByRole("combobox", { name: "Lọc theo trạng thái tiếp nhận" })
       ).toBeInTheDocument()
       expect(screen.queryByRole("button", { name: "Nhập từ Excel" })).not.toBeInTheDocument()
-      expect(screen.queryByRole("button", { name: "Tải file mẫu" })).not.toBeInTheDocument()
+      expect(screen.queryByRole("button", { name: "Tải tệp mẫu" })).not.toBeInTheDocument()
       expect(screen.queryByRole("button", { name: "Thêm người khám" })).not.toBeInTheDocument()
 
       queryClient.setQueryData(
@@ -334,14 +334,14 @@ describe("HealthExaminationBatchDetailPage", () => {
         session(["PARTICIPANT_VIEW", "PARTICIPANT_IMPORT"])
       )
       expect(await screen.findByRole("button", { name: "Nhập từ Excel" })).toBeInTheDocument()
-      expect(screen.queryByRole("button", { name: "Tải file mẫu" })).not.toBeInTheDocument()
+      expect(screen.queryByRole("button", { name: "Tải tệp mẫu" })).not.toBeInTheDocument()
       expect(screen.queryByRole("button", { name: "Thêm người khám" })).not.toBeInTheDocument()
 
       queryClient.setQueryData(
         ["auth", "session"],
         session(["PARTICIPANT_VIEW", "PARTICIPANT_TEMPLATE_DOWNLOAD"])
       )
-      expect(await screen.findByRole("button", { name: "Tải file mẫu" })).toBeInTheDocument()
+      expect(await screen.findByRole("button", { name: "Tải tệp mẫu" })).toBeInTheDocument()
       expect(screen.queryByRole("button", { name: "Nhập từ Excel" })).not.toBeInTheDocument()
 
       queryClient.setQueryData(

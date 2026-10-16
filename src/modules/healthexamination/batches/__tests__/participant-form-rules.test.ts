@@ -83,7 +83,7 @@ describe("participantFormSchema", () => {
   })
 
   it("validates the email only when it is filled", () => {
-    expect(messages({ ...valid, email: "khong-hop-le" })).toEqual(["email: Email không hợp lệ"])
+    expect(messages({ ...valid, email: "khong-hop-le" })).toEqual(["email: Thư điện tử không hợp lệ"])
     expect(messages({ ...valid, email: "an@example.com" })).toEqual([])
   })
 

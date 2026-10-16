@@ -25,7 +25,7 @@ export function HealthExaminationBatchTabs({
 
   return (
     <div className="border-b border-border">
-      <nav aria-label="Tabs" className="-mb-px flex gap-6 overflow-x-auto no-scrollbar">
+      <nav aria-label="Các mục của đợt khám" className="-mb-px flex gap-6 overflow-x-auto no-scrollbar">
         {tabs.filter((tab) => !hiddenTabs.includes(tab.key)).map((tab) => {
           const isActive = activeTab === tab.key
 

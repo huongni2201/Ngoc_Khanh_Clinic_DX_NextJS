@@ -19,7 +19,7 @@ const FIELD_MESSAGES: Record<StaffMemberFormField, string> = {
   dateOfBirth: "Ngày sinh không hợp lệ",
   sex: "Giới tính không hợp lệ",
   phone: "Số điện thoại không hợp lệ",
-  email: "Email không hợp lệ",
+  email: "Thư điện tử không hợp lệ",
   initialPassword: "Mật khẩu tạm không hợp lệ (8–72 ký tự không dấu, không dấu cách)",
   roleCode: "Vai trò không hợp lệ",
 }

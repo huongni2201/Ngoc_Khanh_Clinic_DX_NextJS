@@ -128,7 +128,7 @@ export function PatientDetailPage() {
           <div className="flex items-center gap-3 text-xs lg:border-l lg:border-border lg:pl-5">
             <Mail className="size-4 text-muted-foreground shrink-0" />
             <div>
-              <p className="text-[11px] text-muted-foreground">Email</p>
+              <p className="text-[11px] text-muted-foreground">Thư điện tử</p>
               <p className="font-medium text-foreground truncate max-w-[180px]">
                 {patient.email || "Chưa cập nhật"}
               </p>

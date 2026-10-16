@@ -5,7 +5,7 @@ import { ReceptionPage } from "@/widgets/reception"
 import { ScreenLoadingSkeleton } from "@/shared/ui"
 
 export const metadata: Metadata = {
-  title: "Lễ tân — Ngọc Khánh Clinic",
+  title: "Lễ tân — Phòng khám Ngọc Khánh",
   description: "Bàn tiếp đón và điều phối bệnh nhân tại Phòng Khám Ngọc Khánh",
 }
 

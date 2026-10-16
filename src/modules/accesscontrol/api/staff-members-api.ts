@@ -1,3 +1,4 @@
+import { parseApiData } from "@/shared/api/parse-api-data"
 import { apiClient } from "@/shared/api/api-client"
 import {
   roleListResponseSchema,
@@ -81,9 +82,9 @@ export async function fetchStaffMembers(
     signal,
   })
   if (!response.data) {
-    throw new Error(response.message || "Phản hồi danh sách nhân viên không có dữ liệu.")
+    throw new Error("Phản hồi danh sách nhân viên không có dữ liệu.")
   }
-  const page = staffMemberPageResponseSchema.parse(response.data)
+  const page = parseApiData(staffMemberPageResponseSchema, response.data)
   return {
     data: page.items.map(mapStaffMember),
     total: page.totalElements,
@@ -99,15 +100,15 @@ export async function createStaffMember(input: CreateStaffMemberInput): Promise<
     toRequest(input)
   )
   if (!response.data) {
-    throw new Error(response.message || "Phản hồi tạo nhân viên không có dữ liệu.")
+    throw new Error("Phản hồi tạo nhân viên không có dữ liệu.")
   }
-  return mapStaffMember(staffMemberResponseSchema.parse(response.data))
+  return mapStaffMember(parseApiData(staffMemberResponseSchema, response.data))
 }
 
 export async function fetchAssignableRoles(signal?: AbortSignal): Promise<RoleOption[]> {
   const response = await apiClient.get<unknown>(ROLES_ENDPOINT, { signal })
   if (!response.data) {
-    throw new Error(response.message || "Phản hồi danh sách vai trò không có dữ liệu.")
+    throw new Error("Phản hồi danh sách vai trò không có dữ liệu.")
   }
-  return roleListResponseSchema.parse(response.data).map(mapRole)
+  return parseApiData(roleListResponseSchema, response.data).map(mapRole)
 }

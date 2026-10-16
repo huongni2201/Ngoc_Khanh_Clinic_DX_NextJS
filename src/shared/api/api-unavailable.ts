@@ -6,7 +6,7 @@ export class ApiUnavailableError extends Error {
   readonly feature: string
 
   constructor(feature: string) {
-    super(`Backend chưa cung cấp API cho ${feature}.`)
+    super(`Chưa hỗ trợ chức năng ${feature}.`)
     this.name = "ApiUnavailableError"
     this.feature = feature
   }

@@ -23,11 +23,11 @@ describe("Toaster", () => {
     render(<Toaster />)
 
     act(() => {
-      toast.error("Không thể xuất file.")
+      toast.error("Không thể xuất tệp.")
     })
 
     const alert = await screen.findByRole("alert")
-    expect(alert).toHaveTextContent("Không thể xuất file.")
+    expect(alert).toHaveTextContent("Không thể xuất tệp.")
   })
 
   it("closes a toast from its close button", async () => {
@@ -70,7 +70,7 @@ describe("Toaster", () => {
     let retried = 0
     render(<Toaster />)
     act(() => {
-      toast.error("Không thể tải file mẫu.", { action: { label: "Thử lại", onClick: () => retried++ } })
+      toast.error("Không thể tải tệp mẫu.", { action: { label: "Thử lại", onClick: () => retried++ } })
     })
 
     await user.click(await screen.findByRole("button", { name: "Thử lại", hidden: true }))

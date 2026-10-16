@@ -50,7 +50,7 @@ export function AppHeader({
           <button
             type="button"
             onClick={onOpenMobileMenu}
-            aria-label="Mở menu"
+            aria-label="Mở trình đơn"
             className="flex size-9 shrink-0 items-center justify-center rounded-md text-secondary-foreground transition-colors hover:bg-hover hover:text-foreground lg:hidden"
           >
             <HugeiconsIcon icon={Menu01Icon} className="size-5" aria-hidden="true" />

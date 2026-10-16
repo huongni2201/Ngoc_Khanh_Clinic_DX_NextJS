@@ -37,7 +37,7 @@ describe("describeParticipantImportError", () => {
       "The workbook does not match this batch version; download the template again"
     )
     expect(failure.needsNewTemplate).toBe(true)
-    expect(failure.message).toMatch(/tải lại file mẫu/)
+    expect(failure.message).toMatch(/tải lại tệp mẫu/)
   })
 
   it("asks for a new template after a stale-version conflict", () => {

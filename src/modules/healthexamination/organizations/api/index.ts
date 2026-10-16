@@ -1,3 +1,4 @@
+import { parseApiData } from "@/shared/api/parse-api-data"
 import { apiClient } from "@/shared/api/api-client"
 import {
   organizationResponseSchema,
@@ -36,7 +37,7 @@ function mapOrganization(dto: OrganizationResponseDto): OrganizationDetail {
 }
 
 function requireOrganization(data: unknown): OrganizationDetail {
-  return mapOrganization(organizationResponseSchema.parse(data))
+  return mapOrganization(parseApiData(organizationResponseSchema, data))
 }
 
 function toRequest(dto: CreateOrganizationDto | UpdateOrganizationDto): OrganizationRequestDto {
@@ -69,7 +70,7 @@ export async function fetchOrganizations(
     { signal }
   )
   if (!response.data) {
-    throw new Error(response.message || "Phản hồi danh sách đơn vị không có dữ liệu.")
+    throw new Error("Phản hồi danh sách đơn vị không có dữ liệu.")
   }
 
   return {
@@ -90,7 +91,7 @@ export async function fetchOrganizationById(
     { signal }
   )
   if (!response.data) {
-    throw new Error(response.message || "Phản hồi chi tiết đơn vị không có dữ liệu.")
+    throw new Error("Phản hồi chi tiết đơn vị không có dữ liệu.")
   }
   return requireOrganization(response.data)
 }
@@ -101,7 +102,7 @@ export async function createOrganization(dto: CreateOrganizationDto): Promise<Or
     toRequest(dto)
   )
   if (!response.data) {
-    throw new Error(response.message || "Phản hồi tạo đơn vị không có dữ liệu.")
+    throw new Error("Phản hồi tạo đơn vị không có dữ liệu.")
   }
   return requireOrganization(response.data)
 }
@@ -116,7 +117,7 @@ export async function updateOrganization(
     request
   )
   if (!response.data) {
-    throw new Error(response.message || "Phản hồi cập nhật đơn vị không hợp lệ.")
+    throw new Error("Phản hồi cập nhật đơn vị không hợp lệ.")
   }
   return requireOrganization(response.data)
 }

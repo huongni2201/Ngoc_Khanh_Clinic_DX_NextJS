@@ -60,9 +60,9 @@ describe("ExaminationDetailImportDialog", () => {
     const user = userEvent.setup()
     const { onDownloadTemplate } = renderDialog()
 
-    expect(screen.getByText("Bước 1. Tải file mẫu")).toBeInTheDocument()
-    expect(screen.getByText(/Xoá X trong file sẽ bỏ ghi nhận hạng mục đó/)).toBeInTheDocument()
-    await user.click(screen.getByRole("button", { name: "Tải file mẫu" }))
+    expect(screen.getByText("Bước 1. Tải tệp mẫu")).toBeInTheDocument()
+    expect(screen.getByText(/Xoá X trong tệp sẽ bỏ ghi nhận hạng mục đó/)).toBeInTheDocument()
+    await user.click(screen.getByRole("button", { name: "Tải tệp mẫu" }))
 
     expect(onDownloadTemplate).toHaveBeenCalledTimes(1)
   })
@@ -113,7 +113,7 @@ describe("ExaminationDetailImportDialog", () => {
     expect(await screen.findByText(/Dòng 7: cột “Xét nghiệm máu” chỉ nhận chữ X/)).toBeInTheDocument()
     expect(screen.getByText("Chưa có thay đổi nào được ghi vào đợt khám.")).toBeInTheDocument()
     expect(screen.queryByText(/accepts only/)).not.toBeInTheDocument()
-    expect(screen.queryByRole("button", { name: "Tải lại file mẫu" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Tải lại tệp mẫu" })).not.toBeInTheDocument()
   })
 
   it("offers downloading the template again when a Participant changed after the export", async () => {
@@ -131,8 +131,8 @@ describe("ExaminationDetailImportDialog", () => {
     await user.upload(screen.getByLabelText(/Bước 2/), workbook())
     await user.click(screen.getByRole("button", { name: "Nhập chi tiết khám" }))
 
-    expect(await screen.findByText(/Dòng 9: người khám đã được thay đổi sau khi xuất file/)).toBeInTheDocument()
-    await user.click(screen.getByRole("button", { name: "Tải lại file mẫu" }))
+    expect(await screen.findByText(/Dòng 9: người khám đã được thay đổi sau khi xuất tệp/)).toBeInTheDocument()
+    await user.click(screen.getByRole("button", { name: "Tải lại tệp mẫu" }))
     expect(onDownloadTemplate).toHaveBeenCalledTimes(1)
   })
 

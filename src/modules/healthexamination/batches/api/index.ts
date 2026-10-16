@@ -1,3 +1,4 @@
+import { parseApiData } from "@/shared/api/parse-api-data"
 import { unavailableApi } from "@/shared/api/api-unavailable"
 import { apiClient } from "@/shared/api/api-client"
 import type { CreateHealthExaminationBatchRequest, DeleteHealthExaminationBatchRequest, StartHealthExaminationBatchRequest, ExaminationProgressFilterParams, ExaminationProgressResponse, HealthExaminationBatch, HealthExaminationBatchFilterParams, HealthExaminationBatchListResponse, HealthExaminationBatchSummary, HealthExaminationBatchReportSummary, UpdateHealthExaminationBatchRequest } from "../types"
@@ -92,10 +93,10 @@ export async function fetchHealthExaminationBatchesByOrganization(
     { signal }
   )
   if (!response.data) {
-    throw new Error(response.message || "Phản hồi danh sách đợt khám không có dữ liệu.")
+    throw new Error("Phản hồi danh sách đợt khám không có dữ liệu.")
   }
 
-  const page = healthExaminationBatchPageResponseSchema.parse(response.data)
+  const page = parseApiData(healthExaminationBatchPageResponseSchema, response.data)
   return {
     data: page.items.map((batch) => mapBatchSummary(batch, organizationId)),
     total: page.totalElements,
@@ -115,10 +116,10 @@ export async function fetchHealthExaminationBatchById(
     { signal }
   )
   if (!response.data) {
-    throw new Error(response.message || "Phản hồi chi tiết đợt khám không có dữ liệu.")
+    throw new Error("Phản hồi chi tiết đợt khám không có dữ liệu.")
   }
 
-  return mapBatch(healthExaminationBatchDetailResponseSchema.parse(response.data))
+  return mapBatch(parseApiData(healthExaminationBatchDetailResponseSchema, response.data))
 }
 
 export async function createHealthExaminationBatch(
@@ -129,10 +130,10 @@ export async function createHealthExaminationBatch(
     toConfigurationBody(request)
   )
   if (!response.data) {
-    throw new Error(response.message || "Phản hồi tạo đợt khám không có dữ liệu.")
+    throw new Error("Phản hồi tạo đợt khám không có dữ liệu.")
   }
 
-  return mapBatch(healthExaminationBatchDetailResponseSchema.parse(response.data))
+  return mapBatch(parseApiData(healthExaminationBatchDetailResponseSchema, response.data))
 }
 
 export async function updateHealthExaminationBatch(
@@ -147,10 +148,10 @@ export async function updateHealthExaminationBatch(
     body
   )
   if (!response.data) {
-    throw new Error(response.message || "Phản hồi cập nhật đợt khám không có dữ liệu.")
+    throw new Error("Phản hồi cập nhật đợt khám không có dữ liệu.")
   }
 
-  return mapBatch(healthExaminationBatchDetailResponseSchema.parse(response.data))
+  return mapBatch(parseApiData(healthExaminationBatchDetailResponseSchema, response.data))
 }
 
 export async function deleteHealthExaminationBatch(
@@ -181,10 +182,10 @@ export async function startHealthExaminationBatch(
     { rowVersion: request.rowVersion }
   )
   if (!response.data) {
-    throw new Error(response.message || "Phản hồi bắt đầu đợt khám không có dữ liệu.")
+    throw new Error("Phản hồi bắt đầu đợt khám không có dữ liệu.")
   }
 
-  return mapBatch(healthExaminationBatchDetailResponseSchema.parse(response.data))
+  return mapBatch(parseApiData(healthExaminationBatchDetailResponseSchema, response.data))
 }
 
 export function fetchHealthExaminationBatchMatrix(

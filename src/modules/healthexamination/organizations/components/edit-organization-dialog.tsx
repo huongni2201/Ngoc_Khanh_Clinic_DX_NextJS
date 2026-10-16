@@ -207,7 +207,7 @@ export function EditOrganizationDialog({
             </div>
             <FormTextField
               id="edit-email"
-              label="Email đơn vị"
+              label="Thư điện tử đơn vị"
               required
               type="email"
               placeholder="VD: lienhe@congty.vn"
@@ -252,7 +252,7 @@ export function EditOrganizationDialog({
               />
               <FormTextField
                 id="edit-contact-email"
-                label="Email người liên hệ"
+                label="Thư điện tử người liên hệ"
                 required
                 type="email"
                 placeholder="VD: nguyenvana@congty.vn"

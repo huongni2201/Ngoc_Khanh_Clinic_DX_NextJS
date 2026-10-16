@@ -4,7 +4,7 @@ import * as React from "react"
 import { AppSidebar } from "@/widgets/app-sidebar"
 import { AppHeader, type AppHeaderUser } from "@/widgets/app-header"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
-import { AuthBoundary } from "@/modules/accesscontrol"
+import { AuthBoundary, roleLabel } from "@/modules/accesscontrol"
 import { PaymentCompletionNotifier } from "@/modules/billing"
 
 export interface AppShellProps {
@@ -17,7 +17,7 @@ export function AppShell({ children }: AppShellProps) {
       {(session) => (
         <AuthenticatedShell key={session.userId} user={{
           name: session.username,
-          role: [...new Set(session.roleAssignments.map((assignment) => assignment.roleCode))].join(", "),
+          role: [...new Set(session.roleAssignments.map((assignment) => roleLabel(assignment.roleCode)))].join(", "),
         }}>
           {children}
         </AuthenticatedShell>

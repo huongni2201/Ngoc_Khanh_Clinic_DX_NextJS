@@ -128,10 +128,15 @@ describe("apiClient", () => {
 
   it.each([
     [400, "Invalid request", "Thông tin không hợp lệ. Vui lòng kiểm tra lại."],
+    [401, "Unauthorized", "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại."],
     [403, "You are not authorized to perform this action", "Không được phép thực hiện thao tác này."],
     [404, "Organization not found", "Không tìm thấy hoặc đã bị xóa/ngừng hoạt động."],
     [409, "Business rule could not be completed", "Dữ liệu đã thay đổi hoặc không thỏa quy tắc nghiệp vụ. Vui lòng tải lại."],
+    [408, "Request timeout", "Yêu cầu đã hết thời gian chờ. Vui lòng thử lại."],
+    [413, "Payload too large", "Dữ liệu gửi lên vượt quá dung lượng cho phép."],
+    [415, "Unsupported media type", "Định dạng dữ liệu gửi lên không được hỗ trợ."],
     [422, "The role is not available", "Dữ liệu đã chọn không còn hợp lệ. Vui lòng tải lại và chọn lại."],
+    [429, "Too many attempts", "Bạn đã gửi quá nhiều yêu cầu. Vui lòng đợi rồi thử lại."],
     [500, "An unexpected error occurred", "Máy chủ gặp lỗi. Vui lòng thử lại sau."],
     [503, "Service unavailable", "Máy chủ gặp lỗi. Vui lòng thử lại sau."],
   ])("shows a Vietnamese message for HTTP %i instead of the English server text", async (status, serverMessage, expected) => {
@@ -155,14 +160,29 @@ describe("apiClient", () => {
     })
   })
 
-  it("keeps the server message for statuses without a mapped Vietnamese text", async () => {
+  it("uses a Vietnamese fallback for unmapped statuses and retains the raw message for debugging", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(
-      Response.json({ result: "NG", code: 429, message: "Too many attempts" }, { status: 429 })
+      Response.json({ result: "NG", code: 418, message: "Unexpected server error" }, { status: 418 })
     ))
 
     await expect(apiClient.get("/resource")).rejects.toMatchObject({
-      status: 429,
-      message: "Too many attempts",
+      status: 418,
+      message: "Yêu cầu tới máy chủ thất bại.",
+      serverMessage: "Unexpected server error",
+    })
+  })
+
+  it("does not render an English rejection sent inside an HTTP 200 envelope", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json({
+      result: "NG", code: 400, message: "Request rejected", data: [{ field: "code", code: "NotBlank" }],
+    })))
+
+    await expect(apiClient.get("/resource")).rejects.toMatchObject({
+      status: 200,
+      code: 400,
+      message: "Yêu cầu không được chấp nhận. Vui lòng kiểm tra lại.",
+      serverMessage: "Request rejected",
+      fieldErrors: [{ field: "code", code: "NotBlank" }],
     })
   })
 
@@ -203,7 +223,7 @@ describe("apiClient", () => {
     vi.stubGlobal("fetch", fetch)
 
     await expect(apiClient.get("/organizations")).rejects.toThrow(
-      "NEXT_PUBLIC_API_BASE_URL is required outside development"
+      "Chưa cấu hình địa chỉ kết nối máy chủ. Vui lòng liên hệ quản trị viên."
     )
     expect(fetch).not.toHaveBeenCalled()
   })

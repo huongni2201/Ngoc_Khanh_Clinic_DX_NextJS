@@ -115,18 +115,18 @@ export function ExaminationDetailImportDialog({
         <DialogHeader>
           <DialogTitle>Nhập chi tiết khám từ Excel</DialogTitle>
           <DialogDescription>
-            Tải file mẫu, đánh dấu X vào các hạng mục đã khám rồi tải lên. Người khám có X được ghi
-            nhận là đã đến. Người khám không có trong file được giữ nguyên. Hệ thống nhập toàn bộ
+            Tải tệp mẫu, đánh dấu X vào các hạng mục đã khám rồi tải lên. Người khám có X được ghi
+            nhận là đã đến. Người khám không có trong tệp được giữ nguyên. Hệ thống nhập toàn bộ
             hoặc không nhập dòng nào.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4" noValidate>
           <div className="space-y-2 rounded-lg border border-border bg-muted/40 p-3 text-xs">
-            <p className="font-medium text-foreground">Bước 1. Tải file mẫu</p>
+            <p className="font-medium text-foreground">Bước 1. Tải tệp mẫu</p>
             <div className="flex items-center justify-between gap-3">
               <span className="text-muted-foreground">
-                File mẫu đã điền sẵn danh sách người khám và các dấu X hiện tại. Tải lại nếu danh
+                Tệp mẫu đã điền sẵn danh sách người khám và các dấu X hiện tại. Tải lại nếu danh
                 sách người khám, đợt khám hoặc chi tiết khám vừa thay đổi.
               </span>
               <Button
@@ -136,17 +136,17 @@ export function ExaminationDetailImportDialog({
                 onClick={onDownloadTemplate}
                 disabled={isDownloadingTemplate || pending}
               >
-                {isDownloadingTemplate ? "Đang tải..." : "Tải file mẫu"}
+                {isDownloadingTemplate ? "Đang tải..." : "Tải tệp mẫu"}
               </Button>
             </div>
             <p className="text-muted-foreground">
-              Ô để trống nghĩa là chưa khám. Xoá X trong file sẽ bỏ ghi nhận hạng mục đó.
+              Ô để trống nghĩa là chưa khám. Xoá X trong tệp sẽ bỏ ghi nhận hạng mục đó.
             </p>
           </div>
 
           <div className="space-y-1.5">
             <Label htmlFor="examination-detail-import-file" className="text-xs font-medium">
-              Bước 2. Chọn file đã điền (.xlsx, tối đa 5 MB)
+              Bước 2. Chọn tệp đã điền (.xlsx, tối đa 5 MB)
             </Label>
             <Input
               key={inputKey}
@@ -184,7 +184,7 @@ export function ExaminationDetailImportDialog({
                 <p className="mt-1 text-xs">Chưa có thay đổi nào được ghi vào đợt khám.</p>
                 {failure.needsNewExport && (
                   <div className="mt-2 flex items-center gap-2">
-                    <p className="text-xs">Hãy tải lại file mẫu mới nhất rồi nhập lại.</p>
+                    <p className="text-xs">Hãy tải lại tệp mẫu mới nhất rồi nhập lại.</p>
                     <Button
                       type="button"
                       variant="outline"
@@ -192,7 +192,7 @@ export function ExaminationDetailImportDialog({
                       onClick={onDownloadTemplate}
                       disabled={isDownloadingTemplate}
                     >
-                      {isDownloadingTemplate ? "Đang tải..." : "Tải lại file mẫu"}
+                      {isDownloadingTemplate ? "Đang tải..." : "Tải lại tệp mẫu"}
                     </Button>
                   </div>
                 )}

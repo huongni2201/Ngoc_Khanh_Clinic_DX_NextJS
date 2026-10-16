@@ -11,5 +11,5 @@ export function fetchClinicRooms(): Promise<ClinicRoom[]> {
 
 export function fetchReceptionWorklist(params?: ReceptionFilterParams): Promise<Encounter[]> {
   void params
-  return unavailableApi("worklist tiếp đón")
+  return unavailableApi("danh sách tiếp đón")
 }

@@ -71,10 +71,10 @@ export const createStaffMemberSchema = z.object({
     .string()
     .trim()
     .max(STAFF_MEMBER_EMAIL_MAX_LENGTH, {
-      message: `Email không được vượt quá ${STAFF_MEMBER_EMAIL_MAX_LENGTH} ký tự`,
+      message: `Thư điện tử không được vượt quá ${STAFF_MEMBER_EMAIL_MAX_LENGTH} ký tự`,
     })
     .refine((value) => value === "" || z.email().safeParse(value).success, {
-      message: "Email không hợp lệ",
+      message: "Thư điện tử không hợp lệ",
     }),
   initialPassword: z
     .string()

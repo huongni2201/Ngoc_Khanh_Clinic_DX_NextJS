@@ -16,8 +16,8 @@ export async function generateMetadata({
 }: HealthExaminationBatchDetailPageProps): Promise<Metadata> {
   const resolvedParams = await params
   return {
-    title: "Chi tiết đợt khám — Ngọc Khánh Clinic",
-    description: "Chi tiết đợt khám " + resolvedParams.batchId + " tại Ngọc Khánh Clinic",
+    title: "Chi tiết đợt khám — Phòng khám Ngọc Khánh",
+    description: "Chi tiết đợt khám " + resolvedParams.batchId + " tại Phòng khám Ngọc Khánh",
   }
 }
 

@@ -13,8 +13,9 @@ describe("batch server field errors", () => {
     const issue = batchServerFieldIssue({ field: "examinationSiteName", code: "NotBlank" })
 
     expect(issue.target).toBeNull()
-    expect(issue.message).toContain('"examinationSiteName"')
-    expect(issue.message).toContain("khởi động lại backend")
+    expect(issue.message).toContain("Thiếu thông tin bắt buộc")
+    expect(issue.message).toContain("liên hệ quản trị viên")
+    expect(issue.message).not.toContain("examinationSiteName")
   })
 
   it("maps a negotiated price to its table row and drops duplicate messages", () => {

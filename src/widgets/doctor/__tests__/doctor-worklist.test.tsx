@@ -57,7 +57,7 @@ describe("Danh sách lượt khám của bác sĩ", () => {
     renderWithClient(<AppSidebar />)
 
     // Check brand header
-    expect(screen.getByText("Ngọc Khánh Clinic")).toBeInTheDocument()
+    expect(screen.getByText("Phòng khám Ngọc Khánh")).toBeInTheDocument()
     expect(screen.getByText("Hệ thống quản lý phòng khám")).toBeInTheDocument()
 
     // Check all requested nav items are present

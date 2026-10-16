@@ -1,3 +1,4 @@
+import { parseApiData } from "@/shared/api/parse-api-data"
 import { apiClient } from "@/shared/api/api-client"
 import type { DownloadedFile, PaymentSummaryReport } from "../types"
 import { paymentSummaryReportResponseSchema } from "../types/transport"
@@ -25,10 +26,10 @@ export async function fetchPaymentSummaryReport(
     signal,
   })
   if (!response.data) {
-    throw new Error(response.message || "Phản hồi báo cáo thanh toán không có dữ liệu.")
+    throw new Error("Phản hồi báo cáo thanh toán không có dữ liệu.")
   }
 
-  const report = paymentSummaryReportResponseSchema.parse(response.data)
+  const report = parseApiData(paymentSummaryReportResponseSchema, response.data)
   return {
     ...report,
     items: report.items.map((item) => ({

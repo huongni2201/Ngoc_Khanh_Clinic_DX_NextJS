@@ -91,7 +91,7 @@ export function LoginPage() {
 
       {/* Outer Page Footer */}
       <footer className="relative z-10 w-full text-center text-xs text-muted-foreground pt-4 pb-2">
-        © 2026 Ngọc Khánh Clinic. Tất cả quyền được bảo lưu.
+        © 2026 Phòng khám Ngọc Khánh. Tất cả quyền được bảo lưu.
       </footer>
     </div>
   )

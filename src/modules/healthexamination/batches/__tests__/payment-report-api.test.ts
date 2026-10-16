@@ -74,7 +74,10 @@ describe("payment report", () => {
       data: { ...backendReport, batchStatus: "ARCHIVED" },
     })
 
-    await expect(fetchPaymentSummaryReport("org-1", "batch-1")).rejects.toBeInstanceOf(ZodError)
+    await expect(fetchPaymentSummaryReport("org-1", "batch-1")).rejects.toMatchObject({
+      message: "Dữ liệu phản hồi từ máy chủ không hợp lệ. Vui lòng tải lại hoặc liên hệ quản trị viên.",
+      cause: expect.any(ZodError),
+    })
   })
 
   it("downloads the Word file with the backend name or a default", async () => {

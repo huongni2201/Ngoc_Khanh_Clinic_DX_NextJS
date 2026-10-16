@@ -15,7 +15,7 @@ const optionalPhoneSchema = z
   .optional()
   .or(z.literal(""))
 
-const requiredEmailSchema = z.email({ message: "Email không hợp lệ" })
+const requiredEmailSchema = z.email({ message: "Thư điện tử không hợp lệ" })
 
 const organizationFields = {
   name: z.string().trim().min(2, { message: "Tên đơn vị phải có ít nhất 2 ký tự" }).max(300, { message: "Tên đơn vị không được vượt quá 300 ký tự" }),
