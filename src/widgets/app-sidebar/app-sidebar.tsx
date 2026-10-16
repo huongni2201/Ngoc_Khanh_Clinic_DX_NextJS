@@ -13,6 +13,8 @@ import {
   UserCheck01Icon,
   UserGroupIcon,
   UserMultiple02Icon,
+  UserShield01Icon,
+  Key01Icon,
 } from "@hugeicons/core-free-icons"
 import { cn } from "@/lib/utils"
 import { PERMISSION, usePermissions, type PermissionCode } from "@/modules/accesscontrol"
@@ -38,7 +40,24 @@ export function AppSidebar({ className }: { className?: string }) {
       icon: UserMultiple02Icon,
       permission: PERMISSION.STAFF_MEMBER_VIEW,
     },
+    {
+      title: "Vai trò",
+      href: "/roles",
+      icon: UserShield01Icon,
+      permission: PERMISSION.ROLE_MANAGE,
+    },
+    {
+      title: "Phân quyền vai trò",
+      href: "/roles/permissions",
+      icon: Key01Icon,
+      permission: PERMISSION.ROLE_PERMISSION_VIEW,
+    },
   ].filter((item) => isKnown && can(item.permission))
+  // "/roles/permissions" sits under "/roles": only the most specific matching item is active.
+  const activeAdminHref = adminItems
+    .map((item) => item.href)
+    .filter((href) => pathname === href || pathname.startsWith(`${href}/`))
+    .sort((a, b) => b.length - a.length)[0]
 
   const navItems: NavItem[] = [
     {
@@ -138,7 +157,7 @@ export function AppSidebar({ className }: { className?: string }) {
                 <SidebarLink
                   key={item.title}
                   item={item}
-                  isActive={pathname.startsWith(item.href)}
+                  isActive={item.href === activeAdminHref}
                 />
               ))}
             </div>

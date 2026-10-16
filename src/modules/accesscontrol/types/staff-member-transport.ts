@@ -42,7 +42,8 @@ export const roleResponseSchema = z.object({
   id: z.string().min(1),
   code: z.string().min(1),
   name: z.string(),
-  description: z.string(),
+  // Optional since V005: a role created by an administrator may have no description.
+  description: z.string().nullish(),
 })
 
 export const roleListResponseSchema = z.array(roleResponseSchema)

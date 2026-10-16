@@ -14,6 +14,9 @@ export { AuthSessionSync } from "./components/auth-session-sync"
 export { replaceSession, notifySessionChanged } from "./utils/session-cache"
 export { hasStaffPermission } from "./utils/staff-workspace-access"
 export { StaffMemberListPage } from "./pages/staff-member-list-page"
+export { RoleListPage } from "./pages/role-list-page"
+export { RolePermissionsPage } from "./pages/role-permissions-page"
+export type { RoleSummary, PermissionCatalogItem, RolePermissions } from "./types/role"
 export type {
   StaffMember,
   StaffAccount,

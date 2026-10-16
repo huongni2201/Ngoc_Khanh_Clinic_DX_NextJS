@@ -45,6 +45,12 @@ export const PERMISSION = {
   ROLE_VIEW: "ROLE_VIEW", // GET /roles (V004)
   // No endpoint of its own: POST /staff-members also requires it because it grants the role.
   USER_ROLE_ASSIGN: "USER_ROLE_ASSIGN",
+  ROLE_MANAGE: "ROLE_MANAGE", // GET /admin/roles (V005)
+  ROLE_CREATE: "ROLE_CREATE", // POST /admin/roles (V005)
+  ROLE_UPDATE: "ROLE_UPDATE", // PUT /admin/roles/{roleId} (V005)
+  PERMISSION_VIEW: "PERMISSION_VIEW", // GET /admin/permissions (V005)
+  ROLE_PERMISSION_VIEW: "ROLE_PERMISSION_VIEW", // GET /admin/roles/{roleId}/permissions (V005)
+  ROLE_PERMISSION_ASSIGN: "ROLE_PERMISSION_ASSIGN", // PUT /admin/roles/{roleId}/permissions (V005)
 } as const
 
 export type PermissionCode = (typeof PERMISSION)[keyof typeof PERMISSION]
