@@ -7,7 +7,6 @@ import {
   AlertCircle,
   DataTablePagination,
   DEFAULT_PAGE_SIZE,
-  Info,
   Lock,
   parsePageSize,
   PageHeader,
@@ -18,13 +17,11 @@ import {
 import { RoleFormSheet } from "../components/role-form-sheet"
 import { RoleTable } from "../components/role-table"
 import { usePermissions } from "../hooks/use-permissions"
-import { useRoles } from "../hooks/use-roles"
-import { PERMISSION } from "../permissions"
+import { useAllRoles } from "../hooks/use-roles"
+import { PERMISSION, ROLE_PERMISSIONS_SCREEN_PERMISSIONS } from "../permissions"
 import type { RoleStatusFilter, RoleSummary } from "../types/role"
 import { selectRolePage } from "../utils/role-labels"
-
-/** The backend's largest page: the whole role list is loaded at once and searched here. */
-const ROLE_LIST_LIMIT = 100
+import { PATIENT_ROLE_CODE } from "../utils/role-permission-draft"
 
 /** Role List (SRS UC-008, 1.3.1) with the New Role and Edit Role panels. */
 export function RoleListPage() {
@@ -35,8 +32,9 @@ export function RoleListPage() {
   const canView = can(PERMISSION.ROLE_MANAGE)
   const canCreate = can(PERMISSION.ROLE_CREATE)
   const canEdit = can(PERMISSION.ROLE_UPDATE)
-  // The Role Permissions screen reads the catalogue and the grants of the role.
-  const canOpenPermissions = canAll(PERMISSION.ROLE_PERMISSION_VIEW, PERMISSION.PERMISSION_VIEW)
+  const canCopyPermissions = can(PERMISSION.ROLE_PERMISSION_ASSIGN)
+  // The Role Permissions screen reads the grants, the catalogue and the role list.
+  const canOpenPermissions = canAll(...ROLE_PERMISSIONS_SCREEN_PERMISSIONS)
 
   const search = searchParams?.get("q")?.trim() || ""
   const statusParam = searchParams?.get("status")
@@ -75,18 +73,18 @@ export function RoleListPage() {
   )
 
   // Searched here on the Vietnamese names shown on screen: the backend stores the English seed names.
-  const { data, isLoading, isError, error, refetch } = useRoles(
-    { pageSize: ROLE_LIST_LIMIT },
-    canView
-  )
-  const allRoles = React.useMemo(() => data?.data ?? [], [data])
+  const { data, isLoading, isError, error, refetch } = useAllRoles(canView)
+  const allRoles = React.useMemo(() => data ?? [], [data])
   const view = React.useMemo(
     () => selectRolePage(allRoles, { search, status, page, pageSize }),
     [allRoles, search, status, page, pageSize]
   )
-  const isTruncated = (data?.total ?? 0) > allRoles.length
-  // "Copy permissions from" lists every active role, not only the current page.
-  const copySources = React.useMemo(() => allRoles.filter((role) => role.active), [allRoles])
+  // "Copy permissions from" lists every active staff role, not only the current page: the patient
+  // portal role would give a staff role its OWN_* permissions, and the backend rejects it.
+  const copySources = React.useMemo(
+    () => allRoles.filter((role) => role.active && role.code !== PATIENT_ROLE_CODE),
+    [allRoles]
+  )
 
   const roleToEdit = roleToEditId
     ? allRoles.find((role) => role.id === roleToEditId)
@@ -140,12 +138,6 @@ export function RoleListPage() {
         </div>
       ) : (
         <>
-          {isTruncated ? (
-            <p className="flex items-start gap-2 rounded-lg bg-muted px-3 py-2 text-xs text-muted-foreground">
-              <Info aria-hidden="true" className="mt-0.5 size-3.5 shrink-0" />
-              Chỉ tìm và hiển thị trong {allRoles.length} vai trò đầu tiên trên tổng số {data?.total}.
-            </p>
-          ) : null}
           <div className="flex flex-1 flex-col">
             <RoleTable
               roles={view.items}
@@ -180,7 +172,8 @@ export function RoleListPage() {
         <RoleFormSheet
           open={isCreateOpen}
           onOpenChange={setIsCreateOpen}
-          copySources={copySources}
+          copySources={canCopyPermissions ? copySources : undefined}
+          existingRoles={allRoles}
         />
       ) : null}
       {canEdit ? (
@@ -190,9 +183,10 @@ export function RoleListPage() {
             if (!open) setRoleToEditId(null)
           }}
           role={roleToEdit}
+          existingRoles={allRoles}
           onReload={async () => {
             const refreshed = await refetch()
-            return refreshed.data?.data.find((role) => role.id === roleToEditId)
+            return refreshed.data?.find((role) => role.id === roleToEditId)
           }}
           onEditPermissions={canOpenPermissions ? openPermissions : undefined}
         />

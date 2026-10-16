@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import type { StaffMember } from "../types/staff-member"
+import type { RoleOption, StaffMember } from "../types/staff-member"
 import {
   roleLabel,
   STAFF_ACCOUNT_STATUS_PRESENTATION,
@@ -27,6 +27,8 @@ interface StaffMemberTableProps {
   onSearchChange?: (search: string) => void
   /** Omitted when the session may not create staff members. */
   onCreateClick?: () => void
+  /** Roles with their stored names, so a renamed role shows its new name. */
+  roles?: RoleOption[]
 }
 
 const HEAD_CLASS = "h-10 px-4 text-xs font-semibold text-table-header-fg"
@@ -39,6 +41,7 @@ export function StaffMemberTable({
   searchTerm = "",
   onSearchChange,
   onCreateClick,
+  roles,
 }: StaffMemberTableProps) {
   // Local value for the debounced search, re-synced when the URL changes.
   const [searchValue, setSearchValue] = React.useState(searchTerm)
@@ -140,7 +143,7 @@ export function StaffMemberTable({
             </TableRow>
           ) : (
             staffMembers.map((staffMember) => (
-              <StaffMemberRow key={staffMember.id} staffMember={staffMember} />
+              <StaffMemberRow key={staffMember.id} staffMember={staffMember} roles={roles} />
             ))
           )}
         </TableBody>
@@ -149,7 +152,13 @@ export function StaffMemberTable({
   )
 }
 
-function StaffMemberRow({ staffMember }: { staffMember: StaffMember }) {
+function StaffMemberRow({
+  staffMember,
+  roles,
+}: {
+  staffMember: StaffMember
+  roles?: RoleOption[]
+}) {
   const status = STAFF_MEMBER_STATUS_PRESENTATION[staffMember.status]
   const account = staffMember.account
   const accountStatus = account ? STAFF_ACCOUNT_STATUS_PRESENTATION[account.status] : null
@@ -180,7 +189,10 @@ function StaffMemberRow({ staffMember }: { staffMember: StaffMember }) {
       <TableCell className="hidden whitespace-normal px-4 py-3 md:table-cell">
         {account ? (
           <span className="rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground">
-            {roleLabel(account.roleCode)}
+            {roleLabel(
+              account.roleCode,
+              roles?.find((role) => role.code === account.roleCode)
+            )}
           </span>
         ) : (
           <span className="text-sm text-muted-foreground">—</span>

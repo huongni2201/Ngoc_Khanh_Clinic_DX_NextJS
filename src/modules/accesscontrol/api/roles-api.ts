@@ -13,14 +13,13 @@ import {
 import type {
   CreateRoleInput,
   PermissionCatalogItem,
-  RoleFilterParams,
   RoleListResponse,
+  RolePageParams,
   RolePermissions,
   RoleSummary,
   UpdateRoleInput,
   UpdateRolePermissionsInput,
 } from "../types/role"
-import { normalizeRoleFilterParams } from "../utils/role-list-params"
 
 // Contract: Ngoc_Khanh_Clinic_DX_Springboot/docs/api/roles-and-permissions.md
 const ROLES_ENDPOINT = "/api/v1/admin/roles"
@@ -60,18 +59,17 @@ function requireData<T>(data: T | undefined, message: string | undefined, fallba
   return data
 }
 
+/** The backend's largest page size for the role list. */
+const ROLE_PAGE_LIMIT = 100
+
+/** One page of roles of every status, in code order. Screens search and filter on their own. */
 export async function fetchRoles(
-  params?: RoleFilterParams,
+  params: RolePageParams,
   signal?: AbortSignal
 ): Promise<RoleListResponse> {
-  const normalized = normalizeRoleFilterParams(params)
   const query = new URLSearchParams({
-    page: String(normalized.page),
-    size: String(normalized.pageSize),
-    ...(normalized.search ? { searchKey: normalized.search } : {}),
-    ...(normalized.status ? { status: normalized.status } : {}),
-    sortKey: normalized.sortKey,
-    sortBy: normalized.sortBy,
+    page: String(Math.max(1, Math.trunc(params.page))),
+    size: String(Math.min(ROLE_PAGE_LIMIT, Math.max(1, Math.trunc(params.pageSize)))),
   })
   const response = await apiClient.get<unknown>(`${ROLES_ENDPOINT}?${query.toString()}`, { signal })
   const page = rolePageResponseSchema.parse(
@@ -83,6 +81,34 @@ export async function fetchRoles(
     page: page.page,
     pageSize: page.size,
     totalPages: page.totalPages,
+  }
+}
+
+/** Reads again when roles were added while the pages were read, at most this many times. */
+const ROLE_READ_ATTEMPTS = 3
+
+/**
+ * Every role, in code order: the first page, then the remaining pages in parallel. Screens search
+ * and page the list themselves on the Vietnamese names they show. Pages are read by offset, so a
+ * role created meanwhile can shift rows between pages: the read is repeated while the total
+ * changes, and a role seen twice is kept once.
+ */
+export async function fetchAllRoles(signal?: AbortSignal): Promise<RoleSummary[]> {
+  for (let attempt = 1; ; attempt += 1) {
+    const first = await fetchRoles({ page: 1, pageSize: ROLE_PAGE_LIMIT }, signal)
+    const rest = await Promise.all(
+      Array.from({ length: Math.max(0, first.totalPages - 1) }, (_, index) =>
+        fetchRoles({ page: index + 2, pageSize: ROLE_PAGE_LIMIT }, signal)
+      )
+    )
+    const stable = rest.every((page) => page.total === first.total)
+    if (stable || attempt >= ROLE_READ_ATTEMPTS) {
+      const byId = new Map<string, RoleSummary>()
+      for (const role of [first, ...rest].flatMap((page) => page.data)) {
+        if (!byId.has(role.id)) byId.set(role.id, role)
+      }
+      return [...byId.values()]
+    }
   }
 }
 

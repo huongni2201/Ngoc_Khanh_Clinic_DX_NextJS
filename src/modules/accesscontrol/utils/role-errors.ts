@@ -48,9 +48,17 @@ export function isRoleVersionConflict(error: unknown) {
   return error instanceof ApiClientError && error.status === 409 && error.fieldErrors.length === 0
 }
 
-export function roleFormErrorMessage(error: unknown): string {
+/**
+ * Vietnamese text of a failed create or update. A 409 without a field means different things: on
+ * create, a role with the same code or name was saved at the same moment; on update, the role was
+ * changed by another user or the change is not allowed.
+ */
+export function roleFormErrorMessage(error: unknown, mode: "create" | "edit"): string {
   if (roleFieldErrors(error).length > 0) {
     return "Thông tin chưa hợp lệ. Vui lòng kiểm tra các trường được đánh dấu."
+  }
+  if (isRoleVersionConflict(error) && mode === "create") {
+    return "Mã hoặc tên vai trò vừa trùng với một vai trò khác. Vui lòng kiểm tra lại rồi tạo lại."
   }
   if (isRoleVersionConflict(error)) {
     return "Vai trò vừa được người khác thay đổi hoặc thay đổi này không được phép. Tải lại để xem dữ liệu mới nhất."

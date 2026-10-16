@@ -41,16 +41,21 @@ import {
 import { useCreateRole, useUpdateRole } from "../hooks/use-roles"
 import type { RoleSummary } from "../types/role"
 import { isRoleVersionConflict, roleFieldErrors, roleFormErrorMessage } from "../utils/role-errors"
-import { roleDisplayDescription, roleDisplayName } from "../utils/role-labels"
-import { ADMINISTRATOR_ROLE_CODE } from "../utils/role-permission-draft"
+import { isRoleNameTaken, roleDisplayDescription, roleDisplayName } from "../utils/role-labels"
+import { ADMINISTRATOR_ROLE_CODE, PATIENT_ROLE_CODE } from "../utils/role-permission-draft"
 
 interface RoleFormSheetProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   /** Role to edit (SRS 1.3.3); omitted to create one (SRS 1.3.2). */
   role?: RoleSummary
-  /** Active roles offered by "Copy permissions from" when creating. */
+  /**
+   * Active roles offered by "Copy permissions from" when creating. Omitted hides the field: copying
+   * grants permissions, so it needs the permission to assign them.
+   */
   copySources?: RoleSummary[]
+  /** Every role, to reject a name already shown for another role. */
+  existingRoles?: RoleSummary[]
   /** Reloads the edited role after a conflict; resolves to its latest version, if it still exists. */
   onReload?: () => Promise<RoleSummary | undefined>
   /** Shown as "Sửa quyền" when editing and the session may view role permissions. */
@@ -58,6 +63,7 @@ interface RoleFormSheetProps {
 }
 
 const NO_COPY = ""
+const DUPLICATE_NAME_MESSAGE = "Tên vai trò đã tồn tại"
 
 /**
  * New Role and Edit Role panel sliding in from the right over the Role List. Closing it with unsaved
@@ -68,34 +74,44 @@ export function RoleFormSheet({
   onOpenChange,
   role,
   copySources,
+  existingRoles,
   onReload,
   onEditPermissions,
 }: RoleFormSheetProps) {
   const [dirty, setDirty] = React.useState(false)
-  const [confirmDiscardOpen, setConfirmDiscardOpen] = React.useState(false)
+  // What to do once the user agrees to drop unsaved changes: close the panel, or close it and open
+  // the Role Permissions screen. Null while no confirmation is asked.
+  const [pendingLeave, setPendingLeave] = React.useState<(() => void) | null>(null)
 
-  const requestClose = (next: boolean) => {
-    if (next) {
-      onOpenChange(true)
-      return
-    }
-    if (dirty) {
-      setConfirmDiscardOpen(true)
-      return
-    }
+  const close = () => {
+    setDirty(false)
     onOpenChange(false)
   }
+
+  /** Runs `leave` at once, or after confirmation when the form has unsaved changes. */
+  const leaveSafely = (leave: () => void) => {
+    if (dirty) setPendingLeave(() => leave)
+    else leave()
+  }
+
+  const requestClose = (next: boolean) => {
+    if (next) onOpenChange(true)
+    else leaveSafely(close)
+  }
+
+  const editPermissions = onEditPermissions
+    ? (target: RoleSummary) =>
+        leaveSafely(() => {
+          close()
+          onEditPermissions(target)
+        })
+    : undefined
 
   // Closing the sheet forgets the unsaved state (adjusted while rendering, not in an effect).
   const [wasOpen, setWasOpen] = React.useState(open)
   if (wasOpen !== open) {
     setWasOpen(open)
     if (!open) setDirty(false)
-  }
-
-  const close = () => {
-    setDirty(false)
-    onOpenChange(false)
   }
 
   return (
@@ -107,15 +123,17 @@ export function RoleFormSheet({
               <EditRoleForm
                 key={role.id}
                 role={role}
+                existingRoles={existingRoles ?? []}
                 onDirtyChange={setDirty}
                 onCancel={() => requestClose(false)}
                 onSaved={close}
                 onReload={onReload}
-                onEditPermissions={onEditPermissions}
+                onEditPermissions={editPermissions}
               />
             ) : (
               <CreateRoleForm
-                copySources={copySources ?? []}
+                copySources={copySources}
+                existingRoles={existingRoles ?? []}
                 onDirtyChange={setDirty}
                 onCancel={() => requestClose(false)}
                 onSaved={close}
@@ -125,22 +143,28 @@ export function RoleFormSheet({
         </SheetContent>
       </Sheet>
 
-      <Dialog open={confirmDiscardOpen} onOpenChange={setConfirmDiscardOpen}>
+      <Dialog
+        open={pendingLeave !== null}
+        onOpenChange={(next) => {
+          if (!next) setPendingLeave(null)
+        }}
+      >
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>Bỏ thay đổi chưa lưu?</DialogTitle>
             <DialogDescription>Các thay đổi của vai trò chưa được lưu và sẽ bị mất.</DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setConfirmDiscardOpen(false)}>
+            <Button type="button" variant="outline" onClick={() => setPendingLeave(null)}>
               Tiếp tục chỉnh sửa
             </Button>
             <Button
               type="button"
               variant="destructive"
               onClick={() => {
-                setConfirmDiscardOpen(false)
-                close()
+                const leave = pendingLeave
+                setPendingLeave(null)
+                leave?.()
               }}
             >
               Bỏ thay đổi
@@ -160,10 +184,11 @@ interface FormProps {
 
 function CreateRoleForm({
   copySources,
+  existingRoles,
   onDirtyChange,
   onCancel,
   onSaved,
-}: FormProps & { copySources: RoleSummary[] }) {
+}: FormProps & { copySources?: RoleSummary[]; existingRoles: RoleSummary[] }) {
   const createMutation = useCreateRole()
   const {
     register,
@@ -181,7 +206,7 @@ function CreateRoleForm({
   const copyItems = React.useMemo(
     () => [
       { value: NO_COPY, label: "Không sao chép" },
-      ...copySources.map((source) => ({
+      ...(copySources ?? []).map((source) => ({
         value: source.id,
         label: `${roleDisplayName(source)} (${source.permissionCount} quyền)`,
       })),
@@ -191,6 +216,10 @@ function CreateRoleForm({
   const pending = createMutation.isPending
 
   const onSubmit = async (values: ValidatedCreateRoleFormValues) => {
+    if (isRoleNameTaken(values.name, existingRoles)) {
+      setError("name", { type: "duplicate", message: DUPLICATE_NAME_MESSAGE })
+      return
+    }
     try {
       const created = await createMutation.mutateAsync({
         code: values.code,
@@ -220,7 +249,7 @@ function CreateRoleForm({
       <fieldset disabled={pending} className="m-0 min-w-0 flex-1 space-y-5 border-0 px-6 pb-4">
         {createMutation.error && roleFieldErrors(createMutation.error).length === 0 ? (
           <p role="alert" className="text-xs text-destructive">
-            {roleFormErrorMessage(createMutation.error)}
+            {roleFormErrorMessage(createMutation.error, "create")}
           </p>
         ) : null}
 
@@ -257,34 +286,36 @@ function CreateRoleForm({
 
         <DescriptionField register={register} errors={errors} />
 
-        <div className="space-y-1.5">
-          <Label htmlFor="role-copy-from" className="text-xs font-medium text-foreground">
-            Sao chép quyền từ
-          </Label>
-          <Controller
-            control={control}
-            name="copyFromRoleId"
-            render={({ field }) => (
-              <Select
-                items={copyItems}
-                value={field.value}
-                onValueChange={(value) => field.onChange(value ?? NO_COPY)}
-                disabled={pending}
-              >
-                <SelectTrigger id="role-copy-from" className="h-9 w-full bg-card text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {copyItems.map((item) => (
-                    <SelectItem key={item.value || "none"} value={item.value}>
-                      {item.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          />
-        </div>
+        {copySources ? (
+          <div className="space-y-1.5">
+            <Label htmlFor="role-copy-from" className="text-xs font-medium text-foreground">
+              Sao chép quyền từ
+            </Label>
+            <Controller
+              control={control}
+              name="copyFromRoleId"
+              render={({ field }) => (
+                <Select
+                  items={copyItems}
+                  value={field.value}
+                  onValueChange={(value) => field.onChange(value ?? NO_COPY)}
+                  disabled={pending}
+                >
+                  <SelectTrigger id="role-copy-from" className="h-9 w-full bg-card text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {copyItems.map((item) => (
+                      <SelectItem key={item.value || "none"} value={item.value}>
+                        {item.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+          </div>
+        ) : null}
 
         <ActiveField control={control} />
       </fieldset>
@@ -308,7 +339,7 @@ function CreateRoleForm({
   )
 }
 
-/** Prefills the Vietnamese name and description, so a save stores them instead of the seed text. */
+/** Prefills the Vietnamese name and description shown on screen. */
 function toEditValues(role: RoleSummary): UpdateRoleFormValues {
   return {
     name: roleDisplayName(role),
@@ -319,6 +350,7 @@ function toEditValues(role: RoleSummary): UpdateRoleFormValues {
 
 function EditRoleForm({
   role,
+  existingRoles,
   onDirtyChange,
   onCancel,
   onSaved,
@@ -326,6 +358,7 @@ function EditRoleForm({
   onEditPermissions,
 }: FormProps & {
   role: RoleSummary
+  existingRoles: RoleSummary[]
   onReload?: () => Promise<RoleSummary | undefined>
   onEditPermissions?: (role: RoleSummary) => void
 }) {
@@ -351,6 +384,7 @@ function EditRoleForm({
   const pending = updateMutation.isPending
   const isConflict = isRoleVersionConflict(updateMutation.error)
   const isAdministrator = base.code === ADMINISTRATOR_ROLE_CODE
+  const isPatient = base.code === PATIENT_ROLE_CODE
 
   // After a 409 the form keeps the user's input. Only an explicit reload replaces it, and the edit
   // is never resubmitted automatically.
@@ -375,10 +409,21 @@ function EditRoleForm({
   }
 
   const onSubmit = async (values: ValidatedUpdateRoleFormValues) => {
+    // A field left as its Vietnamese display text keeps the stored value, so changing only the
+    // status neither renames a seeded role nor collides with another role's Vietnamese name.
+    const shown = toEditValues(base)
+    const nameChanged = values.name !== shown.name.trim()
+    if (nameChanged && isRoleNameTaken(values.name, existingRoles, base.id)) {
+      setError("name", { type: "duplicate", message: DUPLICATE_NAME_MESSAGE })
+      return
+    }
     try {
       const updated = await updateMutation.mutateAsync({
-        name: values.name,
-        description: values.description,
+        name: nameChanged ? values.name : base.name,
+        description:
+          values.description.trim() === shown.description.trim()
+            ? base.description
+            : values.description,
         active: values.active,
         rowVersion: base.rowVersion,
       })
@@ -409,7 +454,7 @@ function EditRoleForm({
             role="alert"
             className="space-y-2 rounded-lg border border-border bg-muted p-3 text-xs text-foreground"
           >
-            <p>{roleFormErrorMessage(updateMutation.error)}</p>
+            <p>{roleFormErrorMessage(updateMutation.error, "edit")}</p>
             {isConflict && onReload ? (
               <Button type="button" variant="outline" size="sm" onClick={() => void reload()}>
                 <RefreshCw className="size-3.5" />
@@ -446,11 +491,13 @@ function EditRoleForm({
 
         <ActiveField
           control={control}
-          disabled={isAdministrator}
+          disabled={isAdministrator || isPatient}
           hint={
             isAdministrator
               ? "Vai trò Quản trị viên luôn hoạt động để còn người quản trị được vai trò."
-              : "Vai trò ngừng hoạt động không cấp quyền nào cho người dùng của vai trò."
+              : isPatient
+                ? "Vai trò Bệnh nhân luôn hoạt động vì mọi tài khoản cổng bệnh nhân đều dùng vai trò này."
+                : "Vai trò ngừng hoạt động không cấp quyền nào cho người dùng của vai trò."
           }
         />
 

@@ -1,6 +1,17 @@
 import type { StatusTone } from "@/shared/ui"
 import type { RoleSummary } from "../types/role"
-import { ROLE_LABELS } from "./staff-member-labels"
+
+/** Vietnamese names of the roles seeded by V002 and the local TEST role. */
+export const ROLE_LABELS: Record<string, string> = {
+  RECEPTIONIST: "Lễ tân",
+  GENERAL_PRACTITIONER: "Bác sĩ đa khoa",
+  DIAGNOSTIC_DOCTOR: "Bác sĩ chẩn đoán",
+  NURSE: "Điều dưỡng",
+  CLINIC_MANAGER: "Quản lý phòng khám",
+  ADMINISTRATOR: "Quản trị viên",
+  PATIENT: "Bệnh nhân",
+  TEST: "Kiểm thử nội bộ",
+}
 
 export const ROLE_ACTIVE_PRESENTATION: Record<
   "ACTIVE" | "INACTIVE",
@@ -87,6 +98,35 @@ export function roleDisplayName(role: Pick<RoleSummary, "code" | "name">) {
   return seeded && role.name === seeded.name ? (ROLE_LABELS[role.code] ?? role.name) : role.name
 }
 
+/**
+ * Whether another role already uses the name, as shown on screen or as stored, ignoring case. The
+ * backend only compares stored names, so it cannot see that "Lễ tân" is the label of RECEPTIONIST.
+ */
+export function isRoleNameTaken(
+  name: string,
+  roles: readonly Pick<RoleSummary, "id" | "code" | "name">[],
+  exceptRoleId?: string
+) {
+  const wanted = name.trim().toLocaleLowerCase("vi")
+  return roles.some(
+    (role) =>
+      role.id !== exceptRoleId &&
+      [roleDisplayName(role), role.name].some(
+        (candidate) => candidate.trim().toLocaleLowerCase("vi") === wanted
+      )
+  )
+}
+
+/** Roles ordered by the Vietnamese name shown on screen, the order of every role list and selector. */
+export function sortRolesByDisplayName<T extends Pick<RoleSummary, "code" | "name">>(
+  roles: readonly T[]
+): T[] {
+  return roles
+    .map((role) => ({ role, name: roleDisplayName(role) }))
+    .sort((a, b) => a.name.localeCompare(b.name, "vi"))
+    .map(({ role }) => role)
+}
+
 export interface RoleListView {
   items: RoleSummary[]
   total: number
@@ -104,12 +144,9 @@ export function selectRolePage(
   options: { search: string; status?: "ACTIVE" | "INACTIVE"; page: number; pageSize: number }
 ): RoleListView {
   const keyword = options.search.trim().toLocaleLowerCase("vi")
-  const matching = roles
+  const matching = sortRolesByDisplayName(roles)
     .filter((role) => options.status === undefined || role.active === (options.status === "ACTIVE"))
-    .map((role) => ({ role, name: roleDisplayName(role) }))
-    .filter(({ name }) => !keyword || name.toLocaleLowerCase("vi").includes(keyword))
-    .sort((a, b) => a.name.localeCompare(b.name, "vi"))
-    .map(({ role }) => role)
+    .filter((role) => !keyword || roleDisplayName(role).toLocaleLowerCase("vi").includes(keyword))
   const totalPages = Math.max(1, Math.ceil(matching.length / options.pageSize))
   const page = Math.min(Math.max(1, options.page), totalPages)
   const start = (page - 1) * options.pageSize

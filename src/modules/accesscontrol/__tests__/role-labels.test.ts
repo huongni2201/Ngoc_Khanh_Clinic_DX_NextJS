@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 import type { RoleSummary } from "../types/role"
-import { selectRolePage } from "../utils/role-labels"
+import { isRoleNameTaken, selectRolePage, sortRolesByDisplayName } from "../utils/role-labels"
+import { roleLabel } from "../utils/staff-member-labels"
 
 function role(code: string, name: string, active = true): RoleSummary {
   return { id: code, code, name, active, permissionCount: 0, userCount: 0, rowVersion: 0 }
@@ -44,5 +45,34 @@ describe("selectRolePage", () => {
       page: 1,
       totalPages: 1,
     })
+  })
+
+  it("orders roles by the Vietnamese name shown on screen", () => {
+    // Vietnamese collation: "Đ" comes right after "D", before "K".
+    expect(sortRolesByDisplayName(roles).map((item) => item.code)).toEqual([
+      "NURSE",
+      "LAB_TECH",
+      "RECEPTIONIST",
+      "ADMINISTRATOR",
+    ])
+  })
+})
+
+describe("isRoleNameTaken", () => {
+  it("compares the shown and the stored names of other roles, ignoring case", () => {
+    expect(isRoleNameTaken("  lễ TÂN ", roles)).toBe(true)
+    expect(isRoleNameTaken("Receptionist", roles)).toBe(true)
+    expect(isRoleNameTaken("Lễ tân", roles, "RECEPTIONIST")).toBe(false)
+    expect(isRoleNameTaken("Lễ tân ca sáng", roles)).toBe(false)
+  })
+})
+
+describe("roleLabel", () => {
+  it("shows a renamed role by its new name and a seeded one in Vietnamese", () => {
+    expect(roleLabel("RECEPTIONIST")).toBe("Lễ tân")
+    expect(roleLabel("RECEPTIONIST", { name: "Receptionist" })).toBe("Lễ tân")
+    expect(roleLabel("RECEPTIONIST", { name: "Lễ tân ca sáng" })).toBe("Lễ tân ca sáng")
+    expect(roleLabel("LAB_TECH", { name: "Kỹ thuật viên" })).toBe("Kỹ thuật viên")
+    expect(roleLabel("LAB_TECH")).toBe("LAB_TECH")
   })
 })

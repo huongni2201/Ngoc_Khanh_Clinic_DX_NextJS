@@ -1,4 +1,5 @@
 import type { StatusTone } from "@/shared/ui"
+import { ROLE_LABELS, roleDisplayName } from "./role-labels"
 import type { RoleOption, StaffAccountStatus, StaffMemberSex, StaffMemberStatus } from "../types/staff-member"
 
 export const STAFF_MEMBER_SEX_LABELS: Record<StaffMemberSex, string> = {
@@ -26,22 +27,12 @@ export const STAFF_ACCOUNT_STATUS_PRESENTATION: Record<
   DISABLED: { label: "Vô hiệu hóa", tone: "neutral" },
 }
 
-/** Vietnamese names of the roles seeded by V002 and the local TEST role. */
-export const ROLE_LABELS: Record<string, string> = {
-  RECEPTIONIST: "Lễ tân",
-  GENERAL_PRACTITIONER: "Bác sĩ đa khoa",
-  DIAGNOSTIC_DOCTOR: "Bác sĩ chẩn đoán",
-  NURSE: "Điều dưỡng",
-  CLINIC_MANAGER: "Quản lý phòng khám",
-  ADMINISTRATOR: "Quản trị viên",
-  PATIENT: "Bệnh nhân",
-  TEST: "Kiểm thử nội bộ",
-}
-
 /**
- * Vietnamese label of a role code. A role added later by the backend falls back to its English
- * name, then to its code, so it is never hidden.
+ * Name of a role as the Role List shows it. With the stored name, a seeded role still carrying its
+ * English seed name shows its Vietnamese label and a renamed role shows its new name. Without it,
+ * a seeded code shows its Vietnamese label and any other code shows the code, so it is never hidden.
  */
 export function roleLabel(code: string, role?: Pick<RoleOption, "name">) {
-  return ROLE_LABELS[code] ?? (role?.name || code)
+  if (role?.name) return roleDisplayName({ code, name: role.name })
+  return ROLE_LABELS[code] ?? code
 }

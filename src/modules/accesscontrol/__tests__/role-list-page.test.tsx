@@ -5,7 +5,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type { UserSession } from "../types"
 import { SESSION_QUERY_KEY } from "../utils/session-cache"
 import { RoleListPage } from "../pages/role-list-page"
-import { mockRoleFetch, receptionistRole, roleAdministratorSession } from "./role-fixtures"
+import {
+  mockRoleFetch,
+  patientRole,
+  receptionistRole,
+  roleAdministratorSession,
+} from "./role-fixtures"
 import { jsonResponse, sessionWith } from "./staff-member-fixtures"
 
 const push = vi.fn()
@@ -71,8 +76,8 @@ describe("RoleListPage", () => {
       .filter((url) => url.pathname === "/api/v1/admin/roles")
     expect(listCalls.length).toBeGreaterThan(0)
     for (const url of listCalls) {
+      expect([...url.searchParams.keys()].sort()).toEqual(["page", "size"])
       expect(url.searchParams.get("size")).toBe("100")
-      expect(url.searchParams.has("searchKey")).toBe(false)
     }
   })
 
@@ -100,6 +105,20 @@ describe("RoleListPage", () => {
 
     expect(screen.getByRole("alert")).toHaveTextContent("chưa được cấp quyền xem danh sách vai trò")
     expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it("offers copying permissions only to a session that may assign them", async () => {
+    const user = userEvent.setup()
+    mockRoleFetch()
+    const view = renderPage(roleAdministratorSession)
+    await user.click(await screen.findByRole("button", { name: "Thêm vai trò" }))
+    expect(await screen.findByText("Sao chép quyền từ")).toBeInTheDocument()
+    view.unmount()
+
+    renderPage(sessionWith(["ROLE_MANAGE", "ROLE_CREATE"]))
+    await user.click(await screen.findByRole("button", { name: "Thêm vai trò" }))
+    expect(await screen.findByLabelText(/Tên vai trò/)).toBeInTheDocument()
+    expect(screen.queryByText("Sao chép quyền từ")).not.toBeInTheDocument()
   })
 
   it("creates a role and shows a duplicated code under its field", async () => {
@@ -168,8 +187,8 @@ describe("RoleListPage", () => {
     await waitFor(() =>
       expect(bodies(fetchMock, "PUT")).toEqual([
         {
-          // The seed name is saved in Vietnamese; a description an administrator typed is kept.
-          name: "Lễ tân",
+          // Only the status changed: the stored seed name is sent back, not its Vietnamese label.
+          name: "Receptionist",
           description: "Registers patients, collects payments",
           active: false,
           rowVersion: 3,
@@ -188,5 +207,89 @@ describe("RoleListPage", () => {
       "aria-disabled",
       "true"
     )
+  })
+
+  it("lists and searches roles beyond the first 100", async () => {
+    const roles = Array.from({ length: 101 }, (_, index) => ({
+      ...receptionistRole,
+      id: `role-${index}`,
+      code: `ROLE_${String(index).padStart(3, "0")}`,
+      name: index === 100 ? "Kỹ thuật viên xét nghiệm" : `Vai trò ${index}`,
+      description: null,
+    }))
+    navigation.query = "q=k%E1%BB%B9+thu%E1%BA%ADt"
+    mockRoleFetch({ roles })
+    renderPage(roleAdministratorSession)
+
+    expect(await screen.findByText("Kỹ thuật viên xét nghiệm")).toBeInTheDocument()
+    expect(screen.queryByText(/vai trò đầu tiên/)).not.toBeInTheDocument()
+  })
+
+  it("asks before Sửa quyền drops the edited role details", async () => {
+    const user = userEvent.setup()
+    mockRoleFetch()
+    renderPage(roleAdministratorSession)
+
+    await user.click(await screen.findByRole("button", { name: "Sửa vai trò Lễ tân" }))
+    await user.type(await screen.findByLabelText(/^Tên vai trò/), " ca sáng")
+    await user.click(screen.getByRole("button", { name: "Sửa quyền" }))
+
+    expect(await screen.findByText("Bỏ thay đổi chưa lưu?")).toBeInTheDocument()
+    await user.click(screen.getByRole("button", { name: "Tiếp tục chỉnh sửa" }))
+    expect(push).not.toHaveBeenCalled()
+    expect(screen.getByLabelText(/^Tên vai trò/)).toHaveValue("Lễ tân ca sáng")
+
+    await user.click(screen.getByRole("button", { name: "Sửa quyền" }))
+    await user.click(await screen.findByRole("button", { name: "Bỏ thay đổi" }))
+    expect(push).toHaveBeenCalledWith("/roles/permissions?roleId=role-receptionist")
+  })
+
+  it("rejects a name another role shows, on create and on rename", async () => {
+    const user = userEvent.setup()
+    const fetchMock = mockRoleFetch()
+    renderPage(roleAdministratorSession)
+    await screen.findByText("Lễ tân")
+
+    await user.click(screen.getByRole("button", { name: "Thêm vai trò" }))
+    await user.type(await screen.findByLabelText(/^Tên vai trò/), "lễ tân")
+    await user.type(screen.getByLabelText(/^Mã vai trò/), "FRONT_OFFICE")
+    await user.click(screen.getByRole("button", { name: "Tạo vai trò" }))
+    expect(await screen.findByText("Tên vai trò đã tồn tại")).toBeInTheDocument()
+    expect(bodies(fetchMock, "POST")).toEqual([])
+    await user.click(screen.getByRole("button", { name: "Hủy" }))
+    await user.click(await screen.findByRole("button", { name: "Bỏ thay đổi" }))
+
+    await user.click(await screen.findByRole("button", { name: "Sửa vai trò Điều dưỡng" }))
+    const name = await screen.findByLabelText(/^Tên vai trò/)
+    await user.clear(name)
+    await user.type(name, "Quản trị viên")
+    await user.click(screen.getByRole("button", { name: "Lưu thay đổi" }))
+    expect(await screen.findByText("Tên vai trò đã tồn tại")).toBeInTheDocument()
+    expect(bodies(fetchMock, "PUT")).toEqual([])
+  })
+
+  it("opens Sửa quyền at once when nothing was edited", async () => {
+    const user = userEvent.setup()
+    mockRoleFetch()
+    renderPage(roleAdministratorSession)
+
+    await user.click(await screen.findByRole("button", { name: "Sửa vai trò Lễ tân" }))
+    await user.click(await screen.findByRole("button", { name: "Sửa quyền" }))
+
+    expect(push).toHaveBeenCalledWith("/roles/permissions?roleId=role-receptionist")
+    expect(screen.queryByText("Bỏ thay đổi chưa lưu?")).not.toBeInTheDocument()
+  })
+
+  it("keeps the Patient role active", async () => {
+    const user = userEvent.setup()
+    mockRoleFetch({ roles: [patientRole] })
+    renderPage(roleAdministratorSession)
+
+    await user.click(await screen.findByRole("button", { name: "Sửa vai trò Bệnh nhân" }))
+    expect(await screen.findByRole("checkbox", { name: "Hoạt động" })).toHaveAttribute(
+      "aria-disabled",
+      "true"
+    )
+    expect(screen.getByText(/Vai trò Bệnh nhân luôn hoạt động/)).toBeInTheDocument()
   })
 })
