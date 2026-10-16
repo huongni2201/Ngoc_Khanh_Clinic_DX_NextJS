@@ -37,8 +37,8 @@ vi.mock("@/modules/billing/api", async () =>
 vi.mock("@/modules/encounter/api", async () =>
   import("@/widgets/encounter-detail/__tests__/fixtures/api-fixtures")
 )
-vi.mock("@/modules/healthexamination/batches/api", async () =>
-  import("@/modules/healthexamination/batches/__tests__/fixtures/api-fixtures")
+vi.mock("@/modules/healthexamination/agreements/api", async () =>
+  import("@/modules/healthexamination/agreements/__tests__/fixtures/api-fixtures")
 )
 
 vi.mock("@/modules/catalog/api/services", async () =>

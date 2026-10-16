@@ -1,7 +1,7 @@
 import { screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, it, expect, vi, beforeEach } from "vitest"
-import { OrganizationExaminationDetailTab } from "@/modules/healthexamination/batches/components/examination-detail-tab/organization-examination-detail-tab"
+import { OrganizationExaminationDetailTab } from "@/modules/healthexamination/agreements/components/examination-detail-tab/organization-examination-detail-tab"
 import { renderWithClient } from "@/test-utils/render-with-client"
 
 describe("OrganizationExaminationDetailTab (Tab 3: Chi tiết khám)", () => {
@@ -9,12 +9,12 @@ describe("OrganizationExaminationDetailTab (Tab 3: Chi tiết khám)", () => {
     vi.clearAllMocks()
   })
 
-  it("renders batch selector, operational counters, and patient-centric table", async () => {
+  it("renders agreement selector, operational counters, and patient-centric table", async () => {
     renderWithClient(<OrganizationExaminationDetailTab organizationId="ent-2" />)
 
-    // Batch selector & active batch metadata
+    // Agreement selector & active agreement metadata
     await waitFor(() => {
-      expect(screen.getByText("Đợt khám:")).toBeInTheDocument()
+      expect(screen.getByText("Thỏa thuận:")).toBeInTheDocument()
       expect(screen.getByText(/Khám sức khỏe định kỳ 2026/i)).toBeInTheDocument()
     })
 
@@ -96,12 +96,12 @@ describe("OrganizationExaminationDetailTab (Tab 3: Chi tiết khám)", () => {
     })
   })
 
-  it("renders empty state when organization has no batches", async () => {
+  it("renders empty state when organization has no agreements", async () => {
     renderWithClient(<OrganizationExaminationDetailTab organizationId="nonexistent-org" />)
 
     await waitFor(() => {
-      expect(screen.getByText("Chưa có đợt khám nào")).toBeInTheDocument()
+      expect(screen.getByText("Chưa có thỏa thuận nào")).toBeInTheDocument()
     })
-    expect(screen.getByText(/Đơn vị này chưa có đợt khám sức khỏe nào được cấu hình/i)).toBeInTheDocument()
+    expect(screen.getByText(/Đơn vị này chưa có thỏa thuận sức khỏe nào được cấu hình/i)).toBeInTheDocument()
   })
 })

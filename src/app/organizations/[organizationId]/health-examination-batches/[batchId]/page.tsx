@@ -1,42 +1,8 @@
-import { Metadata } from "next"
-import { Suspense } from "react"
-import { AppShell } from "@/widgets/app-shell"
-import { HealthExaminationBatchDetailPage } from "@/modules/healthexamination"
-import { ScreenLoadingSkeleton } from "@/shared/ui"
+import { notFound } from "next/navigation"
 
-interface HealthExaminationBatchDetailPageProps {
-  params: Promise<{
-    organizationId: string
-    batchId: string
-  }>
+// The batch route was replaced by /organizations/{organizationId}/agreements/{agreementId}.
+// This file could not be deleted automatically (file permissions); delete the whole
+// `health-examination-batches` folder.
+export default function RemovedBatchRoute() {
+  notFound()
 }
-
-export async function generateMetadata({
-  params,
-}: HealthExaminationBatchDetailPageProps): Promise<Metadata> {
-  const resolvedParams = await params
-  return {
-    title: "Chi tiết đợt khám — Ngọc Khánh Clinic",
-    description: "Chi tiết đợt khám " + resolvedParams.batchId + " tại Ngọc Khánh Clinic",
-  }
-}
-
-export default async function HealthExaminationBatchPage({
-  params,
-}: HealthExaminationBatchDetailPageProps) {
-  const resolvedParams = await params
-
-  return (
-    <AppShell>
-      <Suspense
-        fallback={<ScreenLoadingSkeleton variant="detail" />}
-      >
-        <HealthExaminationBatchDetailPage
-          organizationId={resolvedParams.organizationId}
-          batchId={resolvedParams.batchId}
-        />
-      </Suspense>
-    </AppShell>
-  )
-}
-

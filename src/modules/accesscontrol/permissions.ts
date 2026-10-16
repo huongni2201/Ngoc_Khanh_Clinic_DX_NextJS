@@ -12,33 +12,45 @@ export const PERMISSION = {
   ORGANIZATION_VIEW: "ORGANIZATION_VIEW", // GET /organizations/{organizationId}
   ORGANIZATION_CREATE: "ORGANIZATION_CREATE", // POST /organizations
   ORGANIZATION_UPDATE: "ORGANIZATION_UPDATE", // PUT /organizations/{organizationId}
-  HEALTH_EXAMINATION_BATCH_VIEW: "HEALTH_EXAMINATION_BATCH_VIEW", // GET /organizations/{organizationId}/health-examination-batches
-  HEALTH_EXAMINATION_BATCH_CREATE: "HEALTH_EXAMINATION_BATCH_CREATE", // POST /organizations/{organizationId}/health-examination-batches
-  HEALTH_EXAMINATION_BATCH_UPDATE: "HEALTH_EXAMINATION_BATCH_UPDATE", // PUT /organizations/{organizationId}/health-examination-batches/{batchId}
-  HEALTH_EXAMINATION_BATCH_START: "HEALTH_EXAMINATION_BATCH_START", // POST /organizations/{organizationId}/health-examination-batches/{batchId}/start
-  PARTICIPANT_VIEW: "PARTICIPANT_VIEW", // GET /organizations/{organizationId}/health-examination-batches/{batchId}/participants
-  PARTICIPANT_TEMPLATE_DOWNLOAD: "PARTICIPANT_TEMPLATE_DOWNLOAD", // GET /organizations/{organizationId}/health-examination-batches/{batchId}/participants/import-template
-  PARTICIPANT_IMPORT: "PARTICIPANT_IMPORT", // POST /organizations/{organizationId}/health-examination-batches/{batchId}/participants/imports
-  PARTICIPANT_UPDATE: "PARTICIPANT_UPDATE", // PUT /organizations/{organizationId}/health-examination-batches/{batchId}/participants/{participantId}
-  PARTICIPANT_REMOVE: "PARTICIPANT_REMOVE", // DELETE /organizations/{organizationId}/health-examination-batches/{batchId}/participants/{participantId}
-  PARTICIPANT_EXAMINATION_FORM_PRINT: "PARTICIPANT_EXAMINATION_FORM_PRINT", // GET /organizations/{organizationId}/health-examination-batches/{batchId}/participants/{participantId}/examination-form
-  PARTICIPANT_EXAMINATION_FORM_BULK_PRINT: "PARTICIPANT_EXAMINATION_FORM_BULK_PRINT", // POST /organizations/{organizationId}/health-examination-batches/{batchId}/participants/examination-form-print-jobs
+  HEALTH_EXAMINATION_AGREEMENT_VIEW: "HEALTH_EXAMINATION_AGREEMENT_VIEW", // GET /organizations/{organizationId}/agreements
+  HEALTH_EXAMINATION_AGREEMENT_CREATE: "HEALTH_EXAMINATION_AGREEMENT_CREATE", // POST /organizations/{organizationId}/agreements
+  HEALTH_EXAMINATION_AGREEMENT_UPDATE: "HEALTH_EXAMINATION_AGREEMENT_UPDATE", // PUT /organizations/{organizationId}/agreements/{agreementId}
+  HEALTH_EXAMINATION_AGREEMENT_ACTIVATE: "HEALTH_EXAMINATION_AGREEMENT_ACTIVATE", // POST /organizations/{organizationId}/agreements/{agreementId}/activate
+  PARTICIPANT_VIEW: "PARTICIPANT_VIEW", // GET /organizations/{organizationId}/agreements/{agreementId}/participants
+  PARTICIPANT_TEMPLATE_DOWNLOAD: "PARTICIPANT_TEMPLATE_DOWNLOAD", // GET /organizations/{organizationId}/agreements/{agreementId}/participants/import-template
+  PARTICIPANT_IMPORT: "PARTICIPANT_IMPORT", // POST /organizations/{organizationId}/agreements/{agreementId}/participants/imports
+  PARTICIPANT_UPDATE: "PARTICIPANT_UPDATE", // PUT /organizations/{organizationId}/agreements/{agreementId}/participants/{participantId}
+  PARTICIPANT_REMOVE: "PARTICIPANT_REMOVE", // DELETE /organizations/{organizationId}/agreements/{agreementId}/participants/{participantId}
+  PARTICIPANT_EXAMINATION_FORM_PRINT: "PARTICIPANT_EXAMINATION_FORM_PRINT", // GET /organizations/{organizationId}/agreements/{agreementId}/participants/{participantId}/examination-form
+  PARTICIPANT_EXAMINATION_FORM_BULK_PRINT: "PARTICIPANT_EXAMINATION_FORM_BULK_PRINT", // POST /organizations/{organizationId}/agreements/{agreementId}/participants/examination-form-print-jobs
   DOCUMENT_RENDER_JOB_READ: "DOCUMENT_RENDER_JOB_READ", // GET /document-render-jobs/{jobId}
   DOCUMENT_RENDER_JOB_DOWNLOAD: "DOCUMENT_RENDER_JOB_DOWNLOAD", // GET /document-render-jobs/{jobId}/parts/{partNo}
-  PARTICIPANT_CREATE: "PARTICIPANT_CREATE", // POST /organizations/{organizationId}/health-examination-batches/{batchId}/participants
-  PARTICIPANT_REACTIVATE: "PARTICIPANT_REACTIVATE", // POST /organizations/{organizationId}/health-examination-batches/{batchId}/participants/{participantId}/reactivate
-  HEALTH_EXAMINATION_SERVICE_READ: "HEALTH_EXAMINATION_SERVICE_READ", // GET /organizations/{organizationId}/health-examination-batches/{batchId}/examination-details
-  HEALTH_EXAMINATION_SERVICE_RECONCILE: "HEALTH_EXAMINATION_SERVICE_RECONCILE", // POST /organizations/{organizationId}/health-examination-batches/{batchId}/examination-details/imports
-  HEALTH_EXAMINATION_SERVICE_TEMPLATE_DOWNLOAD: "HEALTH_EXAMINATION_SERVICE_TEMPLATE_DOWNLOAD", // GET /organizations/{organizationId}/health-examination-batches/{batchId}/examination-details/import-template
-  HEALTH_EXAMINATION_SERVICE_RECORD: "HEALTH_EXAMINATION_SERVICE_RECORD", // PUT /organizations/{organizationId}/health-examination-batches/{batchId}/examination-details/{participantId}
-  HEALTH_EXAMINATION_REPORT_READ: "HEALTH_EXAMINATION_REPORT_READ", // GET /organizations/{organizationId}/health-examination-batches/{batchId}/reports/payment-summary
+  PARTICIPANT_CREATE: "PARTICIPANT_CREATE", // POST /organizations/{organizationId}/agreements/{agreementId}/participants
+  PARTICIPANT_REACTIVATE: "PARTICIPANT_REACTIVATE", // POST /organizations/{organizationId}/agreements/{agreementId}/participants/{participantId}/reactivate
+  HEALTH_EXAMINATION_SERVICE_READ: "HEALTH_EXAMINATION_SERVICE_READ", // GET /organizations/{organizationId}/agreements/{agreementId}/examination-details
+  HEALTH_EXAMINATION_SERVICE_RECONCILE: "HEALTH_EXAMINATION_SERVICE_RECONCILE", // POST /organizations/{organizationId}/agreements/{agreementId}/examination-details/imports
+  HEALTH_EXAMINATION_SERVICE_TEMPLATE_DOWNLOAD: "HEALTH_EXAMINATION_SERVICE_TEMPLATE_DOWNLOAD", // GET /organizations/{organizationId}/agreements/{agreementId}/examination-details/import-template
+  HEALTH_EXAMINATION_SERVICE_RECORD: "HEALTH_EXAMINATION_SERVICE_RECORD", // PUT /organizations/{organizationId}/agreements/{agreementId}/examination-details/{participantId}
+  HEALTH_EXAMINATION_REPORT_READ: "HEALTH_EXAMINATION_REPORT_READ", // GET /organizations/{organizationId}/agreements/{agreementId}/reports/payment-summary
+  HEALTH_EXAMINATION_AGREEMENT_END: "HEALTH_EXAMINATION_AGREEMENT_END", // POST /organizations/{organizationId}/agreements/{agreementId}/end
+  HEALTH_EXAMINATION_SESSION_VIEW: "HEALTH_EXAMINATION_SESSION_VIEW", // GET /organizations/{organizationId}/sessions
+  HEALTH_EXAMINATION_SESSION_DETAIL_VIEW: "HEALTH_EXAMINATION_SESSION_DETAIL_VIEW", // GET /organizations/{organizationId}/sessions/{sessionId}
+  HEALTH_EXAMINATION_SESSION_CREATE: "HEALTH_EXAMINATION_SESSION_CREATE", // POST /organizations/{organizationId}/sessions
+  HEALTH_EXAMINATION_SESSION_UPDATE: "HEALTH_EXAMINATION_SESSION_UPDATE", // PUT /organizations/{organizationId}/sessions/{sessionId}
+  HEALTH_EXAMINATION_SESSION_CANCEL: "HEALTH_EXAMINATION_SESSION_CANCEL", // POST /organizations/{organizationId}/sessions/{sessionId}/cancel
+  HEALTH_EXAMINATION_ASSIGNMENT_VIEW: "HEALTH_EXAMINATION_ASSIGNMENT_VIEW", // GET /organizations/{organizationId}/sessions/{sessionId}/assignments
+  HEALTH_EXAMINATION_ASSIGNMENT_CREATE: "HEALTH_EXAMINATION_ASSIGNMENT_CREATE", // POST /organizations/{organizationId}/sessions/{sessionId}/assignments
+  HEALTH_EXAMINATION_ASSIGNMENT_MOVE_ALL: "HEALTH_EXAMINATION_ASSIGNMENT_MOVE_ALL", // POST /organizations/{organizationId}/sessions/{sessionId}/assignments/move
+  HEALTH_EXAMINATION_ASSIGNMENT_MOVE: "HEALTH_EXAMINATION_ASSIGNMENT_MOVE", // POST /organizations/{organizationId}/sessions/{sessionId}/assignments/{assignmentId}/move
+  HEALTH_EXAMINATION_ASSIGNMENT_CANCEL: "HEALTH_EXAMINATION_ASSIGNMENT_CANCEL", // POST /organizations/{organizationId}/sessions/{sessionId}/assignments/{assignmentId}/cancel
+  HEALTH_EXAMINATION_ASSIGNMENT_ATTENDANCE_RECORD: "HEALTH_EXAMINATION_ASSIGNMENT_ATTENDANCE_RECORD", // POST /organizations/{organizationId}/sessions/{sessionId}/assignments/{assignmentId}/attendance
   ORGANIZATION_DELETE: "ORGANIZATION_DELETE", // DELETE /organizations/{organizationId}
-  HEALTH_EXAMINATION_BATCH_DETAIL_VIEW: "HEALTH_EXAMINATION_BATCH_DETAIL_VIEW", // GET /organizations/{organizationId}/health-examination-batches/{batchId}
-  HEALTH_EXAMINATION_BATCH_DELETE: "HEALTH_EXAMINATION_BATCH_DELETE", // DELETE /organizations/{organizationId}/health-examination-batches/{batchId}
-  PARTICIPANT_DETAIL_VIEW: "PARTICIPANT_DETAIL_VIEW", // GET /organizations/{organizationId}/health-examination-batches/{batchId}/participants/{participantId}
-  HEALTH_EXAMINATION_SERVICE_SUMMARY_READ: "HEALTH_EXAMINATION_SERVICE_SUMMARY_READ", // GET /organizations/{organizationId}/health-examination-batches/{batchId}/examination-details/summary
-  HEALTH_EXAMINATION_SERVICE_EXPORT: "HEALTH_EXAMINATION_SERVICE_EXPORT", // GET /organizations/{organizationId}/health-examination-batches/{batchId}/examination-details/export
-  HEALTH_EXAMINATION_REPORT_EXPORT: "HEALTH_EXAMINATION_REPORT_EXPORT", // GET /organizations/{organizationId}/health-examination-batches/{batchId}/reports/payment-summary/docx
+  HEALTH_EXAMINATION_AGREEMENT_DETAIL_VIEW: "HEALTH_EXAMINATION_AGREEMENT_DETAIL_VIEW", // GET /organizations/{organizationId}/agreements/{agreementId}
+  HEALTH_EXAMINATION_AGREEMENT_DELETE: "HEALTH_EXAMINATION_AGREEMENT_DELETE", // DELETE /organizations/{organizationId}/agreements/{agreementId}
+  PARTICIPANT_DETAIL_VIEW: "PARTICIPANT_DETAIL_VIEW", // GET /organizations/{organizationId}/agreements/{agreementId}/participants/{participantId}
+  HEALTH_EXAMINATION_SERVICE_SUMMARY_READ: "HEALTH_EXAMINATION_SERVICE_SUMMARY_READ", // GET /organizations/{organizationId}/agreements/{agreementId}/examination-details/summary
+  HEALTH_EXAMINATION_SERVICE_EXPORT: "HEALTH_EXAMINATION_SERVICE_EXPORT", // GET /organizations/{organizationId}/agreements/{agreementId}/examination-details/export
+  HEALTH_EXAMINATION_REPORT_EXPORT: "HEALTH_EXAMINATION_REPORT_EXPORT", // GET /organizations/{organizationId}/agreements/{agreementId}/reports/payment-summary/docx
   SERVICE_CATALOG_VIEW: "SERVICE_CATALOG_VIEW", // GET /catalog/services
   STAFF_MEMBER_VIEW: "STAFF_MEMBER_VIEW", // GET /staff-members (V004)
   USER_ACCOUNT_CREATE: "USER_ACCOUNT_CREATE", // POST /staff-members (V004)

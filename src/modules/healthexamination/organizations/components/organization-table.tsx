@@ -167,7 +167,7 @@ export function OrganizationTable({
                   {isFiltered
                     ? "Thử đổi từ khóa hoặc tìm theo mã số thuế."
                     : onCreateClick
-                      ? "Thêm đơn vị đầu tiên để bắt đầu tạo đợt khám sức khỏe."
+                      ? "Thêm đơn vị đầu tiên để bắt đầu tạo thỏa thuận sức khỏe."
                       : "Đơn vị mới sẽ xuất hiện ở đây khi được thêm."}
                 </p>
                 {isFiltered && onSearchChange ? (

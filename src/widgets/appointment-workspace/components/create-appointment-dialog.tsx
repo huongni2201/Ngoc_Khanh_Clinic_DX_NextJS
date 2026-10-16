@@ -18,7 +18,7 @@ import { createAppointmentSchema, type CreateAppointmentFormValues } from "@/mod
 import { useCreateAppointment } from "@/modules/appointment"
 import { useClinicRooms } from "@/widgets/reception"
 import { useOrganizations } from "@/modules/healthexamination"
-import { useOrganizationHealthExaminationBatches, useHealthExaminationBatchParticipants } from "@/modules/healthexamination"
+import { useOrganizationHealthExaminationAgreements, useHealthExaminationAgreementParticipants } from "@/modules/healthexamination"
 import { Patient } from "@/modules/patient"
 import { Appointment, CareProgram } from "@/modules/appointment"
 import { CareProgramToggle } from "@/modules/appointment"
@@ -33,7 +33,7 @@ interface CreateAppointmentDialogProps {
   onOpenChange: (open: boolean) => void
   initialPatient?: Patient | null
   initialOrganizationId?: string
-  initialHealthExaminationBatchId?: string
+  initialHealthExaminationAgreementId?: string
   initialParticipantCode?: string
   initialCareProgram?: CareProgram
   onOpenPatientSearch?: () => void
@@ -46,7 +46,7 @@ export function CreateAppointmentDialog({
   onOpenChange,
   initialPatient,
   initialOrganizationId,
-  initialHealthExaminationBatchId,
+  initialHealthExaminationAgreementId,
   initialParticipantCode,
   initialCareProgram = "INDIVIDUAL",
   onOpenPatientSearch,
@@ -63,8 +63,8 @@ export function CreateAppointmentDialog({
   const [selectedOrganizationId, setSelectedOrganizationId] = React.useState<string>(
     initialOrganizationId || ""
   )
-  const [selectedHealthExaminationBatchId, setSelectedHealthExaminationBatchId] = React.useState<string>(
-    initialHealthExaminationBatchId || ""
+  const [selectedHealthExaminationAgreementId, setSelectedHealthExaminationAgreementId] = React.useState<string>(
+    initialHealthExaminationAgreementId || ""
   )
   const [selectedParticipantCode, setSelectedParticipantCode] = React.useState<string>(
     initialParticipantCode || ""
@@ -83,11 +83,11 @@ export function CreateAppointmentDialog({
     () => organizationsData?.data || [],
     [organizationsData?.data]
   )
-  const { data: batchesData } = useOrganizationHealthExaminationBatches(selectedOrganizationId)
-  const batches = React.useMemo(() => batchesData?.data || [], [batchesData?.data])
-  const { data: participantsData } = useHealthExaminationBatchParticipants(
+  const { data: agreementsData } = useOrganizationHealthExaminationAgreements(selectedOrganizationId)
+  const agreements = React.useMemo(() => agreementsData?.data || [], [agreementsData?.data])
+  const { data: participantsData } = useHealthExaminationAgreementParticipants(
     selectedOrganizationId,
-    selectedHealthExaminationBatchId,
+    selectedHealthExaminationAgreementId,
     { pageSize: 100 }
   )
   const participants = React.useMemo(
@@ -118,7 +118,7 @@ export function CreateAppointmentDialog({
       notes: "",
       careProgram: initialCareProgram,
       organizationId: initialOrganizationId || "",
-      healthExaminationBatchId: initialHealthExaminationBatchId || "",
+      healthExaminationAgreementId: initialHealthExaminationAgreementId || "",
       participantCode: initialParticipantCode || "",
     },
   })
@@ -132,7 +132,7 @@ export function CreateAppointmentDialog({
     if (open) {
       if (initialCareProgram) setCareProgram(initialCareProgram)
       if (initialOrganizationId) setSelectedOrganizationId(initialOrganizationId)
-      if (initialHealthExaminationBatchId) setSelectedHealthExaminationBatchId(initialHealthExaminationBatchId)
+      if (initialHealthExaminationAgreementId) setSelectedHealthExaminationAgreementId(initialHealthExaminationAgreementId)
       if (initialParticipantCode) setSelectedParticipantCode(initialParticipantCode)
     }
   }
@@ -159,8 +159,8 @@ export function CreateAppointmentDialog({
       if (initialOrganizationId) {
         setValue("organizationId", initialOrganizationId)
       }
-      if (initialHealthExaminationBatchId) {
-        setValue("healthExaminationBatchId", initialHealthExaminationBatchId)
+      if (initialHealthExaminationAgreementId) {
+        setValue("healthExaminationAgreementId", initialHealthExaminationAgreementId)
       }
       if (initialParticipantCode) {
         setValue("participantCode", initialParticipantCode)
@@ -173,7 +173,7 @@ export function CreateAppointmentDialog({
     open,
     initialCareProgram,
     initialOrganizationId,
-    initialHealthExaminationBatchId,
+    initialHealthExaminationAgreementId,
     initialParticipantCode,
     selectedPatient?.id,
     setValue,
@@ -215,8 +215,8 @@ export function CreateAppointmentDialog({
       setValue("examinationType", "Khám tổng quát")
       setValue("organizationId", "")
       setValue("organizationName", "")
-      setValue("healthExaminationBatchId", "")
-      setValue("healthExaminationBatchName", "")
+      setValue("healthExaminationAgreementId", "")
+      setValue("healthExaminationAgreementName", "")
       setValue("participantCode", "")
     } else {
       setPatientOverride(null)
@@ -229,7 +229,7 @@ export function CreateAppointmentDialog({
       setServerError(null)
       setPatientOverride(null)
       setSelectedOrganizationId("")
-      setSelectedHealthExaminationBatchId("")
+      setSelectedHealthExaminationAgreementId("")
       setSelectedParticipantCode("")
       reset()
     }
@@ -238,13 +238,13 @@ export function CreateAppointmentDialog({
 
   const handleOrganizationChange = (organizationId: string) => {
     setSelectedOrganizationId(organizationId)
-    setSelectedHealthExaminationBatchId("")
+    setSelectedHealthExaminationAgreementId("")
     setSelectedParticipantCode("")
     setPatientOverride(null)
   }
 
-  const handleBatchChange = (batchId: string) => {
-    setSelectedHealthExaminationBatchId(batchId)
+  const handleAgreementChange = (agreementId: string) => {
+    setSelectedHealthExaminationAgreementId(agreementId)
     setSelectedParticipantCode("")
     setPatientOverride(null)
   }
@@ -276,7 +276,7 @@ export function CreateAppointmentDialog({
           patientId: selectedPatient.id,
           careProgram,
           organization: organizations.find((item) => item.id === selectedOrganizationId),
-          batch: batches.find((item) => item.id === selectedHealthExaminationBatchId),
+          agreement: agreements.find((item) => item.id === selectedHealthExaminationAgreementId),
           participantCode: selectedParticipantCode,
         })
       )
@@ -339,16 +339,16 @@ export function CreateAppointmentDialog({
                     isLoadingOrganizations={isLoadingOrganizations}
                     isOrganizationsError={isOrganizationsError}
                     organizationsError={organizationsError}
-                    batches={batches}
+                    agreements={agreements}
                     participants={participants}
                     selectedOrganizationId={selectedOrganizationId}
-                    selectedHealthExaminationBatchId={selectedHealthExaminationBatchId}
+                    selectedHealthExaminationAgreementId={selectedHealthExaminationAgreementId}
                     selectedParticipantCode={selectedParticipantCode}
                     selectedPatient={selectedPatient}
                     isPending={isPending}
                     isLinkingParticipant={isLinkingParticipant}
                     onOrganizationChange={handleOrganizationChange}
-                    onBatchChange={handleBatchChange}
+                    onAgreementChange={handleAgreementChange}
                     onParticipantChange={handleSelectParticipant}
                   />
                 )}

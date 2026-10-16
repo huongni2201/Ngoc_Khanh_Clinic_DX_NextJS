@@ -30,18 +30,20 @@ describe("OrganizationDetailPage", () => {
     vi.unstubAllEnvs()
   })
 
-  it("opens on the batch list and keeps the organization details beside it", async () => {
+  it("opens on the agreement list and keeps the organization details beside it", async () => {
     renderWithClient(<OrganizationDetailPage organizationId="org-1" />, { permissions: ALL_PERMISSIONS })
 
     expect(await screen.findByRole("heading", { name: organizationFixture.name })).toBeInTheDocument()
-    expect(screen.getByRole("heading", { name: "Đợt khám" })).toBeInTheDocument()
-    expect(await screen.findByText("Chưa có đợt khám nào cho đơn vị này")).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: "Tạo đợt khám" })).toBeInTheDocument()
+    const workTabs = within(screen.getByRole("navigation", { name: "Công việc của đơn vị" }))
+    expect(workTabs.getByRole("button", { name: "Thỏa thuận" })).toHaveAttribute("aria-current", "page")
+    expect(workTabs.getByRole("button", { name: "Lịch khám" })).not.toHaveAttribute("aria-current")
+    expect(await screen.findByText("Chưa có thỏa thuận nào cho đơn vị này")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Tạo thỏa thuận" })).toBeInTheDocument()
 
     expect(screen.getByRole("complementary", { name: "Thông tin đơn vị" })).toBeInTheDocument()
     expect(screen.getAllByText(organizationFixture.contactPhone)).not.toHaveLength(0)
     expect(screen.getByText(organizationFixture.email)).toBeInTheDocument()
-    // The old Thông tin / Đợt khám tab bar is gone; details no longer sit behind a tab.
+    // The old Thông tin / Thỏa thuận tab bar is gone; details no longer sit behind a tab.
     expect(screen.queryByRole("button", { name: "Thông tin" })).not.toBeInTheDocument()
     expect(screen.queryByRole("button", { name: "Chi tiết khám" })).not.toBeInTheDocument()
     expect(screen.queryByRole("button", { name: "Báo cáo" })).not.toBeInTheDocument()
@@ -49,13 +51,13 @@ describe("OrganizationDetailPage", () => {
 
   it("hides edit and deactivate from an account that only reads organizations", async () => {
     renderWithClient(<OrganizationDetailPage organizationId="org-1" />, {
-      permissions: ["ORGANIZATION_VIEW", "HEALTH_EXAMINATION_BATCH_VIEW"],
+      permissions: ["ORGANIZATION_VIEW", "HEALTH_EXAMINATION_AGREEMENT_VIEW"],
     })
 
     expect(await screen.findByRole("heading", { name: organizationFixture.name })).toBeInTheDocument()
     expect(screen.queryByRole("button", { name: "Ngừng hoạt động" })).not.toBeInTheDocument()
     expect(screen.queryByRole("button", { name: /Chỉnh sửa đơn vị/ })).not.toBeInTheDocument()
-    expect(screen.queryByRole("button", { name: "Tạo đợt khám" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Tạo thỏa thuận" })).not.toBeInTheDocument()
   })
 
   it("turns the contact phone and email into tel and mailto links", async () => {
@@ -68,11 +70,43 @@ describe("OrganizationDetailPage", () => {
     expect(email).toHaveAttribute("href", `mailto:${organizationFixture.contactEmail}`)
   })
 
-  it("ignores the legacy tab query and still opens on the batch list", async () => {
-    mockNavigation.search = "tab=batches"
+  it("switches to the sessions of the organization through the address", async () => {
+    const user = userEvent.setup()
     renderWithClient(<OrganizationDetailPage organizationId="org-1" />, { permissions: ALL_PERMISSIONS })
 
-    expect(await screen.findByText("Chưa có đợt khám nào cho đơn vị này")).toBeInTheDocument()
+    await user.click(await screen.findByRole("button", { name: "Lịch khám" }))
+
+    expect(mockNavigation.replace).toHaveBeenCalledWith("/organizations/org-1?tab=sessions", {
+      scroll: false,
+    })
+  })
+
+  it("opens on the sessions when the address asks for them", async () => {
+    mockNavigation.search = "tab=sessions"
+    renderWithClient(<OrganizationDetailPage organizationId="org-1" />, { permissions: ALL_PERMISSIONS })
+
+    const workTabs = within(await screen.findByRole("navigation", { name: "Công việc của đơn vị" }))
+    expect(workTabs.getByRole("button", { name: "Lịch khám" })).toHaveAttribute("aria-current", "page")
+    expect(await screen.findByLabelText("Tìm lịch khám")).toBeInTheDocument()
+    expect(screen.queryByText("Chưa có thỏa thuận nào cho đơn vị này")).not.toBeInTheDocument()
+  })
+
+  it("leaves out the sessions tab for an account that cannot read sessions, even when asked", async () => {
+    mockNavigation.search = "tab=sessions"
+    renderWithClient(<OrganizationDetailPage organizationId="org-1" />, {
+      permissions: ["ORGANIZATION_VIEW", "HEALTH_EXAMINATION_AGREEMENT_VIEW"],
+    })
+
+    expect(await screen.findByRole("heading", { name: organizationFixture.name })).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Lịch khám" })).not.toBeInTheDocument()
+    expect(await screen.findByText("Chưa có thỏa thuận nào cho đơn vị này")).toBeInTheDocument()
+  })
+
+  it("ignores an unknown tab query and still opens on the agreement list", async () => {
+    mockNavigation.search = "tab=agreements"
+    renderWithClient(<OrganizationDetailPage organizationId="org-1" />, { permissions: ALL_PERMISSIONS })
+
+    expect(await screen.findByText("Chưa có thỏa thuận nào cho đơn vị này")).toBeInTheDocument()
     expect(screen.queryByText(/Backend chưa cung cấp API/)).not.toBeInTheDocument()
     expect(mockNavigation.push).not.toHaveBeenCalled()
   })

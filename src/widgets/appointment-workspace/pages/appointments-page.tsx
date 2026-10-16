@@ -42,7 +42,7 @@ export function AppointmentsPage() {
   const searchParams = useSearchParams()
 
   const organizationIdParam = searchParams?.get("organizationId") || undefined
-  const healthExaminationBatchIdParam = searchParams?.get("healthExaminationBatchId") || undefined
+  const healthExaminationAgreementIdParam = searchParams?.get("healthExaminationAgreementId") || undefined
   const participantCodeParam = searchParams?.get("participantCode") || undefined
   const createParam = searchParams?.get("create") === "true"
 
@@ -355,7 +355,7 @@ export function AppointmentsPage() {
         onOpenChange={setIsCreateOpen}
         initialPatient={selectedPatientForAppt}
         initialOrganizationId={organizationIdParam}
-        initialHealthExaminationBatchId={healthExaminationBatchIdParam}
+        initialHealthExaminationAgreementId={healthExaminationAgreementIdParam}
         initialParticipantCode={participantCodeParam}
         initialCareProgram={
           organizationIdParam ? "ORGANIZATION_HEALTH_EXAMINATION" : "INDIVIDUAL"

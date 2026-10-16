@@ -3,14 +3,14 @@ import type * as AppointmentsApi from "@/modules/appointment/api"
 import type * as BillingApi from "@/modules/billing/api"
 import type * as DoctorApi from "@/widgets/doctor/api"
 import type * as EncountersApi from "@/modules/encounter/api"
-import type * as HealthExaminationsApi from "@/modules/healthexamination/batches/api"
+import type * as HealthExaminationsApi from "@/modules/healthexamination/agreements/api"
 import type * as PatientsApi from "@/modules/patient/api"
 import type * as ReceptionApi from "@/widgets/reception/api"
 import * as appointmentFixtures from "@/modules/appointment/__tests__/fixtures/api-fixtures"
 import * as billingFixtures from "@/modules/billing/__tests__/fixtures/api-fixtures"
 import * as doctorFixtures from "@/widgets/doctor/__tests__/fixtures/api-fixtures"
 import * as encounterFixtures from "@/widgets/encounter-detail/__tests__/fixtures/api-fixtures"
-import * as healthExaminationFixtures from "@/modules/healthexamination/batches/__tests__/fixtures/api-fixtures"
+import * as healthExaminationFixtures from "@/modules/healthexamination/agreements/__tests__/fixtures/api-fixtures"
 import * as patientFixtures from "@/modules/patient/__tests__/fixtures/api-fixtures"
 import * as receptionFixtures from "@/widgets/reception/__tests__/fixtures/api-fixtures"
 
@@ -27,7 +27,7 @@ const contracts = [
   ["encounters", "@/modules/encounter/api", encounterFixtures satisfies typeof EncountersApi],
   [
     "health-examinations",
-    "@/modules/healthexamination/batches/api",
+    "@/modules/healthexamination/agreements/api",
     healthExaminationFixtures satisfies typeof HealthExaminationsApi,
   ],
   ["patients", "@/modules/patient/api", patientFixtures satisfies typeof PatientsApi],

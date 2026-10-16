@@ -1,0 +1,138 @@
+import { apiClient } from "@/shared/api/api-client"
+import type {
+  CreateExaminationFormPrintJobRequest,
+  DownloadedFile,
+  ExaminationFormPrintJob,
+  ParticipantListFilterParams,
+  ParticipantSelectionEntry,
+} from "../types"
+import {
+  examinationFormPrintJobResponseSchema,
+  type ExaminationFormPrintJobRequestDto,
+} from "../types/transport"
+import { toParticipantSelectionEntry } from "../utils/participant-selection"
+import { fetchHealthExaminationAgreementParticipants } from "./participants"
+
+/** Records one print job may hold (`nkc.document.jobs.max-records`). */
+export const EXAMINATION_FORM_PRINT_JOB_MAX_RECORDS = 1000
+/** The backend fills the template and converts it to PDF before answering (Gotenberg: 15 s). */
+export const EXAMINATION_FORM_RENDER_TIMEOUT_MS = 45_000
+export const EXAMINATION_FORM_FALLBACK_FILE_NAME = "phieu-kham.pdf"
+/** Largest page the Participant list returns. */
+const LIST_PAGE_SIZE = 100
+
+function participantsEndpoint(organizationId: string, agreementId: string) {
+  return `/api/v1/organizations/${encodeURIComponent(organizationId)}/agreements/${encodeURIComponent(agreementId)}/participants`
+}
+
+/** `sessionId` makes the form show the date of that session instead of the Participant's next one. */
+export function buildExaminationFormUrl(
+  organizationId: string,
+  agreementId: string,
+  participantId: string,
+  sessionId?: string
+) {
+  const url = `${participantsEndpoint(organizationId, agreementId)}/${encodeURIComponent(participantId)}/examination-form`
+  return sessionId ? `${url}?sessionId=${encodeURIComponent(sessionId)}` : url
+}
+
+export function buildExaminationFormPrintJobsUrl(organizationId: string, agreementId: string) {
+  return `${participantsEndpoint(organizationId, agreementId)}/examination-form-print-jobs`
+}
+
+/**
+ * The blank examination form of one Participant as a PDF, rendered on demand and never stored.
+ * The administrative part is pre-filled; the clinical part stays empty for the doctor.
+ */
+export async function fetchExaminationForm(
+  organizationId: string,
+  agreementId: string,
+  participantId: string,
+  signal?: AbortSignal,
+  sessionId?: string
+): Promise<DownloadedFile> {
+  const { blob, filename } = await apiClient.getBlob(
+    buildExaminationFormUrl(organizationId, agreementId, participantId, sessionId),
+    { signal, timeoutMs: EXAMINATION_FORM_RENDER_TIMEOUT_MS }
+  )
+  return { blob, fileName: filename?.trim() || EXAMINATION_FORM_FALLBACK_FILE_NAME }
+}
+
+function buildPrintJobBody(
+  request: CreateExaminationFormPrintJobRequest
+): ExaminationFormPrintJobRequestDto {
+  if (request.scope === "SESSION") {
+    return {
+      scope: "SESSION",
+      sessionId: request.sessionId,
+      includeAttended: request.includeAttended,
+      sort: request.sort,
+    }
+  }
+  return request.sessionId
+    ? { participantIds: request.participantIds, sessionId: request.sessionId }
+    : { participantIds: request.participantIds }
+}
+
+/**
+ * Queues the forms of many Participants in a background job (202), either the ones named or all of
+ * a session. The same `idempotencyKey` with the same body returns the job already queued
+ * instead of a second one.
+ */
+export async function createExaminationFormPrintJob(
+  request: CreateExaminationFormPrintJobRequest
+): Promise<ExaminationFormPrintJob> {
+  const response = await apiClient.post<ExaminationFormPrintJobRequestDto, unknown>(
+    buildExaminationFormPrintJobsUrl(request.organizationId, request.agreementId),
+    buildPrintJobBody(request),
+    { headers: { "Idempotency-Key": request.idempotencyKey } }
+  )
+  if (!response.data) {
+    throw new Error(response.message || "Phản hồi tạo lệnh in không có dữ liệu.")
+  }
+  return examinationFormPrintJobResponseSchema.parse(response.data)
+}
+
+export interface PrintableParticipants {
+  /** Participants on the active roster that match the filter, in list order. */
+  entries: ParticipantSelectionEntry[]
+  /** Matching Participants on the active roster. */
+  total: number
+  /** More than one print job may hold: nothing was collected beyond the first page. */
+  tooMany: boolean
+}
+
+/**
+ * Collects every active Participant that matches the list filter, page by page in the list order.
+ * Cancelled Participants are never printable, so the roster filter is always `ACTIVE`.
+ */
+export async function fetchPrintableParticipants(
+  organizationId: string,
+  agreementId: string,
+  filter: Omit<ParticipantListFilterParams, "page" | "pageSize" | "rosterStatus">,
+  signal?: AbortSignal,
+  maxRecords: number = EXAMINATION_FORM_PRINT_JOB_MAX_RECORDS
+): Promise<PrintableParticipants> {
+  const entries: ParticipantSelectionEntry[] = []
+  let page = 1
+  for (;;) {
+    const result = await fetchHealthExaminationAgreementParticipants(
+      organizationId,
+      agreementId,
+      { ...filter, rosterStatus: "ACTIVE", page, pageSize: LIST_PAGE_SIZE },
+      signal
+    )
+    if (result.total > maxRecords) return { entries: [], total: result.total, tooMany: true }
+    for (const participant of result.data) entries.push(toParticipantSelectionEntry(participant))
+    if (result.data.length === 0 || page >= result.totalPages) {
+      return { entries: uniqueById(entries), total: result.total, tooMany: false }
+    }
+    page += 1
+  }
+}
+
+/** A row added between two page reads can shift the next page; keep the first occurrence only. */
+function uniqueById(entries: ParticipantSelectionEntry[]): ParticipantSelectionEntry[] {
+  const seen = new Set<string>()
+  return entries.filter((entry) => (seen.has(entry.id) ? false : (seen.add(entry.id), true)))
+}

@@ -55,9 +55,9 @@ src/
 
 `modules` contains accesscontrol, appointment, billing, catalog, clinical,
 diagnostics, document, encounter, healthexamination, patient and prescription.
-Organization and Batch/Participant features live under
-`healthexamination/organizations` and `healthexamination/batches`. Catalog owns
-service lookup; negotiated batch prices and batch reports stay in healthexamination.
+Organization features live under `healthexamination/organizations`; Agreement,
+Participant, Session and Assignment features live under `healthexamination/agreements`.
+Catalog owns service lookup; negotiated agreement prices and reports stay in healthexamination.
 
 Reception, doctor, patient-workspace, appointment-workspace and encounter-detail
 are widget compositions. The encounter-detail widget owns the combined view
@@ -105,8 +105,8 @@ These may compose shadcn primitives but remain domain-neutral.
 
 Location: `src/modules/<domain>/components`
 
-Examples: ParticipantsTab, ParticipantFormDialog, HealthExaminationBatchOverview
-and OrganizationHealthExaminationBatchesTab.
+Examples: ParticipantsTab, ParticipantFormDialog, HealthExaminationAgreementOverview,
+SessionsTab and OrganizationAgreementsTab.
 
 These contain business terminology or behavior.
 
@@ -187,21 +187,22 @@ See ADR-0004.
 
 ```text
 Organization
-  └── HealthExaminationBatch
+  └── HealthExaminationAgreement (services, prices, validity)
         └── HealthExaminationParticipant
+              ├── SessionAssignment ── Session (date, site, activity)
               ↓ check-in
             Patient link/create
               ↓
             Encounter
 ```
 
-`HealthExaminationParticipant` is a batch membership record and is not
+`HealthExaminationParticipant` is an agreement roster record (dates come from its session assignments) and is not
 automatically a `Patient`. Roster list/manual changes/import have HTTP contracts;
 Participant-to-Patient visit preparation/check-in does not yet have a public handler.
 
 ## Corporate Health Examination Flow
 
-Current mapped operations include authentication, organization/batch configuration,
+Current mapped operations include authentication, organization/agreement configuration, sessions and assignments,
 Participant list/manual changes/template/import, examination-details reconciliation
 and import/export, payment-summary JSON/DOCX, and blank examination form printing
 (one PDF per Participant and background print jobs, see
@@ -211,7 +212,7 @@ for exact routes and authorization gaps. The single-step roster import was resto
 on 2026-10-06; the former preview/confirm/cancel chain remains removed. Visit
 preparation and official clinical printing need explicit HTTP contracts. The
 Participant action gates use the backend's separate permission codes (see
-"Permission checks" under accesscontrol); mapped Organization/Batch DELETE and
+"Permission checks" under accesscontrol); mapped Organization/Agreement DELETE and
 catalog lookup also have production authorization gaps. Existing
 FE callers do not make missing endpoints supported. See
 [code follow-ups](../maintenance/code-follow-ups.md).
@@ -222,7 +223,7 @@ FE callers do not make missing endpoints supported. See
 /auth/login
 /organizations
 /organizations/[organizationId]
-/organizations/[organizationId]/health-examination-batches/[batchId]
+/organizations/[organizationId]/agreements/[agreementId]   (?tab=overview|participants|sessions|examination|report)
 ```
 
 Existing staff workspace routes (some business integrations remain unavailable):
@@ -290,8 +291,8 @@ constants in `accesscontrol/permissions.ts`, the backend permissions tied to an 
 endpoint, so a typo fails type checking and `permission-codes.test.ts` fails when a code is
 not defined by the backend migrations (skipped without the backend checkout). A feature
 that calls several endpoints needs all of them. Each feature module groups its flags in one
-hook, for example `useBatchPermissions()` for the batch screens (participants, batch
-create/edit/delete/start) and `useOrganizationPermissions()` for the Organization screens
+hook, for example `useAgreementPermissions()` for the agreement screens (participants, sessions,
+assignments, agreement create/edit/delete/activate/end) and `useOrganizationPermissions()` for the Organization screens
 (create, edit, deactivate), instead of calling `hasStaffPermission` inline. The sidebar hides
 an item whose `permission` the session lacks ("Đơn vị" needs `ORGANIZATION_SEARCH`). Until the session is loaded (`isKnown` false) a read still
 tries and the backend answers. Add a code to `PERMISSION` when a screen needs it. These

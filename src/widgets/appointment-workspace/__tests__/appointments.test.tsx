@@ -116,10 +116,10 @@ describe("Appointments Module (Lịch hẹn)", () => {
     )
 
     expect(screen.getByText("Khám đơn vị")).toBeInTheDocument()
-    expect(screen.getByText("1. Chọn đơn vị, đợt khám & người khám")).toBeInTheDocument()
+    expect(screen.getByText("1. Chọn đơn vị, thỏa thuận & người khám")).toBeInTheDocument()
     expect(screen.getByText("Đơn vị")).toBeInTheDocument()
-    expect(screen.getByText("Đợt khám sức khỏe")).toBeInTheDocument()
-    expect(screen.getByText("Người khám trong đợt khám")).toBeInTheDocument()
+    expect(screen.getByText("Thỏa thuận sức khỏe")).toBeInTheDocument()
+    expect(screen.getByText("Người khám trong thỏa thuận")).toBeInTheDocument()
   })
 
   it("renders operational counters strip matching Reception with 5 key metric cards", async () => {

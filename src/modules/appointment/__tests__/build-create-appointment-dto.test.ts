@@ -11,11 +11,11 @@ const form = {
   notes: "",
   careProgram: "INDIVIDUAL" as const,
   organizationId: "",
-  healthExaminationBatchId: "",
+  healthExaminationAgreementId: "",
   participantCode: "",
 }
 const organization = { id: "org-1", name: "Công ty FPT" }
-const batch = { id: "batch-1", name: "Đợt 1" }
+const agreement = { id: "agreement-1", name: "Đợt 1" }
 
 describe("buildCreateAppointmentDto", () => {
   it("omits organization fields and empty notes for an individual appointment", () => {
@@ -24,24 +24,24 @@ describe("buildCreateAppointmentDto", () => {
       patientId: "patient-1",
       careProgram: "INDIVIDUAL",
       organization,
-      batch,
+      agreement,
       participantCode: "NV001",
     })
 
     expect(dto).toMatchObject({ patientId: "patient-1", bookingChannel: "RECEPTION", careProgram: "INDIVIDUAL" })
     expect(dto.notes).toBeUndefined()
     expect(dto.organizationId).toBeUndefined()
-    expect(dto.healthExaminationBatchId).toBeUndefined()
+    expect(dto.healthExaminationAgreementId).toBeUndefined()
     expect(dto.participantCode).toBeUndefined()
   })
 
-  it("sends the organization, batch and participant for an organization health examination", () => {
+  it("sends the organization, agreement and participant for an organization health examination", () => {
     const dto = buildCreateAppointmentDto({
       form: { ...form, notes: "Nhịn ăn sáng" },
       patientId: "patient-1",
       careProgram: "ORGANIZATION_HEALTH_EXAMINATION",
       organization,
-      batch,
+      agreement,
       participantCode: "NV001",
     })
 
@@ -49,8 +49,8 @@ describe("buildCreateAppointmentDto", () => {
       notes: "Nhịn ăn sáng",
       organizationId: "org-1",
       organizationName: "Công ty FPT",
-      healthExaminationBatchId: "batch-1",
-      healthExaminationBatchName: "Đợt 1",
+      healthExaminationAgreementId: "agreement-1",
+      healthExaminationAgreementName: "Đợt 1",
       participantCode: "NV001",
     })
   })

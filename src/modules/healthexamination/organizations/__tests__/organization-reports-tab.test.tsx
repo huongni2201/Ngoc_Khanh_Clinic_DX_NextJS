@@ -1,7 +1,7 @@
 import { screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, it, expect, vi, beforeEach } from "vitest"
-import { OrganizationReportsTab } from "@/modules/healthexamination/batches/components/report-tab/organization-reports-tab"
+import { OrganizationReportsTab } from "@/modules/healthexamination/agreements/components/report-tab/organization-reports-tab"
 import { renderWithClient } from "@/test-utils/render-with-client"
 
 describe("OrganizationReportsTab (Tab 4: Báo cáo)", () => {
@@ -9,7 +9,7 @@ describe("OrganizationReportsTab (Tab 4: Báo cáo)", () => {
     vi.clearAllMocks()
   })
 
-  it("renders batch selector, report notice, and vertical cost summary by default", async () => {
+  it("renders agreement selector, report notice, and vertical cost summary by default", async () => {
     renderWithClient(
       <OrganizationReportsTab
         organizationId="ent-2"
@@ -17,9 +17,9 @@ describe("OrganizationReportsTab (Tab 4: Báo cáo)", () => {
       />
     )
 
-    // Batch selector
+    // Agreement selector
     await waitFor(() => {
-      expect(screen.getByText("Đợt khám:")).toBeInTheDocument()
+      expect(screen.getByText("Thỏa thuận:")).toBeInTheDocument()
       expect(screen.getByText(/Khám sức khỏe định kỳ 2026/i)).toBeInTheDocument()
     })
 
@@ -75,7 +75,7 @@ describe("OrganizationReportsTab (Tab 4: Báo cáo)", () => {
     ).toBeInTheDocument()
   })
 
-  it("renders empty state when organization has no batches", async () => {
+  it("renders empty state when organization has no agreements", async () => {
     renderWithClient(
       <OrganizationReportsTab
         organizationId="nonexistent-org"
@@ -84,7 +84,7 @@ describe("OrganizationReportsTab (Tab 4: Báo cáo)", () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByText("Chưa có đợt khám nào để tạo báo cáo")).toBeInTheDocument()
+      expect(screen.getByText("Chưa có thỏa thuận nào để tạo báo cáo")).toBeInTheDocument()
     })
   })
 })

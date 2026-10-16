@@ -61,7 +61,7 @@ export const DEPRECATED_RULES = [
 
 export const TERMINOLOGY_EXCEPTIONS = [
   {
-    path: "src/modules/healthexamination/batches/__tests__/health-examination-batch-schema.test.ts",
+    path: "src/modules/healthexamination/agreements/__tests__/health-examination-agreement-schema.test.ts",
     labels: ["site type COMPANY"],
     reason: "Negative test: the legacy COMPANY site type must be rejected.",
   },

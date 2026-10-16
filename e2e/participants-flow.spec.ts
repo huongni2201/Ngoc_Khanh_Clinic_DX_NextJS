@@ -15,11 +15,11 @@ const PERMISSIONS = {
   manage: "HEALTH_EXAMINATION_PARTICIPANT_MANAGE",
 }
 
-function participant(index: number, batchId: string) {
+function participant(index: number, agreementId: string) {
   return {
     id: `0199dddd-0000-7000-8000-${String(index).padStart(12, "0")}`,
-    batchId,
-    batchDayId: "0199eeee-0000-7000-8000-000000000001",
+    agreementId,
+    agreementDayId: "0199eeee-0000-7000-8000-000000000001",
     examinationDate: "2026-10-20",
     participantCode: `NV00${index}`,
     fullName: `Người khám ${index}`,
@@ -44,7 +44,7 @@ interface ParticipantMock {
 }
 
 /** Registered after `mockBackend`, so these routes win for the Participant endpoints only. */
-async function mockParticipants(page: Page, batchId: string, permissions: string[]) {
+async function mockParticipants(page: Page, agreementId: string, permissions: string[]) {
   const mock: ParticipantMock = {
     imports: [],
     listRequests: [],
@@ -65,7 +65,7 @@ async function mockParticipants(page: Page, batchId: string, permissions: string
     const request = route.request()
     const url = new URL(request.url())
     const path = url.pathname
-    const base = `/api/v1/organizations/${ORGANIZATION_ID}/health-examination-batches/${batchId}/participants`
+    const base = `/api/v1/organizations/${ORGANIZATION_ID}/agreements/${agreementId}/participants`
 
     if (path === "/api/v1/auth/me") {
       const now = Date.now()
@@ -78,7 +78,7 @@ async function mockParticipants(page: Page, batchId: string, permissions: string
         roleAssignments: [{
           roleId: "33333333-3333-4333-8333-333333333333",
           roleCode: "CLINIC_MANAGER",
-          permissions: ["ORGANIZATION_READ", "HEALTH_EXAMINATION_BATCH_READ", ...permissions],
+          permissions: ["ORGANIZATION_READ", "HEALTH_EXAMINATION_AGREEMENT_READ", ...permissions],
         }],
         idleExpiresAt: new Date(now + 30 * 60_000).toISOString(),
         absoluteExpiresAt: new Date(now + 8 * 3600_000).toISOString(),
@@ -109,10 +109,10 @@ async function mockParticipants(page: Page, batchId: string, permissions: string
         importFailure = null
         return envelope(route, failure.status, undefined, failure.message)
       }
-      rows = [participant(1, batchId), participant(2, batchId)]
+      rows = [participant(1, agreementId), participant(2, agreementId)]
       return envelope(route, 201, {
         importJobId: "0199ffff-0000-7000-8000-000000000001",
-        batchId,
+        agreementId,
         totalRows: 2,
         createdCount: 2,
         completedAt: new Date().toISOString(),
@@ -136,11 +136,11 @@ async function mockParticipants(page: Page, batchId: string, permissions: string
 
 test("imports a roster from Excel and refreshes the Participant list", async ({ page }) => {
   const backend = await mockBackend(page)
-  const batch = backend.seedBatch()
-  const participants = await mockParticipants(page, batch.id, [PERMISSIONS.read, PERMISSIONS.import])
-  await page.goto(`/organizations/${ORGANIZATION_ID}/health-examination-batches/${batch.id}?tab=participants`)
+  const agreement = backend.seedAgreement()
+  const participants = await mockParticipants(page, agreement.id, [PERMISSIONS.read, PERMISSIONS.import])
+  await page.goto(`/organizations/${ORGANIZATION_ID}/agreements/${agreement.id}?tab=participants`)
 
-  await expect(page.getByText("Chưa có người khám trong đợt khám")).toBeVisible()
+  await expect(page.getByText("Chưa có người khám trong thỏa thuận")).toBeVisible()
   const download = page.waitForEvent("download")
   await page.getByRole("button", { name: "Tải file mẫu" }).click()
   expect((await download).suggestedFilename()).toMatch(/^mau-nhap-nguoi-kham-.*\.xlsx$/)
@@ -155,7 +155,7 @@ test("imports a roster from Excel and refreshes the Participant list", async ({ 
   await dialog.getByRole("button", { name: "Nhập danh sách" }).click()
 
   await expect(dialog).toBeHidden()
-  await expect(page.getByText("Đã thêm 2 người khám vào đợt khám.")).toBeVisible()
+  await expect(page.getByText("Đã thêm 2 người khám vào thỏa thuận.")).toBeVisible()
   await expect(page.getByText("Người khám 1")).toBeVisible()
   await expect(page.getByText("Người khám 2")).toBeVisible()
   await expect(page.getByText("********8901").first()).toBeVisible()
@@ -169,10 +169,10 @@ test("imports a roster from Excel and refreshes the Participant list", async ({ 
 
 test("shows a Vietnamese row error and keeps the same file retryable", async ({ page }) => {
   const backend = await mockBackend(page)
-  const batch = backend.seedBatch()
-  const participants = await mockParticipants(page, batch.id, [PERMISSIONS.read, PERMISSIONS.import])
+  const agreement = backend.seedAgreement()
+  const participants = await mockParticipants(page, agreement.id, [PERMISSIONS.read, PERMISSIONS.import])
   participants.failNextImport(400, "Row 3: full_name is required")
-  await page.goto(`/organizations/${ORGANIZATION_ID}/health-examination-batches/${batch.id}?tab=participants`)
+  await page.goto(`/organizations/${ORGANIZATION_ID}/agreements/${agreement.id}?tab=participants`)
 
   await page.getByRole("button", { name: "Nhập từ Excel" }).click()
   const dialog = page.getByRole("dialog")
@@ -184,26 +184,26 @@ test("shows a Vietnamese row error and keeps the same file retryable", async ({ 
   await dialog.getByRole("button", { name: "Nhập danh sách" }).click()
 
   await expect(dialog.getByText(/Dòng 3: thiếu giá trị ở cột Họ và tên/)).toBeVisible()
-  await expect(dialog.getByText("Chưa có người khám nào được thêm vào đợt khám.")).toBeVisible()
+  await expect(dialog.getByText("Chưa có người khám nào được thêm vào thỏa thuận.")).toBeVisible()
   await expect(dialog.getByText(/full_name is required/)).toHaveCount(0)
 })
 
 test("a session without the import permission sees the list but no import action", async ({ page }) => {
   const backend = await mockBackend(page)
-  const batch = backend.seedBatch()
-  await mockParticipants(page, batch.id, [PERMISSIONS.read])
-  await page.goto(`/organizations/${ORGANIZATION_ID}/health-examination-batches/${batch.id}?tab=participants`)
+  const agreement = backend.seedAgreement()
+  await mockParticipants(page, agreement.id, [PERMISSIONS.read])
+  await page.goto(`/organizations/${ORGANIZATION_ID}/agreements/${agreement.id}?tab=participants`)
 
-  await expect(page.getByText("Chưa có người khám trong đợt khám")).toBeVisible()
+  await expect(page.getByText("Chưa có người khám trong thỏa thuận")).toBeVisible()
   await expect(page.getByRole("button", { name: "Nhập từ Excel" })).toHaveCount(0)
   await expect(page.getByRole("button", { name: "Tải file mẫu" })).toHaveCount(0)
 })
 
 test("a session without the read permission never requests the list", async ({ page }) => {
   const backend = await mockBackend(page)
-  const batch = backend.seedBatch()
-  const participants = await mockParticipants(page, batch.id, [])
-  await page.goto(`/organizations/${ORGANIZATION_ID}/health-examination-batches/${batch.id}?tab=participants`)
+  const agreement = backend.seedAgreement()
+  const participants = await mockParticipants(page, agreement.id, [])
+  await page.goto(`/organizations/${ORGANIZATION_ID}/agreements/${agreement.id}?tab=participants`)
 
   await expect(page.getByText("Không có quyền xem")).toBeVisible()
   expect(participants.listRequests).toEqual([])
@@ -215,7 +215,7 @@ interface StoredParticipant {
   identificationNumber: string
   rosterStatus: "ACTIVE" | "CANCELLED"
   rowVersion: number
-  batchDayId: string
+  agreementDayId: string
 }
 
 interface ManageMock {
@@ -227,9 +227,9 @@ interface ManageMock {
  * Stateful Participant backend for the manual add, cancel and reactivate flow. Registered after
  * `mockBackend`, so these routes win for the Participant endpoints only.
  */
-async function mockManageableParticipants(page: Page, batchId: string, permissions: string[]) {
+async function mockManageableParticipants(page: Page, agreementId: string, permissions: string[]) {
   const mock: ManageMock = { rows: [], reactivations: [] }
-  const base = `/api/v1/organizations/${ORGANIZATION_ID}/health-examination-batches/${batchId}/participants`
+  const base = `/api/v1/organizations/${ORGANIZATION_ID}/agreements/${agreementId}/participants`
   let sequence = 0
 
   const envelope = (route: Route, status: number, data?: unknown, message = "OK") =>
@@ -241,8 +241,8 @@ async function mockManageableParticipants(page: Page, batchId: string, permissio
 
   const summary = (row: StoredParticipant) => ({
     id: row.id,
-    batchId,
-    batchDayId: row.batchDayId,
+    agreementId,
+    agreementDayId: row.agreementDayId,
     examinationDate: "2026-10-20",
     participantCode: null,
     fullName: row.fullName,
@@ -286,7 +286,7 @@ async function mockManageableParticipants(page: Page, batchId: string, permissio
         roleAssignments: [{
           roleId: "33333333-3333-4333-8333-333333333333",
           roleCode: "CLINIC_MANAGER",
-          permissions: ["ORGANIZATION_READ", "HEALTH_EXAMINATION_BATCH_READ", ...permissions],
+          permissions: ["ORGANIZATION_READ", "HEALTH_EXAMINATION_AGREEMENT_READ", ...permissions],
         }],
         idleExpiresAt: new Date(now + 30 * 60_000).toISOString(),
         absoluteExpiresAt: new Date(now + 8 * 3600_000).toISOString(),
@@ -313,7 +313,7 @@ async function mockManageableParticipants(page: Page, batchId: string, permissio
     if (path === base && method === "POST") {
       const body = request.postDataJSON() as Record<string, string>
       if (mock.rows.some((row) => row.identificationNumber === body.identificationNumber)) {
-        return envelope(route, 409, undefined, "Participant identity already exists in this batch")
+        return envelope(route, 409, undefined, "Participant identity already exists in this agreement")
       }
       sequence += 1
       const row: StoredParticipant = {
@@ -322,7 +322,7 @@ async function mockManageableParticipants(page: Page, batchId: string, permissio
         identificationNumber: body.identificationNumber,
         rosterStatus: "ACTIVE",
         rowVersion: 0,
-        batchDayId: body.batchDayId,
+        agreementDayId: body.agreementDayId,
       }
       mock.rows.push(row)
       return envelope(route, 201, detail(row), "Created")
@@ -354,12 +354,12 @@ async function mockManageableParticipants(page: Page, batchId: string, permissio
 
 test("adds, cancels and reactivates a Participant on the same row", async ({ page }) => {
   const backend = await mockBackend(page)
-  const batch = backend.seedBatch()
-  const participants = await mockManageableParticipants(page, batch.id, [
+  const agreement = backend.seedAgreement()
+  const participants = await mockManageableParticipants(page, agreement.id, [
     PERMISSIONS.read,
     PERMISSIONS.manage,
   ])
-  await page.goto(`/organizations/${ORGANIZATION_ID}/health-examination-batches/${batch.id}?tab=participants`)
+  await page.goto(`/organizations/${ORGANIZATION_ID}/agreements/${agreement.id}?tab=participants`)
 
   async function fillAndSubmitAddForm() {
     await page.getByRole("button", { name: "Thêm người khám" }).first().click()
@@ -375,7 +375,7 @@ test("adds, cancels and reactivates a Participant on the same row", async ({ pag
   }
 
   // Add.
-  await expect(page.getByText("Chưa có người khám trong đợt khám")).toBeVisible()
+  await expect(page.getByText("Chưa có người khám trong thỏa thuận")).toBeVisible()
   await fillAndSubmitAddForm()
   const row = page.getByRole("row", { name: /Trần Thị B/ })
   await expect(row).toBeVisible()

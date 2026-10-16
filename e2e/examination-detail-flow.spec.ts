@@ -33,10 +33,10 @@ interface ExaminationMock {
  * Registered after `mockBackend`, so these routes win for the examination detail and report
  * endpoints only. The first row has one performed service; an import marks both rows reconciled.
  */
-async function mockExamination(page: Page, batchId: string, permissions: string[]) {
+async function mockExamination(page: Page, agreementId: string, permissions: string[]) {
   const mock: ExaminationMock = { requests: [], imports: [], records: [], failNextImport: () => undefined }
-  const base = `/api/v1/organizations/${ORGANIZATION_ID}/health-examination-batches/${batchId}`
-  const serviceId = `${batchId}-s0`
+  const base = `/api/v1/organizations/${ORGANIZATION_ID}/agreements/${agreementId}`
+  const serviceId = `${agreementId}-s0`
   let reconciled = false
   const recorded = new Map<string, Record<string, unknown>>()
   let failure: { status: number; message: string } | null = null
@@ -60,7 +60,7 @@ async function mockExamination(page: Page, batchId: string, permissions: string[
     attendanceStatus: reconciled || index === 1 ? "ATTENDED" : "UNCONFIRMED",
     actualExaminationDate: reconciled || index === 1 ? "2026-10-20" : null,
     reconciliationStatus: reconciled ? "RECONCILED" : "PENDING",
-    performedBatchServiceIds: reconciled || index === 1 ? [serviceId] : [],
+    performedAgreementServiceIds: reconciled || index === 1 ? [serviceId] : [],
     rowVersion: reconciled ? 1 : 0,
     ...recorded.get(`0199dddd-0000-7000-8000-${String(index).padStart(12, "0")}`),
   })
@@ -81,7 +81,7 @@ async function mockExamination(page: Page, batchId: string, permissions: string[
         roleAssignments: [{
           roleId: "33333333-3333-4333-8333-333333333333",
           roleCode: "CLINIC_MANAGER",
-          permissions: ["ORGANIZATION_READ", "HEALTH_EXAMINATION_BATCH_READ", ...permissions],
+          permissions: ["ORGANIZATION_READ", "HEALTH_EXAMINATION_AGREEMENT_READ", ...permissions],
         }],
         idleExpiresAt: new Date(now + 30 * 60_000).toISOString(),
         absoluteExpiresAt: new Date(now + 8 * 3600_000).toISOString(),
@@ -133,7 +133,7 @@ async function mockExamination(page: Page, batchId: string, permissions: string[
       const stored = {
         attendanceStatus: body.attendanceStatus,
         actualExaminationDate: body.actualExaminationDate ?? null,
-        performedBatchServiceIds: body.performedBatchServiceIds,
+        performedAgreementServiceIds: body.performedAgreementServiceIds,
         rowVersion: Number(body.rowVersion) + 1,
       }
       recorded.set(recordMatch[1], stored)
@@ -153,7 +153,7 @@ async function mockExamination(page: Page, batchId: string, permissions: string[
       reconciled = true
       return envelope(route, 201, {
         importJobId: "0199ffff-0000-7000-8000-000000000001",
-        batchId,
+        agreementId,
         totalRows: 2,
         updatedParticipants: 2,
         unchangedParticipants: 0,
@@ -183,16 +183,16 @@ async function mockExamination(page: Page, batchId: string, permissions: string[
     }
     if (path === `${base}/reports/payment-summary`) {
       return envelope(route, 200, {
-        batchId,
-        batchCode: "SEED-1",
-        batchName: "Đợt khám có sẵn 1",
-        batchStatus: "DRAFT",
+        agreementId,
+        agreementCode: "SEED-1",
+        agreementName: "Thỏa thuận có sẵn 1",
+        agreementStatus: "DRAFT",
         provisional: true,
         registeredCount: 2,
         attendedCount: reconciled ? 2 : 1,
         reconciledCount: reconciled ? 2 : 0,
         items: [{
-          batchServiceId: serviceId,
+          agreementServiceId: serviceId,
           serviceCode: "LOCAL_SVC_CONSULT",
           serviceName: "Khám tổng quát",
           displayOrder: 1,
@@ -210,8 +210,8 @@ async function mockExamination(page: Page, batchId: string, permissions: string[
   return mock
 }
 
-const batchUrl = (batchId: string, tab: string) =>
-  `/organizations/${ORGANIZATION_ID}/health-examination-batches/${batchId}?tab=${tab}`
+const agreementUrl = (agreementId: string, tab: string) =>
+  `/organizations/${ORGANIZATION_ID}/agreements/${agreementId}?tab=${tab}`
 
 async function chooseWorkbook(page: Page) {
   await page.getByRole("button", { name: "Nhập Excel" }).click()
@@ -227,9 +227,9 @@ async function chooseWorkbook(page: Page) {
 
 test("shows the matrix, exports the workbook and imports a reconciliation file", async ({ page }) => {
   const backend = await mockBackend(page)
-  const batch = backend.seedBatch()
-  const examination = await mockExamination(page, batch.id, [PERMISSIONS.read, PERMISSIONS.reconcile])
-  await page.goto(batchUrl(batch.id, "examination"))
+  const agreement = backend.seedAgreement()
+  const examination = await mockExamination(page, agreement.id, [PERMISSIONS.read, PERMISSIONS.reconcile])
+  await page.goto(agreementUrl(agreement.id, "examination"))
 
   await expect(page.getByText("Người khám 1")).toBeVisible()
   await expect(page.getByText("Khám tổng quát").first()).toBeVisible()
@@ -255,25 +255,25 @@ test("shows the matrix, exports the workbook and imports a reconciliation file",
 
 test("shows a Vietnamese message when a Participant changed after the export", async ({ page }) => {
   const backend = await mockBackend(page)
-  const batch = backend.seedBatch()
-  const examination = await mockExamination(page, batch.id, [PERMISSIONS.read, PERMISSIONS.reconcile])
+  const agreement = backend.seedAgreement()
+  const examination = await mockExamination(page, agreement.id, [PERMISSIONS.read, PERMISSIONS.reconcile])
   examination.failNextImport(409, "Row 9: participant was changed after export; export again")
-  await page.goto(batchUrl(batch.id, "examination"))
+  await page.goto(agreementUrl(agreement.id, "examination"))
   await expect(page.getByText("Người khám 1")).toBeVisible()
 
   const dialog = await chooseWorkbook(page)
 
   await expect(dialog.getByText(/Dòng 9: người khám đã được thay đổi sau khi xuất file/)).toBeVisible()
-  await expect(dialog.getByText("Chưa có thay đổi nào được ghi vào đợt khám.")).toBeVisible()
+  await expect(dialog.getByText("Chưa có thay đổi nào được ghi vào thỏa thuận.")).toBeVisible()
   await expect(dialog.getByRole("button", { name: "Tải lại file mẫu" })).toBeVisible()
   await expect(dialog.getByText(/participant was changed/)).toHaveCount(0)
 })
 
 test("a session with only the read permission cannot import and sees no report tab", async ({ page }) => {
   const backend = await mockBackend(page)
-  const batch = backend.seedBatch()
-  const examination = await mockExamination(page, batch.id, [PERMISSIONS.read])
-  await page.goto(batchUrl(batch.id, "examination"))
+  const agreement = backend.seedAgreement()
+  const examination = await mockExamination(page, agreement.id, [PERMISSIONS.read])
+  await page.goto(agreementUrl(agreement.id, "examination"))
 
   await expect(page.getByText("Người khám 1")).toBeVisible()
   await expect(page.getByRole("button", { name: "Xuất Excel" })).toBeVisible()
@@ -284,9 +284,9 @@ test("a session with only the read permission cannot import and sees no report t
 
 test("shows the provisional payment summary and downloads the Word file", async ({ page }) => {
   const backend = await mockBackend(page)
-  const batch = backend.seedBatch()
-  await mockExamination(page, batch.id, [PERMISSIONS.report])
-  await page.goto(batchUrl(batch.id, "report"))
+  const agreement = backend.seedAgreement()
+  await mockExamination(page, agreement.id, [PERMISSIONS.report])
+  await page.goto(agreementUrl(agreement.id, "report"))
 
   await expect(page.getByText("Tạm tính").first()).toBeVisible()
   await expect(page.getByRole("table").getByText("Khám tổng quát")).toBeVisible()
@@ -301,11 +301,11 @@ test("shows the provisional payment summary and downloads the Word file", async 
 
 test("a session without either permission sees neither tab and requests nothing for them", async ({ page }) => {
   const backend = await mockBackend(page)
-  const batch = backend.seedBatch()
-  const examination = await mockExamination(page, batch.id, [])
-  await page.goto(batchUrl(batch.id, "report"))
+  const agreement = backend.seedAgreement()
+  const examination = await mockExamination(page, agreement.id, [])
+  await page.goto(agreementUrl(agreement.id, "report"))
 
-  await expect(page.getByRole("heading", { name: batch.batchName })).toBeVisible()
+  await expect(page.getByRole("heading", { name: agreement.name })).toBeVisible()
   await expect(page.getByRole("button", { name: "Chi tiết khám" })).toHaveCount(0)
   await expect(page.getByRole("button", { name: "Báo cáo" })).toHaveCount(0)
   await page.waitForLoadState("networkidle")
@@ -315,15 +315,15 @@ test("a session without either permission sees neither tab and requests nothing 
 
 test("downloads the template and records one Participant by hand", async ({ page }) => {
   const backend = await mockBackend(page)
-  // The batch has already started, so today is a valid actual date.
-  const batch = backend.seedBatch({ dates: ["2026-01-05"] })
-  const examination = await mockExamination(page, batch.id, [
+  // The agreement has already started, so today is a valid actual date.
+  const agreement = backend.seedAgreement({ validFrom: "2026-01-05" })
+  const examination = await mockExamination(page, agreement.id, [
     PERMISSIONS.read,
     PERMISSIONS.reconcile,
     PERMISSIONS.template,
     PERMISSIONS.record,
   ])
-  await page.goto(batchUrl(batch.id, "examination"))
+  await page.goto(agreementUrl(agreement.id, "examination"))
   await expect(page.getByText("Người khám 2")).toBeVisible()
 
   const download = page.waitForEvent("download")
@@ -339,7 +339,7 @@ test("downloads the template and records one Participant by hand", async ({ page
   expect(examination.records).toHaveLength(1)
   expect(examination.records[0].body).toMatchObject({
     attendanceStatus: "ATTENDED",
-    performedBatchServiceIds: [`${batch.id}-s0`],
+    performedAgreementServiceIds: [`${agreement.id}-s0`],
     rowVersion: 0,
   })
   expect(backend.unexpected).toEqual([])

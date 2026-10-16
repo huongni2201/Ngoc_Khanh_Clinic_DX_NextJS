@@ -6,7 +6,7 @@ interface BuildCreateAppointmentDtoInput {
   patientId: string
   careProgram: CareProgram
   organization?: { id: string; name: string }
-  batch?: { id: string; name: string }
+  agreement?: { id: string; name: string }
   participantCode: string
 }
 
@@ -16,7 +16,7 @@ export function buildCreateAppointmentDto({
   patientId,
   careProgram,
   organization,
-  batch,
+  agreement,
   participantCode,
 }: BuildCreateAppointmentDtoInput): CreateAppointmentDto {
   const isOrganization = careProgram === "ORGANIZATION_HEALTH_EXAMINATION"
@@ -33,8 +33,8 @@ export function buildCreateAppointmentDto({
     careProgram,
     organizationId: isOrganization ? organization?.id : undefined,
     organizationName: isOrganization ? organization?.name : undefined,
-    healthExaminationBatchId: isOrganization ? batch?.id : undefined,
-    healthExaminationBatchName: isOrganization ? batch?.name : undefined,
+    healthExaminationAgreementId: isOrganization ? agreement?.id : undefined,
+    healthExaminationAgreementName: isOrganization ? agreement?.name : undefined,
     participantCode: isOrganization ? participantCode : undefined,
   }
 }
