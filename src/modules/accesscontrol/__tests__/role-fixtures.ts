@@ -133,10 +133,7 @@ export function mockRoleFetch(options: RoleFetchOptions = {}) {
     if (path.startsWith("/api/v1/admin/roles/") && method === "PUT") {
       return options.updateResponse?.() ?? jsonResponse({ result: "OK", code: 200, data: receptionistRole })
     }
-    const status = url.searchParams.get("status")
-    const matching = roles.filter(
-      (role) => !status || (status === "ACTIVE" ? role.active : !role.active)
-    )
+    const matching = roles
     const page = Number(url.searchParams.get("page") ?? "1")
     const size = Number(url.searchParams.get("size") ?? "10")
     return jsonResponse({

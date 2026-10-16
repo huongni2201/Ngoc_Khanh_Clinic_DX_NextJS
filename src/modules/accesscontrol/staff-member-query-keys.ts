@@ -1,6 +1,4 @@
-import type { RoleFilterParams } from "./types/role"
 import type { StaffMemberFilterParams } from "./types/staff-member"
-import { normalizeRoleFilterParams } from "./utils/role-list-params"
 import { normalizeStaffMemberFilterParams } from "./utils/staff-member-list-params"
 
 export const staffMemberKeys = {
@@ -15,8 +13,6 @@ export const roleKeys = {
   assignable: () => [...roleKeys.all, "assignable"] as const,
   lists: () => [...roleKeys.all, "list"] as const,
   allRoles: () => [...roleKeys.lists(), "all"] as const,
-  list: (params?: RoleFilterParams) =>
-    [...roleKeys.lists(), normalizeRoleFilterParams(params)] as const,
   permissions: (roleId: string) => [...roleKeys.all, "permissions", roleId] as const,
 }
 

@@ -13,14 +13,13 @@ import {
 import type {
   CreateRoleInput,
   PermissionCatalogItem,
-  RoleFilterParams,
   RoleListResponse,
+  RolePageParams,
   RolePermissions,
   RoleSummary,
   UpdateRoleInput,
   UpdateRolePermissionsInput,
 } from "../types/role"
-import { normalizeRoleFilterParams } from "../utils/role-list-params"
 
 // Contract: Ngoc_Khanh_Clinic_DX_Springboot/docs/api/roles-and-permissions.md
 const ROLES_ENDPOINT = "/api/v1/admin/roles"
@@ -60,18 +59,17 @@ function requireData<T>(data: T | undefined, message: string | undefined, fallba
   return data
 }
 
+/** The backend's largest page size for the role list. */
+const ROLE_PAGE_LIMIT = 100
+
+/** One page of roles of every status, in code order. Screens search and filter on their own. */
 export async function fetchRoles(
-  params?: RoleFilterParams,
+  params: RolePageParams,
   signal?: AbortSignal
 ): Promise<RoleListResponse> {
-  const normalized = normalizeRoleFilterParams(params)
   const query = new URLSearchParams({
-    page: String(normalized.page),
-    size: String(normalized.pageSize),
-    ...(normalized.search ? { searchKey: normalized.search } : {}),
-    ...(normalized.status ? { status: normalized.status } : {}),
-    sortKey: normalized.sortKey,
-    sortBy: normalized.sortBy,
+    page: String(Math.max(1, Math.trunc(params.page))),
+    size: String(Math.min(ROLE_PAGE_LIMIT, Math.max(1, Math.trunc(params.pageSize)))),
   })
   const response = await apiClient.get<unknown>(`${ROLES_ENDPOINT}?${query.toString()}`, { signal })
   const page = rolePageResponseSchema.parse(
@@ -85,9 +83,6 @@ export async function fetchRoles(
     totalPages: page.totalPages,
   }
 }
-
-/** The backend's largest page size for the role list. */
-const ROLE_PAGE_LIMIT = 100
 
 /** Reads again when roles were added while the pages were read, at most this many times. */
 const ROLE_READ_ATTEMPTS = 3

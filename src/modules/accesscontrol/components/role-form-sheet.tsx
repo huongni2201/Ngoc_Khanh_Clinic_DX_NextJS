@@ -49,7 +49,10 @@ interface RoleFormSheetProps {
   onOpenChange: (open: boolean) => void
   /** Role to edit (SRS 1.3.3); omitted to create one (SRS 1.3.2). */
   role?: RoleSummary
-  /** Active roles offered by "Copy permissions from" when creating. */
+  /**
+   * Active roles offered by "Copy permissions from" when creating. Omitted hides the field: copying
+   * grants permissions, so it needs the permission to assign them.
+   */
   copySources?: RoleSummary[]
   /** Every role, to reject a name already shown for another role. */
   existingRoles?: RoleSummary[]
@@ -129,7 +132,7 @@ export function RoleFormSheet({
               />
             ) : (
               <CreateRoleForm
-                copySources={copySources ?? []}
+                copySources={copySources}
                 existingRoles={existingRoles ?? []}
                 onDirtyChange={setDirty}
                 onCancel={() => requestClose(false)}
@@ -185,7 +188,7 @@ function CreateRoleForm({
   onDirtyChange,
   onCancel,
   onSaved,
-}: FormProps & { copySources: RoleSummary[]; existingRoles: RoleSummary[] }) {
+}: FormProps & { copySources?: RoleSummary[]; existingRoles: RoleSummary[] }) {
   const createMutation = useCreateRole()
   const {
     register,
@@ -203,7 +206,7 @@ function CreateRoleForm({
   const copyItems = React.useMemo(
     () => [
       { value: NO_COPY, label: "Không sao chép" },
-      ...copySources.map((source) => ({
+      ...(copySources ?? []).map((source) => ({
         value: source.id,
         label: `${roleDisplayName(source)} (${source.permissionCount} quyền)`,
       })),
@@ -283,34 +286,36 @@ function CreateRoleForm({
 
         <DescriptionField register={register} errors={errors} />
 
-        <div className="space-y-1.5">
-          <Label htmlFor="role-copy-from" className="text-xs font-medium text-foreground">
-            Sao chép quyền từ
-          </Label>
-          <Controller
-            control={control}
-            name="copyFromRoleId"
-            render={({ field }) => (
-              <Select
-                items={copyItems}
-                value={field.value}
-                onValueChange={(value) => field.onChange(value ?? NO_COPY)}
-                disabled={pending}
-              >
-                <SelectTrigger id="role-copy-from" className="h-9 w-full bg-card text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {copyItems.map((item) => (
-                    <SelectItem key={item.value || "none"} value={item.value}>
-                      {item.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          />
-        </div>
+        {copySources ? (
+          <div className="space-y-1.5">
+            <Label htmlFor="role-copy-from" className="text-xs font-medium text-foreground">
+              Sao chép quyền từ
+            </Label>
+            <Controller
+              control={control}
+              name="copyFromRoleId"
+              render={({ field }) => (
+                <Select
+                  items={copyItems}
+                  value={field.value}
+                  onValueChange={(value) => field.onChange(value ?? NO_COPY)}
+                  disabled={pending}
+                >
+                  <SelectTrigger id="role-copy-from" className="h-9 w-full bg-card text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {copyItems.map((item) => (
+                      <SelectItem key={item.value || "none"} value={item.value}>
+                        {item.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+          </div>
+        ) : null}
 
         <ActiveField control={control} />
       </fieldset>

@@ -32,6 +32,7 @@ export function RoleListPage() {
   const canView = can(PERMISSION.ROLE_MANAGE)
   const canCreate = can(PERMISSION.ROLE_CREATE)
   const canEdit = can(PERMISSION.ROLE_UPDATE)
+  const canCopyPermissions = can(PERMISSION.ROLE_PERMISSION_ASSIGN)
   // The Role Permissions screen reads the grants, the catalogue and the role list.
   const canOpenPermissions = canAll(...ROLE_PERMISSIONS_SCREEN_PERMISSIONS)
 
@@ -171,7 +172,7 @@ export function RoleListPage() {
         <RoleFormSheet
           open={isCreateOpen}
           onOpenChange={setIsCreateOpen}
-          copySources={copySources}
+          copySources={canCopyPermissions ? copySources : undefined}
           existingRoles={allRoles}
         />
       ) : null}

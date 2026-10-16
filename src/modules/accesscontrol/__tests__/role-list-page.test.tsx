@@ -76,8 +76,8 @@ describe("RoleListPage", () => {
       .filter((url) => url.pathname === "/api/v1/admin/roles")
     expect(listCalls.length).toBeGreaterThan(0)
     for (const url of listCalls) {
+      expect([...url.searchParams.keys()].sort()).toEqual(["page", "size"])
       expect(url.searchParams.get("size")).toBe("100")
-      expect(url.searchParams.has("searchKey")).toBe(false)
     }
   })
 
@@ -105,6 +105,20 @@ describe("RoleListPage", () => {
 
     expect(screen.getByRole("alert")).toHaveTextContent("chưa được cấp quyền xem danh sách vai trò")
     expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it("offers copying permissions only to a session that may assign them", async () => {
+    const user = userEvent.setup()
+    mockRoleFetch()
+    const view = renderPage(roleAdministratorSession)
+    await user.click(await screen.findByRole("button", { name: "Thêm vai trò" }))
+    expect(await screen.findByText("Sao chép quyền từ")).toBeInTheDocument()
+    view.unmount()
+
+    renderPage(sessionWith(["ROLE_MANAGE", "ROLE_CREATE"]))
+    await user.click(await screen.findByRole("button", { name: "Thêm vai trò" }))
+    expect(await screen.findByLabelText(/Tên vai trò/)).toBeInTheDocument()
+    expect(screen.queryByText("Sao chép quyền từ")).not.toBeInTheDocument()
   })
 
   it("creates a role and shows a duplicated code under its field", async () => {

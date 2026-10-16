@@ -14,16 +14,10 @@ export interface RoleSummary {
   rowVersion: number
 }
 
-export const ROLE_SORT_KEYS = ["id", "code", "name"] as const
-export type RoleSortKey = (typeof ROLE_SORT_KEYS)[number]
-
-export interface RoleFilterParams {
-  search?: string
-  status?: RoleStatusFilter
-  page?: number
-  pageSize?: number
-  sortKey?: RoleSortKey
-  sortBy?: "ASC" | "DESC"
+/** One page of the role list as the backend serves it: every status, in code order. */
+export interface RolePageParams {
+  page: number
+  pageSize: number
 }
 
 export interface RoleListResponse {

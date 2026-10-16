@@ -18,15 +18,13 @@ describe("roles API", () => {
     vi.restoreAllMocks()
   })
 
-  it("requests a normalized page and maps a role without description", async () => {
+  it("requests a page within the backend limit and maps a role without description", async () => {
     const fetchMock = mockRoleFetch({ roles: [nurseRole] })
 
-    const page = await fetchRoles({ search: "  nur ", status: "INACTIVE", page: 1, pageSize: 500 })
+    const page = await fetchRoles({ page: 1, pageSize: 500 })
 
     expect(fetchMock).toHaveBeenCalledWith(
-      expect.stringContaining(
-        "/api/v1/admin/roles?page=1&size=100&searchKey=nur&status=INACTIVE&sortKey=code&sortBy=ASC"
-      ),
+      expect.stringMatching(/\/api\/v1\/admin\/roles\?page=1&size=100$/),
       expect.objectContaining({ method: "GET" })
     )
     expect(page.data[0]).toEqual({
