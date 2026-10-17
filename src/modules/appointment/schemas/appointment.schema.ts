@@ -24,8 +24,8 @@ export const createAppointmentSchema = z.object({
     .optional(),
   organizationId: z.string().optional().or(z.literal("")),
   organizationName: z.string().optional().or(z.literal("")),
-  healthExaminationBatchId: z.string().optional().or(z.literal("")),
-  healthExaminationBatchName: z.string().optional().or(z.literal("")),
+  healthExaminationAgreementId: z.string().optional().or(z.literal("")),
+  healthExaminationAgreementName: z.string().optional().or(z.literal("")),
   participantCode: z.string().optional().or(z.literal("")),
 })
 

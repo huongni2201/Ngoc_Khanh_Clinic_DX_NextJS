@@ -96,8 +96,8 @@ const initialAppointments: Appointment[] = [
     careProgram: "ORGANIZATION_HEALTH_EXAMINATION",
     organizationId: "ent-2",
     organizationName: "Công ty Cổ phần FPT",
-    healthExaminationBatchId: "batch-1",
-    healthExaminationBatchName: "Khám sức khỏe định kỳ 2026",
+    healthExaminationAgreementId: "agreement-1",
+    healthExaminationAgreementName: "Khám sức khỏe định kỳ 2026",
     participantCode: "FPT004",
     status: "CONFIRMED",
     notes: "Khám đoàn FPT đợt 1",
@@ -145,8 +145,8 @@ const initialAppointments: Appointment[] = [
     careProgram: "ORGANIZATION_HEALTH_EXAMINATION",
     organizationId: "ent-1",
     organizationName: "Samsung Electronics Việt Nam",
-    healthExaminationBatchId: "batch-samsung-1",
-    healthExaminationBatchName: "Đợt khám sức khỏe cán bộ 2026",
+    healthExaminationAgreementId: "agreement-samsung-1",
+    healthExaminationAgreementName: "Thỏa thuận sức khỏe cán bộ 2026",
     participantCode: "SS0106",
     status: "CONFIRMED",
     notes: "Khám gói VIP Samsung",
@@ -262,8 +262,8 @@ export async function fetchAppointments(
       const matchPhone = a.phoneNumber.includes(q)
       const matchApptCode = a.appointmentCode.toLowerCase().includes(q)
       const matchOrganization = a.organizationName?.toLowerCase().includes(q) || false
-      const matchBatch =
-        a.healthExaminationBatchName?.toLowerCase().includes(q) || false
+      const matchAgreement =
+        a.healthExaminationAgreementName?.toLowerCase().includes(q) || false
       const matchParticipantCode =
         a.participantCode?.toLowerCase().includes(q) || false
       return (
@@ -272,7 +272,7 @@ export async function fetchAppointments(
         matchPhone ||
         matchApptCode ||
         matchOrganization ||
-        matchBatch ||
+        matchAgreement ||
         matchParticipantCode
       )
     })
@@ -313,8 +313,8 @@ export async function createAppointment(
       (dto.organizationId ? "ORGANIZATION_HEALTH_EXAMINATION" : "INDIVIDUAL"),
     organizationId: dto.organizationId,
     organizationName: dto.organizationName,
-    healthExaminationBatchId: dto.healthExaminationBatchId,
-    healthExaminationBatchName: dto.healthExaminationBatchName,
+    healthExaminationAgreementId: dto.healthExaminationAgreementId,
+    healthExaminationAgreementName: dto.healthExaminationAgreementName,
     participantCode: dto.participantCode,
     notes: dto.notes,
     createdAt: new Date().toISOString(),

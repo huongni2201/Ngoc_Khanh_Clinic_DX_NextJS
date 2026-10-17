@@ -13,51 +13,51 @@ import {
 } from "@/components/ui/select"
 import type { Patient } from "@/modules/patient"
 import type { Organization } from "@/modules/healthexamination"
-import type { HealthExaminationBatchSummary, HealthExaminationParticipant } from "@/modules/healthexamination"
+import type { HealthExaminationAgreementSummary, HealthExaminationParticipant } from "@/modules/healthexamination"
 
 interface OrganizationSelectionSectionProps {
   organizations: Pick<Organization, "id" | "name">[]
   isLoadingOrganizations: boolean
   isOrganizationsError: boolean
   organizationsError: unknown
-  batches: Pick<HealthExaminationBatchSummary, "id" | "name" | "code">[]
+  agreements: Pick<HealthExaminationAgreementSummary, "id" | "name" | "code">[]
   participants: Pick<
     HealthExaminationParticipant,
     "id" | "participantCode" | "fullName" | "departmentName"
   >[]
   selectedOrganizationId: string
-  selectedHealthExaminationBatchId: string
+  selectedHealthExaminationAgreementId: string
   selectedParticipantCode: string
   selectedPatient: Patient | null
   isPending: boolean
   isLinkingParticipant: boolean
   onOrganizationChange: (organizationId: string) => void
-  onBatchChange: (batchId: string) => void
+  onAgreementChange: (agreementId: string) => void
   onParticipantChange: (participantCode: string) => void
 }
 
-/** Organization → batch → participant pickers, plus the linked patient record once one is resolved. */
+/** Organization → agreement → participant pickers, plus the linked patient record once one is resolved. */
 export function OrganizationSelectionSection({
   organizations,
   isLoadingOrganizations,
   isOrganizationsError,
   organizationsError,
-  batches,
+  agreements,
   participants,
   selectedOrganizationId,
-  selectedHealthExaminationBatchId,
+  selectedHealthExaminationAgreementId,
   selectedParticipantCode,
   selectedPatient,
   isPending,
   isLinkingParticipant,
   onOrganizationChange,
-  onBatchChange,
+  onAgreementChange,
   onParticipantChange,
 }: OrganizationSelectionSectionProps) {
   return (
     <div className="space-y-3">
       <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground block">
-        1. Chọn đơn vị, đợt khám & người khám
+        1. Chọn đơn vị, thỏa thuận & người khám
       </span>
 
       {isOrganizationsError && (
@@ -102,25 +102,25 @@ export function OrganizationSelectionSection({
         </Select>
       </div>
 
-      {/* Batch select */}
+      {/* Agreement select */}
       <div className="space-y-1">
         <Label className="text-xs font-medium text-foreground">
-          Đợt khám sức khỏe <span className="text-destructive">*</span>
+          Thỏa thuận sức khỏe <span className="text-destructive">*</span>
         </Label>
         <Select
-          value={selectedHealthExaminationBatchId}
-          onValueChange={(val) => onBatchChange(val || "")}
+          value={selectedHealthExaminationAgreementId}
+          onValueChange={(val) => onAgreementChange(val || "")}
           disabled={!selectedOrganizationId || isPending}
         >
           <SelectTrigger className="h-8.5 text-xs bg-card">
             <SelectValue
               placeholder={
-                selectedOrganizationId ? "-- Chọn đợt khám --" : "Vui lòng chọn đơn vị trước"
+                selectedOrganizationId ? "-- Chọn thỏa thuận --" : "Vui lòng chọn đơn vị trước"
               }
             />
           </SelectTrigger>
           <SelectContent>
-            {batches.map((b) => (
+            {agreements.map((b) => (
               <SelectItem key={b.id} value={b.id}>
                 {b.name} ({b.code})
               </SelectItem>
@@ -132,23 +132,23 @@ export function OrganizationSelectionSection({
       {/* Participant select */}
       <div className="space-y-1">
         <Label className="text-xs font-medium text-foreground">
-          Người khám trong đợt khám <span className="text-destructive">*</span>
+          Người khám trong thỏa thuận <span className="text-destructive">*</span>
         </Label>
         <Select
           value={selectedParticipantCode}
           onValueChange={(val) => {
             if (val) onParticipantChange(val)
           }}
-          disabled={!selectedHealthExaminationBatchId || isPending || isLinkingParticipant}
+          disabled={!selectedHealthExaminationAgreementId || isPending || isLinkingParticipant}
         >
           <SelectTrigger className="h-8.5 text-xs bg-card">
             <SelectValue
               placeholder={
-                selectedHealthExaminationBatchId
+                selectedHealthExaminationAgreementId
                   ? isLinkingParticipant
                     ? "Đang liên kết hồ sơ..."
                     : "-- Chọn người khám --"
-                  : "Vui lòng chọn đợt khám trước"
+                  : "Vui lòng chọn thỏa thuận trước"
               }
             />
           </SelectTrigger>

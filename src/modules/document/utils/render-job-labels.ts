@@ -28,7 +28,7 @@ export function isRenderJobActive(status: RenderJobStatus | undefined): boolean 
 }
 
 const SKIP_REASON_LABELS: Record<string, string> = {
-  NOT_FOUND: "Không còn thuộc đợt khám",
+  NOT_FOUND: "Không còn thuộc thỏa thuận hoặc lịch khám",
   CANCELLED: "Đã bị hủy khỏi danh sách",
   TOO_LONG: "Thông tin quá dài, phiếu tràn sang trang khác",
   RENDER_FAILED: "Lỗi khi tạo phiếu",
@@ -44,9 +44,9 @@ const ERROR_CODE_LABELS: Record<string, string> = {
   TEMPLATE_UNAVAILABLE: "Tệp mẫu phiếu bị lỗi, không điền được dữ liệu. Liên hệ quản lý phòng khám.",
   RENDERER_UNAVAILABLE: "Dịch vụ tạo PDF không phản hồi. Thử lại sau ít phút.",
   STORAGE_FAILED: "Máy chủ không lưu được tệp in. Liên hệ quản trị hệ thống.",
-  SOURCE_NOT_FOUND: "Đợt khám đã bị xóa sau khi tạo lệnh in.",
+  SOURCE_NOT_FOUND: "Thỏa thuận hoặc lịch khám đã bị xóa sau khi tạo lệnh in.",
   SOURCE_NOT_PRINTABLE:
-    "Đợt khám không còn ở trạng thái cho phép in (Sẵn sàng hoặc Đã hoàn tất chuyên môn).",
+    "Thỏa thuận không còn ở trạng thái cho phép in (Đang áp dụng hoặc Đã kết thúc).",
   NOTHING_TO_PRINT: "Không còn người khám nào in được.",
   ATTEMPTS_EXHAUSTED: "Máy chủ xử lý lệnh in bị gián đoạn nhiều lần.",
   INTERNAL_ERROR: "Máy chủ gặp lỗi khi tạo tệp in.",

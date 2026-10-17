@@ -96,9 +96,9 @@ export function AppointmentDetailDialog({
                       <div>
                         Đơn vị: <strong className="text-foreground">{appointment.organizationName}</strong>
                       </div>
-                      {appointment.healthExaminationBatchName && (
+                      {appointment.healthExaminationAgreementName && (
                         <div>
-                          Đợt khám: <span className="text-foreground">{appointment.healthExaminationBatchName}</span>
+                          Thỏa thuận: <span className="text-foreground">{appointment.healthExaminationAgreementName}</span>
                         </div>
                       )}
                       {appointment.participantCode && (

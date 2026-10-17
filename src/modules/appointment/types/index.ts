@@ -49,8 +49,8 @@ export interface Appointment {
   status: AppointmentStatus
   organizationId?: string
   organizationName?: string
-  healthExaminationBatchId?: string
-  healthExaminationBatchName?: string
+  healthExaminationAgreementId?: string
+  healthExaminationAgreementName?: string
   participantCode?: string
   notes?: string
   createdAt: string
@@ -79,8 +79,8 @@ export interface CreateAppointmentDto {
   careProgram?: CareProgram
   organizationId?: string
   organizationName?: string
-  healthExaminationBatchId?: string
-  healthExaminationBatchName?: string
+  healthExaminationAgreementId?: string
+  healthExaminationAgreementName?: string
   participantCode?: string
 }
 

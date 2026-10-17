@@ -29,7 +29,7 @@ function EmailLink({ value }: { value: string }) {
   )
 }
 
-/** Reference card shown beside the batch list, so contact details are one glance away. */
+/** Reference card shown beside the agreement list, so contact details are one glance away. */
 export function OrganizationInfoCard({ organization }: OrganizationInfoCardProps) {
   return (
     <Card data-slot="organization-info-card" className="gap-0 py-0">

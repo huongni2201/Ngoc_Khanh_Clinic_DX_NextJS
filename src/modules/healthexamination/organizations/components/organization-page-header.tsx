@@ -17,7 +17,7 @@ export function OrganizationPageHeader({
     <PageHeader
       breadcrumbs={[{ label: "Đơn vị" }]}
       title="Đơn vị"
-      description="Quản lý đơn vị và các đợt khám sức khỏe"
+      description="Quản lý đơn vị và các thỏa thuận sức khỏe"
       actions={
         onOpenCreateDialog ? (
           <Button type="button" onClick={onOpenCreateDialog}>

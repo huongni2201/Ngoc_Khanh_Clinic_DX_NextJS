@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { AlertCircle, RefreshCw, ArrowLeft } from "@/shared/ui/product-icon"
 import { Button } from "@/components/ui/button"
 import {
@@ -24,7 +24,10 @@ import {
 } from "../hooks/use-organizations"
 import { OrganizationDetailHeader } from "../components/organization-detail-header"
 import { OrganizationInfoCard } from "../components/organization-info-card"
-import { OrganizationHealthExaminationBatchesTab } from "../../batches/components/organization-health-examination-batches-tab"
+import { OrganizationHealthExaminationAgreementsTab } from "../../agreements/components/organization-agreements-tab"
+import { SessionsTab } from "../../agreements/components/session-tab/sessions-tab"
+import { useAgreementPermissions } from "../../agreements/hooks/use-agreement-permissions"
+import { OrganizationWorkTabs, type OrganizationWorkTab } from "../components/organization-work-tabs"
 import { EditOrganizationDialog } from "../components/edit-organization-dialog"
 
 interface OrganizationDetailPageProps {
@@ -35,8 +38,23 @@ export function OrganizationDetailPage({
   organizationId,
 }: OrganizationDetailPageProps) {
   const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
   // Display only; the backend checks every request.
   const { canEdit, canDeactivate } = useOrganizationPermissions()
+  const { sessions } = useAgreementPermissions()
+  const requestedTab: OrganizationWorkTab =
+    searchParams?.get("tab") === "sessions" ? "sessions" : "agreements"
+  const activeTab: OrganizationWorkTab =
+    requestedTab === "sessions" && !sessions.canRead ? "agreements" : requestedTab
+
+  const handleTabChange = (tab: OrganizationWorkTab) => {
+    // Each tab keeps its own filters; leaving the tab drops the ones of the tab it came from.
+    const params = new URLSearchParams()
+    if (tab === "sessions") params.set("tab", "sessions")
+    const query = params.toString()
+    router.replace(`${pathname}${query ? `?${query}` : ""}`, { scroll: false })
+  }
 
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false)
 
@@ -130,17 +148,22 @@ export function OrganizationDetailPage({
         isDeactivating={deactivateMutation.isPending}
       />
 
-      {/* 2. Work area: the batches are the job, the organization details are reference */}
+      {/* 2. Work area: the agreements are the job, the organization details are reference */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start xl:grid-cols-[minmax(0,1fr)_22rem]">
-        <section aria-labelledby="organization-batches-heading" className="min-w-0 space-y-3">
-          <h2 id="organization-batches-heading" className="text-base font-semibold text-foreground">
-            Đợt khám
-          </h2>
-          <OrganizationHealthExaminationBatchesTab
-            organizationId={organization.id}
-            organizationName={organization.name}
-            organizationAddress={organization.address}
+        <section aria-label="Công việc của đơn vị" className="min-w-0 space-y-3">
+          <OrganizationWorkTabs
+            activeTab={activeTab}
+            onTabChange={handleTabChange}
+            hiddenTabs={sessions.canRead ? [] : ["sessions"]}
           />
+          {activeTab === "sessions" ? (
+            <SessionsTab organizationId={organization.id} />
+          ) : (
+            <OrganizationHealthExaminationAgreementsTab
+              organizationId={organization.id}
+              organizationName={organization.name}
+            />
+          )}
         </section>
         <aside aria-label="Thông tin đơn vị" className="min-w-0 lg:sticky lg:top-0">
           <OrganizationInfoCard organization={organization} />
@@ -154,7 +177,7 @@ export function OrganizationDetailPage({
             <DialogHeader>
               <DialogTitle>Ngừng hoạt động đơn vị</DialogTitle>
               <DialogDescription>
-                Đơn vị “{organization.name}” sẽ không còn xuất hiện trong danh sách. Các đợt khám đã tạo
+                Đơn vị “{organization.name}” sẽ không còn xuất hiện trong danh sách. Các thỏa thuận đã tạo
                 vẫn được giữ lại.
               </DialogDescription>
             </DialogHeader>

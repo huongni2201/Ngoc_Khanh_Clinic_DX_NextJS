@@ -91,7 +91,7 @@ describe("terminology guard", () => {
   })
 
   it("keeps exceptions narrow: a listed file is only exempt for its listed labels", () => {
-    const path = "src/modules/healthexamination/batches/__tests__/health-examination-batch-schema.test.ts"
+    const path = "src/modules/healthexamination/agreements/__tests__/health-examination-agreement-schema.test.ts"
     expect(labelsFor(path, 'examinationSiteType: "COMPANY"')).toEqual([])
     expect(labelsFor(path, "const companyId = 1")).toEqual(["Company"])
   })

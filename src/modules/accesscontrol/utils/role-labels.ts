@@ -66,14 +66,14 @@ const SEEDED_ROLES: Record<string, { name: string; description: string; vietname
     description:
       "Prepares participant examination records, enters batch examination data and issues completed records.",
     vietnameseDescription:
-      "Chuẩn bị hồ sơ khám của người khám, nhập dữ liệu khám theo đợt và phát hành hồ sơ đã hoàn tất.",
+      "Chuẩn bị hồ sơ khám của người khám, ghi nhận dịch vụ đã khám và phát hành hồ sơ đã hoàn tất.",
   },
   CLINIC_MANAGER: {
     name: "Clinic Manager",
     description:
       "Manages organizations, health examination batches, participants, clinic master data and operational reports.",
     vietnameseDescription:
-      "Quản lý đơn vị, đợt khám sức khỏe, người khám, danh mục phòng khám và báo cáo vận hành.",
+      "Quản lý đơn vị, thỏa thuận, lịch khám, người khám, danh mục phòng khám và báo cáo vận hành.",
   },
   ADMINISTRATOR: {
     name: "Administrator",
