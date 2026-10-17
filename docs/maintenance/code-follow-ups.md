@@ -35,6 +35,5 @@ dependencies are tracked in
 
 | Priority | Evidence | Required follow-up and acceptance evidence |
 |---|---|---|
-| Medium | Stub files from the Batch to Agreement rename could not be deleted (permission denied): `src/app/organizations/[organizationId]/health-examination-batches/`, `agreements/schemas/health-examination-batch.schema.ts`, `agreements/components/agreement-form/health-examination-batch-basic-info-section.tsx`, `agreements/components/agreement-list/health-examination-batch-{table,toolbar}.tsx`, and `agreements/__tests__/{batch-status,health-examination-batch-detail,health-examination-batch-schema}.test.*`. | Delete them; each holds only a comment or `test.skip`, and the old route returns 404. |
 | Medium | The mock E2E (`pnpm test:e2e`) reuses a dev server already on :3000, which reads `NEXT_PUBLIC_API_BASE_URL` from `.env` (8081) while the mocks default to 8080. | Run with `NEXT_PUBLIC_API_BASE_URL` equal to the running dev server, or stop it first. `session-scheduling-flow.spec.ts` passes alone; the whole suite was not green on a shared dev server. |
 | Medium | `test:e2e:backend` has no scheduling flow (agreement, import, assign, move, attend, reconcile, report, print) against the real backend. | Add once the backend `local` seed is available; the mock flow covers assign, move and attendance only. |
